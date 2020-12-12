@@ -1,0 +1,89 @@
+fap3=~/projects/fap/fap3 CD=. filter="autogen.sh Makefile.am configure.ac AUTHORS COPYING ChangeLog README NEWS *.in {
+ autogen.sh
+ Makefile.am
+ configure.ac
+ AUTHORS
+ COPYING
+ ChangeLog
+ README
+ NEWS
+ Makefile.in
+ libfap3.pc.in
+src=src CD=. filter="*.h *.cpp *.dtd Makefile.am" {
+  ifu.h
+  menv.h
+  miface.h
+  mowning.h
+  msyst.h
+  munit.h
+  mvert.h
+  nconn.h
+  syst.h
+  unit.h
+  vert.h
+  ifu.cpp
+  syst.cpp
+  unit.cpp
+  vert.cpp
+  Makefile.am
+} 
+etc=etc CD=. filter="*" {
+ objspec.dtd
+  objspec_s1.dtd
+  objspec_s2.dtd
+}
+modules=modules CD=. filter="*" {
+  capsula.chs
+  capsula.xml
+  data.chs
+  data.xml
+  des.chs
+  des.xml
+  func.chs
+  func.xml
+  syst.chs
+  syst.xml
+  vis.xml
+}
+debian=debian CD=. filter="*" {
+ README.Debian
+  changelog
+  compat
+  control
+  copyright
+  dirs
+  docs
+  fapws-dev.install
+  fapws-dev.substvars
+  fapws.install
+  fapws.postinst.debhelper
+  fapws.postrm.debhelper
+  fapws.substvars
+  files
+  rules
+  fapws-dev.debhelper.log
+  fapws.debhelper.log
+}
+doc=doc CD=. filter="*" {
+ requirements=requirements CD=. filter="*" {
+  fap_req.xml
+   index.html
+ }
+ design=design CD=. filter="*" {
+  fap_design.xml
+ }
+}
+test=test CD=. filter="*.cpp *.h *.xml *.am *.txt" {
+  ut_fap3_main.cpp
+  ut_nn.cpp
+  Makefile.am
+  libs=.libs CD=. filter="*" {
+  }
+}
+clm=clm CD=. filter="*.cpp *.h *.xml *.am *.txt" {
+  main.cpp
+  monitor.cpp
+  monitor.h
+  Makefile.am
+}
+}

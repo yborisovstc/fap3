@@ -1,0 +1,294 @@
+<?xml version="1.0" ?>
+
+<!DOCTYPE article SYSTEM "/usr/share/sgml/docbook/dtd/xml/4.5/docbookx.dtd">
+
+
+<article status="draft" class="specification"> <title>Enhanced Discrete Events System framework (multiagents based). Design.</title>
+
+    <articleinfo>
+	<author><personname><firstname>Yuri</firstname><surname>Borisov</surname></personname>
+	    <email>yuri.borisov.v@gmail.com</email></author> 
+
+	<releaseinfo>Ver.0.01 at 05-Dec-2020</releaseinfo>
+
+	<abstract>
+	    <simpara>This document collects software desing for Discrete Events System (DES) framework ver 3.</simpara>
+	</abstract>
+
+	<revhistory>
+	    <revision> <revnumber>0.01</revnumber> <date>05-Mar-2020</date> <authorinitials>Yuri Borisov</authorinitials>
+		<revremark>Initial version</revremark> </revision>
+	</revhistory>
+
+    </articleinfo>
+
+    <bibliolist>
+	<title>References</title>
+
+	<biblioentry id="ref_incr_mut"> <abbrev>INCR_MUT</abbrev>
+	    <productname><ulink url="../../../fap-doc/doc_incr_syst_creation/index.html "/></productname>
+	    <title>Y.Borisov. Using incremental mutation process for systems modeling</title> </biblioentry>
+
+	<biblioentry id="ref_rfc_3986"> <abbrev>RFC_3986_URI</abbrev>
+	    <productname><ulink url="httpss://www.ietf.org/rfc/rfc3986.txt"/></productname>
+	    <title>RFC 3986: Uniform Resource Identifier (URI): Generic Syntax</title> </biblioentry>
+    </bibliolist>
+
+    <glossary> <title>Glossary</title> 
+	<glossentry id="gls_adp"><glossterm>ADP</glossterm> <acronym>ADP</acronym>
+	    <glossdef> <para>Agents DES adaPtor</para> <para>
+		    The agent dedicated to adapt target agent interfaces to DES.
+		    Ref <xref linkend="ds_dmm_adp"/> </para></glossdef> </glossentry>
+	<glossentry id="gls_cp"><glossterm>CP</glossterm> <acronym>CP</acronym>
+	    <glossdef> <para>Connection Point</para> <para>
+		    Element that is used as endpoint of connections between systems.  
+	</para></glossdef> </glossentry>
+	<glossentry id="gls_daa"><glossterm>DAA</glossterm> <acronym>DAA</acronym>
+	    <glossdef> <para>Distributed Agents Approach</para> <para>
+		    Approach of multi-agent system that assumes that the modes is distributed among several environments that 
+		    can be running on undependent executable enviromnents.
+		    Ref <xref linkend="ds_daa"/> </para></glossdef> </glossentry>
+	<glossentry id="gls_deds"><glossterm>DEDS</glossterm> <acronym>DEDS</acronym>
+	    <glossdef> <para>Discrete Event Dynamic System,  a discrete-state, event-driven system of which the state evolution depends entirely
+		    on the occurrence of asynchronous discrete events over time. Although similar to continuous-variable dynamic systems (CVDS),
+		    DEDS consists solely of discrete state spaces and event-driven state transition mechanisms. 
+		    Ref <ulink url="https://en.wikipedia.org/wiki/Discrete_event_dynamic_system"/></para>
+		<glossseealso otherterm="gls_des"/>
+	</glossdef> </glossentry>
+	<glossentry id="gls_des"><glossterm>DES</glossterm> <acronym>DES</acronym>
+	    <glossdef> <para>Discrete-Event Simulation - model of the operation of a system as a discrete sequence of events in time.
+		    Each event occurs at a particular instant in time and marks a change of state in the system.
+		    Ref <ulink url="https://en.wikipedia.org/wiki/Discrete-event_simulation"/></para>
+		<glossseealso otherterm="gls_deds"/>
+	</glossdef> </glossentry>
+	<glossentry id="gls_dhc"><glossterm>DHC</glossterm> <acronym>DHC</acronym>
+	    <glossdef> <para>Direct Hierarchical Chromosome</para> <para>
+		    Approach of multi-agent system definition that describes the model's structure directly. 
+		    Ref <xref linkend="ds_smc"/> for discussion regarding chromo desing approaches.
+		    Ref <xref linkend="gls_osm"/> for anoter design approach.</para></glossdef> </glossentry>
+	<glossentry id="gls_ccn"><glossterm>CCN</glossterm> <acronym>CCN</acronym>
+	    <glossdef> <para>Compact (and customized) Chromo Notation, approach that focus on having compact notation of model chromo.
+		    This allows effectivelly creating the model via 'manually' creating chromo of it. Another solution
+		    is Native Chromo Notation, ref <xref linkend="gls_ncn"/>. </para></glossdef> </glossentry>
+	<glossentry id="gls_clm"><glossterm>CLM</glossterm> <acronym>CLM</acronym>
+	    <glossdef> <para>Command Line Monitor application <xref linkend="ds_clm"/> </para></glossdef> </glossentry>
+	<glossentry id="gls_cmt"><glossterm>CMT</glossterm> <acronym>CMT</acronym>
+	    <glossdef> <para>Combined Mutation Target.  The approach of specifying target in mutation spec when mutation target and change targets are
+		    spedified separately. With this approach the target specified with two mutation attribute, ref also <xref linkend="gls_umt"/> for
+		    alternative approach.</para></glossdef> </glossentry>
+	<glossentry id="gls_cpa"><glossterm>CPA</glossterm> <acronym>CPA</acronym>
+	    <glossdef> <para>Connecting Proxy Agent.
+		    The approach of agents design where dedicated embedded agents play the role of 
+		    connection points of agent, i.e. doing all connecting relative work instead of agent.
+		    In contrast of <xref linkend="gls_pia"/> connecting proxy agent provides interface
+		    resolution mechanism for the client, so the mechanism is distributed between multiple
+		    connecting agents in the model.  </para></glossdef> </glossentry>
+	<glossentry id="gls_dmm"><glossterm>DMM</glossterm> <acronym>DMM</acronym>
+	    <glossdef> <para>DES Managing of Model.  The approach of using DES to manage the generic multi-agent model.
+		    With this approach it is not needed to have some external native model managing entity, this managing entity
+		    is implemented as managing DES model, ref also <xref linkend="ds_dmm"/> for details.</para></glossdef> </glossentry>
+	<glossentry id="gls_fap2"><glossterm>FAP2</glossterm> <acronym>FAP2</acronym>
+	    <glossdef> <para>Discrete Events System (DES) framework ver. 2 aka "grayb".</para> <para>
+		    Ref <ulink url="../../../grayb/doc/design/index.html"/> </para></glossdef> </glossentry>
+	<glossentry id="gls_irm"><glossterm>IRM</glossterm>
+	    <glossdef> <para>Interface resolution mechanism.  <xref linkend="ds_ifcache"/>
+	</para></glossdef> </glossentry>
+	<glossentry id="gls_ncn"><glossterm>NCN</glossterm> <acronym>NCN</acronym>
+	    <glossdef> <para>Native Chromo Notation, approach that focus on very simple chromo notation, like
+		    assembler. It is 'universal', less readable and more suitable for creating model with IDE. Another solution
+		    is Compact Chromo Notation, ref <xref linkend="gls_ccn"/>.  </para></glossdef> </glossentry>
+	<glossentry id="gls_osm"><glossterm>OSM</glossterm> <acronym>OSM</acronym>
+	    <glossdef> <para>Original Sequence of Mutations - 
+		    The approach of models creation where the same mutation order is
+		    used for model creation as on construction phase, ref
+		    <xref linkend="ds_mut_osm"/>. Ref <xref linkend="gls_dhc"/> for another approach.
+	</para></glossdef> </glossentry>
+	<glossentry id="gls_mae"><glossterm>MAE</glossterm>
+	    <glossdef> <para>Using monodilic agent instead of embedded.
+		    Optimization approach, where monolitic native agents instead of constructed agents.
+		    <xref linkend="ds_mae"/>
+	</para></glossdef> </glossentry>
+	<glossentry id="gls_pia"><glossterm>PIA</glossterm> <acronym>PIA</acronym>
+	    <glossdef> <para>Properties Instead of embedded auxiliary Agents
+		    The approach of agents design where properties are using instead of auxiliary agents
+		    in order to minimize the agents number, ref
+		    <xref linkend="ds_pia"/>. Ref <xref linkend="gls_cpa"/> for another connecting solution.
+	</para></glossdef> </glossentry>
+	<glossentry id="gls_csl"><glossterm>CSL</glossterm> <acronym>CSL</acronym>
+	    <glossdef> <para>Connecting Same Layer vertices -
+		    Model creation policy of binding vertexes. According to this policy the only same layer
+		    vertexes can be connected. The owner of the layer is respondible to verify the policy.
+		    <xref linkend="ds_conn_cwdl"/>.
+	</para></glossdef> </glossentry>
+	<glossentry id="gls_scc"><glossterm>SCC</glossterm> <acronym>SCC</acronym>
+	    <glossdef> <para>State with Combined Chains. DES state design where data and observing chains are same.
+		    <xref linkend="ds_mae_scc"/>. Ref <xref linkend="gls_ssc"/> for another design solution.
+	</para></glossdef> </glossentry>
+	<glossentry id="gls_slc"><glossterm>SLC</glossterm> <acronym>SCC</acronym>
+	    <glossdef> <para>Sockets Loopback Connections. Socket design approach when loopback connections are supported
+		    <xref linkend="ds_ifcache_slc"/>.
+	</para></glossdef> </glossentry>
+	<glossentry id="gls_ssc"><glossterm>SSC</glossterm> <acronym>SSC</acronym>
+	    <glossdef> <para>State with Separate Chains. DES state design where data and observing chains are separated.
+		    <xref linkend="ds_mae_scc"/>. Ref <xref linkend="gls_scc"/> for another design solution.
+	</para></glossdef> </glossentry>
+	<glossentry id="gls_uac"><glossterm>UAC</glossterm> <acronym>UAC</acronym>
+	    <glossdef> <para>Units for Auxiliary Components
+		    The approach of agents design where "passive" units are used instead of agnents as
+		    auxiliary components, ref
+		    <xref linkend="ds_uac"/>. Ref <xref linkend="gls_cpa"/>, <xref linkend="gls_pia"/> for other connecting solutions.
+	</para></glossdef> </glossentry>
+	<glossentry id="gls_umt"><glossterm>UMT</glossterm> <acronym>UMT</acronym>
+	    <glossdef> <para>Unified Mutation Target.  The approach of specifying target in mutation spec.
+		    With this approach the target specified with just one mutation attribute, ref <xref linkend="ds_umt"/>.
+		    Ref <xref linkend="gls_cmt"/> for alternative approach.</para></glossdef> </glossentry>
+    </glossary>
+
+    <sect1 id="ds_itr"><title>Intro</title>
+	<sect2><title>The scope of the project</title>
+	    <simpara>This project is focusing on re-desing of DES framework fap2, aka grayb, ref <ulink url="../../../grayb/doc/design/index.html"/> for
+		the desing. The main areas of improvement are:</simpara>
+	    <itemizedlist>
+		<listitem>
+		    Unify of native level relations (connections), like owner-component, observer-observable, etc. Create common desing for the
+		    relations.
+		    <simpara>Ref <ulink url="../../../grayb/doc/design/index.html#ds_i_anr"/> for current desing weakness analysis.</simpara>
+		</listitem>
+		<listitem>Desing native connections iterating mechanism.</listitem>
+		<listitem>Base iface resolution on native level connections.</listitem>
+		<listitem>Desing content basing on native level connections tree of content units.</listitem>
+		<listitem>Easy support of anonymous units.</listitem>
+		<listitem>System creation language (chromo) optimization.</listitem>
+		<listitem>Notification mechainsm optimization. Ref <ulink url="../../../grayb/doc/design/index.html#ds_prfopt_ahn"/></listitem>
+		<listitem>Fix the problem <ulink url="../../../grayb/doc/design/index.html#ds_i_nrn"/></listitem>
+	    </itemizedlist>
+	</sect2>
+	<sect2 id="ds_itr_dp"><title>Dependent projects</title>
+	    <sect3 id="ds_itr_dp_grayb"><title>DES framework fap3, aka grayb, ref <ulink url="../../../grayb/doc/design/index.html"/></title>
+	    </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_nn"><title>Native net</title>
+	<sect2><title>Intro</title>
+	    <sect3><title>What is native net?</title>
+		<simpara>Native net is the initial topology and environment that allows to create the systems using system (model) creation language.
+		    So native net is the "sceleton" of the model. Native net allows to manage all units of the model.</simpara>
+	    </sect3>
+	    <sect3><title>Institutionalize all the relation on native layer.</title>
+		<simpara>The main idea of native net is to support all relations on the native layer via common design approach, common mechanism. Saing "on
+		    native layer" we mean the relations that are not seen from the top layer model, for instance the relations created via iface resoluion, 
+		    notifications etc.. In fap2 different approaches are used for establishing such relations.</simpara>
+	    </sect3>
+	    <sect3><title>Distributed env support by native net.</title>
+		<simpara>Native net supports interactions between units. Theas mean that these interactions shall correctly work in distributed env. So all
+		    ifaces created relations in native net shall be MIface.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2><title>What is difference between native and system level connections?</title>
+	    <simpara>Native connection allows creating native net, the connection is like "owner-component", "iface_requetor-iface_provider". System level
+		connection is just abstraction of system topology. In fap2 the only base mechanism of MVert-MVert binding is used.
+		This connection is to utilize interactions between specialilzed units. The behaviour of such 
+		connection is defined via this specifics of connected units.</simpara>
+	    <simpara>Parameters of system level connectins are defined via system creaton spec (specifying in terms of system creation language).</simpara>
+	</sect2>
+	<sect2><title>Considering common desing for native net two-ways relations.</title>
+	    <simpara>The serious problem in fap2 was that this desing principle was not supported completely. For instance owned-owner iface is not defined
+		properly, huge MUnit is used instead.</simpara>
+	</sect2>
+	<sect2><title>How to implement native connection?</title>
+	    <sect3><title>Intro</title>
+		<sect4><title>Native connection point vs 2-ways connection iface.</title>
+		    <simpara>First idea was to define specific iface for 2-ways connection (allowes connect, disconnect, access to provided and required
+			ifaces). That was like this:</simpara>
+		    <programlisting>
+			template &lt;class TPif, class TRif&gt; class MNcpp
+			{
+			public:
+			    using TPair = MNcpp&lt;TRif, TPif&gt;;
+			virtual TPif* provided() = 0;
+			virtual bool connect(TPair* aPair) = 0;
+			virtual bool disconnect(TPair* aPair) = 0;
+			virtual bool attach(TPair* aPair) = 0;
+			virtual bool deattach(TPair* aPair) = 0;
+			virtual bool isConnected(TPair* aPair) const = 0;
+			virtual bool getId(string&amp; aId) const = 0;
+			};
+		    </programlisting>
+		    <simpara>but then trying to implements MVert with this and see that it is needed to use MNcpp&lt;MVert, MVert&gt; instead of just MVert when
+			connecting. So the question was why cannot we just introduce iface "iface as part of 2-ways connection" and inherit MVert from it but
+			not from MIface. These two solution differs in ifaces inheritance stack.</simpara>
+		    <simpara>The "Native conn point" approach: MIface - &lt;provided iface&gt; - connection_iface</simpara>
+		    <simpara>The "2-ways connection iface":  approach: MIface - connection_iface - &lt;provided iface&gt;</simpara>
+		    <simpara>For "Native conn point" approach we can implement native connection point base class that implements connection_iface. Then from this
+			class we can inherit custom connpoint implementing (delegating) provided iface. This isolates conn point functionality from 
+			host (e.g Unit) implementation,that seems to be advantage. However intuitively this also seems superfluos. For instance MVert already includes the
+			methods for 2-ways connection (connect, disconnect etc).</simpara>
+		</sect4>
+
+	    </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1><title></title>
+    </sect1>
+
+    <sect1 id="ds_uinn"><title>Units identification in native net.</title>
+	<sect2><title>Intro</title>
+	    <simpara>It is common practice to use anonymous units of any type (even native net units). For instance ifaces set obtained via iface resolution
+		mechanism consists of anonymous units. However units identification is very important: it gives us essential information of unit that
+		helps us in case of debug, analysis etc. Also identification is required to resolve the unit in native net, e.g.
+		in case of distributed models. The question is what kind of identification shall be used?</simpara>
+	    <simpara>In <xref linkend="gls_fap2"/> the only identificator of unit in native tree is the unit name. So anonymous unit is simply unit with
+		hidden name.</simpara>
+	</sect2>
+	<sect2 id="ds_uinn_id"><title>What units in native net need to have identification.</title>
+	    <sect3><title>Intro</title>
+		<simpara>In <xref linkend="gls_fap2"/> the only ifaces have identification. The focus was to provide native hier creating iface (MUnit) with
+		    safe identification mechanism. Other ifaces are identified via MUnit identification plus iface type - so the identifiation scheme is restricted,
+		    there is no rule to identify given iface in case of MUnit node includes number of ifaces of same type.
+		    Ref <xref linkend="ds_f2dw_isr"/> for the desing weakness description.</simpara>
+		<simpara>
+		    The question is if we really need to identify all ifaces? The identification require some additional resources.
+		    This why in <xref linkend="gls_fap2"/> the exact identification is supported by MUnit only (it supports identification by name and is element of native
+			hier, thus can be identified by URI). All other ifaces are "attached" to MUnit so identified via MUnit identification (ref MIface::Mid()).
+		</simpara>
+		<simpara>Actually identification of ifaces are supported in fap2, ifaces owned MUnit can overload MIface::Uid() to generate unique IDs for each
+		    iface (even of same type) but there is mechanism of resolving the iface using this ID. So attempt to have full identification of iface is just
+		    attempt of representing iface as unit. Do we really need it? Seems not, because iface is just ptr to virtual func table, so needs the 
+		    "carrier" of the iface (i.e. owner of the table).</simpara>
+	    </sect3>
+	    <sect3><title>Do we need to identify the native units?</title>
+		<simpara>Native units provides the means of creating native net. These are native connections, ifaces etc. I cannot see the necessity
+		    of identifying these units. The matter is that any identifying is just the means of distinguish the unit within some topology, but we are not going
+		    to have dedicatied subnative topology.</simpara>
+	    </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_irm"><title>Iface resoluion mechanism redesign</title>
+	<sect2><title>Intro</title>
+	    <itemizedlist>
+		<listitem>Ref <ulink url="../../../grayb/doc/design/index.html#ds_ifcache"/> for FAP2 design of iface resolution. </listitem>
+	    </itemizedlist>
+	</sect2>
+	<sect2><title>Proposals</title>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_f2dw"><title>FAP2 design gaps and weaknesses</title>
+	<sect2 id="ds_f2dw_isr"><title>Ifaces identification scheme is restricted.</title>
+	    <simpara>In <xref linkend="gls_fap2"/> the only ifaces have identification. The focus was to provide native hier creating iface (MUnit) with
+		safe identification mechanism. Other ifaces are identified via MUnit identification plus iface type - so the identifiation scheme is restricted,
+		there is no rule to identify given iface in case of MUnit node includes number of ifaces of same type.
+		Ref <xref linkend="ds_uinn_id"/> for the desing consideration.</simpara>
+	    </sect2>
+	    <sect2 id="ds_f2dw_ccnu"><title>Creating complex native unit is not supported safely</title>
+	    <simpara>It is often required to create "complex" native unit, adding componentes, changing context etc. This is more effective that create
+		the unit spec in module. But this direct creation of "complex" native unit is not supported properly.</simpara>
+	</sect2>
+    </sect1>
+
+
+</article>
+
