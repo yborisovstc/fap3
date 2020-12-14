@@ -196,6 +196,24 @@
 	    <simpara>The serious problem in fap2 was that this desing principle was not supported completely. For instance owned-owner iface is not defined
 		properly, huge MUnit is used instead.</simpara>
 	</sect2>
+	<sect2><title>Interface vs connections</title>
+	    <sect3><title>Intro</title>
+		<simpara>In fap2 the "atom" of C++ objects interactions is interface, that according to OOP philosophy. However as we see the most of interactions
+		    are of 2-ways. The abstraction of 2-ways relation is connection, that covers two interacting interfaces and binding mechanism. Seems the connections
+		    can play the role of "atom" when 2-ways interactions.</simpara>
+		<simpara>This is also applicable for the interactions in the system layer over native net. Currently the ifaces are resolved over native net. Probably
+		    it makes sense to resolve connection points instead.</simpara>
+	    </sect3>
+	    <sect3><title>Do we need "connecting" iface?</title>
+		<simpara>The possible design solution is MIface is extended to introduce connection functions, ref MCIface or MCIface2 in 74ed7dd2. The rationale
+		    of such design is that iface can be obtain using the current iface resolution  or local iface providing mechanisms,
+		    so as iface supports connection we can connect it. The emotions promoting this desing was "What? Why we need now two abstractions to be taken care -
+		    iface and connpoint. Let's have just one."</simpara>
+		<simpara>This desing is not clear actually. The iface resolution itself involves connections. As for local iface providing, the specific API can 
+		    be addd to access conn points.</simpara>
+		<simpara>The idea is: connection is just means of accessing and managing iface. They are not same level abstractions.</simpara>
+	    </sect3>
+	</sect2>
 	<sect2><title>How to implement native connection?</title>
 	    <sect3><title>Intro</title>
 		<sect4><title>Native connection point vs 2-ways connection iface.</title>

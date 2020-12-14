@@ -71,3 +71,30 @@ void Unit::deleteOwned()
     }
 }
 
+bool Unit::getContent(string& aData, const string& aName) const
+{
+    bool res = false;
+    MCont2* cont = mContent.ownerCp().provided()->getContent(aName);
+    if (cont) {
+	res = cont->getData(aData);
+    }
+    return res;
+}
+
+bool Unit::setContent(const string& aData, const string& aName)
+{
+    bool res = false;
+    MCont2* cont = mContent.ownerCp().provided()->getContent(aName);
+    if (cont) {
+	res = cont->setData(aData);
+    }
+    return res;
+}
+
+bool Unit::addContent(const string& aName, bool aLeaf)
+{
+    bool res = false;
+    return res;
+}
+
+

@@ -10,6 +10,7 @@
 #include "mcontent.h"
 
 #include "cont.h"
+#include "cont2.h"
 
 using namespace std;
 
@@ -99,6 +100,8 @@ class Unit : public MUnit
 		virtual string MOwned_Uid() const {return mType;}
 		virtual string ownedId() const override { return mHost->name();}
 		virtual void deleteOwned() override { delete mHost;}
+		// From MNcp
+		virtual bool getId(string& aId) const override { aId = mHost->name(); return true;}
 	    private:
 		Unit* mHost;
 	};
@@ -110,21 +113,21 @@ class Unit : public MUnit
 	 * the specific is that the content contains pre-allocated default conten
 	 * with empty key (URI is .)
 	 * */
-	class RootContent : public ContNode {
+	class RootContent : public ContNode2 {
 	    public:
 		RootContent(Unit* aHost): mHost(aHost) {}
 	    protected:
 		// From ContNode
-		virtual MCont* nodeGetContent(const CUri& aUri) override {
-		    MCont* res = nullptr;
-		    if (aUri.size() == 1 && aUri.at(0).empty()) {
+		virtual MCont2* nodeGetContent(const CUri& aUri) override {
+		    MCont2* res = nullptr;
+		    if (aUri.size() == 0) {
 			res = &mDefalutContent;
 		    }
 		    return res;
 		}
 	    private:
 		Unit* mHost;
-		Cont mDefalutContent;
+		Cont2 mDefalutContent;
 	};
 
     public:
@@ -134,6 +137,9 @@ class Unit : public MUnit
 	// From MUnit
 	virtual string MUnit_Uid() const override { return mName;}
 	virtual string name() const override { return mName;}
+	virtual bool getContent(string& aData, const string& aName) const override;
+	virtual bool setContent(const string& aData, const string& aName) override;
+	virtual bool addContent(const string& aName, bool aLeaf = false) override;
     protected:
 	void deleteOwned();
     public:
