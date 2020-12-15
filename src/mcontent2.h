@@ -24,6 +24,10 @@ class MCont2: public MIface
 	// Local
 	virtual bool getData(string& aData) const = 0;
 	virtual bool setData(const string& aData) = 0;
+	virtual MContNode2* node() = 0;
+	virtual const MContNode2* node() const = 0;
+	virtual void dump(int aIdt) const override { MCont2_dump(aIdt);}
+	virtual void MCont2_dump(int aIdt) const = 0;
 };
 
 /** @brief Iface of content owner
@@ -41,7 +45,7 @@ class MContOwner2 : public MIface
 
 /** @brief Iface of content node in content tree
 * */
-class MContNode2 : public MContOwner2
+class MContNode2 : public MIface
 {
     public:
 	static const char* Type() { return "MContNode2";};
@@ -49,7 +53,7 @@ class MContNode2 : public MContOwner2
 	virtual string Uid() const override { return MContNode2_Uid();}
 	virtual string MContNode2_Uid() const = 0;
 	// Local
-	virtual bool addCont(const string& aName, bool aLeaf = false) = 0;
+	virtual bool addCont(const CUri& aUri, bool aLeaf = false) = 0;
 	virtual int size() const = 0;
 	virtual MCont2* at(int aIdx) const = 0;
 	virtual MCont2* at(const string& aName) const = 0;

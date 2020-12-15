@@ -115,13 +115,21 @@ class Unit : public MUnit
 	 * */
 	class RootContent : public ContNode2 {
 	    public:
-		RootContent(Unit* aHost): mHost(aHost) {}
-	    protected:
+		RootContent(Unit* aHost): ContNode2(string()), mHost(aHost) {}
+		virtual ~RootContent() {}
+		// From MCont
+		virtual void MCont2_dump(int aIdt) const {
+		    mDefalutContent.dump(++aIdt);
+		    ContNode2::MCont2_dump(++aIdt);
+		}
 		// From ContNode
-		virtual MCont2* nodeGetContent(const CUri& aUri) override {
+		virtual MCont2* getContent(const CUri& aUri) const override {
 		    MCont2* res = nullptr;
 		    if (aUri.size() == 0) {
-			res = &mDefalutContent;
+			const MCont2* cont = &mDefalutContent;
+			res = const_cast<MCont2*>(cont);
+		    } else {
+			res = ContNode2::getContent(aUri);
 		    }
 		    return res;
 		}
@@ -137,9 +145,10 @@ class Unit : public MUnit
 	// From MUnit
 	virtual string MUnit_Uid() const override { return mName;}
 	virtual string name() const override { return mName;}
-	virtual bool getContent(string& aData, const string& aName) const override;
-	virtual bool setContent(const string& aData, const string& aName) override;
+	virtual bool getContent(string& aData, const string& aName = string()) const override;
+	virtual bool setContent(const string& aData, const string& aName = string()) override;
 	virtual bool addContent(const string& aName, bool aLeaf = false) override;
+	virtual void dumpContent() const override { dynamic_cast<const MCont2&>(mContent).dump(0);}
     protected:
 	void deleteOwned();
     public:

@@ -39,7 +39,7 @@ void Ut_cont::tearDown()
 void Ut_cont::test_cont_1()
 {
     printf("\n === Test of def content set\n");
-    MUnit* unit1 = new Unit("Owner", nullptr);
+    Unit* unit1 = new Unit("Owner", nullptr);
     string tcont1 = "test1";
     // Default content
     bool res = unit1->setContent(tcont1);
@@ -48,6 +48,26 @@ void Ut_cont::test_cont_1()
     res = unit1->getContent(tcontr);
     CPPUNIT_ASSERT_MESSAGE("Failed setting content", tcontr == tcont1);
     // Adding content
+    cout << endl << "Adding [Debug] content node" << endl;
+    res = unit1->addContent("Debug");
+    unit1->dumpContent();
+    CPPUNIT_ASSERT_MESSAGE("Adding content [Debug] failed", res);
+    cout << endl << "Setting [Color] content leaf" << endl;
+    res = unit1->setContent("Blue", "Color");
+    CPPUNIT_ASSERT_MESSAGE("Adding content leaf [Color] failed", res);
+    unit1->dumpContent();
+    cout << endl << "Adding Debug.Update" << endl;
+    res = unit1->addContent("Debug.Update");
+    CPPUNIT_ASSERT_MESSAGE("Adding content [Debug.Update] failed", res);
+    unit1->dumpContent();
+    cout << endl << "Setting Debug.Trace.Enabled content leaf" << endl;
+    res = unit1->setContent("Yes", "Debug.Trace.Enabled");
+    CPPUNIT_ASSERT_MESSAGE("Setting content [Debug.Trace.Enabled] failed", res);
+    unit1->dumpContent();
+    cout << endl << "Setting complex content #1" << endl;
+    res = unit1->setContent("{ Prov:'IfaceProv' Req:'IfaceReq'}", "ConnPoint");
+    CPPUNIT_ASSERT_MESSAGE("Setting complex content #1 failed", res);
+    unit1->dumpContent();
 
     
     delete unit1;

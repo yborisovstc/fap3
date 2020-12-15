@@ -16,6 +16,8 @@ class MUnit: public MIface
 	virtual bool getContent(string& aData, const string& aName = string()) const = 0;
 	virtual bool setContent(const string& aData, const string& aName = string()) = 0;
 	virtual bool addContent(const string& aName, bool aLeaf = false) = 0;
+	// Debug
+	virtual void dumpContent() const = 0;
 };
 
 

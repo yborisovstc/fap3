@@ -17,6 +17,10 @@ class MIface
 	virtual string Uid() const = 0;
 	/** @brief Gets local interface of type aType */
 	virtual MIface *GetLif(const char *aType) { return nullptr;}
+	/** @brief outputs dump
+	 * @param aInt  indentation level
+	 * */
+	virtual void dump(int aIdt) const {};
 };
 
 /** @brief Connection (2-ways relation) interface

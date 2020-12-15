@@ -18,6 +18,8 @@ class CUri
 	CUri(const string& aSrc) { parse(aSrc);}
 	int size() const { return mElems.size();}
 	const string& at(int aIdx) const { return mElems.at(aIdx);}
+	CUri tail(int aIdx) const;
+	operator string();
     private:
 	void parse(const string& aSrc);
     private:

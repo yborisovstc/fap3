@@ -107,6 +107,7 @@ class MNcp: public TPif
 {
     public:
 	using TPair = MNcp<TRif, TPif>;
+	virtual ~MNcp() {}
 	virtual TPif* provided() = 0;
 	virtual const TPif* provided() const = 0;
 	virtual bool connect(TPair* aPair) = 0;
@@ -126,6 +127,7 @@ class MNcpp
 {
     public:
 	using TPair = MNcpp<TRif, TPif>;
+	virtual ~MNcpp() {}
 	virtual TPif* provided() = 0;
 	virtual const TPif* provided() const = 0;
 	virtual bool connect(TPair* aPair) = 0;
@@ -134,6 +136,7 @@ class MNcpp
 	virtual bool deattach(TPair* aPair) = 0;
 	virtual bool isConnected(TPair* aPair) const = 0;
 	virtual bool getId(string& aId) const = 0;
+	virtual void dump(int aIdt) const {}
 };
 
 #if 0
@@ -318,6 +321,8 @@ class NCpOmip : public MNcpp<TPif, TRif>
 	using TPairsElem = pair<string, TPair*>;
     public:
 	NCpOmip(TPif* aPx): mPx(aPx) {}
+	virtual ~NCpOmip();
+	// From MNcpp
 	virtual TPif* provided() override { return mPx;}
 	virtual const TPif* provided() const override { return mPx;}
 	virtual bool attach(TPair* aPair) override;
@@ -326,10 +331,30 @@ class NCpOmip : public MNcpp<TPif, TRif>
 	virtual bool disconnect(TPair* aPair) override;
 	virtual bool isConnected(TPair* aPair) const override;
 	virtual bool getId(string& aId) const override { return false;}
+	virtual void dump(int aIdt) const override {
+	    for (auto item : mPairs) {
+		item.second->dump(aIdt);
+	    }
+	}
+    public:
+	// Local
+	int count() const { return mPairs.size();}
+	TPair* at(const string& aId) const { return mPairs.count(aId) > 0 ? mPairs.at(aId) : nullptr;}
     protected:
 	TPairs mPairs;
 	TPif* mPx;
 };
+
+template <class TPif, class TRif>
+NCpOmip<TPif, TRif>::~NCpOmip()
+{
+    while (!mPairs.empty()) {
+	auto it = mPairs.begin();
+	TPair* pair = it->second;
+	disconnect(pair);
+	delete pair;
+    }
+}
 
 template <class TPif, class TRif>
 bool NCpOmip<TPif, TRif>::attach(TPair* aPair)
@@ -391,7 +416,8 @@ class NCpOip : public MNcpp<TPif, TRif>
     public:
 	using TPair = typename MNcpp<TPif, TRif>::TPair;
     public:
-	NCpOip(TPif* aPx): mPx(aPx) {}
+	NCpOip(TPif* aPx): mPair(nullptr), mPx(aPx) {}
+	virtual ~NCpOip() { delete mPx;}
 	virtual TPif* provided() override { return mPx;}
 	virtual const TPif* provided() const override { return mPx;}
 	virtual bool attach(TPair* aPair) override;
@@ -400,6 +426,9 @@ class NCpOip : public MNcpp<TPif, TRif>
 	virtual bool disconnect(TPair* aPair) override;
 	virtual bool isConnected(TPair* aPair) const override;
 	virtual bool getId(string& aId) const override { return false;}
+	virtual void dump(int aIdt) const { mPx->dump(aIdt); }
+    public:
+	void resetPx() {mPx = nullptr;}
     protected:
 	TPair* mPair;
 	TPif* mPx;
@@ -703,10 +732,12 @@ template <class TProv, class TReq>
 class NTnip : public NCpOip<TProv, TReq>
 {
     public:
+	using TNode = NCpOmip<TReq, TProv>;
+    public:
 	NTnip(TProv* aProvPx, TReq* aReqPx): NCpOip<TProv, TReq>(aProvPx), mOwnerCp(aReqPx) {}
 	NCpOmip<TReq, TProv>& ownerCp() { return mOwnerCp;}
 	const NCpOmip<TReq, TProv>& ownerCp() const { return mOwnerCp;}
-    private:
+    protected:
 	NCpOmip<TReq, TProv> mOwnerCp;
 };
 

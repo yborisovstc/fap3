@@ -10,6 +10,8 @@ libfap3_la_SOURCES = \
 		       nconn.h \
 		       menv.h \
 		       munit.h \
+		       ifu.h \
+		       ifu.cpp \
 		       curi.h \
 		       curi.cpp \
 		       cont.h \
