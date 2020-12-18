@@ -19,7 +19,7 @@ class Cont : public MCont
 	virtual bool getContent(string& aCont) const override;
 	virtual bool setContent(const string& aCont) override;
 	// From MCont::MCIface
-	virtual string provided() const override { return MCont::Type();}
+	//virtual string provided() const override { return MCont::Type();}
 	virtual bool isCompatible(MCIface* aPair) const override;
 	virtual bool connect(MCIface* aPair) override;
 	virtual bool disconnect(MCIface* aPair) override;
@@ -50,7 +50,7 @@ class ContNode : public MCont
 		virtual string MContOwner_Uid() const override { return string();}
 		virtual bool onContChanged(MCont* aCnt) override;
 		//  Fron MContNode::MContOwner::MCIface
-		virtual string provided() const override;
+		//virtual string provided() const override { return string();}
 		virtual bool isCompatible(MCIface* aPair) const override;
 		virtual bool connect(MCIface* aPair) override;
 		virtual bool disconnect(MCIface* aPair) override;
@@ -67,7 +67,7 @@ class ContNode : public MCont
 	virtual bool getContent(string& aCont) const override;
 	virtual bool setContent(const string& aCont) override;
 	//  Fron MCont::MCIface
-	virtual string provided() const override;
+	//virtual string provided() const override { return string();}
 	virtual bool isCompatible(MCIface* aPair) const override;
 	virtual bool connect(MCIface* aPair) override;
 	virtual bool disconnect(MCIface* aPair) override;

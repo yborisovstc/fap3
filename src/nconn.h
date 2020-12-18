@@ -113,7 +113,7 @@ class MNcp: public TPif
 	virtual bool connect(TPair* aPair) = 0;
 	virtual bool disconnect(TPair* aPair) = 0;
 	virtual bool attach(TPair* aPair) = 0;
-	virtual bool deattach(TPair* aPair) = 0;
+	virtual bool detach(TPair* aPair) = 0;
 	virtual bool isConnected(TPair* aPair) const = 0;
 	virtual bool getId(string& aId) const = 0;
 };
@@ -133,7 +133,7 @@ class MNcpp
 	virtual bool connect(TPair* aPair) = 0;
 	virtual bool disconnect(TPair* aPair) = 0;
 	virtual bool attach(TPair* aPair) = 0;
-	virtual bool deattach(TPair* aPair) = 0;
+	virtual bool detach(TPair* aPair) = 0;
 	virtual bool isConnected(TPair* aPair) const = 0;
 	virtual bool getId(string& aId) const = 0;
 	virtual void dump(int aIdt) const {}
@@ -152,7 +152,7 @@ class MNc
 	virtual bool connect(TPair* aPair) = 0;
 	virtual bool disconnect(TPair* aPair) = 0;
 	virtual bool attach(TPair* aPair) = 0;
-	virtual bool deattach(TPair* aPair) = 0;
+	virtual bool detach(TPair* aPair) = 0;
 	virtual bool isConnected(TPair* aPair) const = 0;
 	virtual bool getId(string& aId) const = 0;
 };
@@ -177,7 +177,7 @@ class NCpOmi2 : public MNcp<TPif, TRif>
 	virtual TPif* provided() override { return this;}
 	virtual const TPif* provided() const  { return this;}
 	virtual bool attach(TPair* aPair) override;
-	virtual bool deattach(TPair* aPair) override;
+	virtual bool detach(TPair* aPair) override;
 	virtual bool connect(TPair* aPair) override;
 	virtual bool disconnect(TPair* aPair) override;
 	virtual bool isConnected(TPair* aPair) const override;
@@ -196,7 +196,7 @@ bool NCpOmi2<TPif, TRif>::attach(TPair* aPair)
 }
 
 template <class TPif, class TRif>
-bool NCpOmi2<TPif, TRif>::deattach(TPair* aPair)
+bool NCpOmi2<TPif, TRif>::detach(TPair* aPair)
 {
     string pid;
     assert(aPair && aPair->getId(pid) && isConnected(aPair));
@@ -219,9 +219,9 @@ template <class TPif, class TRif>
 bool NCpOmi2<TPif, TRif>::disconnect(TPair* aPair)
 {
     assert(aPair && aPair->isConnected(this) && isConnected(aPair));
-    bool res = aPair->deattach(this);
+    bool res = aPair->detach(this);
     if (res) {
-       res = deattach(aPair);
+       res = detach(aPair);
     }
     return res;
 }
@@ -252,7 +252,7 @@ class NCpOi2 : public MNcp<TPif, TRif>
 	virtual TPif* provided() override { return this;}
 	virtual const TPif* provided() const override { return this;}
 	virtual bool attach(TPair* aPair) override;
-	virtual bool deattach(TPair* aPair) override;
+	virtual bool detach(TPair* aPair) override;
 	virtual bool connect(TPair* aPair) override;
 	virtual bool disconnect(TPair* aPair) override;
 	virtual bool isConnected(TPair* aPair) const override;
@@ -271,7 +271,7 @@ bool NCpOi2<TPif, TRif>::attach(TPair* aPair)
 }
 
 template <class TPif, class TRif>
-bool NCpOi2<TPif, TRif>::deattach(TPair* aPair)
+bool NCpOi2<TPif, TRif>::detach(TPair* aPair)
 {
     assert(aPair && isConnected(aPair));
     mPair = nullptr;
@@ -293,9 +293,9 @@ template <class TPif, class TRif>
 bool NCpOi2<TPif, TRif>::disconnect(TPair* aPair)
 {
     assert(aPair && aPair->isConnected(this));
-    bool res = aPair->deattach(this);
+    bool res = aPair->detach(this);
     if (res) {
-	res = deattach(aPair);
+	res = detach(aPair);
     }
     return true;
 }
@@ -326,7 +326,7 @@ class NCpOmip : public MNcpp<TPif, TRif>
 	virtual TPif* provided() override { return mPx;}
 	virtual const TPif* provided() const override { return mPx;}
 	virtual bool attach(TPair* aPair) override;
-	virtual bool deattach(TPair* aPair) override;
+	virtual bool detach(TPair* aPair) override;
 	virtual bool connect(TPair* aPair) override;
 	virtual bool disconnect(TPair* aPair) override;
 	virtual bool isConnected(TPair* aPair) const override;
@@ -366,7 +366,7 @@ bool NCpOmip<TPif, TRif>::attach(TPair* aPair)
 }
 
 template <class TPif, class TRif>
-bool NCpOmip<TPif, TRif>::deattach(TPair* aPair)
+bool NCpOmip<TPif, TRif>::detach(TPair* aPair)
 {
     string pid;
     assert(aPair && aPair->getId(pid) && isConnected(aPair));
@@ -389,9 +389,9 @@ template <class TPif, class TRif>
 bool NCpOmip<TPif, TRif>::disconnect(TPair* aPair)
 {
     assert(aPair && aPair->isConnected(this) && isConnected(aPair));
-    bool res = aPair->deattach(this);
+    bool res = aPair->detach(this);
     if (res) {
-       res = deattach(aPair);
+       res = detach(aPair);
     }
     return res;
 }
@@ -421,7 +421,7 @@ class NCpOip : public MNcpp<TPif, TRif>
 	virtual TPif* provided() override { return mPx;}
 	virtual const TPif* provided() const override { return mPx;}
 	virtual bool attach(TPair* aPair) override;
-	virtual bool deattach(TPair* aPair) override;
+	virtual bool detach(TPair* aPair) override;
 	virtual bool connect(TPair* aPair) override;
 	virtual bool disconnect(TPair* aPair) override;
 	virtual bool isConnected(TPair* aPair) const override;
@@ -443,7 +443,7 @@ bool NCpOip<TPif, TRif>::attach(TPair* aPair)
 }
 
 template <class TPif, class TRif>
-bool NCpOip<TPif, TRif>::deattach(TPair* aPair)
+bool NCpOip<TPif, TRif>::detach(TPair* aPair)
 {
     assert(aPair && isConnected(aPair));
     mPair = nullptr;
@@ -465,9 +465,9 @@ template <class TPif, class TRif>
 bool NCpOip<TPif, TRif>::disconnect(TPair* aPair)
 {
     assert(aPair && aPair->isConnected(this));
-    bool res = aPair->deattach(this);
+    bool res = aPair->detach(this);
     if (res) {
-	res = deattach(aPair);
+	res = detach(aPair);
     }
     return true;
 }
@@ -597,26 +597,39 @@ class NCpOmnp : public MNcpp<TPif, TRif>
 	virtual bool connect(TPair* aPair) override ;
 	virtual bool disconnect(TPair* aPair) override;
 	virtual bool attach(TPair* aPair) override;
-	virtual bool deattach(TPair* aPair) override;
+	virtual bool detach(TPair* aPair) override;
 	virtual bool isConnected(TPair* aPair) const override;
 	virtual bool getId(string& aId) const override { return false;}
+    public:
+	TPair* next(TPair* aPair) const {
+	    TPair* res = nullptr;
+	    auto it = mPairs.find(aPair);
+	    if (it != mPairs.end())  res = *(++it);
+	    return res;
+	};
+	TPair* first() const {
+	    TPair* res = nullptr;
+	    auto it = mPairs.begin();
+	    if (it != mPairs.end())  res = *it;
+	    return res;
+	}
     protected:
 	TPairs mPairs;
 	TPif* mPx;
 };
 
-template <class TPif, class TRif>
+    template <class TPif, class TRif>
 bool NCpOmnp<TPif, TRif>::attach(TPair* aPair)
 {
-    assert(aPair && !aPair->isConnected(this) && mPairs.count(aPair) == 0);
+    assert(aPair && !isConnected(aPair));
     mPairs.insert(aPair);
     return true;
 }
 
 template <class TPif, class TRif>
-bool NCpOmnp<TPif, TRif>::deattach(TPair* aPair)
+bool NCpOmnp<TPif, TRif>::detach(TPair* aPair)
 {
-    assert(aPair && aPair->isConnected(this) && mPairs.count(aPair) == 1);
+    assert(aPair && isConnected(aPair));
     mPairs.erase(aPair);
     return true;
 }
@@ -624,6 +637,7 @@ bool NCpOmnp<TPif, TRif>::deattach(TPair* aPair)
 template <class TPif, class TRif>
 bool NCpOmnp<TPif, TRif>::connect(TPair* aPair)
 {
+    assert(aPair && !aPair->isConnected(this) && !isConnected(aPair));
     bool res = aPair->attach(this);
     if (res) {
 	res = attach(aPair);
@@ -634,9 +648,10 @@ bool NCpOmnp<TPif, TRif>::connect(TPair* aPair)
 template <class TPif, class TRif>
 bool NCpOmnp<TPif, TRif>::disconnect(TPair* aPair)
 {
-    bool res = aPair->deattach(this);
+    assert(aPair && aPair->isConnected(this) && isConnected(aPair));
+    bool res = aPair->detach(this);
     if (res) {
-	res = deattach(aPair);
+	res = detach(aPair);
     }
     return res;
 }
@@ -645,6 +660,78 @@ template <class TPif, class TRif>
 bool NCpOmnp<TPif, TRif>::isConnected(TPair* aPair) const
 {
     return mPairs.count(aPair) == 1;
+}
+
+
+/** @brief Native connection point, one-to-one, no Id, proxy
+ * @tparam TPif  type of provided interface
+ * @tparam TPair type of pair
+ * @tparam THost type of host
+ * @tparam TPx type of provided iface proxy
+ * */
+template <class TPif, class TRif>
+class NCpOnp : public MNcpp<TPif, TRif>
+{
+    public:
+	using TPair= typename MNcpp<TPif, TRif>::TPair;
+	using TPairs = set<TPair*>;
+    public:
+	NCpOnp(TPif* aPx): mPx(aPx) {}
+	virtual TPif* provided() override { return mPx;}
+	virtual const TPif* provided() const override { return mPx;}
+	virtual bool connect(TPair* aPair) override ;
+	virtual bool disconnect(TPair* aPair) override;
+	virtual bool attach(TPair* aPair) override;
+	virtual bool detach(TPair* aPair) override;
+	virtual bool isConnected(TPair* aPair) const override;
+	virtual bool getId(string& aId) const override { return false;}
+    protected:
+	TPair* mPair;
+	TPif* mPx;
+};
+
+template <class TPif, class TRif>
+bool NCpOnp<TPif, TRif>::attach(TPair* aPair)
+{
+    assert(aPair && !mPair && !isConnected(aPair));
+    mPair = aPair;
+    return true;
+}
+
+template <class TPif, class TRif>
+bool NCpOnp<TPif, TRif>::detach(TPair* aPair)
+{
+    assert(aPair && isConnected(aPair));
+    mPair = nullptr;
+    return true;
+}
+
+template <class TPif, class TRif>
+bool NCpOnp<TPif, TRif>::connect(TPair* aPair)
+{
+    assert(aPair && !aPair->isConnected(this) && !isConnected(mPair) == 0);
+    bool res = aPair->attach(this);
+    if (res) {
+	res = attach(aPair);
+    }
+    return res;
+}
+
+template <class TPif, class TRif>
+bool NCpOnp<TPif, TRif>::disconnect(TPair* aPair)
+{
+    assert(aPair && aPair->isConnected(this) && isConnected(mPair) == 0);
+    bool res = aPair->detach(this);
+    if (res) {
+	res = detach(aPair);
+    }
+    return res;
+}
+
+template <class TPif, class TRif>
+bool NCpOnp<TPif, TRif>::isConnected(TPair* aPair) const
+{
+    return mPair == aPair;
 }
 
 
@@ -667,7 +754,7 @@ class NCOmi : public MNc
 	NCOmi() {}
 	virtual MIface* provided() override { return mPx;}
 	virtual bool attach(TPair* aPair) override;
-	virtual bool deattach(TPair* aPair) override;
+	virtual bool detach(TPair* aPair) override;
 	virtual bool connect(TPair* aPair) override;
 	virtual bool disconnect(TPair* aPair) override;
 	virtual bool isConnected(TPair* aPair) const override;
@@ -687,7 +774,7 @@ bool NCOmi<TProv, TReq>::attach(TPair* aPair)
 }
 
 template <class TProv, class TReq>
-bool NCOmi<TProv, TReq>::deattach(TPair* aPair)
+bool NCOmi<TProv, TReq>::detach(TPair* aPair)
 {
     string pid;
     assert(aPair && aPair->getId(pid) && aPair->isConnected(this) && isConnected(aPair));
@@ -708,9 +795,9 @@ bool NCOmi<TProv, TReq>::connect(TPair* aPair)
 template <class TProv, class TReq>
 bool NCOmi<TProv, TReq>::disconnect(TPair* aPair)
 {
-    bool res = aPair->deattach(this);
+    bool res = aPair->detach(this);
     if (res) {
-       res = deattach(aPair);
+       res = detach(aPair);
     }
     return res;
 }
@@ -726,7 +813,7 @@ bool NCOmi<TProv, TReq>::isConnected(TPair* aPair) const
 #endif
 
 
-/** @brief Native net tree node
+/** @brief Native net tree node, identified sub-nodes
  * */
 template <class TProv, class TReq>
 class NTnip : public NCpOip<TProv, TReq>
@@ -740,6 +827,25 @@ class NTnip : public NCpOip<TProv, TReq>
     protected:
 	NCpOmip<TReq, TProv> mOwnerCp;
 };
+
+
+/** @brief Native net tree node, not identified sub-nodes
+ * */
+template <class TProv, class TReq>
+class NTnnp : public NCpOnp<TProv, TReq>
+{
+    public:
+	using TNodeIf = MNcpp<TProv, TReq>; /*!< Node (pole) iface type */
+	using TCnodeIf = MNcpp<TReq, TProv>; /*!< Complement node (pole) type */
+	using TCnode = NCpOmnp<TReq, TProv>; /*!< Complement node (pole) type */
+    public:
+	NTnnp(TProv* aProvPx, TReq* aReqPx): NCpOnp<TProv, TReq>(aProvPx), mCnode(aReqPx) {}
+	TCnode& cnode() { return mCnode;}
+	const TCnode& cnode() const { return mCnode;}
+    protected:
+	TCnode mCnode;
+};
+
 
 
 

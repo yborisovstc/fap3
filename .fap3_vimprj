@@ -10,9 +10,16 @@ fap3=~/projects/fap/fap3 CD=. filter="autogen.sh Makefile.am configure.ac AUTHOR
  Makefile.in
  libfap3.pc.in
 src=src CD=. filter="*.h *.cpp *.dtd Makefile.am" {
+  cont.h
+  cont2.h
+  curi.h
+  ifr.h
   ifu.h
+  mcontent.h
+  mcontent2.h
   menv.h
   miface.h
+  mifr.h
   mowning.h
   msyst.h
   munit.h
@@ -21,6 +28,9 @@ src=src CD=. filter="*.h *.cpp *.dtd Makefile.am" {
   syst.h
   unit.h
   vert.h
+  cont.cpp
+  cont2.cpp
+  curi.cpp
   ifu.cpp
   syst.cpp
   unit.cpp
@@ -74,8 +84,11 @@ doc=doc CD=. filter="*" {
  }
 }
 test=test CD=. filter="*.cpp *.h *.xml *.am *.txt" {
+  ut_cont.cpp
   ut_fap3_main.cpp
+  ut_ifr.cpp
   ut_nn.cpp
+  ut_syst.cpp
   Makefile.am
   libs=.libs CD=. filter="*" {
   }

@@ -243,7 +243,16 @@
 			host (e.g Unit) implementation,that seems to be advantage. However intuitively this also seems superfluos. For instance MVert already includes the
 			methods for 2-ways connection (connect, disconnect etc).</simpara>
 		</sect4>
-
+	    </sect3>
+	</sect2>
+	<sect2><title>How to implement tree?</title>
+	    <sect3><title>Intro</title>
+		<simpara>There is the initial implementation (4da8309df913) of the tree node, ref nconn.h:NTnnp or nconn.h:NTnip. But there are doubts regarding the
+		    desing, it seems not proper. This is bacause of quite complicated scheme. Actually the "tree node" functionality is implemented on application
+		    iface level but not in the tree node class itself.</simpara>
+	    </sect3>
+	    <sect3><title>Design approach: introduce specific iface for tree node.</title>
+		<simpara>Currently (4da8309df913) the tree node class is just combination of two connpoints. So it doesnt support upward navigation for instance.</simpara>
 	    </sect3>
 	</sect2>
     </sect1>

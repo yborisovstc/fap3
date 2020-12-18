@@ -16,7 +16,8 @@ class MIface
 	/** @brief Getting id unique in the scope of the env */
 	virtual string Uid() const = 0;
 	/** @brief Gets local interface of type aType */
-	virtual MIface *GetLif(const char *aType) { return nullptr;}
+	virtual MIface *getLif(const char *aType) { return nullptr;}
+	template <class T> T* lIf(T* aInst) {return aInst = dynamic_cast<T*>(getLif(aInst->Type()));}
 	/** @brief outputs dump
 	 * @param aInt  indentation level
 	 * */
@@ -30,7 +31,7 @@ class MCIface : public MIface
 {
     public:
 	/** @brief Gets provided iface type */
-	virtual string provided() const = 0;
+	//virtual string provided() const = 0;
 	/** @brief Indicates the pair is comatible */
 	virtual bool isCompatible(MCIface* aPair) const = 0;
 	/** @brief Connects to pair, one-way, returns success indicator */
@@ -38,7 +39,9 @@ class MCIface : public MIface
 	/** @brief Disconnects to pair, one-way, returns success indicator */
 	virtual bool disconnect(MCIface* aPair) = 0;
 	/** @brief Connects to pair, two-way, returns success indicator */
-	bool connect(MCIface* aSelf, MCIface* aPair) { return aPair->connect(aSelf) ? aSelf->connect(aPair) : false;}
+	static bool connect(MCIface* aSelf, MCIface* aPair) { return aPair->connect(aSelf) ? aSelf->connect(aPair) : false;}
+	/** @brief Disonnects pairs, two-way, returns success indicator */
+	static bool disconnect(MCIface* aSelf, MCIface* aPair) { return aPair->disconnect(aSelf) ? aSelf->disconnect(aPair) : false;}
 	/** @brief Gets ID, returns success indicator */
 	virtual bool getId(string& aId) const = 0;
 	/** @brief Indicates of connected to pair */

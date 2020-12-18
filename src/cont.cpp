@@ -64,11 +64,6 @@ bool ContNode::Node::onContChanged(MCont* aCnt)
     return true;
 }
 
-string ContNode::Node::provided() const
-{
-    return string();
-}
-
 bool ContNode::Node::isCompatible(MCIface* aPair) const
 {
     return true;
@@ -102,11 +97,6 @@ bool ContNode::getContent(string& aCont) const
 bool ContNode::setContent(const string& aCont)
 {
     return false;
-}
-
-string ContNode::provided() const
-{
-    return string();
 }
 
 bool ContNode::isCompatible(MCIface* aPair) const

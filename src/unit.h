@@ -3,6 +3,8 @@
 
 #include <string>
 #include <map>
+#include <list>
+#include <cstring>
 
 #include "nconn.h"
 #include "munit.h"
@@ -11,6 +13,7 @@
 
 #include "cont.h"
 #include "cont2.h"
+#include "ifr.h"
 
 using namespace std;
 
@@ -144,13 +147,18 @@ class Unit : public MUnit
 	virtual ~Unit();
 	// From MUnit
 	virtual string MUnit_Uid() const override { return mName;}
+	virtual MIface* MUnit_getLif(const char *aType) override;
 	virtual string name() const override { return mName;}
 	virtual bool getContent(string& aData, const string& aName = string()) const override;
 	virtual bool setContent(const string& aData, const string& aName = string()) override;
 	virtual bool addContent(const string& aName, bool aLeaf = false) override;
 	virtual void dumpContent() const override { dynamic_cast<const MCont2&>(mContent).dump(0);}
+	virtual MIfProv* defaultIfProv(const string& aName) override;
+	virtual bool resolveIface(const string& aName, TIfReqCp* aReq) override;
     protected:
 	void deleteOwned();
+	template<class T> MIface* checkLif(const char* aType) { return (strcmp(aType, T::Type()) == 0) ? dynamic_cast<T*>(this) : nullptr;}
+	virtual IfrNode* createDefaultIfProv(const string& aName) const;
     public:
 	NCpOwner mCpOwner = NCpOwner(this);
 	NCpOwned mCpOwned = NCpOwned(this);
@@ -158,6 +166,8 @@ class Unit : public MUnit
 	string mName;
 	MEnv* mEnv;
 	RootContent mContent = RootContent(this);
+	map<string, IfrNode*> mLocalIrn; /*!< Local IFR node */
+	list<IfrNode*> mIrns;  /*! IFR nodes */
 };
 
 #endif // __FAP3_UNIT_H

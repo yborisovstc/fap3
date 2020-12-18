@@ -16,19 +16,22 @@ class Vertu : public Unit, public MVert
     public:
 	Vertu(const string &aName, MEnv* aEnv): Unit(aName, aEnv) {}
 	virtual ~Vertu();
+	// From MVert::MCIface::MIface
+	virtual MIface *getLif(const char *aType) override;
 	// From MVert::MCIface
 	virtual bool connect(MCIface* aPair) override;
 	virtual bool disconnect(MCIface* aPair) override;
 	virtual bool isConnected(MCIface* aPair) const override;
 	virtual bool isCompatible(MCIface* aPair) const override;
+	virtual bool getId(string& aId) const override { return false;}
 	// From MVert
-	virtual bool isCompatible(MVert* aPair, bool aExt = false) override {return true;}
+	virtual bool isCompatible(MVert* aPair, bool aExt) override {return true;}
 	virtual MVert* getExtd() override {return nullptr;}
 	virtual TDir getDir() const override { return ERegular;}
-	virtual int pairsCount() const = 0;
-	virtual MVert* getPair(int aInd) const = 0;
-	virtual bool isPair(const MVert* aPair) const = 0;
-	virtual bool isLinked(const MVert* aPair, bool aDirect = false) const = 0;
+	virtual int pairsCount() const override;
+	virtual MVert* getPair(int aInd) const override;
+	virtual bool isPair(const MVert* aPair) const override;
+	virtual bool isLinked(const MVert* aPair, bool aDirect = false) const override;
 	virtual string MVert_Uid() const { return "Vertu";}
     protected:
     protected:
