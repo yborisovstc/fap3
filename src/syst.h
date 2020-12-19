@@ -8,20 +8,21 @@
 
 class ConnPointu: public Vertu, public MConnPoint
 {
+    friend class CpIfrNode;
     public:
 	ConnPointu(const string &aName, MEnv* aEnv);
 	virtual ~ConnPointu() {}
-	// From MVert::MCIface::MIface
-	virtual MIface *getLif(const char *aType) override;
+	// From MUnit
+	virtual MIface *MUnit_getLif(const char *aType) override;
 	// From MVert::MCIface
 	virtual bool isCompatible(MCIface* aPair) const override;
 	// From MConnPoint
-	virtual string MConnPoint_Uid() const { return MConnPoint::Type();}
-	virtual string provided() const override;
-	virtual string required() const override;
+	virtual string MConnPoint_Uid() const { return name() + Ifu::KUidSep + MConnPoint::Type();}
+	virtual string provName() const override;
+	virtual string reqName() const override;
     protected:
 	// From Unit
-	virtual IfrNode* createDefaultIfProv(const string& aName) const override;
+	virtual IfrNode* createIfProv(const string& aName, TIfReqCp* aReq) const override;
 };
 
 #endif

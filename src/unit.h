@@ -158,7 +158,7 @@ class Unit : public MUnit
     protected:
 	void deleteOwned();
 	template<class T> MIface* checkLif(const char* aType) { return (strcmp(aType, T::Type()) == 0) ? dynamic_cast<T*>(this) : nullptr;}
-	virtual IfrNode* createDefaultIfProv(const string& aName) const;
+	virtual IfrNode* createIfProv(const string& aName, TIfReqCp* aReq) const;
     public:
 	NCpOwner mCpOwner = NCpOwner(this);
 	NCpOwned mCpOwned = NCpOwned(this);

@@ -18,11 +18,12 @@ class IfrNode : public NTnnp<MIfProv, MIfReq>, public MIfProv, protected MIfReq
 	virtual string name() const override;
 	virtual MIfProv* first() const override;
 	virtual MIfProv* next() const override;
+	virtual void MIfProv_dump(int aIdt) const override;
 	//virtual const MIfReq* requestor() const override { return mCnode.provided(); }
 	virtual bool resolve(const string& aName) override;
 	// From MIfReq
 	virtual string MIfReq_Uid() const override { return MIfReq::Type();}
-	virtual const MIfProv* owner() const { return this;}
+	//virtual const MIfProv* owner() const { return this;}
 	virtual MIfProv* next(MIfProv::TCp* aProvCp) const override;
 	virtual MIface* iface() override { return nullptr;}
     protected:
@@ -39,10 +40,11 @@ class IfrLeaf : public NCpOnp<MIfProv, MIfReq>, public MIfProv
 	// From MIfProv
 	virtual string MIfProv_Uid() const override { return MIfProv::Type();}
 	virtual string name() const override;
-	virtual MIfProv* first() const override { return nullptr;}
-	virtual MIfProv* next() const override { return nullptr;}
+	virtual MIfProv* first() const override { return const_cast<IfrLeaf*>(this);}
+	virtual MIfProv* next() const override;
 	virtual bool resolve(const string& aName) override {return false;}
 	virtual MIface* iface() override { return mIface;}
+	virtual void MIfProv_dump(int aIdt) const override;
     protected:
 	bool mValid;
 	MIface* mIface;

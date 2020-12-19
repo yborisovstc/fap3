@@ -7,6 +7,7 @@
 
 
 char Ifu::KEsc = '\\';
+char Ifu::KUidSep = '%';
 
 Ifu::Ifu()
 {

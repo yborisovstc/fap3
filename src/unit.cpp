@@ -144,12 +144,11 @@ bool Unit::resolveIface(const string& aName, TIfReqCp* aReq)
 	if (item->isConnected(aReq)) { connected = true; break;}
     }
     if (!connected) {
-	IfrNode* node = new IfrNode();
+	IfrNode* node = createIfProv(aName, aReq);
 	res = node->connect(aReq);
 	if (res) {
 	    res = node->resolve(aName);
 	}
-
     }
     return res;
 }
@@ -160,14 +159,19 @@ MIfProv* Unit::defaultIfProv(const string& aName)
     if (mLocalIrn.count(aName) > 0) {
 	res = mLocalIrn.at(aName);
     } else {
-	IfrNode* node = createDefaultIfProv(aName);
+	IfrNode* node = createIfProv(aName, nullptr);
 	mLocalIrn[aName] = node;
 	res = node;
     }
     return res;
 }
 
-IfrNode* Unit::createDefaultIfProv(const string& aName) const
+IfrNode* Unit::createIfProv(const string& aName, TIfReqCp* aReq) const
 {
-    return new IfrNodeRoot(aName);
+    IfrNode* res = nullptr;
+    if (aReq) {
+	res = new IfrNodeRoot(aName);
+    }
+    return res;
 }
+

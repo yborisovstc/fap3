@@ -8,14 +8,21 @@ Vertu::~Vertu()
 {
 }
 
-MIface* Vertu::getLif(const char *aType)
+MIface* Vertu::MUnit_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (strcmp(aType, MVert::Type()) == 0)
-	res = dynamic_cast<MVert*>(this);
+    if (res = checkLif<MVert>(aType));
+    else res = Unit::MUnit_getLif(aType);
     return res;
 }
 
+MIface* Vertu::MVert_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MUnit>(aType));
+    else res = MUnit_getLif(aType);
+    return res;
+}
 
 bool Vertu::connect(MCIface* aPair)
 {

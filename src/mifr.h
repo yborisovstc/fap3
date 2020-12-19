@@ -22,6 +22,8 @@ class MIfProv: public MIface
 	virtual MIfProv* next() const = 0;
 	virtual bool resolve(const string& aName) = 0;
 	virtual MIface* iface() = 0;
+	virtual void dump(int aIdt) const override { MIfProv_dump(aIdt);}
+	virtual void MIfProv_dump(int aIdt) const =0;
 };
 
 /** @brief Interface of interface requestor in iface resolution mechanism
@@ -33,7 +35,7 @@ class MIfReq: public MIface
 	// From MIface
 	virtual string Uid() const override { return MIfReq_Uid();}
 	virtual string MIfReq_Uid() const = 0;
-	virtual const MIfProv* owner() const = 0;
+	//virtual const MIfProv* owner() const = 0;
 	virtual MIfProv* next(MIfProv::TCp* aProvCp) const = 0;
 };
 

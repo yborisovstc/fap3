@@ -19,6 +19,8 @@ class MVert: public MCIface
 	static const char* Type() { return "MVert";}
 	// From MCIface 
 	//virtual string provided() const override { return Type();}
+	virtual MIface *getLif(const char *aType) { return MVert_getLif(aType);}
+	virtual MIface *MVert_getLif(const char *aType) = 0;
 	/** @brief Indicates if connnectable is compatible */
 	virtual bool isCompatible(MVert* aPair, bool aExt) = 0;
 	/** @brief Gets extended part in case if checked is extender */

@@ -42,17 +42,29 @@ void Ut_ifr::test_base_1()
     cout << endl << "=== Test of base functionality ===" << endl;
     MUnit* cpu1 = new ConnPointu("Cp1", nullptr);
     MUnit* cpu2 = new ConnPointu("Cp2", nullptr);
+    MUnit* cpu3 = new ConnPointu("Cp3", nullptr);
     MVert* cpv1 = cpu1->lIf(cpv1);
     MVert* cpv2 = cpu2->lIf(cpv2);
-    cpu1->setContent("{ Provided:'Iface1' Required:'Iface2'}");
-    cpu2->setContent("{ Provided:'Iface2' Required:'Iface1'}");
+    MVert* cpv3 = cpu3->lIf(cpv3);
+    cpu1->setContent("{ Provided:'Iface1' Required:'MConnPoint'}");
+    cpu2->setContent("{ Provided:'MConnPoint' Required:'Iface1'}");
+    cpu3->setContent("{ Provided:'MConnPoint' Required:'Iface1'}");
     MConnPoint* cp1 = cpu1->lIf(cp1);
     bool res = MVert::connect(cpv1, cpv2);
+    CPPUNIT_ASSERT_MESSAGE("Failed connecting cp1 - cp2", res);
+    res = MVert::connect(cpv1, cpv3);
+    CPPUNIT_ASSERT_MESSAGE("Failed connecting cp1 - cp3", res);
     MIfProv* ifp = cpu1->defaultIfProv("MConnPoint");
     MIfProv* prov = ifp->first();
     CPPUNIT_ASSERT_MESSAGE("Failed getting MConnPoint provider", prov);
-    MIface* iface = prov->iface();
-    CPPUNIT_ASSERT_MESSAGE("Failed getting MConnPoint iface", iface);
+    cout << endl << "== Iface resolved ==" << endl;
+    do {
+	MIface* iface = prov->iface();
+	CPPUNIT_ASSERT_MESSAGE("Failed getting MConnPoint iface", iface);
+	cout << ">>  " << (iface ? iface->Uid() : "null") << endl;
+	prov = prov->next();
+    } while (prov);
+    cout << endl;
  
     
     delete cpu1;

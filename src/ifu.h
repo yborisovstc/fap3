@@ -20,6 +20,7 @@ class Ifu
 	static size_t FindRightDelim(const string& aString, char LeftDelim, char RightDelim, size_t aPos);
     public:
 	static char KEsc;
+	static char KUidSep;
 };
 
 

@@ -13,8 +13,8 @@ class MConnPoint: public MIface
 	// From MIface
 	virtual string Uid() const override { return MConnPoint_Uid();}
 	virtual string MConnPoint_Uid() const = 0;
-	virtual string provided() const = 0;
-	virtual string required() const = 0;
+	virtual string provName() const = 0;
+	virtual string reqName() const = 0;
 };
 
 

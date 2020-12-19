@@ -16,8 +16,8 @@ class Vertu : public Unit, public MVert
     public:
 	Vertu(const string &aName, MEnv* aEnv): Unit(aName, aEnv) {}
 	virtual ~Vertu();
-	// From MVert::MCIface::MIface
-	virtual MIface *getLif(const char *aType) override;
+	// From MUnit
+	virtual MIface* MUnit_getLif(const char *aType) override;
 	// From MVert::MCIface
 	virtual bool connect(MCIface* aPair) override;
 	virtual bool disconnect(MCIface* aPair) override;
@@ -25,6 +25,7 @@ class Vertu : public Unit, public MVert
 	virtual bool isCompatible(MCIface* aPair) const override;
 	virtual bool getId(string& aId) const override { return false;}
 	// From MVert
+	virtual MIface *MVert_getLif(const char *aType) override;
 	virtual bool isCompatible(MVert* aPair, bool aExt) override {return true;}
 	virtual MVert* getExtd() override {return nullptr;}
 	virtual TDir getDir() const override { return ERegular;}

@@ -72,10 +72,10 @@ void Ut_syst::test_cp_1()
     cpu1->setContent("{ Provided:'Iface1' Required:'Iface2'}");
     cpu2->setContent("{ Provided:'Iface2' Required:'Iface1'}");
     MConnPoint* cp1 = cpu1->lIf(cp1);
-    string cp1Prov = cp1->provided();
+    string cp1Prov = cp1->provName();
     bool res = cp1Prov == "Iface1";
     CPPUNIT_ASSERT_MESSAGE("Failed checking cp1 Provided", res);
-    string cp1Req = cp1->required();
+    string cp1Req = cp1->reqName();
     res = cp1Req == "Iface2";
     CPPUNIT_ASSERT_MESSAGE("Failed checking cp1 Required", res);
     res = MVert::connect(cpv1, cpv2);
