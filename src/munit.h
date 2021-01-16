@@ -5,6 +5,7 @@
 #include "menv.h"
 #include "mifr.h"
 #include "nconn.h"
+#include "guri.h"
 
 class MIfProv;
 
@@ -69,6 +70,8 @@ class MUnit: public MIface
 	virtual MIface* MUnit_getLif(const char *aType) = 0;
 	// Local
 	virtual string name() const = 0;
+	virtual MUnit* getComp(const string& aId) = 0;
+	virtual MUnit* getNode(const GUri& aUri) = 0;
 	virtual bool getContent(string& aData, const string& aName = string()) const = 0;
 	virtual bool setContent(const string& aData, const string& aName = string()) = 0;
 	virtual bool addContent(const string& aName, bool aLeaf = false) = 0;

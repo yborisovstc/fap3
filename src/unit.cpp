@@ -4,57 +4,6 @@
 #include "unit.h"
 #include "ifr.h"
 
-#if 0
-bool Unit::NCpOwner::connect(TPair* aPair)
-{
-    assert(aPair && !aPair->isConnected(this));
-    assert(mPairs.count(aPair->ownedId()) == 0);
-    bool res = aPair->connect(this);
-    if (res) {
-	mPairs.insert(TPairsElem(aPair->ownedId(), aPair));
-    }
-    return res;
-}
-
-bool Unit::NCpOwner::disconnect(TPair* aPair)
-{
-    assert(aPair && aPair->isConnected(this));
-    assert(mPairs.count(aPair->ownedId()) == 1);
-    bool res = aPair->disconnect(this);
-    if (res) {
-	mPairs.erase(aPair->ownedId());
-    }
-    return res;
-}
-
-bool Unit::NCpOwner::isConnected(TPair* aPair) const
-{
-    return mPairs.count(aPair->ownedId()) == 1 && mPairs.at(aPair->ownedId()) == aPair;
-}
-
-bool Unit::NCpOwned::connect(TPair* aPair)
-{
-    assert(aPair && !aPair->isConnected(this));
-    assert(!mPair);
-    bool res = true;
-    mPair = aPair;
-    return res;
-}
-
-bool Unit::NCpOwned::disconnect(TPair* aPair)
-{
-    assert(aPair && aPair->isConnected(this));
-    bool res = true;
-    mPair = nullptr;
-    return res;
-}
-
-void Unit::NCpOwned::deleteOwned()
-{
-    delete mHost;
-}
-
-#endif
 
 Unit::Unit(const string &aName, MEnv* aEnv): mName(aName), mEnv(aEnv)
 {
@@ -63,14 +12,26 @@ Unit::Unit(const string &aName, MEnv* aEnv): mName(aName), mEnv(aEnv)
 Unit::~Unit()
 {
     deleteOwned();
+    for (auto item : mIrns) {
+	delete item;
+    }
 }
 
 MIface* Unit::MUnit_getLif(const char *aType)
 {
     MIface* res = nullptr;
     if (res = checkLif<MUnit>(aType));
+    if (res = checkLif<MIfProvOwner>(aType));
     return res;
 }
+
+MIface* Unit::MIfProvOwner_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MUnit>(aType));
+    return res;
+}
+
 
 void Unit::deleteOwned()
 {
@@ -145,6 +106,7 @@ bool Unit::resolveIface(const string& aName, TIfReqCp* aReq)
     }
     if (!connected) {
 	IfrNode* node = createIfProv(aName, aReq);
+	mIrns.push_back(node);
 	res = node->connect(aReq);
 	if (res) {
 	    res = node->resolve(aName);
@@ -160,6 +122,7 @@ MIfProv* Unit::defaultIfProv(const string& aName)
 	res = mLocalIrn.at(aName);
     } else {
 	IfrNode* node = createIfProv(aName, nullptr);
+	mIrns.push_back(node);
 	mLocalIrn[aName] = node;
 	res = node;
     }
@@ -170,8 +133,44 @@ IfrNode* Unit::createIfProv(const string& aName, TIfReqCp* aReq) const
 {
     IfrNode* res = nullptr;
     if (aReq) {
-	res = new IfrNodeRoot(aName);
+	Unit* self = const_cast<Unit*>(this);
+	res = new IfrNodeRoot(self, aName);
     }
     return res;
 }
 
+void Unit::invalidateIrm()
+{
+    for (auto node : mIrns) {
+	node->setValid(false);
+    }
+    for (auto node : mLocalIrn) {
+	node.second->setValid(false);
+    }
+}
+
+void Unit::onIfpDisconnected(MIfProv* aProv)
+{
+    for (auto it = mIrns.begin(); it != mIrns.end(); it++) {
+	if ((*it)->provided() == aProv) {
+	    mIrns.erase(it); break;
+	}
+    }
+    delete aProv;
+}
+
+MUnit* Unit::getComp(const string& aId)
+{
+    MOwned* ores = mCpOwner.at(aId);
+    MUnit* res = ores ? ores->lIf(res) : nullptr;
+    return res;
+}
+
+MUnit* Unit::getNode(const GUri& aUri)
+{
+    MUnit* res = getComp(aUri.at(0));
+    for (int i = 1; i < aUri.size() && res; i++) {
+	res = res->getComp(aUri.at(i));
+    }
+    return res;
+}

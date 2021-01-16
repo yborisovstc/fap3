@@ -40,6 +40,15 @@ MIfProv* IfrNode::next() const
 
 bool IfrNode::resolve(const string& aName)
 {
+    // Cleanup the node - remove all invalid pairs
+    auto up = binded()->firstPair();
+    while (up) {
+	if (!up->provided()->isValid()) {
+	    binded()->disconnect(up);
+	} else {
+	    up = binded()->nextPair(up);
+	}
+    }
     return false;
 }
 
@@ -50,7 +59,7 @@ MIfProv* IfrNode::next(MIfProv::TCp* aProvCp) const
 
 void IfrNode::MIfProv_dump(int aIdt) const
 {
-    cout << string(aIdt, ' ') << "NODE. Name: " << name() << endl;
+    cout << string(aIdt, ' ') << "NODE [" << name() << "], Owner: " << mOwner->Uid() << ", Valid: " << mValid << endl;
     auto self = const_cast<IfrNode*>(this);
     auto pair = self->binded()->firstPair();
     aIdt++;
@@ -58,6 +67,58 @@ void IfrNode::MIfProv_dump(int aIdt) const
 	pair->provided()->dump(aIdt);
 	pair = self->binded()->nextPair(pair);
     }
+}
+
+void IfrNode::setValid(bool aValid)
+{
+    mValid = aValid;
+    if (mPair && !aValid) {
+	auto down = mPair->binded();
+	if (down) {
+	    down->provided()->setValid(aValid);
+	}
+    }
+}
+
+MIfProv* IfrNode::findIface(const MIface* aIface)
+{
+    MIfProv* res = nullptr;
+    auto pair = binded()->firstPair();
+    while (pair) {
+	auto prov = pair->provided();
+	if (prov->iface() == aIface) {
+	    res = prov; break;
+	}
+	pair = binded()->nextPair(pair);
+    }
+    return res;
+}
+
+MIfProv* IfrNode::findOwner(const MIfProvOwner* aOwner)
+{
+    MIfProv* res = nullptr;
+    auto pair = binded()->firstPair();
+    while (pair) {
+	auto prov = pair->provided();
+	if (prov->owner() == aOwner) {
+	    res = prov; break;
+	}
+	pair = binded()->nextPair(pair);
+    }
+    return res;
+}
+
+void IfrNode::eraseInvalid()
+{
+    auto pair = binded()->firstPair();
+    while (pair) {
+	auto prov = pair->provided();
+	if (!prov->isValid()) {
+	    binded()->disconnect(pair);
+	}
+	pair = binded()->nextPair(pair);
+    }
+
 }
 
 
@@ -82,6 +143,18 @@ MIfProv* IfrLeaf::next() const
 
 void IfrLeaf::MIfProv_dump(int aIdt) const
 {
-    cout << string(aIdt,' ') << "LEAF. Name: " << name() << ", Iface: " << (mIface ? mIface->Uid() : "null") << endl;
+    cout << string(aIdt,' ') << "LEAF [" << name() << "], Owner: " << mOwner->Uid() << ", Valid: " << mValid << ", Iface: " << (mIface ? mIface->Uid() : "null") << endl;
 }
+
+void IfrLeaf::setValid(bool aValid)
+{
+    mValid = aValid;
+    if (mPair && !aValid) {
+	auto down = mPair->binded();
+	if (down) {
+	    down->provided()->setValid(aValid);
+	}
+    }
+}
+
 

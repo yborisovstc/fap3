@@ -35,6 +35,9 @@ class Vertu : public Unit, public MVert
 	virtual bool isLinked(const MVert* aPair, bool aDirect = false) const override;
 	virtual string MVert_Uid() const { return "Vertu";}
     protected:
+	// Local
+	virtual void onConnected() {}
+	virtual void onDisconnected() {}
     protected:
 	TPairs mPairs;
 };

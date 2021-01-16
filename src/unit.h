@@ -14,74 +14,16 @@
 #include "cont.h"
 #include "cont2.h"
 #include "ifr.h"
+#include "ifu.h"
 
 using namespace std;
 
-class Unit : public MUnit
+template<class T> MIface* checkLifs(const char* aType, MIface* aSelf) { return (strcmp(aType, T::Type()) == 0) ? dynamic_cast<T*>(aSelf) : nullptr;}
+	
+class Unit : public MUnit, public MIfProvOwner
 {
     public:
 	class NCpOwned;
-#if 0
-	/** @brief Owner connection point, one-to-many
-	 * */
-	class NCpOwner : public MOwner {
-	    friend class Unit;
-	    public:
-		using TPair = NCpOwned;
-		using TPairs = map<string, TPair*>;
-		using TPairsElem = pair<string, TPair*>;
-	    public:
-		NCpOwner(Unit* aHost): mHost(aHost) {}
-		bool connect(TPair* aPair);
-		bool disconnect(TPair* aPair);
-		bool isConnected(TPair* aPair) const;
-		// From MOwner
-		virtual string MOwner_Uid() const {return mType;}
-	    private:
-		TPairs mPairs;
-		Unit* mHost;
-	};
-	/** @brief Owned connection point, one-to-one
-	 * */
-	class NCpOwned : public MOwned {
-	    public:
-		using TPair = NCpOwner;
-	    public:
-		NCpOwned(Unit* aHost): mHost(aHost) {}
-		bool connect(TPair* aPair);
-		bool disconnect(TPair* aPair);
-		bool isConnected(TPair* aPair) const { return mPair && mPair == aPair;}
-		// From MOwner
-		virtual string MOwned_Uid() const {return mType;}
-		virtual string ownedId() const override { return mHost->name();}
-		virtual void deleteOwned() override;
-	    private:
-		TPair* mPair;
-		Unit* mHost;
-	};
-#endif
-
-#if 0
-	/** @brief Owner connection point, one-to-many
-	 * */
-	class NCpOwner : public NCpOmi<MOwner, NCpOwned, Unit> {
-	    friend class Unit;
-	    public:
-		NCpOwner(Unit* aHost): NCpOmi<MOwner, NCpOwned, Unit>(aHost) {}
-		// From MOwner
-		virtual string MOwner_Uid() const {return mType;}
-	};
-	/** @brief Owned connection point, one-to-one
-	 * */
-	class NCpOwned : public NCpOi<MOwned, NCpOwner, Unit> {
-	    public:
-		NCpOwned(Unit* aHost): NCpOi<MOwned, NCpOwner, Unit>(aHost) {}
-		// From MOwned
-		virtual string MOwned_Uid() const {return mType;}
-		virtual string ownedId() const override { return mHost->name();}
-		virtual void deleteOwned() override { delete mHost;}
-	};
-#endif
 
 	/** @brief Owner connection point, one-to-many
 	 * */
@@ -91,6 +33,15 @@ class Unit : public MUnit
 		NCpOwner(Unit* aHost): NCpOmi2<MOwner, MOwned>(), mHost(aHost) {}
 		// From MOwner
 		virtual string MOwner_Uid() const {return mType;}
+		// Local
+		// TODO Consider form specific Owned iface instead of getting whole MUnit
+		MUnit* munitAt(const string& aId) {
+		    MUnit* res = nullptr;
+		    MOwned* owd = at(aId);
+		    res = owd->lIf(res);
+		    return res;
+		}
+
 	    private:
 		Unit* mHost;
 	};
@@ -101,6 +52,13 @@ class Unit : public MUnit
 		NCpOwned(Unit* aHost): NCpOi2<MOwned, MOwner>(), mHost(aHost) {}
 		// From MOwned
 		virtual string MOwned_Uid() const {return mType;}
+		virtual MIface* MOwned_getLif(const char *aType) override {
+		    MIface* res = nullptr;
+		    if (res = checkLifs<MOwned>(aType, this));
+		    if (res = mHost->checkLif<MUnit>(aType));
+		    return res;
+		}
+		virtual string MOwned_() const {return mType;}
 		virtual string ownedId() const override { return mHost->name();}
 		virtual void deleteOwned() override { delete mHost;}
 		// From MNcp
@@ -149,16 +107,23 @@ class Unit : public MUnit
 	virtual string MUnit_Uid() const override { return mName;}
 	virtual MIface* MUnit_getLif(const char *aType) override;
 	virtual string name() const override { return mName;}
+	virtual MUnit* getComp(const string& aId) override;
+	virtual MUnit* getNode(const GUri& aUri) override;
 	virtual bool getContent(string& aData, const string& aName = string()) const override;
 	virtual bool setContent(const string& aData, const string& aName = string()) override;
 	virtual bool addContent(const string& aName, bool aLeaf = false) override;
 	virtual void dumpContent() const override { dynamic_cast<const MCont2&>(mContent).dump(0);}
 	virtual MIfProv* defaultIfProv(const string& aName) override;
 	virtual bool resolveIface(const string& aName, TIfReqCp* aReq) override;
+	// From MIfProvOwner
+	virtual string MIfProvOwner_Uid() const override {return name() +  Ifu::KUidSep + MIfProvOwner::Type();}
+	virtual MIface* MIfProvOwner_getLif(const char *aType) override;
+	virtual void onIfpDisconnected(MIfProv* aProv) override;
     protected:
 	void deleteOwned();
 	template<class T> MIface* checkLif(const char* aType) { return (strcmp(aType, T::Type()) == 0) ? dynamic_cast<T*>(this) : nullptr;}
 	virtual IfrNode* createIfProv(const string& aName, TIfReqCp* aReq) const;
+	void invalidateIrm();
     public:
 	NCpOwner mCpOwner = NCpOwner(this);
 	NCpOwned mCpOwned = NCpOwned(this);
@@ -168,6 +133,7 @@ class Unit : public MUnit
 	RootContent mContent = RootContent(this);
 	map<string, IfrNode*> mLocalIrn; /*!< Local IFR node */
 	list<IfrNode*> mIrns;  /*! IFR nodes */
+	//list<MIfProv*> mIrns;  /*! IFR nodes */
 };
 
 #endif // __FAP3_UNIT_H

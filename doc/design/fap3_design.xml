@@ -3,7 +3,7 @@
 <!DOCTYPE article SYSTEM "/usr/share/sgml/docbook/dtd/xml/4.5/docbookx.dtd">
 
 
-<article status="draft" class="specification"> <title>Enhanced Discrete Events System framework (multiagents based). Design.</title>
+<article status="draft" class="specification"> <title>Discrete Events System framework (multiagents based) ver. 3. Design.</title>
 
     <articleinfo>
 	<author><personname><firstname>Yuri</firstname><surname>Borisov</surname></personname>
@@ -66,6 +66,11 @@
 		    Approach of multi-agent system definition that describes the model's structure directly. 
 		    Ref <xref linkend="ds_smc"/> for discussion regarding chromo desing approaches.
 		    Ref <xref linkend="gls_osm"/> for anoter design approach.</para></glossdef> </glossentry>
+	<glossentry id="gls_dmc"><glossterm>DMC</glossterm> <acronym>DHC</acronym>
+	    <glossdef> <para>Dependent Mutations Chromosome</para> <para>
+		Chromo definition approach when the mutation can have other mutaions (of node type) as the operands.
+		This approach helps defining the model with anonymous nodes that is especially effective for <xref linkend="gls_des"/> models.
+		    Ref <ulink url="../../../grayb/doc/design/index.html#gls_dmc"/> for original glossary. </para></glossdef> </glossentry>
 	<glossentry id="gls_ccn"><glossterm>CCN</glossterm> <acronym>CCN</acronym>
 	    <glossdef> <para>Compact (and customized) Chromo Notation, approach that focus on having compact notation of model chromo.
 		    This allows effectivelly creating the model via 'manually' creating chromo of it. Another solution
@@ -145,15 +150,6 @@
     </glossary>
 
     <sect1 id="ds_itr"><title>Intro</title>
-	<sect2><title>The philosophy of structured systems.</title>
-	    <simple>All FAP projects are about using structured system as the means of creating big models. Structured system philosophy is very simple:
-		there are a number of agents that can be combined according to the topology. The topology connects the agents according to that required for the created model.</simple>
-	    <simple>The structured sytem creates topology basing on system principles: the big model is separated to smaller parts,
-		these parts are also separated etc. So the topology is "hidden" in the clear and well understandable structure.</simple>
-	    <simple>So the model is created via the creation of proper topology of the given set of pre-defined compoments.</simple>
-	    <simple>There are a number of models types suitable for such model creation apporach. One of the types is <xref linkend="gls_deds"/> that allows creating
-		complex dynamic systems.</simple>
-	</sect2>
 	<sect2><title>The scope of the project</title>
 	    <simpara>This project is focusing on re-desing of DES framework fap2, aka grayb, ref <ulink url="../../../grayb/doc/design/index.html"/> for
 		the desing. The main areas of improvement are:</simpara>
@@ -164,17 +160,36 @@
 		    <simpara>Ref <ulink url="../../../grayb/doc/design/index.html#ds_i_anr"/> for current desing weakness analysis.</simpara>
 		</listitem>
 		<listitem>Desing native connections iterating mechanism.</listitem>
-		<listitem>Base iface resolution on native level connections.</listitem>
+		<listitem>
+		    Base iface resolution on native level connections.
+		    <simpara>Ref <xref linkend="ds_irm"/></simpara>
+		</listitem>
 		<listitem>Desing content basing on native level connections tree of content units.</listitem>
 		<listitem>Easy support of anonymous units.</listitem>
 		<listitem>System creation language (chromo) optimization.</listitem>
 		<listitem>Notification mechainsm optimization. Ref <ulink url="../../../grayb/doc/design/index.html#ds_prfopt_ahn"/></listitem>
-		<listitem>Fix the problem <ulink url="../../../grayb/doc/design/index.html#ds_i_nrn"/></listitem>
+		<listitem>Fix the IRM problem <ulink url="../../../grayb/doc/design/index.html#ds_i_nrn"/>
+		    <simpara>Ref <xref linkend="ds_irm_ut_own"/></simpara> </listitem>
+		<listitem>Redesign system navigation mechanism to restrict the access. <simpara>Ref <xref linkend="ds_sn"/></simpara></listitem>
+		<listitem>
+		    Improve chromo language: support mutations chain (<xref linkend="gls_dmc"/>), use strong parsing.
+		    <simpara>Ref <ulink url="../../../grayb/doc/design/index.html#ds_chr2_mc"/> for FAP2 desing item. Ref <xref linkend="ds_chr"/> for the material.</simpara>
+		    <simpara></simpara>
+		</listitem>
 	    </itemizedlist>
 	</sect2>
 	<sect2 id="ds_itr_dp"><title>Dependent projects</title>
 	    <sect3 id="ds_itr_dp_grayb"><title>DES framework fap3, aka grayb, ref <ulink url="../../../grayb/doc/design/index.html"/></title>
 	    </sect3>
+	</sect2>
+	    <sect2><title>The philosophy of structured systems.</title>
+	    <simpara>All FAP projects are about using structured system as the means of creating big models. Structured system philosophy is very simple:
+		there are a number of agents that can be combined according to the topology. The topology connects the agents according to that required for the created model.</simpara>
+	    <simpara>The structured sytem creates topology basing on system principles: the big model is separated to smaller parts,
+		these parts are also separated etc. So the topology is "hidden" in the clear and well understandable structure.</simpara>
+	    <simpara>So the model is created via the creation of proper topology of the given set of pre-defined compoments.</simpara>
+	    <simpara>There are a number of models types suitable for such model creation apporach. One of the types is <xref linkend="gls_deds"/> that allows creating
+		complex dynamic systems.</simpara>
 	</sect2>
     </sect1>
 
@@ -274,8 +289,8 @@
 	    </sect3>
 	    <sect3 id="ds_nn_tree_bc"><title>Design approach: extended cp api for binded cp, embedded up cp</title>
 		<sect4><title>Intro</title>
-		    <similar>The idea is to extend cp api to get up/down  connpoint (<xref linkend="ds_nn_tree_si_dtl"/>) and implemend specific tree node embedded up connpoint
-			so that it returns the host as down cp.</similar>
+		    <simpara>The idea is to extend cp api to get up/down  connpoint (<xref linkend="ds_nn_tree_si_dtl"/>) and implemend specific tree node embedded up connpoint
+			so that it returns the host as down cp.</simpara>
 		</sect4>
 	    </sect3>
 	</sect2>
@@ -317,24 +332,221 @@
 	</sect2>
     </sect1>
 
-    <sect1 id="ds_irm"><title>Iface resoluion mechanism redesign</title>
+    <sect1 id="ds_irm"><title>Iface resoluion mechanism (<xref linkend="gls_irm"/>) redesign</title>
 	<sect2><title>Intro</title>
 	    <itemizedlist>
 		<listitem>Ref <ulink url="../../../grayb/doc/design/index.html#ds_ifcache"/> for FAP2 design of iface resolution. </listitem>
+		<listitem>In FAP2 the iface resolution cache was implemented as the reolutio mechanism. </listitem>
 	    </itemizedlist>
 	</sect2>
 	<sect2><title>Proposals</title>
+	    <simpara>The idea of redesign is to get rid of fap2 iface cache and use native tree of iface providers instead. Each iface request shall
+		create specific native tree of providers, so the client can traverse via the tree to get all the ifaces provided.</simpara>
+	</sect2>
+	<sect2 id="ds_irm_ut"><title>How to update <xref linkend="gls_irm"/> tree?</title>
+	    <sect3><title>Intro</title>
+		<simpara>The tree created in result of iface request needs to be updated according to the system changes. For instance if system node provided
+		    iface is removed then the tree corresponde branch needs to be removed too. How can we implement this updatae of IRM tree?</simpara>
+		<simpara>In FAP3 the invalidation apporach was applied: the whole branch is marked as invalid on any provider update, this causes 
+		    the cache update on the iface next request.</simpara>
+	    </sect3>
+	    <sect3 id="ds_irm_ut_inv"><title>Solution: branch invalidation</title>
+		<sect4><title>Intro</title>
+		    <simpara>This is same approach as FAP2 applied.</simpara>
+		</sect4>
+		<sect4><title>How current node has to be updated.</title>
+		    <simpara>It is not enough that the current provider "passes" all potential providers and refresh the tree. It is also required to
+			go thru all up pairs after that and remove the pairs that are still invalid.</simpara>
+		</sect4>
+	    </sect3>
+	    <sect3 id="ds_irm_ut_own"><title>Providers owner iface, notification of provider updated</title>
+		<sect4><title>Intro</title>
+		    <simpara>We need to support owning of iface providers nodes, the proper way for that is introducing specific iface for the owner.</simpara>
+		    <simpara>Also the owner iface shall support notification of provider update. This will solve the FAP2 IRM problem
+		    <ulink url="../../../grayb/doc/design/index.html#ds_i_nrn"/> </simpara>
+		</sect4>
+	    </sect3>
 	</sect2>
     </sect1>
 
-    <sect1 id="ds_f2dw"><title>FAP2 design gaps and weaknesses</title>
-	<sect2 id="ds_f2dw_isr"><title>Ifaces identification scheme is restricted.</title>
+    <sect1 id="ds_sn"><title>System navigation improvement. Access restrictions</title>
+	<sect2><title>Intro</title>
+	    <simpara>There is the gap in FAP2 desing: the access to system nodes is not restricted. So any node can access to any node. This can cause the models
+		unreliability.</simpara>
+	</sect2>
+	<sect2><title>GUri improvement: avoid upward navigation</title>
+	    <sect3><title>Intro</title>
+		<simpara>In FAP2 GUri can specify upward navigation, for instance navigation thru owner to root, direct access root etc. This needs to
+		    be disabled. So we don't need such navigation at all. Instead we can have "special nodes" that can be accessed via GUri. Special nodes need
+		    to have named specifically, prefix '_' can be used for instance. Owner can be such special node also.
+		    such special node.</simpara>
+	    </sect3>
+	    <sect3><title>Usecase: agents accesses neighbours in owning container.</title>
+		<simpara>This is very common case when agent is placed in system so it needs access to other components of this system, e.g to system coppnoints.
+		    The agents acs in this case as system's confidant so it is reasonable it has the access to system's internals. How this use-case can be
+		    supported? </simpara>
+		<simpara>The solution can be as: the agent uses URI with special node "owner", so the navigation goes thru the owner, the client acces the owner
+		    via MOwner iface, passing self as the argument. Thus the owner can handle this request specifically - it can check if the requestor is 
+		    an agent and event verify if such agent has rights for access to owner's components.</simpara>
+	    </sect3>
+	    <sect3><title>Use-case: fap2-vis VrController - unit adapter gets path to managed agent upward.</title>
+		<simpara>So agent needs access upward its owner.</simpara>
+	    </sect3>
+	    <sect3><title>Use-case: creating node from parent located in arbitrary layer of hier.</title>
+	    </sect3>
+	    <sect3><title>Approach#1: node reference in owner.</title>
+		<simpara>The idea is that sub-system needs to ask its owner to get required node - owner is the only sub-system "window to the world". The owner
+		    prepares the reference to the node for it's components. What is the reference? This is the node that proxies some ifaces, MUnit in case of
+		    ref to parent.</simpara>
+		<simpara>It some "deep" located node requires access to much upper layer than all the owners have to create such references.</simpara>
+		<simpara>With this approach the owners responsibility is to create "environment" for its compoments.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2><title>Namespaces support</title>
+	    <sect3><title>Use-case: native units</title>
+		<simpara>Native units is specific units category, they cannot be accessed via navigation thru native hier. Specific rule is used in FAP2 to
+		    distinguish native units in URI: native units are identified by single name.</simpara>
+	    </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_chr"><title>Chromo language improvement</title>
+	<sect2><title>Intro</title>
+	    <simpara><xref linkend="gls_dmc"/> chromo was prototyped in the scope of fap2, ref <ulink url="../../../grayb/doc/design/index.html#ds_chr2_dmc_proto"/> so
+		it was decided that fap3 has to support <xref linkend="gls_dmc"/> chromo language.</simpara>
+	</sect2>
+	<sect2><title>Support of mutation chain</title>
+	    <sect3><title>Intro</title>
+		<simpara>Ref <ulink url="../../../grayb/doc/design/index.html#ds_chr2_mc"/> for FAP2 desing discussion.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2><title>Syntax of chromo language.</title>
+	    <sect3><title>Intro</title>
+		<simpara>Ref <ulink url="../../../grayb/doc/design/index.html#ds_chr2_sns"/> for fap2 syntax draft.</simpara>
+	    </sect3>
+	    <sect3><title>Needs to updata syntax to avoid inproper semantic.</title>
+		<sect4><title>Intro</title>
+		    <simpara>Currently the <xref linkend="gls_dmc"/> syntax allows connection mutation operand to be node mutations and also segment with
+			context (node in context is considering the operand). In this syntax the semantic of segment context as the operand is completely
+			imporper. Even using node mutation as operand is not quite correct - the mutation is just the update of the current elem, thinking exactly
+			it doesn't has the meaning "node created in result of the mutation".</simpara>
+		</sect4>
+		<sect4><title>Solution#1: Introduce the rule of operands interpretation.</title>
+		    <simpara>The idea is to interpret node mutation  and segment context as the created node in the operand of connection mutation.
+			For segment, we need to add some restriction: there should be just one context in the segment.</simpara>
+		</sect4>
+	    </sect3>
+	    <sect3><title>Get rid of combined node mut</title>
+		<sect4><title>Intro</title>
+		    <simpara>In chromo2 the obsolete type of mutation is still valid - combined node mutation. This was done for the purpose of 
+			compatibility. But actually combined node mutation is same as segment with the node as target context.</simpara>
+		</sect4>
+	    </sect3>
+	    <sect3><title>Sequence of segments</title>
+		<sect4><title>Intro</title>
+		    <simpara>Often (especially in case of dependent tree-like chromo) it is required to have not only namespace context segment but
+			also target segment. For instance transition1 input connects to state, the state value is set, the state input connects to 
+			transition2 output. </simpara>
+		</sect4>
+		<sect4><title>Solution.</title>
+		    <simpara>We can allow number of segments with same node as context, for instance:</simpara>
+		    <programlisting>
+			Trans1/Inp ~ : AStatec { Value = "SI 2"; } @ { Inp ~ : ATrcAdd ... }
+		    </programlisting>
+		    <simpara>There are two segments here, first one uses anonymous state as target context, the second use same node as namespace.</simpara>
+		</sect4>
+	    </sect3>
+	    <sect3><title>Syntax definintion</title>
+		<sect4><title>Intial</title>
+		    <programlisting>
+			model_spec = chromo_node_primary_segment;
+			chromo = chromo_node { node_separator, chromo_node };
+			chromo_node = chromo_node_mutation | chromo_node_segment;
+			chromo_node_mutation = [context, [separator] ]  mutation, ';';
+			chromo_node_segment = chromo_node_primary_segment, { chromo_node_secondary_segment };
+			chromo_node_primary_segment = context_unit_target, [separator], segment;
+			chromo_node_secondary_segment = impliclit_context_unit, [separator] segment;
+			segment = '{', [separator], chromo, [separator], '}';
+			context = context_unit { separator, context_unit };
+			context_unit = context_unit_node | context_unit_target | context_unit_namespace;
+			context_unit_target = context_source, separator;
+			context_unit_node = context_source, separator;
+			context_unit_namespace = context_source, separator, context_type_namespace;
+			implicit_context_unit = context_type;
+			context_source = mutation_node | node_uri;
+
+			separator = white_space | end_of_line;
+			white_space = ' ';
+			end_of_line = ;
+
+			mutation = mutation_create | mutation_content_change | mutation_remove | mutation_import
+			| mutation_connect | mutation_disconnect | mutation_rename | mutation_move;
+			mutation_create = [node_name, separator] ":" separator, parent;
+			parent = uri;
+			mutation_content_change = content_uri, separator "=" separator, content_value;
+			mutation_import = "#" separator, module_uri;
+			module_uri = uri;
+			mutation_remove = "!" separator, node_uri;
+			node_uri = uri;
+			mutation_connect = left_pair_spec, separator "~" separator, right_pair_spec;
+			left_pair_spec = uri;
+			right_pair_spec = pair_uri | right_pair_creation;
+			right_pair_creation =  mutation_create | chromo_node_segment;
+			# chromo_node_segment_with_context interprets in connection mutation as node specified as context source
+		    </programlisting>
+		</sect4>
+		<sect4><title>Updated</title>
+		    <programlisting>
+			model_spec = chromo_node_segment_node;
+			chromo = chromo_node { node_separator, chromo_node };
+			chromo_node = mutation | segment;
+			mutation = [context, [separator] ]  mutation, ';';
+			segment = segment_node | segment_target | segment_namespace;
+			segment_node = context_unit_node, [separator], segment;
+			segment_target = target_primary_segment, { target_secondary_segment };
+			target_primary_segment = context_unit_target, [separator], segment;
+			target_secondary_segment = impliclit_context_unit, [separator] segment;
+			segment_namespace = context_unit_namespace, [separator], segment;
+			segment = '{', [separator], chromo, [separator], '}';
+			context = context_unit { separator, context_unit };
+			context_unit = context_unit_node | context_unit_target | context_unit_namespace;
+			context_unit_target = context_source, separator;
+			context_unit_node = mutation_node;
+			context_unit_namespace = context_source, separator, context_type_namespace;
+			implicit_context_unit = context_type;
+			context_source = mutation_node | node_uri;
+
+			separator = white_space | end_of_line;
+			white_space = ' ';
+			end_of_line = ;
+
+			mutation = mutation_create | mutation_content_change | mutation_remove | mutation_import
+			| mutation_connect | mutation_disconnect | mutation_rename | mutation_move;
+			mutation_create = [node_name, separator] ":" separator, parent;
+			parent = uri;
+			mutation_content_change = content_uri, separator "=" separator, content_value;
+			mutation_import = "#" separator, module_uri;
+			module_uri = uri;
+			mutation_remove = "!" separator, node_uri;
+			node_uri = uri;
+			mutation_connect = left_pair_spec, separator "~" separator, right_pair_spec;
+			left_pair_spec = uri;
+			right_pair_spec = pair_uri | right_pair_creation;
+			right_pair_creation =  mutation_create | chromo_node_segment;
+			# chromo_node_segment_with_context interprets in connection mutation as node specified as context source
+		    </programlisting>
+		</sect4>
+	    </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_f2dw"><title>FAP2 design gaps and weaknesses</title> <sect2 id="ds_f2dw_isr"><title>Ifaces identification scheme is restricted.</title>
 	    <simpara>In <xref linkend="gls_fap2"/> the only ifaces have identification. The focus was to provide native hier creating iface (MUnit) with
 		safe identification mechanism. Other ifaces are identified via MUnit identification plus iface type - so the identifiation scheme is restricted,
 		there is no rule to identify given iface in case of MUnit node includes number of ifaces of same type.
 		Ref <xref linkend="ds_uinn_id"/> for the desing consideration.</simpara>
-	    </sect2>
-	    <sect2 id="ds_f2dw_ccnu"><title>Creating complex native unit is not supported safely</title>
+	</sect2>
+	<sect2 id="ds_f2dw_ccnu"><title>Creating complex native unit is not supported safely</title>
 	    <simpara>It is often required to create "complex" native unit, adding componentes, changing context etc. This is more effective that create
 		the unit spec in module. But this direct creation of "complex" native unit is not supported properly.</simpara>
 	</sect2>

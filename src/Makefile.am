@@ -14,6 +14,8 @@ libfap3_la_SOURCES = \
 		       ifu.cpp \
 		       curi.h \
 		       curi.cpp \
+		       guri.h \
+		       guri.cpp \
 		       ifr.h \
 		       ifr.cpp \
 		       cont.h \

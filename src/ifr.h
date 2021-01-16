@@ -11,7 +11,7 @@
 class IfrNode : public NTnnp<MIfProv, MIfReq>, public MIfProv, protected MIfReq
 {
     public:
-	IfrNode(): NTnnp<MIfProv, MIfReq>(this, this), mValid(false) {}
+	IfrNode(MIfProvOwner* aOwner): NTnnp<MIfProv, MIfReq>(this, this), mValid(false), mOwner(aOwner) {}
 	virtual ~IfrNode() {}
 	// From MIfProv
 	virtual string MIfProv_Uid() const override { return MIfProv::Type();}
@@ -19,15 +19,21 @@ class IfrNode : public NTnnp<MIfProv, MIfReq>, public MIfProv, protected MIfReq
 	virtual MIfProv* first() const override;
 	virtual MIfProv* next() const override;
 	virtual void MIfProv_dump(int aIdt) const override;
-	//virtual const MIfReq* requestor() const override { return mCnode.provided(); }
 	virtual bool resolve(const string& aName) override;
+	virtual bool isValid() const override { return mValid;}
+	virtual void setValid(bool aValid) override;
+	virtual MIface* iface() override { return nullptr;}
+	virtual const MIfProvOwner* owner() const override { return mOwner;}
 	// From MIfReq
 	virtual string MIfReq_Uid() const override { return MIfReq::Type();}
-	//virtual const MIfProv* owner() const { return this;}
 	virtual MIfProv* next(MIfProv::TCp* aProvCp) const override;
-	virtual MIface* iface() override { return nullptr;}
+    public:
+	MIfProv* findIface(const MIface* aIface);
+	MIfProv* findOwner(const MIfProvOwner* aOwner);
+	void eraseInvalid();
     protected:
 	bool mValid;
+	MIfProvOwner* mOwner;
 };
 
 /** @brief Interface resolution tree leaf
@@ -35,7 +41,7 @@ class IfrNode : public NTnnp<MIfProv, MIfReq>, public MIfProv, protected MIfReq
 class IfrLeaf : public NCpOnp<MIfProv, MIfReq>, public MIfProv
 {
     public:
-	IfrLeaf(MIface* aIface): NCpOnp<MIfProv, MIfReq>(this), mValid(true), mIface(aIface) {}
+	IfrLeaf(MIfProvOwner* aOwner, MIface* aIface): NCpOnp<MIfProv, MIfReq>(this), mValid(true), mOwner(aOwner), mIface(aIface) {}
 	virtual ~IfrLeaf() {}
 	// From MIfProv
 	virtual string MIfProv_Uid() const override { return MIfProv::Type();}
@@ -44,9 +50,13 @@ class IfrLeaf : public NCpOnp<MIfProv, MIfReq>, public MIfProv
 	virtual MIfProv* next() const override;
 	virtual bool resolve(const string& aName) override {return false;}
 	virtual MIface* iface() override { return mIface;}
+	virtual const MIfProvOwner* owner() const override { return mOwner;}
 	virtual void MIfProv_dump(int aIdt) const override;
+	virtual bool isValid() const override { return mValid;}
+	virtual void setValid(bool aValid) override;
     protected:
 	bool mValid;
+	MIfProvOwner* mOwner;
 	MIface* mIface;
 };
 
@@ -56,7 +66,7 @@ class IfrLeaf : public NCpOnp<MIfProv, MIfReq>, public MIfProv
 class IfrNodeRoot : public IfrNode
 {
     public:
-	IfrNodeRoot(const string& aIfName): IfrNode(), mName(aIfName) {};
+	IfrNodeRoot(MIfProvOwner* aOwner, const string& aIfName): IfrNode(aOwner), mName(aIfName) {};
 	// From MIfProv
 	virtual string name() const override { return mName;}
     protected:

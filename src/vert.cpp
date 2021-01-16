@@ -32,6 +32,7 @@ bool Vertu::connect(MCIface* aPair)
 	MVert* vp = dynamic_cast<MVert*>(aPair);
 	if (vp) {
 	    mPairs.insert(vp);
+	    onConnected();
 	    res = true;
 	}
     }
@@ -45,6 +46,7 @@ bool Vertu::disconnect(MCIface* aPair)
     MVert* vp = dynamic_cast<MVert*>(aPair);
     if (vp) {
 	mPairs.erase(vp);
+	onDisconnected();
 	res = true;
     }
     return res;

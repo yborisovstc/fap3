@@ -16,7 +16,7 @@ class MIface
 	/** @brief Getting id unique in the scope of the env */
 	virtual string Uid() const = 0;
 	/** @brief Gets local interface of type aType */
-	virtual MIface *getLif(const char *aType) { return nullptr;}
+	virtual MIface* getLif(const char *aType) { return nullptr;}
 	template <class T> T* lIf(T* aInst) {return aInst = dynamic_cast<T*>(getLif(aInst->Type()));}
 	/** @brief outputs dump
 	 * @param aInt  indentation level

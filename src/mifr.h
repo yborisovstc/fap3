@@ -5,7 +5,9 @@
 #include "nconn.h"
 
 class MIfProv;
+class MIfProvOwner;
 class MIfReq;
+
 /** @brief Interface of interface provider in iface resolution mechanism
  * */
 class MIfProv: public MIface
@@ -22,8 +24,11 @@ class MIfProv: public MIface
 	virtual MIfProv* next() const = 0;
 	virtual bool resolve(const string& aName) = 0;
 	virtual MIface* iface() = 0;
+	virtual const MIfProvOwner* owner() const = 0;
 	virtual void dump(int aIdt) const override { MIfProv_dump(aIdt);}
 	virtual void MIfProv_dump(int aIdt) const =0;
+	virtual bool isValid() const = 0;
+	virtual void setValid(bool aValid) = 0;
 };
 
 /** @brief Interface of interface requestor in iface resolution mechanism
@@ -39,6 +44,21 @@ class MIfReq: public MIface
 	virtual MIfProv* next(MIfProv::TCp* aProvCp) const = 0;
 };
 
+/** @brief Interface provider owner
+ * */
+class MIfProvOwner: public MIface
+{
+    public:
+	static const char* Type() { return "MIfProvOwner";}
+	// From MIface
+	virtual string Uid() const override { return MIfProvOwner_Uid();}
+	virtual string MIfProvOwner_Uid() const = 0;
+	virtual MIface* getLif(const char *aType) { return MIfProvOwner_getLif(aType);}
+	virtual MIface* MIfProvOwner_getLif(const char *aType) = 0;
+	// Local
+	virtual void onIfpDisconnected(MIfProv* aProv) = 0;
+	
+};
 
 
 #endif

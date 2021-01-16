@@ -148,6 +148,7 @@ class MNcp: public TPif
 	virtual bool detach(TPair* aPair) = 0;
 	virtual bool isConnected(TPair* aPair) const = 0;
 	virtual bool getId(string& aId) const = 0;
+	virtual TPair* at(const string aId) = 0;
 };
 
 
@@ -254,6 +255,7 @@ class NCpOmi2 : public MNcp<TPif, TRif>
 	virtual bool disconnect(TPair* aPair) override;
 	virtual bool isConnected(TPair* aPair) const override;
 	virtual bool getId(string& aId) const override { return false;}
+	virtual TPair* at(const string aId) { return mPairs.count(aId) > 0 ? mPairs.at(aId) : nullptr;;}
     protected:
 	TPairs mPairs;
 };
@@ -320,7 +322,7 @@ class NCpOi2 : public MNcp<TPif, TRif>
 	//using TPair = MNcp<TRif, TPif>;
 	using TPair = typename MNcp<TPif, TRif>::TPair;
     public:
-	NCpOi2() {}
+	NCpOi2(): mPair(nullptr) {}
 	virtual TPif* provided() override { return this;}
 	virtual const TPif* provided() const override { return this;}
 	virtual bool attach(TPair* aPair) override;
@@ -329,6 +331,7 @@ class NCpOi2 : public MNcp<TPif, TRif>
 	virtual bool disconnect(TPair* aPair) override;
 	virtual bool isConnected(TPair* aPair) const override;
 	virtual bool getId(string& aId) const override { return false;}
+	virtual TPair* at(const string aId) { return nullptr;}
     protected:
 	TPair* mPair;
 };
@@ -584,6 +587,7 @@ class NCpOmn : public MNcp<TPif, TRif>
 	virtual bool connect(TPair* aPair) override;
 	virtual bool disconnect(TPair* aPair) override;
 	virtual bool isConnected(TPair* aPair) const override;
+	virtual TPair* at(const string aId) { return nullptr;}
     protected:
 	TPairs mPairs;
 };
@@ -633,6 +637,7 @@ class NCpOn : public MNcp<TPif, TRif>
 	virtual bool disconnect(TPair* aPair) override;
 	virtual bool isConnected(TPair* aPair) const override;
 	virtual bool getId(string& aId) const override { return false;}
+	virtual TPair* at(const string aId) { return nullptr;}
     protected:
 	TPair* mPair;
 };

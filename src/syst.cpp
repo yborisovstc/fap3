@@ -7,7 +7,7 @@ const string KContRequired = "Required";
 class CpIfrNode: public IfrNode
 {
     public:
-	CpIfrNode(const ConnPointu* aHost): IfrNode(), mHost(aHost) {};
+	CpIfrNode(MIfProvOwner* aOwner, const ConnPointu* aHost): IfrNode(aOwner), mHost(aHost) {};
 	// From MIfProv
 	virtual bool resolve(const string& aName) override;
     private:
@@ -19,8 +19,8 @@ bool CpIfrNode::resolve(const string& aName)
     bool res = true;
     ConnPointu* host = const_cast<ConnPointu*>(mHost);
     MIface* ifr = host->MUnit_getLif(aName.c_str());
-    if (ifr) {
-	IfrLeaf* lf = new IfrLeaf(ifr);
+    if (ifr && !findIface(ifr)) {
+	IfrLeaf* lf = new IfrLeaf(mOwner, ifr);
 	mCnode.connect(lf);
     }
     if (aName == mHost->provName()) {
@@ -28,9 +28,13 @@ bool CpIfrNode::resolve(const string& aName)
     } else if (aName == mHost->reqName()) {
 	for (MVert* pair : mHost->mPairs) {
 	    MUnit* pairu = pair->lIf(pairu);
-	    res = pairu->resolveIface(aName, this->binded());
+	    MIfProvOwner* pairo = pairu->lIf(pairo);
+	    if (!findOwner(pairo)) {
+		res = pairu->resolveIface(aName, this->binded());
+	    }
 	}
     }
+    eraseInvalid();
     mValid = res;
 
     return res;
@@ -39,7 +43,7 @@ bool CpIfrNode::resolve(const string& aName)
 class CpIfrNodeRoot : public CpIfrNode
 {
     public:
-	CpIfrNodeRoot(const string& aIfName, const ConnPointu* aHost): CpIfrNode(aHost), mName(aIfName) {}
+	CpIfrNodeRoot(MIfProvOwner* aOwner, const string& aIfName, const ConnPointu* aHost): CpIfrNode(aOwner, aHost), mName(aIfName) {}
 	virtual string name() const override { return mName;}
     private:
 	string mName;
@@ -57,6 +61,14 @@ MIface* ConnPointu::MUnit_getLif(const char *aType)
     if (res = checkLif<MConnPoint>(aType));
     else 
 	res = Vertu::MUnit_getLif(aType);
+    return res;
+}
+
+MIface* ConnPointu::MIfProvOwner_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MConnPoint>(aType));
+    else res = Vertu::MIfProvOwner_getLif(aType);
     return res;
 }
 
@@ -83,11 +95,21 @@ bool ConnPointu::isCompatible(MCIface* aPair) const
 IfrNode* ConnPointu::createIfProv(const string& aName, TIfReqCp* aReq) const
 {
     IfrNode* res = nullptr;
+    ConnPointu* self = const_cast<ConnPointu*>(this);
     if (!aReq) {
-	res = new CpIfrNodeRoot(aName, this);
+	res = new CpIfrNodeRoot(self, aName, this);
     } else {
-	res = new CpIfrNode(this);
+	res = new CpIfrNode(self, this);
     }
     return res;
 }
 
+void ConnPointu::onConnected()
+{
+    invalidateIrm();
+}
+
+void ConnPointu::onDisconnected()
+{
+    invalidateIrm();
+}
