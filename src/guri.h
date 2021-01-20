@@ -13,17 +13,29 @@ using namespace std;
 class GUri
 {
     public:
-	GUri() {}
-	GUri(const GUri& aSrc): mElems(aSrc.mElems) {}
+	using TElem = string;
+    public:
+	GUri(): mErr(false) {}
+	GUri(const GUri& aSrc): mElems(aSrc.mElems), mErr(aSrc.mErr) {}
 	GUri(const string& aSrc) { parse(aSrc);}
 	int size() const { return mElems.size();}
 	const string& at(int aIdx) const { return mElems.at(aIdx);}
 	GUri tail(int aIdx) const;
+	void tail(const GUri& aHead, GUri& aTail) const;
+	const vector<TElem>& elems() const {return mElems;};
 	operator string();
+	void append(const GUri& aUri);
+	void prepend(const GUri& aUri);
+	void appendElem(const TElem& aElem);
+	void prependElem(const TElem& aElem);
+	bool operator==(const GUri& aSrc) const;
+	bool operator<(const GUri& aSrc) const;
+	bool operator<=(const GUri& aSrc) const { return *this < aSrc || *this == aSrc;}
     private:
 	void parse(const string& aSrc);
     private:
-	vector<string> mElems;
+	vector<TElem> mElems;
+	bool mErr;
 };
 
 #endif

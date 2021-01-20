@@ -26,6 +26,10 @@ libfap3_la_SOURCES = \
 		       vert.cpp \
 		       syst.h \
 		       syst.cpp \
+		       chromo.h \
+		       chromo.cpp \
+		       chromo2.h \
+		       chromo2.cpp \
 		       unit.h \
 		       unit.cpp
 

@@ -32,6 +32,10 @@
 	<biblioentry id="ref_rfc_3986"> <abbrev>RFC_3986_URI</abbrev>
 	    <productname><ulink url="httpss://www.ietf.org/rfc/rfc3986.txt"/></productname>
 	    <title>RFC 3986: Uniform Resource Identifier (URI): Generic Syntax</title> </biblioentry>
+
+	<biblioentry id="ref_ss_cof"> <abbrev>SS_COF</abbrev>
+	    <productname>Local copy <ulink url="files://home/yborisov/Documents/Compilators/Konstruirovanie_Kompilyatorov.pdf"/></productname>
+	    <title>Sergey Swerdlov. Creating of compilators.</title> </biblioentry>
     </bibliolist>
 
     <glossary> <title>Glossary</title> 
@@ -173,9 +177,10 @@
 		<listitem>Redesign system navigation mechanism to restrict the access. <simpara>Ref <xref linkend="ds_sn"/></simpara></listitem>
 		<listitem>
 		    Improve chromo language: support mutations chain (<xref linkend="gls_dmc"/>), use strong parsing.
-		    <simpara>Ref <ulink url="../../../grayb/doc/design/index.html#ds_chr2_mc"/> for FAP2 desing item. Ref <xref linkend="ds_chr"/> for the material.</simpara>
+		    <simpara>Ref <ulink url="../../../grayb/doc/design/index.html#ds_chr2_mc"/> for FAP2 desing item. Ref <xref linkend="ds_cl"/> for the material.</simpara>
 		    <simpara></simpara>
 		</listitem>
+		<listitem>Redesign import to avoid chromo analysis for selecting imported node.</listitem>
 	    </itemizedlist>
 	</sect2>
 	<sect2 id="ds_itr_dp"><title>Dependent projects</title>
@@ -410,7 +415,7 @@
 	</sect2>
     </sect1>
 
-    <sect1 id="ds_chr"><title>Chromo language improvement</title>
+    <sect1 id="ds_cl"><title>Chromo language improvement</title>
 	<sect2><title>Intro</title>
 	    <simpara><xref linkend="gls_dmc"/> chromo was prototyped in the scope of fap2, ref <ulink url="../../../grayb/doc/design/index.html#ds_chr2_dmc_proto"/> so
 		it was decided that fap3 has to support <xref linkend="gls_dmc"/> chromo language.</simpara>
@@ -420,7 +425,7 @@
 		<simpara>Ref <ulink url="../../../grayb/doc/design/index.html#ds_chr2_mc"/> for FAP2 desing discussion.</simpara>
 	    </sect3>
 	</sect2>
-	<sect2><title>Syntax of chromo language.</title>
+	<sect2 id="ds_cl_syntax"><title>Syntax of chromo language.</title>
 	    <sect3><title>Intro</title>
 		<simpara>Ref <ulink url="../../../grayb/doc/design/index.html#ds_chr2_sns"/> for fap2 syntax draft.</simpara>
 	    </sect3>
@@ -457,6 +462,26 @@
 		</sect4>
 	    </sect3>
 	    <sect3><title>Syntax definintion</title>
+		<sect4><title>Do we need mutation_create_with_chromo?</title>
+		    <simpara>This mutation is creation of model node and applying assosiated chromo, note this is single mutation.
+			Currently this mutation is valid but same result can be achieved by using simple mutation_create (without chromo) plus
+			segment with the created node as target. So the reasonable question is if we really need this mutation_create_with_chromo?</simpara>
+		    <simpara>Yes, we do. One of the reasons is that syntax production for model_spec cannot be unabmigous in case of using segment. Indeed the
+			full substitution of mutation_create_with_chromo is :</simpara>
+		    <programlisting>
+			Name : Unit &lt; {
+			chromo
+			}
+		    </programlisting>
+		    <simpara>But this also can be defined as (and this is what is real root chromo after model creation):</simpara>
+		    <programlisting>
+			Name : Unit;
+			Name {   (or Name &lt; {)
+			chromo
+			}
+		    </programlisting>
+		    <simpara>This makes systax productions quite complicated.</simpara>
+		</sect4>
 		<sect4><title>Intial</title>
 		    <programlisting>
 			model_spec = chromo_node_primary_segment;
@@ -497,22 +522,35 @@
 		</sect4>
 		<sect4><title>Updated</title>
 		    <programlisting>
-			model_spec = chromo_node_segment_node;
+			model_spec = mutation_create_chromo;
 			chromo = chromo_node { node_separator, chromo_node };
-			chromo_node = mutation | segment;
-			mutation = [context, [separator] ]  mutation, ';';
-			segment = segment_node | segment_target | segment_namespace;
-			segment_node = context_unit_node, [separator], segment;
-			segment_target = target_primary_segment, { target_secondary_segment };
-			target_primary_segment = context_unit_target, [separator], segment;
+			chromo_node = ctx_mutation | segment | mutation_create_chromo;
+			ctx_mutation = [context, separator ]  mutation, ';';
+			ctx_segment = segment_target | segment_namespace;
+			segment_namespace = context_namespace, [separator], segment;
+			segment_target = target_primary_segment, [ target_secondary_segment ];
+			target_primary_segment = context_target_ext, [separator], segment;
 			target_secondary_segment = impliclit_context_unit, [separator] segment;
 			segment_namespace = context_unit_namespace, [separator], segment;
+
+			(*
 			segment = '{', [separator], chromo, [separator], '}';
+			*)
+
+			segment = '{', [separator], chromo_node { node_separator, chromo_node }, [separator], '}';
+
+			(* Mutation Create with assosiated chromo *)
+			mutation_create_chromo = mutation_create, [separator], segment;
+
+			(*
 			context = context_unit { separator, context_unit };
-			context_unit = context_unit_node | context_unit_target | context_unit_namespace;
-			context_unit_target = context_source, separator;
-			context_unit_node = mutation_node;
-			context_unit_namespace = context_source, separator, context_type_namespace;
+			*)
+			context = context_target, context_namespace | context_target | context_namespace;
+			context_unit = context_target | context_namespace;
+			context_target = uri, separator, "&lt;";
+			context_target_ext = (uri | mutation_create), separator, "&lt;";
+			context_node = mutation_node;
+			context_namespace = context_source, separator, context_type_namespace;
 			implicit_context_unit = context_type;
 			context_source = mutation_node | node_uri;
 
@@ -520,21 +558,54 @@
 			white_space = ' ';
 			end_of_line = ;
 
-			mutation = mutation_create | mutation_content_change | mutation_remove | mutation_import
-			| mutation_connect | mutation_disconnect | mutation_rename | mutation_move;
-			mutation_create = [node_name, separator] ":" separator, parent;
+			mutation = mutation_create | mutation_content| mutation_remove | mutation_import
+			| mutation_connect | mutation_disconnect | mutation_rename | mutation_move | mutation_comment;
+			mutation_create = [name, separator] ":" separator, parent;
 			parent = uri;
-			mutation_content_change = content_uri, separator "=" separator, content_value;
-			mutation_import = "#" separator, module_uri;
+			mutation_content = content_uri, separator "=" separator, content_value;
+			mutation_import = "+" separator, module_uri;
 			module_uri = uri;
+			content_uri = uri;
 			mutation_remove = "!" separator, node_uri;
+			mutation_comment = "#" separator, string
+			mutation_connect = uri "~" (uri | mutation_create);
 			node_uri = uri;
 			mutation_connect = left_pair_spec, separator "~" separator, right_pair_spec;
 			left_pair_spec = uri;
 			right_pair_spec = pair_uri | right_pair_creation;
 			right_pair_creation =  mutation_create | chromo_node_segment;
 			# chromo_node_segment_with_context interprets in connection mutation as node specified as context source
+
+			name = letter, { letter | digit | "_"};
+
+			uri = name, { "." , name }
+			string = """ { symbol } """;
 		    </programlisting>
+		</sect4>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_cl_dsa"><title>Desing of chromo language syntax analyzed and compiler.</title>
+	    <sect3><title>Intro</title>
+		<simpara>Ref <xref linkend="ref_ss_cof"/> for studying of basics of syntactic analysis and compiling.</simpara>
+		<simpara>Ref <ulink url="https://en.wikipedia.org/wiki/LL_parser"/> for LL(k) parser wiki.</simpara>
+	    </sect3>
+	    <sect3><title>Can recursive descent parser be used?</title>
+		<simpara>As mentioned in <xref linkend="ref_ss_cof"/>:</simpara>
+		<programlisting>
+		    Рекурсивный спуск — это детерминированный метод нисходя-
+		    щего разбора КС-языков, порождаемых LL(1)-грамматиками.
+		</programlisting>
+		<simpara>But is the grammar of Cromo2 language LL(k)?</simpara>
+	    </sect3>
+	    <sect3><title>Syntactic analyiss based on recursive descent parser</title>
+		<sect4><title>Intro</title>
+		    <simpara>Ref <xref linkend="ref_ss_cof"/>, chapter "Синтаксический анализ КС-языков методом рекурсивного спуска" for the theory.</simpara>
+		    <simpara>Ref <ulink url="https://en.wikipedia.org/wiki/Recursive_descent_parser"/> for wiki material.</simpara>
+		</sect4>
+		<sect4><title>Predictive parser vs table-based parser.</title>
+		    <simpara>There are two variants of parsing: predictive parser ("алгоритм рекурсивного спуска" in <xref linkend="ref_ss_cof"/>) and
+			table-based parser ("табличный распознаватель"  in <xref linkend="ref_ss_cof"/>). </simpara>
+		    <simpara>Let's protorype predictive parser first.</simpara>
 		</sect4>
 	    </sect3>
 	</sect2>
