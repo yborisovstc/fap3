@@ -1469,6 +1469,9 @@ void Chromo2Mdl::rdp_mut(istream& aIs, C2MdlNode& aMnode)
 	if (c == KT_MutSeparator) {
 	} else {
 	    SetErr(aIs, RDPE_MissingMutSep);
+	    C2MdlNode* owner = aMnode.mOwner;
+	    aMnode = C2MdlNode(); // Reset the node, to clean translated data
+	    aMnode.mOwner = owner;
 	}
     }
 }
@@ -1481,16 +1484,22 @@ void Chromo2Mdl::rdp_chromo_node(istream& aIs, C2MdlNode& aMnode)
     node.mOwner = &aMnode;
     rdp_ctx_mutation(aIs, node);
     if (IsError()) {
-	// Backtrace
-	aIs.seekg(pos, aIs.beg);
+	aIs.seekg(pos, aIs.beg); // Backtrace
 	ResetErr();
 	rdp_segment_target(aIs, node);
 	if (IsError()) {
 	    aIs.seekg(pos, aIs.beg); // Backtrack
 	    ResetErr();
-	    rdp_mut_create_chromo(aIs, aMnode);
-	    if (!IsError()) {
-		//aMnode.mChromo.push_back(node);
+	    rdp_segment_namespace(aIs, node);
+	    if (IsError()) {
+		aIs.seekg(pos, aIs.beg); // Backtrack
+		ResetErr();
+		rdp_mut_create_chromo(aIs, node);
+		if (!IsError()) {
+		    aMnode.mChromo.push_back(node);
+		}
+	    } else {
+		aMnode.mChromo.push_back(node);
 	    }
 	} else {
 	    aMnode.mChromo.push_back(node);
@@ -1547,22 +1556,25 @@ void Chromo2Mdl::rdp_segment_target(istream& aIs, C2MdlNode& aMnode)
     }
 }
 
-void Chromo2Mdl::rdp_mut_create_chromo(istream& aIs, C2MdlNode& aMnode)
+void Chromo2Mdl::rdp_segment_namespace(istream& aIs, C2MdlNode& aMnode)
 {
-    C2MdlNode new_node;
-    bool root = (aMnode.mOwner == nullptr);
-    C2MdlNode& node = root ? aMnode : new_node;
-    rdp_mut_create(aIs, node);
+    rdp_context_namespace_ext(aIs, aMnode);
     if (!IsError()) {
 	rdp_sep(aIs);
 	if (!IsError()) {
-	    rdp_segment(aIs, node);
-	    if (!IsError()) {
-		if (!root) {
-		    node.mOwner = &aMnode;
-		    aMnode.mChromo.push_back(node);
-		}
-	    }
+	    rdp_segment(aIs, aMnode);
+	}
+    }
+}
+
+
+void Chromo2Mdl::rdp_mut_create_chromo(istream& aIs, C2MdlNode& aMnode)
+{
+    rdp_mut_create(aIs, aMnode);
+    if (!IsError()) {
+	rdp_sep(aIs);
+	if (!IsError()) {
+	    rdp_segment(aIs, aMnode);
 	}
     }
 }
@@ -1728,6 +1740,33 @@ void Chromo2Mdl::rdp_context_target_ext(istream& aIs, C2MdlNode& aMnode)
 	    char c = aIs.get();
 	    if (c == KTC_Target) {
 		aMnode.AddContext(KT_Target, uri);
+	    } else {
+		SetErr(aIs, RDPE_MissingCtxSmb);
+	    }
+	}
+    }
+}
+
+void Chromo2Mdl::rdp_context_namespace_ext(istream& aIs, C2MdlNode& aMnode)
+{
+    streampos pos = aIs.tellg();
+    C2MdlNode node;
+    rdp_mut_create(aIs, node);
+    string uri;
+    if (IsError()) {
+	aIs.seekg(pos, aIs.beg); // Backtrack
+	ResetErr();
+	rdp_uri(aIs, uri);
+    } else {
+	aMnode.mOwner->mChromo.push_back(node);
+	uri = node.mMut.mP;
+    }
+    if (!IsError()) {
+	rdp_sep(aIs);
+	if (!IsError()) {
+	    char c = aIs.get();
+	    if (c == KTC_Namespace) {
+		aMnode.AddContext(KT_Namespace, uri);
 	    } else {
 		SetErr(aIs, RDPE_MissingCtxSmb);
 	    }

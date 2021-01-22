@@ -525,9 +525,9 @@
 			model_spec = mutation_create_chromo;
 			chromo = chromo_node { node_separator, chromo_node };
 			chromo_node = ctx_mutation | segment | mutation_create_chromo;
-			ctx_mutation = [context, separator ]  mutation, ';';
+			ctx_mutation = [context, separator ]  mutation;
 			ctx_segment = segment_target | segment_namespace;
-			segment_namespace = context_namespace, [separator], segment;
+			segment_namespace = context_namespace_ext, [separator], segment;
 			segment_target = target_primary_segment, [ target_secondary_segment ];
 			target_primary_segment = context_target_ext, [separator], segment;
 			target_secondary_segment = impliclit_context_unit, [separator] segment;
@@ -550,7 +550,8 @@
 			context_target = uri, separator, "&lt;";
 			context_target_ext = (uri | mutation_create), separator, "&lt;";
 			context_node = mutation_node;
-			context_namespace = context_source, separator, context_type_namespace;
+			context_namespace = uri, separator, "@";
+			context_namespace_ext = (uri | mutation_create), separator, "@";
 			implicit_context_unit = context_type;
 			context_source = mutation_node | node_uri;
 
@@ -558,8 +559,8 @@
 			white_space = ' ';
 			end_of_line = ;
 
-			mutation = mutation_create | mutation_content| mutation_remove | mutation_import
-			| mutation_connect | mutation_disconnect | mutation_rename | mutation_move | mutation_comment;
+			mutation = (mutation_create | mutation_content| mutation_remove | mutation_import
+			| mutation_connect | mutation_disconnect | mutation_rename | mutation_move | mutation_comment), ';';
 			mutation_create = [name, separator] ":" separator, parent;
 			parent = uri;
 			mutation_content = content_uri, separator "=" separator, content_value;

@@ -167,6 +167,7 @@ class Chromo2Mdl: public MChromoMdl
 	void rdp_sep(istream& aIs);
 	void rdp_segment(istream& aIs, C2MdlNode& aMnode);
 	void rdp_segment_target(istream& aIs, C2MdlNode& aMnode);
+	void rdp_segment_namespace(istream& aIs, C2MdlNode& aMnode);
 	void rdp_chromo_node(istream& aIs, C2MdlNode& aMnode);
 	void rdp_mut(istream& aIs, C2MdlNode& aMnode);
 	void rdp_ctx_mutation(istream& aIs, C2MdlNode& aMnode);
@@ -174,8 +175,8 @@ class Chromo2Mdl: public MChromoMdl
 	void rdp_context_target(istream& aIs, C2MdlNode& aMnode);
 	void rdp_context_target_ext(istream& aIs, C2MdlNode& aMnode);
 	void rdp_context_namespace(istream& aIs, C2MdlNode& aMnode);
+	void rdp_context_namespace_ext(istream& aIs, C2MdlNode& aMnode);
 	
-
     protected:
 	/** @brief Parses chromo spec
 	 * */

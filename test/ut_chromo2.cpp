@@ -15,7 +15,8 @@ class Ut_chromo2 : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST_SUITE(Ut_chromo2);
 //    CPPUNIT_TEST(test_Chr1);
 //    CPPUNIT_TEST(test_Chr2);
-    CPPUNIT_TEST(test_Chr3);
+//    CPPUNIT_TEST(test_Chr3);
+    CPPUNIT_TEST(test_Chr4);
     CPPUNIT_TEST_SUITE_END();
 public:
     virtual void setUp();
@@ -24,6 +25,7 @@ private:
     void test_Chr1();
     void test_Chr2();
     void test_Chr3();
+    void test_Chr4();
 private:
     //Env* iEnv;
 };
@@ -111,6 +113,22 @@ void Ut_chromo2::test_Chr3()
     int cn = croot.Count();
     CPPUNIT_ASSERT_MESSAGE("Wrong root node comps number", cn == 3);
     
+}
+
+void Ut_chromo2::test_Chr4()
+{
+    printf("\n === Test of Chromo2 parsing\n");
+    Chromo2 chr;
+    const string fileName("ut_chr2_4.chs");
+    cout << "Chromo set from file [" << fileName << "]" << endl;
+    chr.SetFromFile(fileName);
+    if (chr.IsError()) {
+	cout << "Pos: " << chr.Error().mPos << " -- " << chr.Error().mText << endl;
+    }
+    chr.Root().Dump();
+    CPPUNIT_ASSERT_MESSAGE("Chromo parsing error", !chr.IsError());
+    ChromoNode croot = chr.Root();
+    CPPUNIT_ASSERT_MESSAGE("Chromo root is empty", croot != ChromoNode());
 }
 
 

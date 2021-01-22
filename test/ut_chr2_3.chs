@@ -1,5 +1,8 @@
 root : Elem
 {
+    v3 : Vert @ {
+        Value = "Test Value 2";
+    }
     # "Test of chrmoo2 dependent mutation chain (DMC): base chromo";
     s1 : Vert
     {
