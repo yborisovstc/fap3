@@ -166,16 +166,19 @@ class Chromo2Mdl: public MChromoMdl
 	void rdp_mut_connect(istream& aIs, C2MdlNode& aMnode);
 	void rdp_sep(istream& aIs);
 	void rdp_segment(istream& aIs, C2MdlNode& aMnode);
-	void rdp_segment_target(istream& aIs, C2MdlNode& aMnode);
-	void rdp_segment_namespace(istream& aIs, C2MdlNode& aMnode);
+	void rdp_segment_target(istream& aIs, C2MdlNode& aMnode, C2MdlNode& aDepSeg);
+	void rdp_segment_namespace(istream& aIs, C2MdlNode& aMnode, C2MdlNode& aDepSeg);
 	void rdp_chromo_node(istream& aIs, C2MdlNode& aMnode);
 	void rdp_mut(istream& aIs, C2MdlNode& aMnode);
 	void rdp_ctx_mutation(istream& aIs, C2MdlNode& aMnode);
 	void rdp_context(istream& aIs, C2MdlNode& aMnode);
 	void rdp_context_target(istream& aIs, C2MdlNode& aMnode);
-	void rdp_context_target_ext(istream& aIs, C2MdlNode& aMnode);
+	void rdp_context_target_ext(istream& aIs, C2MdlNode& aMnode, C2MdlNode& aDepSeg);
 	void rdp_context_namespace(istream& aIs, C2MdlNode& aMnode);
-	void rdp_context_namespace_ext(istream& aIs, C2MdlNode& aMnode);
+	/** @brief RDP pareser of context_namespace_ext
+	 * @param aDepNode  segment to keep dependencies
+	 * */
+	void rdp_context_namespace_ext(istream& aIs, C2MdlNode& aMnode, C2MdlNode& aDepSeg);
 	
     protected:
 	/** @brief Parses chromo spec

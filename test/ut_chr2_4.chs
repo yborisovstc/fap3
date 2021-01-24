@@ -1,5 +1,9 @@
 root : Elem
 {
+        v1 ~ : Vert @ {
+             v3 : Vert;
+        };
+    va ~ : Vert;
     # "Test";
     s1 : Vert
     {
@@ -8,9 +12,6 @@ root : Elem
         }
         v1 ~ : Vert < {
              v3 : Vert;
-        };
-        v1 ~ : Vert {
-             v4 : Vert;
         };
     }
 }

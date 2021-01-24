@@ -482,45 +482,7 @@
 		    </programlisting>
 		    <simpara>This makes systax productions quite complicated.</simpara>
 		</sect4>
-		<sect4><title>Intial</title>
-		    <programlisting>
-			model_spec = chromo_node_primary_segment;
-			chromo = chromo_node { node_separator, chromo_node };
-			chromo_node = chromo_node_mutation | chromo_node_segment;
-			chromo_node_mutation = [context, [separator] ]  mutation, ';';
-			chromo_node_segment = chromo_node_primary_segment, { chromo_node_secondary_segment };
-			chromo_node_primary_segment = context_unit_target, [separator], segment;
-			chromo_node_secondary_segment = impliclit_context_unit, [separator] segment;
-			segment = '{', [separator], chromo, [separator], '}';
-			context = context_unit { separator, context_unit };
-			context_unit = context_unit_node | context_unit_target | context_unit_namespace;
-			context_unit_target = context_source, separator;
-			context_unit_node = context_source, separator;
-			context_unit_namespace = context_source, separator, context_type_namespace;
-			implicit_context_unit = context_type;
-			context_source = mutation_node | node_uri;
-
-			separator = white_space | end_of_line;
-			white_space = ' ';
-			end_of_line = ;
-
-			mutation = mutation_create | mutation_content_change | mutation_remove | mutation_import
-			| mutation_connect | mutation_disconnect | mutation_rename | mutation_move;
-			mutation_create = [node_name, separator] ":" separator, parent;
-			parent = uri;
-			mutation_content_change = content_uri, separator "=" separator, content_value;
-			mutation_import = "#" separator, module_uri;
-			module_uri = uri;
-			mutation_remove = "!" separator, node_uri;
-			node_uri = uri;
-			mutation_connect = left_pair_spec, separator "~" separator, right_pair_spec;
-			left_pair_spec = uri;
-			right_pair_spec = pair_uri | right_pair_creation;
-			right_pair_creation =  mutation_create | chromo_node_segment;
-			# chromo_node_segment_with_context interprets in connection mutation as node specified as context source
-		    </programlisting>
-		</sect4>
-		<sect4><title>Updated</title>
+		<sect4><title>Initial</title>
 		    <programlisting>
 			model_spec = mutation_create_chromo;
 			chromo = chromo_node { node_separator, chromo_node };
@@ -531,7 +493,6 @@
 			segment_target = target_primary_segment, [ target_secondary_segment ];
 			target_primary_segment = context_target_ext, [separator], segment;
 			target_secondary_segment = impliclit_context_unit, [separator] segment;
-			segment_namespace = context_unit_namespace, [separator], segment;
 
 			(*
 			segment = '{', [separator], chromo, [separator], '}';
@@ -569,7 +530,7 @@
 			content_uri = uri;
 			mutation_remove = "!" separator, node_uri;
 			mutation_comment = "#" separator, string
-			mutation_connect = uri "~" (uri | mutation_create);
+			mutation_connect = uri "~" (uri | mutation_create | segment_target | segment_namespace);
 			node_uri = uri;
 			mutation_connect = left_pair_spec, separator "~" separator, right_pair_spec;
 			left_pair_spec = uri;
