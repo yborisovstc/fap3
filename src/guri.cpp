@@ -4,6 +4,8 @@
 
 const char KSep = '.';
 
+const string GUri::nil = "nil";
+
 void GUri::parse(const string& aSrc)
 {
     if (aSrc.size() > 0) {
@@ -35,18 +37,6 @@ void GUri::tail(const GUri& aHead, GUri& aTail) const
     }
 }
 
-
-GUri::operator string()
-{
-    string res;
-    for (int i = 0; i < size(); i++) {
-	res.append(mElems.at(i));
-	if (i < size()) {
-	    res.append(1, KSep);
-	}
-    }
-    return res;
-}
 
 void GUri::append(const GUri& aUri)
 {
@@ -86,5 +76,26 @@ bool GUri::operator<(const GUri& aSrc) const
     return res;
 }
 
+string GUri::toString() const
+{
+    string res;
+    bool first = true;
+    for (auto elem : mElems) {
+	if (!first) res += KSep;
+	res += elem;
+	first = false;
+    }
+    return res;
+}
+
+bool GUri::isAbsolute() const
+{
+    return mElems.size() > 0 && mElems.at(0).empty();
+}
+
+bool GUri::isName() const
+{
+    return mElems.size() == 1 && !mElems.at(0).empty();
+}
 
 

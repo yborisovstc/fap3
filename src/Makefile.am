@@ -6,22 +6,44 @@ lib_LTLIBRARIES = libfap3.la
 
 libfap3_la_SOURCES = \
 		       miface.h \
+		       menv.h \
+		       mnode.h \
+		       mplugin.h \
+		       mprov.h \
 		       mowning.h \
 		       nconn.h \
+		       necont.h \
 		       menv.h \
+		       mlog.h \
 		       munit.h \
 		       ifu.h \
 		       ifu.cpp \
+		       env.h \
+		       env.cpp \
 		       curi.h \
 		       curi.cpp \
 		       guri.h \
 		       guri.cpp \
+		       log.h \
+		       log.cpp \
 		       ifr.h \
 		       ifr.cpp \
+		       prov.h \
+		       prov.cpp \
+		       provdef.h \
+		       provdef.cpp \
+		       factr.h \
+		       factr.cpp \
 		       cont.h \
 		       cont.cpp \
 		       cont2.h \
 		       cont2.cpp \
+		       node.h \
+		       node.cpp \
+		       content.h \
+		       content.cpp \
+		       elem.h \
+		       elem.cpp \
 		       vert.h \
 		       vert.cpp \
 		       syst.h \
@@ -34,6 +56,13 @@ libfap3_la_SOURCES = \
 		       unit.cpp
 
 include_HEADERS = \
+		  menv.h \
+		  mplugin.h \
+		  mlog.h \
+		  mprov.h \
+		  mecont.h \
+		  mnode.h \
+		  melem.h \
 		  miface.h
 
 

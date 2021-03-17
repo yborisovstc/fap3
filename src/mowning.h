@@ -3,6 +3,7 @@
 
 #include "miface.h"
 
+class MOwned;
 
 /** @brief Native net owner interface
  * */
@@ -13,6 +14,11 @@ class MOwner : public MIface
 	// From MIface
 	virtual string Uid() const override { return MOwner_Uid();}
 	virtual string MOwner_Uid() const = 0;
+	// Local
+	virtual void getUri(GUri& aUri, MNode* aBase = nullptr) const = 0;
+	virtual MNode* getNode(const GUri& aUri, const MNode* aOwned) const = 0;
+	virtual MOwned* bindedOwned() = 0;
+	virtual const MOwned* bindedOwned() const = 0;
 };
 
 
@@ -31,6 +37,7 @@ class MOwned : public MIface
 	// Local
 	virtual string ownedId() const = 0;
 	virtual void deleteOwned() = 0;
+	virtual bool isOwner(const MOwner* aOwner) const = 0;
 };
 
 

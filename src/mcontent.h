@@ -18,6 +18,10 @@ class MCont : public MCIface
 	// From MIface
 	virtual string Uid() const override { return MCont_Uid();}
 	virtual string MCont_Uid() const = 0;
+	virtual MIface* getLif(const char *aType) { return MCont_getLif(aType);}
+	virtual MIface* MCont_getLif(const char *aType) = 0;
+	virtual void doDump(int aLevel, int aIdt = 0) const { return MCont_doDump(aLevel, aIdt, std::cout);}
+	virtual void MCont_doDump(int aLevel, int aIdt, ostream& aOs) const = 0;
 	// Local
 	virtual bool getContent(string& aCont) const = 0;
 	virtual bool setContent(const string& aCont) = 0;

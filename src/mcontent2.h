@@ -21,13 +21,15 @@ class MCont2: public MIface
 	// From MIface
 	virtual string Uid() const override { return MCont2_Uid();}
 	virtual string MCont2_Uid() const = 0;
+	virtual MIface* getLif(const char *aType) override { return MCont2_getLif(aType);}
+	virtual MIface* MCont2_getLif(const char *aType) = 0;
+	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { MCont2_doDump(aLevel, aIdt, aOs);}
+	virtual void MCont2_doDump(int aLevel, int aIdt, ostream& aOs) const = 0;
 	// Local
 	virtual bool getData(string& aData) const = 0;
 	virtual bool setData(const string& aData) = 0;
 	virtual MContNode2* node() = 0;
 	virtual const MContNode2* node() const = 0;
-	virtual void dump(int aIdt) const override { MCont2_dump(aIdt);}
-	virtual void MCont2_dump(int aIdt) const = 0;
 };
 
 /** @brief Iface of content owner

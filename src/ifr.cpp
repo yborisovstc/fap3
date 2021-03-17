@@ -57,7 +57,7 @@ MIfProv* IfrNode::next(MIfProv::TCp* aProvCp) const
     return nullptr;
 }
 
-void IfrNode::MIfProv_dump(int aIdt) const
+void IfrNode::MIfProv_doDump(int aLevel, int aIdt, ostream& aOs) const
 {
     cout << string(aIdt, ' ') << "NODE [" << name() << "], Owner: " << mOwner->Uid() << ", Valid: " << mValid << endl;
     auto self = const_cast<IfrNode*>(this);
@@ -141,7 +141,7 @@ MIfProv* IfrLeaf::next() const
     return next ? next->provided() : nullptr;
 }
 
-void IfrLeaf::MIfProv_dump(int aIdt) const
+void IfrLeaf::MIfProv_doDump(int aLevel, int aIdt, ostream& aOs) const
 {
     cout << string(aIdt,' ') << "LEAF [" << name() << "], Owner: " << mOwner->Uid() << ", Valid: " << mValid << ", Iface: " << (mIface ? mIface->Uid() : "null") << endl;
 }

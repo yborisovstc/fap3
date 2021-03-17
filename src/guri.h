@@ -23,7 +23,6 @@ class GUri
 	GUri tail(int aIdx) const;
 	void tail(const GUri& aHead, GUri& aTail) const;
 	const vector<TElem>& elems() const {return mElems;};
-	operator string();
 	void append(const GUri& aUri);
 	void prepend(const GUri& aUri);
 	void appendElem(const TElem& aElem);
@@ -31,6 +30,13 @@ class GUri
 	bool operator==(const GUri& aSrc) const;
 	bool operator<(const GUri& aSrc) const;
 	bool operator<=(const GUri& aSrc) const { return *this < aSrc || *this == aSrc;}
+	operator string() const { return toString();}
+	string toString() const;
+	bool isAbsolute() const;
+	bool isValid() const { return !mErr;}
+	bool isName() const;
+    public:
+	static const string nil; // TODO YB move to proper place
     private:
 	void parse(const string& aSrc);
     private:

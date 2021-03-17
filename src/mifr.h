@@ -25,8 +25,8 @@ class MIfProv: public MIface
 	virtual bool resolve(const string& aName) = 0;
 	virtual MIface* iface() = 0;
 	virtual const MIfProvOwner* owner() const = 0;
-	virtual void dump(int aIdt) const override { MIfProv_dump(aIdt);}
-	virtual void MIfProv_dump(int aIdt) const =0;
+	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { MIfProv_doDump(aLevel, aIdt, aOs);}
+	virtual void MIfProv_doDump(int aLevel, int aIdt, ostream& aOs) const =0;
 	virtual bool isValid() const = 0;
 	virtual void setValid(bool aValid) = 0;
 };

@@ -21,6 +21,7 @@ class Ifu
     public:
 	static char KEsc;
 	static char KUidSep;
+	static int  KDumpIndent;
 };
 
 

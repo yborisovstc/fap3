@@ -5,7 +5,7 @@
 #include "ifr.h"
 
 
-Unit::Unit(const string &aName, MEnv* aEnv): mName(aName), mEnv(aEnv)
+Unit::Unit(const string &aName, MEnv* aEnv): Node(aName, aEnv)
 {
 }
 
@@ -21,7 +21,8 @@ MIface* Unit::MUnit_getLif(const char *aType)
 {
     MIface* res = nullptr;
     if (res = checkLif<MUnit>(aType));
-    if (res = checkLif<MIfProvOwner>(aType));
+    else if (res = checkLif<MIfProvOwner>(aType));
+    else res = MNode_getLif(aType);
     return res;
 }
 
@@ -32,13 +33,6 @@ MIface* Unit::MIfProvOwner_getLif(const char *aType)
     return res;
 }
 
-
-void Unit::deleteOwned()
-{
-    for (auto item : mCpOwner.mPairs) {
-	item.second->deleteOwned();
-    }
-}
 
 bool Unit::getContent(string& aData, const string& aName) const
 {
@@ -159,18 +153,3 @@ void Unit::onIfpDisconnected(MIfProv* aProv)
     delete aProv;
 }
 
-MUnit* Unit::getComp(const string& aId)
-{
-    MOwned* ores = mCpOwner.at(aId);
-    MUnit* res = ores ? ores->lIf(res) : nullptr;
-    return res;
-}
-
-MUnit* Unit::getNode(const GUri& aUri)
-{
-    MUnit* res = getComp(aUri.at(0));
-    for (int i = 1; i < aUri.size() && res; i++) {
-	res = res->getComp(aUri.at(i));
-    }
-    return res;
-}

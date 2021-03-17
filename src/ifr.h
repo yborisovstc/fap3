@@ -18,7 +18,7 @@ class IfrNode : public NTnnp<MIfProv, MIfReq>, public MIfProv, protected MIfReq
 	virtual string name() const override;
 	virtual MIfProv* first() const override;
 	virtual MIfProv* next() const override;
-	virtual void MIfProv_dump(int aIdt) const override;
+	virtual void MIfProv_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	virtual bool resolve(const string& aName) override;
 	virtual bool isValid() const override { return mValid;}
 	virtual void setValid(bool aValid) override;
@@ -51,7 +51,7 @@ class IfrLeaf : public NCpOnp<MIfProv, MIfReq>, public MIfProv
 	virtual bool resolve(const string& aName) override {return false;}
 	virtual MIface* iface() override { return mIface;}
 	virtual const MIfProvOwner* owner() const override { return mOwner;}
-	virtual void MIfProv_dump(int aIdt) const override;
+	virtual void MIfProv_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	virtual bool isValid() const override { return mValid;}
 	virtual void setValid(bool aValid) override;
     protected:

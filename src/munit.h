@@ -2,7 +2,6 @@
 #define __FAP3_MUNIT_H
 
 #include "miface.h"
-#include "menv.h"
 #include "mifr.h"
 #include "nconn.h"
 #include "guri.h"
@@ -61,17 +60,14 @@ class MUnit: public MIface
     public:
 	using TIfReqCp = MNcpp<MIfReq, MIfProv>; /*!< IFR requestor connpoint type */
     public:
-	// From MIface
 	static const char* Type() { return "MUnit";}
 	virtual ~MUnit() {} // TODO to consider policy of system destruction
+	// From MIface
 	virtual string Uid() const override { return MUnit_Uid();}
 	virtual string MUnit_Uid() const = 0;
 	virtual MIface* getLif(const char *aType) { return MUnit_getLif(aType);}
 	virtual MIface* MUnit_getLif(const char *aType) = 0;
 	// Local
-	virtual string name() const = 0;
-	virtual MUnit* getComp(const string& aId) = 0;
-	virtual MUnit* getNode(const GUri& aUri) = 0;
 	virtual bool getContent(string& aData, const string& aName = string()) const = 0;
 	virtual bool setContent(const string& aData, const string& aName = string()) = 0;
 	virtual bool addContent(const string& aName, bool aLeaf = false) = 0;

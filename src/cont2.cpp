@@ -35,7 +35,7 @@ bool Cont2::setData(const string& aData)
     return true;
 }
 
-void Cont2::MCont2_dump(int aIdt) const
+void Cont2::MCont2_doDump(int aLevel, int aIdt, ostream& aOs) const
 {
     cout << string(aIdt, ' ') << "_DEFAULT_ :" << mData << endl;
 }
@@ -180,7 +180,7 @@ bool ContNode2::addCont(int aIdx, const CUri& aUri, bool aLeaf)
     return res;
 }
 
-void ContNode2::MCont2_dump(int aIdt) const
+void ContNode2::MCont2_doDump(int aLevel, int aIdt, ostream& aOs) const
 {
     cout << string(aIdt, ' ') << mId << " > " << endl;
     mOwnerCp.dump(++aIdt);
@@ -194,7 +194,7 @@ ContLeaf2::~ContLeaf2()
     resetPx();
 }
 
-void ContLeaf2::MCont2_dump(int aIdt) const
+void ContLeaf2::MCont2_doDump(int aLevel, int aIdt, ostream& aOs) const
 {
     cout << string(aIdt, ' ') << mId << " : " << mData << endl;
 }

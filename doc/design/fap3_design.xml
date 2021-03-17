@@ -42,16 +42,29 @@
 	<glossentry id="gls_adp"><glossterm>ADP</glossterm> <acronym>ADP</acronym>
 	    <glossdef> <para>Agents DES adaPtor</para> <para>
 		    The agent dedicated to adapt target agent interfaces to DES.
-		    Ref <xref linkend="ds_dmm_adp"/> </para></glossdef> </glossentry>
+		    Ref <ulink url="../../../grayb/doc/design/index.html#ds_dmm_adp"/> </para></glossdef> </glossentry>
+	<glossentry id="gls_ascl"><glossterm>ASCL</glossterm>
+	    <glossdef> <para>Agents specific chromo languge.</para> <para>
+		    The approach that allows specific mutations and even chromo syntax for some agents.
+		    Ref <xref linkend="ds_ascl"/> for details.</para></glossdef> </glossentry>
 	<glossentry id="gls_cp"><glossterm>CP</glossterm> <acronym>CP</acronym>
 	    <glossdef> <para>Connection Point</para> <para>
 		    Element that is used as endpoint of connections between systems.  
+	</para></glossdef> </glossentry>
+	<glossentry id="gls_chromo2"><glossterm>CHROMO2</glossterm> <acronym>CP</acronym>
+	    <glossdef> <para>Enhanced version of chromo language.</para> <para>
+		Uses specific syntac instead of xml-based in the initial version.
+			Ref <ulink url="../../../grayb/doc/design/index.html#ds_chr2"/> for details.
 	</para></glossdef> </glossentry>
 	<glossentry id="gls_daa"><glossterm>DAA</glossterm> <acronym>DAA</acronym>
 	    <glossdef> <para>Distributed Agents Approach</para> <para>
 		    Approach of multi-agent system that assumes that the modes is distributed among several environments that 
 		    can be running on undependent executable enviromnents.
 		    Ref <xref linkend="ds_daa"/> </para></glossdef> </glossentry>
+	<glossentry id="gls_dce"><glossterm>DCE</glossterm> <acronym>DAA</acronym>
+	    <glossdef> <para>Dedicated Content Element of native hier.</para> <para>
+		    Approach of content support based on dedicated elements of native hier.
+		    Ref <xref linkend="ds_dce"/> for desing details </para></glossdef> </glossentry>
 	<glossentry id="gls_deds"><glossterm>DEDS</glossterm> <acronym>DEDS</acronym>
 	    <glossdef> <para>Discrete Event Dynamic System,  a discrete-state, event-driven system of which the state evolution depends entirely
 		    on the occurrence of asynchronous discrete events over time. Although similar to continuous-variable dynamic systems (CVDS),
@@ -110,7 +123,7 @@
 	    <glossdef> <para>Original Sequence of Mutations - 
 		    The approach of models creation where the same mutation order is
 		    used for model creation as on construction phase, ref
-		    <xref linkend="ds_mut_osm"/>. Ref <xref linkend="gls_dhc"/> for another approach.
+		    <ulink url="../../../grayb/doc/design/index.html#ds_mut_osm"/>. Ref <xref linkend="gls_dhc"/> for another approach.
 	</para></glossdef> </glossentry>
 	<glossentry id="gls_mae"><glossterm>MAE</glossterm>
 	    <glossdef> <para>Using monodilic agent instead of embedded.
@@ -154,7 +167,7 @@
     </glossary>
 
     <sect1 id="ds_itr"><title>Intro</title>
-	<sect2><title>The scope of the project</title>
+	<sect2 id="ds_itr_sp"><title>The scope of the project</title>
 	    <simpara>This project is focusing on re-desing of DES framework fap2, aka grayb, ref <ulink url="../../../grayb/doc/design/index.html"/> for
 		the desing. The main areas of improvement are:</simpara>
 	    <itemizedlist>
@@ -168,26 +181,54 @@
 		    Base iface resolution on native level connections.
 		    <simpara>Ref <xref linkend="ds_irm"/></simpara>
 		</listitem>
-		<listitem>Desing content basing on native level connections tree of content units.</listitem>
+		<listitem>
+			Desing content basing on native level connections tree of content units.
+		    <simpara>Also look at <xref linkend="ds_cnh"/> for another content desing discussion.</simpara>
+		</listitem>
 		<listitem>Easy support of anonymous units.</listitem>
-		<listitem>System creation language (chromo) optimization.</listitem>
+		<listitem>
+		    System creation language (chromo) optimization.
+		    <simpara>Ref <xref linkend="ds_cli"/></simpara>
+		</listitem>
 		<listitem>Notification mechainsm optimization. Ref <ulink url="../../../grayb/doc/design/index.html#ds_prfopt_ahn"/></listitem>
 		<listitem>Fix the IRM problem <ulink url="../../../grayb/doc/design/index.html#ds_i_nrn"/>
 		    <simpara>Ref <xref linkend="ds_irm_ut_own"/></simpara> </listitem>
 		<listitem>Redesign system navigation mechanism to restrict the access. <simpara>Ref <xref linkend="ds_sn"/></simpara></listitem>
 		<listitem>
 		    Improve chromo language: support mutations chain (<xref linkend="gls_dmc"/>), use strong parsing.
-		    <simpara>Ref <ulink url="../../../grayb/doc/design/index.html#ds_chr2_mc"/> for FAP2 desing item. Ref <xref linkend="ds_cl"/> for the material.</simpara>
+		    <simpara>Ref <ulink url="../../../grayb/doc/design/index.html#ds_chr2_mc"/> for FAP2 desing item. Ref <xref linkend="ds_cli"/> for the material.</simpara>
 		    <simpara></simpara>
 		</listitem>
 		<listitem>Redesign import to avoid chromo analysis for selecting imported node.</listitem>
+		<listitem>
+		    Redesign DES adapter referencing to managed agent.
+		    <simpara>Ref <ulink url="../../../grayb/doc/design/index.html#ds_dmm_irta"/> for details.</simpara>
+		</listitem>
+		<listitem>
+		    Redesign chromo to be really copyable.
+		    <simpara>At lease one related use-case is MElem <xref linkend="gls_adp"/> that can mutate managed agent basing on the input
+			receiveing chromo. Current chromo desing potentially allows copy (ref DChr2 data based state) but in rather messy way.</simpara>
+		</listitem>
+		<listitem>Redesing connpoint extender. Ref <ulink url="../../../grayb/doc/design/index.html#ds_di_wrcpe"/> for desing issue.</listitem>
+		<listitem>
+		    <glossterm id="ds_itr_sp_rnac">Redesing notification of agent change.</glossterm>
+		    <simpara>
+			Currently, the agent notifies of its updates to owner, embedded agents and observers. This is too comlicated. We need
+			to remain only observer and implement proper native relation observer-observable. Also there should be some policy enabling
+			establishing such relation. For instance is embedded agent can set itself as observer there should be acceptance from the embedding agent.
+		    </simpara>
+		</listitem>
+		<listitem>
+		    Redesing URI to make is simpler and convenient.
+		    <simpara>Ref <xref linkend="ds_urd"/> for details.</simpara>
+		</listitem>
 	    </itemizedlist>
 	</sect2>
 	<sect2 id="ds_itr_dp"><title>Dependent projects</title>
 	    <sect3 id="ds_itr_dp_grayb"><title>DES framework fap3, aka grayb, ref <ulink url="../../../grayb/doc/design/index.html"/></title>
 	    </sect3>
 	</sect2>
-	    <sect2><title>The philosophy of structured systems.</title>
+	<sect2><title>The philosophy of structured systems.</title>
 	    <simpara>All FAP projects are about using structured system as the means of creating big models. Structured system philosophy is very simple:
 		there are a number of agents that can be combined according to the topology. The topology connects the agents according to that required for the created model.</simpara>
 	    <simpara>The structured sytem creates topology basing on system principles: the big model is separated to smaller parts,
@@ -415,7 +456,7 @@
 	</sect2>
     </sect1>
 
-    <sect1 id="ds_cl"><title>Chromo language improvement</title>
+    <sect1 id="ds_cli"><title>Chromo language improvement</title>
 	<sect2><title>Intro</title>
 	    <simpara><xref linkend="gls_dmc"/> chromo was prototyped in the scope of fap2, ref <ulink url="../../../grayb/doc/design/index.html#ds_chr2_dmc_proto"/> so
 		it was decided that fap3 has to support <xref linkend="gls_dmc"/> chromo language.</simpara>
@@ -425,7 +466,7 @@
 		<simpara>Ref <ulink url="../../../grayb/doc/design/index.html#ds_chr2_mc"/> for FAP2 desing discussion.</simpara>
 	    </sect3>
 	</sect2>
-	<sect2 id="ds_cl_syntax"><title>Syntax of chromo language.</title>
+	<sect2 id="ds_cli_syntax"><title>Syntax of chromo language.</title>
 	    <sect3><title>Intro</title>
 		<simpara>Ref <ulink url="../../../grayb/doc/design/index.html#ds_chr2_sns"/> for fap2 syntax draft.</simpara>
 	    </sect3>
@@ -447,7 +488,7 @@
 			compatibility. But actually combined node mutation is same as segment with the node as target context.</simpara>
 		</sect4>
 	    </sect3>
-	    <sect3><title>Sequence of segments</title>
+	    <sect3 id="ds_cli_syntax_ss"><title>Sequence of segments</title>
 		<sect4><title>Intro</title>
 		    <simpara>Often (especially in case of dependent tree-like chromo) it is required to have not only namespace context segment but
 			also target segment. For instance transition1 input connects to state, the state value is set, the state input connects to 
@@ -524,8 +565,15 @@
 			| mutation_connect | mutation_disconnect | mutation_rename | mutation_move | mutation_comment), ';';
 			mutation_create = [name, separator] ":" separator, parent;
 			parent = uri;
+
+			#ifdef _DCE_
+			mutation_content = node_uri, separator "=" separator, content_value;
+			#else
 			mutation_content = content_uri, separator "=" separator, content_value;
+			#endif // _DCE_
+
 			mutation_import = "+" separator, module_uri;
+			node_uri = uri;
 			module_uri = uri;
 			content_uri = uri;
 			mutation_remove = "!" separator, node_uri;
@@ -546,7 +594,7 @@
 		</sect4>
 	    </sect3>
 	</sect2>
-	<sect2 id="ds_cl_dsa"><title>Desing of chromo language syntax analyzed and compiler.</title>
+	<sect2 id="ds_cli_dsa"><title>Design of chromo language syntax analyzed and compiler.</title>
 	    <sect3><title>Intro</title>
 		<simpara>Ref <xref linkend="ref_ss_cof"/> for studying of basics of syntactic analysis and compiling.</simpara>
 		<simpara>Ref <ulink url="https://en.wikipedia.org/wiki/LL_parser"/> for LL(k) parser wiki.</simpara>
@@ -571,6 +619,229 @@
 		</sect4>
 	    </sect3>
 	</sect2>
+	<sect2 id="ds_cii_ascl"><title>Agent specific chromo-language (<xref linkend="gls_ascl"/>).</title>
+	    <sect3><title>Intro</title>
+		<simpara>
+		    Currently the chromo is the language of mutation of base agent - Elem in FAP2. So it can be applied for any Elem derived agents.
+		    In earlier implementation so called "custom mutations" were considered, for instance the mutation "connect". But later "connect" mutation
+		    was included in the base mutations set.
+		</simpara>
+		<simpara>
+		    The drawback of this approach is clear - it doesn't allow to utilize the advantage of core FAP desing prinicple "The model is created by
+		    mutating agent." (initially root agent). With current approach it is not possible to have optimized mutation language for agent specific mutation.
+		    The idea of the current approach was that there shouldn't be specific mutation and that all cases can be simply covered by mutating the base
+		    agent (Elem).
+		</simpara>
+		<simpara>
+		    The question is if there really can be some custom mutations? Seems so. For instance we can constider "transition" agent that 
+			uses compact notations for transition agents, like Add instead of ATrcAddVar.
+		</simpara>
+		<simpara>
+		    Note that FAP2 already support this partially. Indeed, the base agent mutation APIs are virtual so base agent hier can overload
+		    the mutation processing.
+		</simpara>
+	    </sect3>
+	    <sect3 id="ds_cli_ascl_bdp"><title>Base desing principle of </title>
+		<sect4 ><title>Any agents should allow mutating even if the agent can be not allowing derivation.</title>
+		    <sect5><title>Intro</title>
+			<simpara>
+			    FAP2 intoduced two types of agents, mutable and not-mutable. Actually both types are updated via mutation, the only difference is
+			    that "non-mutable" agent don't kept its own mutation, so are not derivable in some sense. Instead they are mutated by theirs owners.
+			</simpara>
+		    </sect5>
+		</sect4>
+		<sect4><title>Common chromo internal structure.</title>
+		    <simpara>
+			Chromo is just the data describing the mutations. This data can be represented in different forms. There should be internal chromo 
+			representation that is kept in the model any agents. This is important because we can imagine the model where is agent A and its
+			compoment B at that mutations of B is B-specific but B is not derivable. So agent A keeps the whole mutation. And even A cannot 
+			"understand" B-specific mutation A shall be able to keep them.
+		    </simpara>
+		    <simpara>
+			Also the <xref linkend="gls_osm"/> approach currently applied presumes that models any agent keeps the
+			<emphasis>whole</emphasis> chromo, including chromo of it's componetns.
+		    </simpara>
+		</sect4>
+	    </sect3>
+	</sect2>
+	<sect2><title>Mutation of root content instead of specific content set mutation.</title>
+	    <sect3><title>Intro</title>
+		<simpara>
+		    FAP2 uses specific content set mutation syntax to define hierarhical content. So FAP2 implements specific parser for this syntax.
+		    Probably we don't need this specific parser if we consider content as native hier node that can be mutated. In that case the mutation of 
+		    root content node in content nodes hierarchy can be used instead.
+		</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_cli_pi"><title>Proposal of <xref linkend="gls_chromo2"/> improvement</title>
+	    <sect3><title>To make chromo end symbol (";") not required if there is EOL.</title>
+	    </sect3>
+	    <sect3><title>To introduce special name for nearest namespace.</title>
+		<simpara>
+		    "Special name" approach can help us to make chromo more compact. We already use symbol "$" as special name of "whatewer"
+		    in mutation "Comment"
+		</simpara>
+	    </sect3>
+	    <sect3><title>To introduce "Inactivity" context to solve the problem with comments.</title>
+		<simpara>
+		    Ref <xref linkend="ds_cli_icc_cfc"/> for the FAP2 chromo language weakness. To solve this problem
+			we can just introduce new context of type "Inactive". This context applied to the mut or segment just makes it inactive.
+		</simpara>
+	    </sect3>
+	    <sect3><title>To introduce segment type depending on context.</title>
+		<simpara>
+		    For instance the segment type "target" is can have "{}" boundaries, but "namespace" segment - "()".
+		</simpara>
+	    </sect3>
+	</sect2>
+	<sect2><title>FAP2 chromo language analysis and criticism.</title>
+	    <sect3><title>Do we really need namespace context?</title>
+		<simpara>
+		    Namespace helps to make transition notation compact with <xref linkend="gls_dmc"/>. But it is still not perfect, ref
+		    <xref linkend="ds_cli_icc_uncs"/> for instance. What helps NS context to do in
+		    <xref linkend="gls_dmc"/>? Just to compact (i.e. without full URI) specify the inputs in the connectins chain plus have a new segment
+			(this is important to create hierarchical chromo structure that is more readeable that the flat structure).
+			Can we specify it compact in another way?
+		</simpara>
+		<simpara>
+		    Note that the context types actually are not independent. Indeed, the target context means also that target node is also namespace.
+		</simpara>
+	    </sect3>
+	    <sect3><title>Is it OK to use segments for forming connections hierarchy?</title>
+		<simpara>
+		    FAP2 <xref linkend="gls_dmc"/> uses segments plus namespace context to form connections hierarhy represetation of 
+			hierarchical stype. But is using segments really nesessary?
+		</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_cli_icc"><title>What seems inconvenient in the FAP2 current chromo (<xref linkend="gls_chromo2"/>, <xref linkend="gls_dmc"/>)</title>
+	    <sect3 id="ds_cli_icc_uncs"><title>Using namespace context symbol in <xref linkend="gls_dmc"/> chromo.</title>
+		<simpara>
+		    It needs to be used wastely in case of complex transition.
+		    It really seems messy to see a lot of "@" in chromo.
+		</simpara>
+	    </sect3>
+	    <sect3><title>Cannot simply specify chromo of last-created anonymous agent.</title>
+		<simpara>
+		    It is common case when required to specify some mutation of newly-created anonymous agent in connection heirarchy with
+		    <xref linkend="gls_dmc"/>. New chromo syntax (ref <xref linkend="ds_cli_syntax_ss"/>) allows to do it having two subsequent
+			namespace and target segments. However it is not convenient. The solution would be to use special name designating the
+			top namespace agent, like that (compate to <xref linkend="ds_cli_syntax_ss"/>):
+		</simpara>
+		<programlisting>
+			Trans1/Inp ~ : AStatec @ { _N &lt; Value = "SI 2"; Inp ~ : ATrcAdd ... }
+		</programlisting>
+	    </sect3>
+	    <sect3><title>Comment syntax is too complicated.</title>
+	    </sect3>
+	    <sect3 id="ds_cli_icc_cfc"><title>Cannot to simply comment out some fragment of chromo.</title>
+	    </sect3>
+	    <sect3><title></title>
+	    </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_dce"><title>Dedicated content element of native hier (<xref linkend="gls_dce"/>)</title>
+	<sect2><title>Intro</title>
+	    <simpara>
+		This section if for discussing specific content desing solution. In earlier FAP version the complex content was implemented as
+		unit components, i.e. was the part of model native hier. In further FAP versions this was changed - the content was moved from native hier
+		to Unit, so specific MUnit API was introduced. This idea was to simplify native hier thus to improve the model performance. 
+	    </simpara>
+	    <simpara>Current FAP3 content designg is not perfect obviously. </simpara>
+	</sect2>
+	<sect2><title>Pros</title>
+	    <sect3><title>Content language is no needed, chromo language is used instead.</title>
+		<simpara>Current design - Conent language. Set content of conn point:</simpara>
+		<programlisting>
+		    |  Cp : ConnPoint {
+		    |      $ = "{ Provided:'Iface1' Required:'Iface2;}";
+		    |  } 
+		</programlisting>
+		<simpara>Embedded to native hier, content items to be created (Prop is the base Property agent):</simpara>
+		<programlisting>
+		    |  Cp : ConnPoint {
+		    |      Provided : Prop = 'Iface1'; Required : Prop = 'Iface2;
+		    |  } 
+		</programlisting>
+		<simpara>One more example of <xref lidkend="gls_dce"/> - Debug property.</simpara>
+		    |  Agt : AStatec {
+		    |      Debug : Prop {
+		    |          Update = "yes";
+		    |          LogLevel = "20";
+		    |      }
+		    |  }
+	    </sect3>
+	</sect2>
+	<sect2><title>Cons</title>
+	    <sect3><title>Requires native hier node for each content.</title>
+	    </sect3>
+	    <sect3><title>Content owner needs to sign up for observing content nodes change.</title>
+		<simpara>
+		    In current FAP3 solution native CP of ContentOwner alredy has method of notification. With new approach we need to utilize
+		    standart node notification mechanism.
+		</simpara>
+	    </sect3>
+	</sect2>
+	<sect2><title>Desing outline</title>
+	    <sect3><title>MProp iface and Prop node</title>
+		<simpara>
+		    We need to introduce new elements of native hier - node. Node can just support owner-owned relation and have content.
+		    Aslo dedicated iface "MProp" needs to be defined to support property (i.e. content). It makes sense that normal agents doesn't implement.
+		    Agent Prop is implemented this iface. Prop can owns other Props only. 
+		</simpara>
+	    </sect3>
+	    <sect3><title>MProp specific mutation - "set value"</title>
+		<simpara>
+		    Interesting but if keeping content is the ability just MProp nodes then the mutation "Content" gets only MProp specific, ref
+		    <xref linkend="ds_cii_ascl"/> for related desing item.
+		</simpara>
+	    </sect3>
+	    <sect3><title>How to notify of content change.</title>
+		<simpara>
+		    <simpara>
+			Current FAP Unit supports notification of content changed and agent changed. How this will be desingned in 
+			<xref linkend="gls_dce"/>
+		    </simpara>
+		    <simpara>
+			Ref <xref linkend="ds_itr_sp_rnac"/> regarding re-desing of notification scheme. There will not be dedicated notif of 
+			    content change. Instead it is up Prop owner to observe the notif of Prop change and generate it's own "Changed" notif.
+		    </simpara>
+		    <simpara></simpara>
+		</simpara>
+	    </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_"><title></title>
+	<sect2><title>Intro</title>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_urd"><title>URI re-desing</title>
+	<sect2><title>Use-cases</title>
+	    <sect3><title>URI can designates both absolute and relative path to node.</title>
+	    </sect3>
+	</sect2>
+	<sect2><title>Design outline</title>
+	    <sect3><title>Absolution vs relation.</title>
+		<simpara>Absolute URI has mostleft relation symbol.</simpara>
+	    </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1><title>Chromo of element: Node or Segment?</title>
+	<sect2><title>Intro</title>
+	    <simpara>
+		Originally the chromo of element is the mut of Node type. It contains name and parent. The idea was that the chromo should be
+		the whole info to create this elem. But this logic is not quite reasonable - actually Node mut is the mut to create the node and add it
+		to the owner as its comp. Node mut is the mut of the owner actually. What is the mut of element itself is the segment of this Node mut -
+		it is the mut the has to be applied to elements parent to get the element.
+		So the question is if we need elem chromo to be Node mut or segment?
+	    </simpara>
+	    <simpara>In other words: what is chromo of element: mut of adding the element to owner or mut the element parent? </simpara>
+	    <simpara>The rationale of Node variant is that it tells "Get the given parent and mutate it via given segment".</simpara>
+	</sect2>
     </sect1>
 
     <sect1 id="ds_f2dw"><title>FAP2 design gaps and weaknesses</title> <sect2 id="ds_f2dw_isr"><title>Ifaces identification scheme is restricted.</title>
@@ -582,6 +853,25 @@
 	<sect2 id="ds_f2dw_ccnu"><title>Creating complex native unit is not supported safely</title>
 	    <simpara>It is often required to create "complex" native unit, adding componentes, changing context etc. This is more effective that create
 		the unit spec in module. But this direct creation of "complex" native unit is not supported properly.</simpara>
+	</sect2>
+    </sect1>
+
+    <sect1><title>Giving "Changeable" ability to Node</title>
+	<sect2><title>Intro</title>
+	    <simpara>
+		Currently the only MElem is truly mutable, even Unit also can be changed. It make sense to generalize mutable/changeable desing.
+		We can give changeable ability to lower layer, havng method "Mutate" in it. The method actually will change but not mutate
+		(the term "Change" designates here the ability to be changed but not propagate this change to childs).
+	    </simpara>
+	</sect2>
+    </sect1>
+
+    <sect1><title>Having pre-created Root node in the model.</title>
+	<sect2><title>Intro</title>
+	    <simpara>
+		Currently the root is created via rather tricky procedure: env gets it's parent from chromo and creates it. More reasonable
+		would be just pre-create "true Root" and then mutate it with given chromo.
+	    </simpara>
 	</sect2>
     </sect1>
 

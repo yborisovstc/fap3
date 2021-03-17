@@ -12,15 +12,15 @@ MIface* Vertu::MUnit_getLif(const char *aType)
 {
     MIface* res = nullptr;
     if (res = checkLif<MVert>(aType));
-    else res = Unit::MUnit_getLif(aType);
+    else res = Unit::MNode_getLif(aType);
     return res;
 }
 
 MIface* Vertu::MVert_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MUnit>(aType));
-    else res = MUnit_getLif(aType);
+    if (res = checkLif<MVert>(aType));
+    else res = MNode_getLif(aType);
     return res;
 }
 

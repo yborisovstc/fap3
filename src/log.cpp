@@ -1,0 +1,248 @@
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
+#include <sys/time.h>
+#include <stdexcept> 
+#include <stdarg.h> 
+
+#include "log.h"
+#include "guri.h"
+#include "mnode.h"
+#include "chromo.h"
+
+const int Logrec::KLogRecBufSize = 1400;
+
+const char* CtgText[ECtg_Max] = {"ERR", "WRN", "INF", "DBG"};
+const char* KColSep = "; ";
+const char KFieldSep = ';';
+
+string TLogGetField(const string& aPack, size_t& aBeg, bool aESep = true)
+{
+    size_t end = aPack.find_first_of(KFieldSep, aBeg);
+    assert(!aESep || end != string::npos);
+    string res = aPack.substr(aBeg, end - aBeg);
+    aBeg = end + 1;
+    return res;
+}
+
+TLog::TLog(TLogRecCtg aCtg, const MNode* aAgt)
+{
+    stringstream ss;
+    struct timeval tp;
+    gettimeofday(&tp, NULL);
+    long int ms = tp.tv_sec * 1000000 + tp.tv_usec;
+    ss << ms;
+    mTimestampS = ss.str();
+    mCtgS = CtgText[aCtg];
+    if (aAgt != NULL) {
+	GUri uri;
+	aAgt->getUri(uri);
+	mNodeUriS = uri.toString();
+    }
+}
+
+TLog::TLog(const string& aString)
+{
+    size_t beg = 0;
+    mTimestampS = TLogGetField(aString, beg);
+    mCtgS = TLogGetField(aString, beg);
+    mMutIdS = TLogGetField(aString, beg);
+    mNodeUriS = TLogGetField(aString, beg);
+    mContent = TLogGetField(aString, beg);
+}
+
+TLog::operator string() const
+{
+    return mTimestampS + KFieldSep + mCtgS + KFieldSep + mMutIdS + KFieldSep + mNodeUriS + KFieldSep + mContent;
+}
+
+TLog& TLog::operator +(const string& aString)
+{
+    mContent += aString;
+    return *this;
+}
+
+string TLog::TimestampS() const
+{
+    return mTimestampS;
+}
+
+string TLog::NodeUriS() const
+{
+    return mNodeUriS;
+}
+
+string TLog::MutIdS() const
+{
+    return mMutIdS;
+}
+
+int TLog::MutId() const
+{
+    int res;
+    istringstream ss(mMutIdS);
+    ss >> res;
+    return res;
+}
+
+string TLog::CtgS() const
+{
+    return mCtgS;
+}
+
+
+Logrec::Logrec(const string& aLogFileName): iLogFileName(aLogFileName), iLogFileValid(),
+    iObs(NULL), mCtxMutId(-1)
+{
+    for (int ct = 0; ct < ECtg_Max; ct++) {
+	mStat[ct] = 0;
+    }
+    //remove(iLogFileName.c_str()); 
+    rename(iLogFileName.c_str(), (iLogFileName + "~old").c_str()); 
+    iLogFile = fopen(iLogFileName.c_str(), "w+");
+    if(iLogFile)
+    {
+	iLogFileValid=true;
+	//fputs("----------New Log----------\015\012", iLogFile);
+	fflush(iLogFile);
+    }
+    else
+	iLogFileValid = false;
+};
+
+Logrec::~Logrec()
+{
+    if (iObs != NULL) {
+	iObs->OnLogRecDeleting(this);
+    }
+    if (iLogFileValid) 
+	fclose(iLogFile);
+}
+
+void Logrec::WriteRecord(const char* aText)
+{
+    if (iLogFile)
+    {
+	fputs(aText, iLogFile);
+	fputs("\015\012", iLogFile);
+	fflush(iLogFile);
+    }
+}
+
+void Logrec::WriteRecord(const string& aText)
+{
+    WriteRecord(aText.c_str());
+}
+
+void Logrec::WriteFormat(const char* aFmt,...)
+{
+    char buf[KLogRecBufSize] = "";
+    va_list list;
+    va_start(list,aFmt);
+    vsprintf(buf, aFmt, list);
+    int len = strlen(buf);
+    WriteRecord(buf);
+    va_end(list);
+}
+
+void Logrec::Write(TLogRecCtg aCtg, const MNode* aNode, const char* aFmt,...)
+{
+    char buf1[KLogRecBufSize] = "";
+    stringstream ss;
+    struct timeval tp;
+    gettimeofday(&tp, NULL);
+    //long int ms = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+    long int ms = tp.tv_sec * 1000000 + tp.tv_usec;
+    ss << ms << KColSep;
+    ss << CtgText[aCtg] << KColSep;
+    int mutid = mCtxMutId;
+    if (mutid != -1) {
+	ss << mutid << KColSep;
+    }
+    else {
+	ss << KColSep;
+    }
+    if (aNode != NULL) {
+	GUri fullpath;
+	aNode->getUri(fullpath);
+	ss << fullpath.toString() << KColSep;
+    }
+    va_list list;
+    va_start(list,aFmt);
+    vsprintf(buf1, aFmt, list);
+    ss << buf1;
+    WriteRecord(ss.str().c_str());
+    if (iObs != NULL) {
+	iObs->OnLogAdded(ms, aCtg, aNode, buf1, mutid);
+    }
+    va_end(list);
+}
+
+void Logrec::Write(TLogRecCtg aCtg, MNode* aNode, const ChromoNode& aMut, const char* aFmt,...)
+{
+    char buf1[KLogRecBufSize] = "";
+    stringstream ss;
+    ss << CtgText[aCtg] << KColSep;
+    int lineid = aMut.LineId();
+    ss << lineid << KColSep;
+    if (aNode != NULL) {
+	GUri fullpath;
+	aNode->getUri(fullpath);
+	ss << fullpath.toString() << KColSep;
+    }
+    va_list list;
+    va_start(list,aFmt);
+    vsprintf(buf1, aFmt, list);
+    ss << buf1;
+    WriteRecord(ss.str().c_str());
+    mStat[aCtg]++;
+    if (iObs != NULL) {
+	iObs->OnLogAdded(0, aCtg, aNode, buf1, lineid);
+    }
+    va_end(list);
+}
+
+void Logrec::Write(const TLog& aRec)
+{
+    WriteRecord(aRec);
+    if (iObs != NULL) {
+	iObs->OnLogAdded(aRec);
+    }
+}
+
+void Logrec::Flush()
+{
+    if (iLogFile)
+	fflush(iLogFile);
+}
+
+bool Logrec::AddLogObserver(MLogObserver* aObs)
+{
+    bool res = false;
+    if (aObs != NULL && iObs == NULL) {
+	iObs = aObs;
+	iObs->AddObservable(this);
+	res = true;
+    }
+    return res;
+}
+
+void Logrec::RemoveLogObserver(MLogObserver* aObs)
+{
+    assert(aObs == iObs);
+    iObs->RemoveObservable(this);
+    iObs = NULL;
+}
+
+void Logrec::SetContextMutId(int aMutId)
+{
+    if (mCtxMutId != aMutId) {
+	mCtxMutId = aMutId;
+    }
+}
+
+int Logrec::GetStat(TLogRecCtg aCtg) const
+{
+    return mStat[aCtg];
+}
+

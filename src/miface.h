@@ -2,6 +2,7 @@
 #define __FAP3_MIFACE_H
 
 #include <string>
+#include <iostream>
 
 using namespace std;
 
@@ -18,10 +19,12 @@ class MIface
 	/** @brief Gets local interface of type aType */
 	virtual MIface* getLif(const char *aType) { return nullptr;}
 	template <class T> T* lIf(T* aInst) {return aInst = dynamic_cast<T*>(getLif(aInst->Type()));}
+	template <class T> const T* lIf(T* aInst) const { MIface* self = const_cast<MIface*>(this); return aInst = dynamic_cast<T*>(self->getLif(aInst->Type()));}
 	/** @brief outputs dump
 	 * @param aInt  indentation level
 	 * */
-	virtual void dump(int aIdt) const {};
+	inline void dump(int aLevel, int aIdt = 0) const { doDump(aLevel, aIdt, std::cout);}
+	virtual void doDump(int aLevel, int aIdt, std::ostream& aOs) const {}
 };
 
 /** @brief Connection (2-ways relation) interface

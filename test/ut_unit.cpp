@@ -50,7 +50,7 @@ void Ut_unit::test_nav_1()
     comp2->mCpOwner.connect(&comp2_1->mCpOwned);
 
     GUri uri1("Comp2.Comp2_1");
-    MUnit* res1 = owner->getNode(uri1);
+    MNode* res1 = owner->getNode(uri1);
     CPPUNIT_ASSERT_MESSAGE("Failed getting Comp2_1", res1 == comp2_1);
 
     delete owner;
