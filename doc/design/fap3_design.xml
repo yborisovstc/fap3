@@ -209,7 +209,7 @@
 		    <simpara>At lease one related use-case is MElem <xref linkend="gls_adp"/> that can mutate managed agent basing on the input
 			receiveing chromo. Current chromo desing potentially allows copy (ref DChr2 data based state) but in rather messy way.</simpara>
 		</listitem>
-		<listitem>Redesing connpoint extender. Ref <ulink url="../../../grayb/doc/design/index.html#ds_di_wrcpe"/> for desing issue.</listitem>
+		<listitem>Redesign connpoint extender. Ref <ulink url="../../../grayb/doc/design/index.html#ds_di_wrcpe"/> for desing issue.</listitem>
 		<listitem>
 		    <glossterm id="ds_itr_sp_rnac">Redesing notification of agent change.</glossterm>
 		    <simpara>
@@ -221,6 +221,9 @@
 		<listitem>
 		    Redesing URI to make is simpler and convenient.
 		    <simpara>Ref <xref linkend="ds_urd"/> for details.</simpara>
+		</listitem>
+		<listitem>
+			Avoid necessity of having dedicated chromo for mutation in inheritable agents. Ref <xref linend="ds_adcm"/> for details.
 		</listitem>
 	    </itemizedlist>
 	</sect2>
@@ -844,6 +847,22 @@
 	</sect2>
     </sect1>
 
+    <sect1 id="sec_att"><title>Is it possible to avoid using "attached" property.</title>
+	<sect2><title>Intro</title>
+	    <simpara>
+		In FAP2 the <xref linkend="gls_osm"/> mutation solution uses agent "attached-to-chromo" property to decide if the agent mutation
+		    needs to be propagated or not. However this property is rather trkcky calculated. The question is if this property
+		    is fundamental part of <xref linkend="gls_osm"/> mutation process or can be replaced by simpler mechanism.
+	    </simpara>
+	</sect2>
+	<sect2><title>Approach#1: using mutation context.</title>
+	    <simpara>
+		"Deattached" agents are the agents created by parent in the scope of parents creating its hier. So if we set mutation context as 
+		the created hier then we can use the context to stop propagating the mutation.
+	    </simpara>
+	</sect2>
+    </sect1>
+
     <sect1 id="ds_f2dw"><title>FAP2 design gaps and weaknesses</title> <sect2 id="ds_f2dw_isr"><title>Ifaces identification scheme is restricted.</title>
 	    <simpara>In <xref linkend="gls_fap2"/> the only ifaces have identification. The focus was to provide native hier creating iface (MUnit) with
 		safe identification mechanism. Other ifaces are identified via MUnit identification plus iface type - so the identifiation scheme is restricted,
@@ -872,6 +891,29 @@
 		Currently the root is created via rather tricky procedure: env gets it's parent from chromo and creates it. More reasonable
 		would be just pre-create "true Root" and then mutate it with given chromo.
 	    </simpara>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_adcm"><title>Avoid necessity of having dedicated chromo for mutation in inheritable agents.</title>
+	<sect2><title>Intro</title>
+	    <simpara>
+		In FAP2 base inheritable agent Elem contains two chromo: one for mutation and another for chromo of itslef. This creates overheads in
+		design. 
+	    </simpara>
+	</sect2>
+	<sect2><title>The reason why it was designed that way in FAP2</title>
+	    <simpara>
+		There is known dilemma in mutable agent - what is the change object - mutation or chromo (list of mutations). In FAP2 it was assumed
+		the the change object is chromo. So the design was corresponding: there was emvedded "mutation" member of Chromo type. Incoming
+		mutation went to this chromo and then the whole chromo was applied.
+	    </simpara>
+	</sect2>
+	<sect2><title>Initial design considerations</title>
+	    <sect3><title>Can be the dilemma solved in favor of "change is mutaion"?</title>
+		<simpara>
+		    Current desing of Chromo2 allows mutation containing chromo. Each mutaion node contains chromo segment.
+		</simpara>
+	    </sect3>
 	</sect2>
     </sect1>
 

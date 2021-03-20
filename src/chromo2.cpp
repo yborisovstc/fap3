@@ -513,6 +513,9 @@ THandle Chromo2Mdl::AddChild(const THandle& aParent, const THandle& aHandle, boo
     C2MdlNode node;
     node.CloneFrom(*child, true);
     node.mOwner = parent;
+    if (!aRecursively) {
+	node.mChromo.clear();
+    }
     parent->mChromo.push_back(node);
     parent->BindTree(parent->mOwner);
     C2MdlNode& res = parent->mChromo.back();
@@ -1884,9 +1887,9 @@ void Chromo2Mdl::rdp_context(istream& aIs, C2MdlNode& aMnode)
 	ResetErr();
 	rdp_context_namespace(aIs, aMnode);
     } else {
+	pos = aIs.tellg();
 	rdp_sep(aIs);
 	if (!IsError()) {
-	    pos = aIs.tellg();
 	    rdp_context_namespace(aIs, aMnode);
 	    if (IsError()) {
 		aIs.seekg(pos, aIs.beg); // Backtrack

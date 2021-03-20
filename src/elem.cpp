@@ -34,159 +34,9 @@ MIface* Elem::MNode_getLif(const char *aType)
 }
 
 
-void Elem::mutate(const ChromoNode& aMut, bool aUpdOnly /*false*/, const MutCtx& aCtx)
+void Elem::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 {
-    bool res = true;
-    TNs root_ns = aCtx.mNs;
-    updateNs(root_ns, aMut); //!!
-
-    MNode* btarg = this; // Base target
-    string sbtarg;
-    if (aMut.AttrExists(ENa_Targ) /* && (aMut.Type() != ENt_Node) */) {
-	sbtarg = aMut.Attr(ENa_Targ);
-	btarg = getNode(sbtarg, root_ns);
-	if (btarg == NULL) {
-	    btarg = getNode(sbtarg, root_ns);
-	    Logger()->Write(EErr, this, "Cannot find base target node [%s]", sbtarg.c_str());
-	    res = false;
-	}
-    }
-
-    for (ChromoNode::Const_Iterator rit = aMut.Begin(); rit != aMut.End() && res; rit++)
-    {
-	ChromoNode rno = (*rit);
-	Logger()->SetContextMutId(rno.LineId());
-	// Get target node by analysis of mut-target and mut-node, ref ds_chr2_cctx_tn_umt
-	MNode* ftarg = btarg;
-	MElem* eftarg = this; // Mutable target
-	MNode* aoftarg = NULL; // Attached owner of target
-	bool exs_targ = rno.AttrExists(ENa_Targ);
-	bool exs_mnode = rno.AttrExists(ENa_MutNode);
-	string starg, smnode;
-	// Set namespace to mut node
-	if (aMut.AttrExists(ENa_NS)) {
-	    if (!rno.AttrExists(ENa_NS)) {
-		rno.SetAttr(ENa_NS, aMut.Attr(ENa_NS));
-	    } else {
-		// TODO Support multiple namespaces, ref ds_chr2_ns_insmns 
-		// Currently the only last namespaces is active
-		//	assert(false);
-	    }
-	}
-	if (exs_targ) {
-	    starg = rno.Attr(ENa_Targ);
-	    ftarg = btarg->getNode(starg, root_ns);
-	    if (!ftarg) {
-		Logger()->Write(EErr, this, "Cannot find target node [%s]", starg.c_str());
-		continue;
-	    }
-	}
-	if (exs_mnode) {
-	    // Transform DHC mutation to OSM mutation
-	    // Transform ENa_Targ: enlarge to ENa_MutNode
-	    smnode = rno.Attr(ENa_MutNode);
-	    ftarg = ftarg->getNode(smnode, root_ns);
-	    if (!ftarg) {
-		Logger()->Write(EErr, this, "Cannot find mut node [%s]", smnode.c_str());
-		continue;
-	    }
-	}
-	if (ftarg != this) {
-	    // Targeted mutation
-	    eftarg = ftarg->lIf(eftarg);
-	    aoftarg = ftarg;
-	    if (!eftarg) {
-		// Target is not mutable, redirect to mutable owner
-		// TODO Should the mut be redirected to attached owner but not just mutable?
-		aoftarg = getMowner(ftarg);
-		eftarg = aoftarg ? aoftarg->lIf(eftarg) : nullptr;
-	    }
-	    if (eftarg) {
-		if (ftarg != aoftarg) {
-		    string newTargUri = ftarg->getUriS(aoftarg);
-		    rno.SetAttr(ENa_Targ, newTargUri);
-		} else {
-		    rno.RmAttr(ENa_Targ);
-		}
-		if (rno.AttrExists(ENa_MutNode)) {
-		    rno.RmAttr(ENa_MutNode);
-		}
-		if (!rno.AttrExists(ENa_Targ)) {
-		    // Correcting target if the mut is component related
-		    TNodeType mtype = rno.Type();
-		    if (mtype == ENt_Change || mtype == ENt_Rm) {
-			// Mutation is for component only, find the comp mutable owner
-			aoftarg = getMowner(ftarg);
-			eftarg = aoftarg->lIf(eftarg);
-			if (ftarg != aoftarg) {
-			    string newTargUri = ftarg->getUriS(aoftarg);
-			    rno.SetAttr(ENa_Targ, newTargUri);
-			}
-		    }
-		}
-	    } else {
-		string ftarg_uri = ftarg->getUriS(NULL);
-		Logger()->Write(EErr, this, "Cannot find mutable target for [%s]", ftarg_uri.c_str());
-	    }
-	} else {
-	    // Local mutation
-	    rno.RmAttr(ENa_Targ);
-	}
-	if (eftarg != this) {
-	    // Redirect the mut to target: no run-time to keep the mut in internal nodes
-	    // Propagate till target owning comp if run-time to keep hidden all muts from parent
-	    /*
-	    ChromoNode madd = eftarg->AppendMutation(rno);
-	    MutCtx mctx(aRunTime ? GetCompOwning(ftarg) : aCtx.mUnit, root_ns);
-	    eftarg->Mutate(false, aCheckSafety, aTrialMode, mctx);
-	    */
-	} else {
-	    // Local mutation
-	    MutCtx mctx(aCtx.mNode, root_ns);
-	    TNodeType rnotype = rno.Type();
-	    if (rnotype == ENt_Node) {
-		MNode* mres = mutAddElem(rno, aUpdOnly, mctx);
-		if (rno.Count() > 0) {
-		    MElem* emres = mres->lIf(emres);
-		    if (!emres) {
-			// There is node chromo but node is not mutable. Mutate it from the current mutable.
-			string targUri = mres->getUriS(this);
-			rno.SetAttr(ENa_Targ, targUri);
-			mutate(rno, false, mctx);
-		    }
-		}
-	    }
-	    else if (rnotype == ENt_Seg) {
-		mutate(rno, aUpdOnly, mctx);
-	    }
-	    else if (rnotype == ENt_Change) {
-		//ChangeAttr(rno, aRunTime, aCheckSafety, aTrialMode, mctx);
-	    }
-	    else if (rnotype == ENt_Cont) {
-		//DoMutChangeCont(rno, aRunTime, aCheckSafety, aTrialMode, mctx);
-	    }
-	    else if (rnotype == ENt_Move) {
-		//MoveNode(rno, aRunTime, aTrialMode, mctx);
-	    }
-	    else if (rnotype == ENt_Import) {
-		//ImportNode(rno, aRunTime, aTrialMode);
-	    }
-	    else if (rnotype == ENt_Rm) {
-		//RmNode(rno, aRunTime, aCheckSafety, aTrialMode, mctx);
-	    }
-	    else if (rnotype == ENt_Note) {
-		// Comment, just accept
-		/*
-		iChromo->Root().AddChild(rno);
-		NotifyNodeMutated(rno, mctx);
-		*/
-	    }
-	    else {
-		//DoSpecificMut(rno, aRunTime, aTrialMode, mctx);
-	    }
-	    Logger()->SetContextMutId();
-	}
-    }
+    Node::mutate(aMut, aUpdOnly, aCtx);
 }
 
 // TODO Roughtly implemeted, re-implement
@@ -209,6 +59,58 @@ MNode* Elem::getMowner(MNode* aNode)
     return nullptr;
 }
 
+MNode* Elem::createHeir(const string& aName, MNode* aContext)
+{
+    return nullptr;
+}
+
+void Elem::setParent(const string& aParent)
+{
+}
+
+bool Elem::appendChild(MNode* aChild)
+{
+    bool res = false;
+    return res;
+}
+
+void Elem::notifyNodeMutated(const ChromoNode& aMut, const MutCtx& aCtx)
+{
+}
+
+void Elem::notifyParentMutated(const TMut& aMut)
+{
+}
+
+void Elem::setCrAttr(const string& aEType, const string& aName)
+{
+    ChromoNode croot = mChromo->Root();
+    string ptype;
+    if (aName.empty()) {
+	// Native base agent, its name is cpp class type
+	mName = aEType;
+    } else {
+	// Inherited native agent, its name is given, type is class extended type
+	mName = aName;
+	// Using short type for parent to be compatible with current version
+	// Needs to consider to use full type
+	ptype = aEType;
+    }
+    croot.SetAttr(ENa_Id, mName);
+    croot.SetAttr(ENa_Parent, ptype);
+}
+
+MNode* Elem::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
+{
+    if (!aUpdOnly) {
+	// Copy just top node, not recursivelly, ref ds_daa_chrc_va
+	mChromo->Root().AddChild(aMut, true, false);
+    }
+    MNode* elem = Node::mutAddElem(aMut, aUpdOnly, aCtx);
+    return elem;
+}
+
+#if 0
 MNode* Elem::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 {
     assert(!aMut.AttrExists(ENa_Comp));
@@ -301,46 +203,20 @@ MNode* Elem::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
     }
     return uelem;
 }
+#endif
 
-MNode* Elem::createHeir(const string& aName, MNode* aContext)
+void Elem::onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx)
 {
-    return nullptr;
-}
-
-void Elem::setParent(const string& aParent)
-{
-}
-
-bool Elem::appendChild(MNode* aChild)
-{
-    bool res = false;
-    return res;
-}
-
-void Elem::notifyNodeMutated(const ChromoNode& aMut, const MutCtx& aCtx)
-{
-}
-
-void Elem::notifyParentMutated(const TMut& aMut)
-{
-}
-
-void Elem::setCrAttr(const string& aEType, const string& aName)
-{
-    ChromoNode croot = mChromo->Root();
-    string ptype;
-    if (aName.empty()) {
-	// Native base agent, its name is cpp class type
-	mName = aEType;
-    } else {
-	// Inherited native agent, its name is given, type is class extended type
-	mName = aName;
-	// Using short type for parent to be compatible with current version
-	// Needs to consider to use full type
-	ptype = aEType;
+    ChromoNode anode = mChromo->Root().AddChild(aMut);
+    const MNode* onode = aOwned->lIf(onode);
+    GUri nuri;
+    onode->getUri(nuri, this);
+    if (anode.AttrExists(ENa_Targ)) {
+	string starg = anode.Attr(ENa_Targ);
+	nuri.append(starg);
     }
-    croot.SetAttr(ENa_Id, mName);
-    croot.SetAttr(ENa_Parent, ptype);
-}
+    anode.SetAttr(ENa_Targ, nuri);
 
+    Node::onOwnedMutated(aOwned, aMut, aCtx);
+}
 

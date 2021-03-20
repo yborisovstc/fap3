@@ -4,6 +4,7 @@
 #include "miface.h"
 
 class MOwned;
+class MutCtx;
 
 /** @brief Native net owner interface
  * */
@@ -19,6 +20,7 @@ class MOwner : public MIface
 	virtual MNode* getNode(const GUri& aUri, const MNode* aOwned) const = 0;
 	virtual MOwned* bindedOwned() = 0;
 	virtual const MOwned* bindedOwned() const = 0;
+	virtual void onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx) = 0;
 };
 
 

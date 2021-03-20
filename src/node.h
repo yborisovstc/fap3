@@ -50,6 +50,8 @@ class Node : public MNode
 		    mHost->getUri(aUri, aBase);
 		}
 		virtual MNode* getNode(const GUri& aUri, const MNode* aOwned) const override { return mHost->getNode(aUri, aOwned);}
+		virtual void onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx) override {
+		    return mHost->onOwnedMutated(aOwned, aMut, aCtx);}
 	    private:
 		Node* mHost;
 	};
@@ -110,6 +112,9 @@ class Node : public MNode
 	void updateNs(TNs& aNs, const ChromoNode& aCnode);
 	MNode* getNode(const GUri& aUri, const MNode* aOwned) const;
 	bool isOwned(const MNode* aComp) const;
+	virtual MNode* mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx);
+	void notifyNodeMutated(const ChromoNode& aMut, const MutCtx& aCtx);
+	virtual void onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx);
     protected:
 	MEnv* mEnv = nullptr;
 	string mName;

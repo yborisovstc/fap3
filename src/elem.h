@@ -29,10 +29,11 @@ class Elem: public Unit, public MElem
 	virtual bool appendChild(MNode* aChild) override;
     protected:
 	MNode* getMowner(MNode* aNode);
-	MNode* mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx);
 	void notifyNodeMutated(const ChromoNode& aMut, const MutCtx& aCtx);
 	void notifyParentMutated(const TMut& aMut);
 	void setCrAttr(const string& aEType, const string& aName);
+	virtual MNode* mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx) override;
+	virtual void onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx) override;
     protected:
 	MChromo* mChromo; /*!< Chromo */
 };

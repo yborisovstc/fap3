@@ -13,10 +13,10 @@
 class Ut_chromo2 : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_chromo2);
-//    CPPUNIT_TEST(test_Chr1);
+    CPPUNIT_TEST(test_Chr1);
 //    CPPUNIT_TEST(test_Chr2);
 //    CPPUNIT_TEST(test_Chr3);
-    CPPUNIT_TEST(test_Chr4);
+//    CPPUNIT_TEST(test_Chr4);
     CPPUNIT_TEST_SUITE_END();
 public:
     virtual void setUp();

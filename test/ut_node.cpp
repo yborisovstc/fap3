@@ -7,6 +7,7 @@
 
 #include "env.h"
 #include "melem.h"
+#include "mchromo.h"
 
 /*
  * This test of MNode interface main operations
@@ -130,17 +131,19 @@ void Ut_node::test_cre_1()
     string spec = specn + string(".") + "chs";
     string log = specn + "_" + ext + ".log";
     mEnv = new Env(spec, log);
-    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv != 0);
+    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv);
     //mEnv->ImpsMgr()->ResetImportsPaths();
     //mEnv->ImpsMgr()->AddImportsPaths("../modules");
     mEnv->constructSystem();
     MNode* root = mEnv->Root();
+    MElem* eroot = root ? root->lIf(eroot) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get root", eroot);
     GUri ruri;
     root->getUri(ruri);
     string ruris = ruri.toString();
-    MElem* eroot = root ? root->lIf(eroot) : nullptr;
-    CPPUNIT_ASSERT_MESSAGE("Fail to get root", eroot);
-    root->dump(0x3,0);
+    root->dump(Node::EDM_Base | Node::EDM_Comps | Node::EDM_Recursive,0);
+    // Save root chromoe
+    eroot->Chromos().Save(specn + "_saved." + ext);
 }
  
 
