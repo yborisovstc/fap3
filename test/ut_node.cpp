@@ -17,7 +17,7 @@
 class Ut_node : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_node);
-    CPPUNIT_TEST(test_nav_1);
+//    CPPUNIT_TEST(test_nav_1);
 //    CPPUNIT_TEST(test_cont_1);
     CPPUNIT_TEST(test_cre_1);
     CPPUNIT_TEST_SUITE_END();
@@ -92,9 +92,11 @@ void Ut_node::test_cont_1()
 {
     cout << endl << "=== Test of MNode base operations ===" << endl;
 
-    Node* owner = new Node("Owner", nullptr);
-    Node* comp1 = new Node("Comp1", nullptr);
-    Node* cont1 = new Content("A", nullptr);
+    MNode* owner = new Node("Owner", nullptr);
+    MNode* comp1 = new Node("Comp1", nullptr);
+    MNode* cont1 = new Content("Cont1", nullptr);
+    MNode* cont2 = new Content("Cont2", nullptr);
+    MNode* cont2_1 = new Content("Cont2_1", nullptr);
     MContent* cont1c = cont1->lIf(cont1c);
     CPPUNIT_ASSERT_MESSAGE("Failed getting cont1c", cont1c);
     cont1c->doDump(0, 0, cout);
@@ -106,16 +108,41 @@ void Ut_node::test_cont_1()
     cont1c->dump(0);
     cres = cont1c->getData(cdata);
     CPPUNIT_ASSERT_MESSAGE("Wrong data", cres && cdata == cwdata);
-    Node* comp2 = new Node("Comp2", nullptr);
-    Node* comp2_1 = new Node("Comp2_1", nullptr);
-    owner->mCpOwner.connect(&comp1->mCpOwned);
-    owner->mCpOwner.connect(&cont1->mCpOwned);
-    owner->mCpOwner.connect(&comp2->mCpOwned);
-    comp2->mCpOwner.connect(&comp2_1->mCpOwned);
+    MNode* comp2 = new Node("Comp2", nullptr);
+    MNode* comp2_1 = new Node("Comp2_1", nullptr);
+    owner->owner()->connect(comp1->owned());
+    owner->owner()->connect(cont1->owned());
+    owner->owner()->connect(cont2->owned());
+    owner->owner()->connect(comp2->owned());
+    comp2->owner()->connect(comp2_1->owned());
+    cont2->owner()->connect(cont2_1->owned());
+
+
+    MContent* cont21c = cont2_1->lIf(cont21c);
+    CPPUNIT_ASSERT_MESSAGE("Failed getting cont21c", cont1c);
+    cwdata = "World";
+    cres = cont21c->setData(cwdata);
+    CPPUNIT_ASSERT_MESSAGE("Failed to set cont21c data", cres);
 
     GUri uri1("Comp2.Comp2_1");
     MNode* res1 = owner->getNode(uri1);
     CPPUNIT_ASSERT_MESSAGE("Failed getting Comp2_1", res1 == comp2_1);
+
+    // testing getContent
+    MContentOwner* cowner = owner->lIf(cowner);
+    string c21data;
+    cres = cowner->getContent(string("Cont2.Cont2_1"), c21data);
+    CPPUNIT_ASSERT_MESSAGE("Failed getting owner Cont2.Cont2_1 data", cres);
+    CPPUNIT_ASSERT_MESSAGE("Wrong owner Cont2.Cont2_1 data", c21data == "World");
+
+    // Dump owner
+    cout << "owner content dump:" << endl;
+    cowner->dump(1,0);
+    ostringstream ss;
+    cowner->doDump(1,0,ss);
+    string dump = ss.str();
+    const string dumpsample("- Cont1: Hello\n- Cont2: nil\n   - Cont2_1: World\n");
+    CPPUNIT_ASSERT_MESSAGE("Wrong conent dump of owner", dump == dumpsample);
 
     delete owner;
 }

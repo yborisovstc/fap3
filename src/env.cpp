@@ -123,7 +123,7 @@ void Env::constructSystem()
 		*/
 		Logger()->Write(EInfo, mRoot, "Started of creating system, spec [%s]", mSpecFile.c_str());
 		MutCtx mc(mRoot, mRoot);
-		mRoot->mutate(root, false, mc);
+		mRoot->mutate(root, false, mc, true);
 		/*
 		Pclock(PEvents::Env_End_Constr, mRoot);
 		gettimeofday(&tp, NULL);

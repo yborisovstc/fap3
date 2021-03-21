@@ -34,9 +34,9 @@ MIface* Elem::MNode_getLif(const char *aType)
 }
 
 
-void Elem::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
+void Elem::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, bool aTreatAsChromo)
 {
-    Node::mutate(aMut, aUpdOnly, aCtx);
+    Node::mutate(aMut, aUpdOnly, aCtx, aTreatAsChromo);
 }
 
 // TODO Roughtly implemeted, re-implement

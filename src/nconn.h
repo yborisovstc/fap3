@@ -260,10 +260,12 @@ class NCpOmi2 : public MNcp<TPif, TRif>
 	virtual bool getId(string& aId) const override { return false;}
 	virtual TPair* at() override { return nullptr;}
 	virtual const TPair* at() const override { return nullptr; }
+	virtual const TPair* at(const string aId) const { return mPairs.count(aId) > 0 ? mPairs.at(aId) : nullptr;;}
 	virtual TPair* at(const string aId) { return mPairs.count(aId) > 0 ? mPairs.at(aId) : nullptr;;}
 	// Local
 	virtual int pcount() const { return mPairs.size(); }
 	virtual const TPair* pairAt(int aInd) const { for (auto it = mPairs.begin(); it != mPairs.end(); it++) if (aInd-- == 0) return it->second; return nullptr; }
+	virtual TPair* pairAt(int aInd) { for (auto it = mPairs.begin(); it != mPairs.end(); it++) if (aInd-- == 0) return it->second; return nullptr; }
     protected:
 	TPairs mPairs;
 };

@@ -15,6 +15,7 @@
 #include "node.h"
 #include "unit.h"
 #include "elem.h"
+#include "content.h"
 #include "chromo2.h"
 
 // TODO [YB] To import from build variable
@@ -26,7 +27,7 @@ const string KChromRarg_Chs = "chs";
 
 /** Native agents factory registry */
 const ProvDef::TFReg ProvDef::mReg ( {
-	Item<Node>(), Item<Unit>(), Item<Elem>(),
+	Item<Node>(), Item<Unit>(), Item<Elem>(), Item<Content>(),
 /*
 	Item<Vertu>(), Item<Vertp>(), Item<Syst>(), Item<Systp>(), Item<Vert>(),
 	Item<ACapsule>(), Item<Edge>(), Item<Aedge>(), Item<AMod>(), Item<AImports>(),
@@ -64,41 +65,9 @@ ProvDef::~ProvDef()
 
 void ProvDef::getNodesInfo(vector<string>& aInfo)
 {
-    /*
-    aInfo.push_back(Elem::Type());
-    aInfo.push_back(Edge::Type());
-    aInfo.push_back(Aedge::Type());
-    aInfo.push_back(Vert::Type());
-    aInfo.push_back(Vertp::Type());
-    aInfo.push_back(Prop::Type());
-    aInfo.push_back(Description::Type());
-    aInfo.push_back(ConnPointBase::Type());
-    aInfo.push_back(ConnPointMc::Type());
-    aInfo.push_back(Syst::Type());
-    aInfo.push_back(Incaps::Type());
-    aInfo.push_back(DInt::Type());
-    aInfo.push_back(DNInt::Type());
-    aInfo.push_back(AIncInt::Type());
-    aInfo.push_back(AAddInt::Type());
-    aInfo.push_back(AFAddInt::Type());
-    aInfo.push_back(AFSubInt::Type());
-    aInfo.push_back(AFLimInt::Type());
-    aInfo.push_back(AFDivInt::Type());
-    aInfo.push_back(AFGTInt::Type());
-    aInfo.push_back(AFBoolToInt::Type());
-    aInfo.push_back(AFConvInt::Type());
-    aInfo.push_back(AFIntToVect::Type());
-    aInfo.push_back(AFunIntRes::Type());
-    aInfo.push_back(ExtenderAgent::Type());
-    aInfo.push_back(AExtender::Type());
-    aInfo.push_back(StateAgent::Type());
-    aInfo.push_back(ATrIncInt::Type());
-    aInfo.push_back(ATrSubInt::Type());
-    aInfo.push_back(ATrMplInt::Type());
-    aInfo.push_back(ATrDivInt::Type());
-    aInfo.push_back(ASocket::Type());
-    aInfo.push_back(ADes::Type());
-    */
+    for (auto elem : mReg) {
+	aInfo.push_back(elem.first);
+    }
 }
 
 const string& ProvDef::modulesPath() const

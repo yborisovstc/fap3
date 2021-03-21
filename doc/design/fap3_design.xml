@@ -47,6 +47,16 @@
 	    <glossdef> <para>Agents specific chromo languge.</para> <para>
 		    The approach that allows specific mutations and even chromo syntax for some agents.
 		    Ref <xref linkend="ds_ascl"/> for details.</para></glossdef> </glossentry>
+	<glossentry id="gls_cac"><glossterm>CAC</glossterm> <acronym>CP</acronym>
+	    <glossdef> <para>Change As Chromo but not mutation</para> <para>
+		Approach of representing model agents change. Ref <xref linkend="ds_adcm"/> for details.
+		    Ref <xref linkend="gls_cam"/> for alternative approach.
+	</para></glossdef> </glossentry>
+	<glossentry id="gls_cam"><glossterm>CAM</glossterm> <acronym>CP</acronym>
+	    <glossdef> <para>Change As Mutation but not chromo</para> <para>
+		Approach of representing model agents change. Ref <xref linkend="ds_adcm"/> for details.
+		    Ref <xref linkend="gls_cac"/> for alternative approach.
+	</para></glossdef> </glossentry>
 	<glossentry id="gls_cp"><glossterm>CP</glossterm> <acronym>CP</acronym>
 	    <glossdef> <para>Connection Point</para> <para>
 		    Element that is used as endpoint of connections between systems.  
@@ -205,9 +215,11 @@
 		    <simpara>Ref <ulink url="../../../grayb/doc/design/index.html#ds_dmm_irta"/> for details.</simpara>
 		</listitem>
 		<listitem>
-		    Redesign chromo to be really copyable.
+		    Redesign chromo to make it really copyable.
 		    <simpara>At lease one related use-case is MElem <xref linkend="gls_adp"/> that can mutate managed agent basing on the input
-			receiveing chromo. Current chromo desing potentially allows copy (ref DChr2 data based state) but in rather messy way.</simpara>
+			receiveing chromo. Current chromo desing potentially allows copy (ref DChr2 data based state) but in rather messy way.
+			Ref <xref linkend="ds_mcrc"/>
+		</simpara>
 		</listitem>
 		<listitem>Redesign connpoint extender. Ref <ulink url="../../../grayb/doc/design/index.html#ds_di_wrcpe"/> for desing issue.</listitem>
 		<listitem>
@@ -223,7 +235,7 @@
 		    <simpara>Ref <xref linkend="ds_urd"/> for details.</simpara>
 		</listitem>
 		<listitem>
-			Avoid necessity of having dedicated chromo for mutation in inheritable agents. Ref <xref linend="ds_adcm"/> for details.
+			Avoid necessity of having dedicated chromo for mutation in inheritable agents. Ref <xref linkend="ds_adcm"/> for details.
 		</listitem>
 	    </itemizedlist>
 	</sect2>
@@ -530,7 +542,7 @@
 		    <programlisting>
 			model_spec = mutation_create_chromo;
 			chromo = chromo_node { node_separator, chromo_node };
-			chromo_node = ctx_mutation | segment | mutation_create_chromo;
+			chromo_node = ctx_mutation | segment_target | segment_namespace | mutation_create_chromo;
 			ctx_mutation = [context, separator ]  mutation;
 			ctx_segment = segment_target | segment_namespace;
 			segment_namespace = context_namespace_ext, [separator], segment;
@@ -579,10 +591,13 @@
 			node_uri = uri;
 			module_uri = uri;
 			content_uri = uri;
+			node_name = name;
 			mutation_remove = "!" separator, node_uri;
+			(* There is alternative variant, where the target should be owner of node being removed:
+			mutation_remove = "!" separator, node_name;
+			*)
 			mutation_comment = "#" separator, string
 			mutation_connect = uri "~" (uri | mutation_create | segment_target | segment_namespace);
-			node_uri = uri;
 			mutation_connect = left_pair_spec, separator "~" separator, right_pair_spec;
 			left_pair_spec = uri;
 			right_pair_spec = pair_uri | right_pair_creation;
@@ -749,9 +764,27 @@
 	    <simpara>
 		This section if for discussing specific content desing solution. In earlier FAP version the complex content was implemented as
 		unit components, i.e. was the part of model native hier. In further FAP versions this was changed - the content was moved from native hier
-		to Unit, so specific MUnit API was introduced. This idea was to simplify native hier thus to improve the model performance. 
+		to Unit internals, so specific MUnit API was introduced. This idea was to simplify native hier thus to improve the model performance. 
 	    </simpara>
 	    <simpara>Current FAP3 content designg is not perfect obviously. </simpara>
+	</sect2>
+	<sect2 id="ds_dce_uc"><title>Use-cases</title>
+	    <sect3 id="ds_dce_uc_01"><title>[DCE_UC_01] Function result as content.</title>
+		<simpara>
+		    There was such technic used to visualize function - dedicated content was created for the function result. This content was
+		    observed from UI and visualized in a compact manner (even inside the function agent visial representation).
+		</simpara>
+	    </sect3>
+	    <sect3 id="ds_dce_uc_02"><title>[DCE_UC_02] Model visualizatio: content is hidden.</title>
+		<simpara>
+		    The content is normally hidden when model is visualized. Oherwize the structure were very complex and hard upderstandable.
+		</simpara>
+	    </sect3>
+	    <sect3 id="ds_dce_uc_03"><title>[DCE_UC_03] Self content</title>
+		<simpara>
+		    To optimize the model some agents (state for instance) can support content by itself.
+		</simpara>
+	    </sect3>
 	</sect2>
 	<sect2><title>Pros</title>
 	    <sect3><title>Content language is no needed, chromo language is used instead.</title>
@@ -767,7 +800,7 @@
 		    |      Provided : Prop = 'Iface1'; Required : Prop = 'Iface2;
 		    |  } 
 		</programlisting>
-		<simpara>One more example of <xref lidkend="gls_dce"/> - Debug property.</simpara>
+		<simpara>One more example of <xref linkend="gls_dce"/> - Debug property.</simpara>
 		    |  Agt : AStatec {
 		    |      Debug : Prop {
 		    |          Update = "yes";
@@ -786,18 +819,31 @@
 		</simpara>
 	    </sect3>
 	</sect2>
-	<sect2><title>Desing outline</title>
-	    <sect3><title>MProp iface and Prop node</title>
+	<sect2 id="ds_dce_dso"><title>Desing outline</title>
+	    <sect3><title>MCont iface and Content node</title>
 		<simpara>
 		    We need to introduce new elements of native hier - node. Node can just support owner-owned relation and have content.
-		    Aslo dedicated iface "MProp" needs to be defined to support property (i.e. content). It makes sense that normal agents doesn't implement.
+		    Aslo dedicated iface "MCont" needs to be defined to support property (i.e. content). It makes sense that normal agents doesn't implement.
 		    Agent Prop is implemented this iface. Prop can owns other Props only. 
 		</simpara>
 	    </sect3>
-	    <sect3><title>MProp specific mutation - "set value"</title>
+	    <sect3><title>Content nodes (properties) are distinguish from ohter nodes.</title>
 		<simpara>
-		    Interesting but if keeping content is the ability just MProp nodes then the mutation "Content" gets only MProp specific, ref
+		    We need to means of distinguishing of MCont node from other. This is required to process properties in a separate manner, ref
+			use-cases <xref linkend="ds_dce_uc_01"/>,  <xref linkend="ds_dce_uc_02"/>
+		</simpara>
+	    </sect3>
+	    <sect3><title>Content provider specific mutation - "set value"</title>
+		<simpara>
+		    Interesting but if keeping content is the ability just Content nodes then the mutation "Content" gets only MCont specific, ref
 		    <xref linkend="ds_cii_ascl"/> for related desing item.
+		</simpara>
+	    </sect3>
+	    <sect3 id="ds_dce_dso_coi"><title>Do we need to have also iface for content owner?</title>
+		<simpara>
+		    This iface could be indented for nodes that owns content provider. The iface could contain FAP2-like content API -
+		    to get content by name, URI etc. Potentially this will be simple wrappers over narive hier and MCont but potentially the iface
+		    can make content desing more clear.
 		</simpara>
 	    </sect3>
 	    <sect3><title>How to notify of content change.</title>
@@ -903,7 +949,8 @@
 	</sect2>
 	<sect2><title>The reason why it was designed that way in FAP2</title>
 	    <simpara>
-		There is known dilemma in mutable agent - what is the change object - mutation or chromo (list of mutations). In FAP2 it was assumed
+		There is known dilemma in mutable agent - what is the change object - mutation (<xref linkend="gls_cam"/> approach) or
+		    chromo (list of mutations) (<xref linkend="gls_cac"/> approach). In FAP2 it was assumed
 		the the change object is chromo. So the design was corresponding: there was emvedded "mutation" member of Chromo type. Incoming
 		mutation went to this chromo and then the whole chromo was applied.
 	    </simpara>
@@ -911,10 +958,26 @@
 	<sect2><title>Initial design considerations</title>
 	    <sect3><title>Can be the dilemma solved in favor of "change is mutaion"?</title>
 		<simpara>
-		    Current desing of Chromo2 allows mutation containing chromo. Each mutaion node contains chromo segment.
+		    Current desing of Chromo2 allows mutation containing chromo. Each mutaion node contains chromo segment. So let's
+			apply <xref linkend="gls_cam"/> for FAP3.
 		</simpara>
 	    </sect3>
 	</sect2>
+	<sect2 id="ds_adcm_pamcc"><title>Problem with applying mutation_create_chromo.</title>
+	    <sect3><title>Intro</title>
+		<simpara>
+		    Wiht <xref linkend="gls_cam"/> in FAP3 the problem occurs whent we apply mutation_create_chromo. To apply
+			this mutation we need to apply "create" mutation first and then the embedded chromo as segment. But for
+			that we need to transform the given mut to segment. Current chromo design doesn't allow to do it properly till
+		    <xref linkend="ds_mcrc"/> is not done. 
+		</simpara>
+		<simpara>There are two options: #1 to disable mutation_create_chromo at all, #2 to have <xref linkend="ds_mcrc"/> done and 
+		    transform mut to segment in mutAddEem. Let's use workaround ATM, ref code Node::mutate() aTreatAsChromo param.</simpara>
+	    </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_mcrc"><title>Redesign chromo to make it really copyable.</title>
     </sect1>
 
 

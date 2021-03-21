@@ -33,6 +33,7 @@ MIface* Node::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
     if (res = checkLif<MNode>(aType));
+    else if (res = checkLif<MContentOwner>(aType));
     return res;
 }
 
@@ -54,16 +55,16 @@ void Node::MNode_doDump(int aLevel, int aIdt, ostream& aOs) const
 }
 
 
-MNode* Node::getComp(const string& aId)
+const MNode* Node::getComp(const string& aId) const
 {
-    MOwned* ores = mCpOwner.at(aId);
-    MNode* res = ores ? ores->lIf(res) : nullptr;
+    const MOwned* ores = mCpOwner.at(aId);
+    const MNode* res = ores ? ores->lIf(res) : nullptr;
     return res;
 }
 
-MNode* Node::getNode(const GUri& aUri)
+const MNode* Node::getNode(const GUri& aUri) const
 {
-    MNode* res = nullptr;
+    const MNode* res = nullptr;
     if (aUri.isAbsolute()) {
 	//Owner()->getNode(aUri, this);
 	if (Owner()) {
@@ -159,62 +160,74 @@ MNode* Node::getNode(const string& aName, const TNs& aNs)
     return res;
 }
 
-void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
+void Node::mutSegment(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 {
     bool res = true;
     TNs root_ns = aCtx.mNs;
     updateNs(root_ns, aMut); //!!
 
-    MNode* btarg = this; // Base target
-    string sbtarg;
+    MNode* targ = this; // Base target
+    string starg;
     if (aMut.AttrExists(ENa_Targ) /* && (aMut.Type() != ENt_Node) */) {
-	sbtarg = aMut.Attr(ENa_Targ);
-	btarg = getNode(sbtarg, root_ns);
-	if (btarg == NULL) {
-	    btarg = getNode(sbtarg, root_ns);
-	    Logger()->Write(EErr, this, "Cannot find base target node [%s]", sbtarg.c_str());
+	starg = aMut.Attr(ENa_Targ);
+	targ = getNode(starg, root_ns);
+	if (!targ) {
+	    targ = getNode(starg, root_ns);
+	    Log(TLog(EErr, this) + "Cannot find target node [" + starg + "]");
 	    res = false;
 	}
     }
-
     for (ChromoNode::Const_Iterator rit = aMut.Begin(); rit != aMut.End() && res; rit++)
     {
 	ChromoNode rno = (*rit);
-	Logger()->SetContextMutId(rno.LineId());
-	// Get target node by analysis of mut-target and mut-node, ref ds_chr2_cctx_tn_umt
-	MNode* ftarg = btarg;
-	bool exs_targ = rno.AttrExists(ENa_Targ);
-	bool exs_mnode = rno.AttrExists(ENa_MutNode);
-	string starg, smnode;
-	// Set namespace to mut node
-	if (aMut.AttrExists(ENa_NS)) {
-	    if (!rno.AttrExists(ENa_NS)) {
-		rno.SetAttr(ENa_NS, aMut.Attr(ENa_NS));
-	    } else {
-		// TODO Support multiple namespaces, ref ds_chr2_ns_insmns 
-		// Currently the only last namespaces is active
-		//	assert(false);
-	    }
+	MutCtx mctx(aUpdOnly ? targ : aCtx.mNode, root_ns);
+	targ->mutate(rno, false, mctx);
+    }
+}
+
+void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, bool aTreatAsChromo)
+{
+    bool res = true;
+    TNs root_ns = aCtx.mNs;
+    updateNs(root_ns, aMut); //!!
+
+    ChromoNode rno = aMut;
+    Logger()->SetContextMutId(rno.LineId());
+    // Get target node by analysis of mut-target and mut-node, ref ds_chr2_cctx_tn_umt
+    MNode* targ = this;
+    bool exs_targ = rno.AttrExists(ENa_Targ);
+    bool exs_mnode = rno.AttrExists(ENa_MutNode);
+    string starg, smnode;
+    // Set namespace to mut node
+    if (aMut.AttrExists(ENa_NS)) {
+	if (!rno.AttrExists(ENa_NS)) {
+	    rno.SetAttr(ENa_NS, aMut.Attr(ENa_NS));
+	} else {
+	    // TODO Support multiple namespaces, ref ds_chr2_ns_insmns 
+	    // Currently the only last namespaces is active
+	    //	assert(false);
 	}
-	if (exs_targ) {
-	    starg = rno.Attr(ENa_Targ);
-	    ftarg = btarg->getNode(starg, root_ns);
-	    if (!ftarg) {
-		Logger()->Write(EErr, this, "Cannot find target node [%s]", starg.c_str());
-		continue;
-	    }
+    }
+    if (exs_targ) {
+	starg = rno.Attr(ENa_Targ);
+	targ = targ->getNode(starg, root_ns);
+	if (!targ) {
+	    Logger()->Write(EErr, this, "Cannot find target node [%s]", starg.c_str());
+	    res = false;
 	}
-	if (exs_mnode) {
-	    // Transform DHC mutation to OSM mutation
-	    // Transform ENa_Targ: enlarge to ENa_MutNode
-	    smnode = rno.Attr(ENa_MutNode);
-	    ftarg = ftarg->getNode(smnode, root_ns);
-	    if (!ftarg) {
-		Logger()->Write(EErr, this, "Cannot find mut node [%s]", smnode.c_str());
-		continue;
-	    }
+    }
+    if (res && exs_mnode) {
+	// Transform DHC mutation to OSM mutation
+	// Transform ENa_Targ: enlarge to ENa_MutNode
+	smnode = rno.Attr(ENa_MutNode);
+	targ = targ->getNode(smnode, root_ns);
+	if (!targ) {
+	    Logger()->Write(EErr, this, "Cannot find mut node [%s]", smnode.c_str());
+	    res = false;
 	}
-	if (ftarg != this) {
+    }
+    if (res) {
+	if (targ != this) {
 	    // Targeted mutation
 	    rno.RmAttr(ENa_Targ);
 	    if (rno.AttrExists(ENa_MutNode)) {
@@ -225,52 +238,44 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 	    if (mtype == ENt_Change || mtype == ENt_Rm) {
 		// Mutation is for component only, find the comp mutable owner
 		/*
-		aoftarg = getMowner(ftarg);
-		eftarg = aoftarg->lIf(eftarg);
-		if (ftarg != aoftarg) {
-		    string newTargUri = ftarg->getUriS(aoftarg);
-		    rno.SetAttr(ENa_Targ, newTargUri);
-		}
-		*/
+		   aoftarg = getMowner(targ);
+		   eftarg = aoftarg->lIf(eftarg);
+		   if (targ != aoftarg) {
+		   string newTargUri = targ->getUriS(aoftarg);
+		   rno.SetAttr(ENa_Targ, newTargUri);
+		   }
+		   */
 	    }
 	    // Redirect the mut to target: no run-time to keep the mut in internal nodes
 	    // Propagate till target owning comp if run-time to keep hidden all muts from parent
-	    MutCtx mctx(aUpdOnly ?ftarg : aCtx.mNode, root_ns);
-	    ftarg->mutate(rno, false, mctx);
-	} else {
+	    MutCtx mctx(aUpdOnly ?targ : aCtx.mNode, root_ns);
+	    targ->mutate(rno, false, mctx);
+	} else  {
 	    // Local mutation
 	    rno.RmAttr(ENa_Targ);
 	    MutCtx mctx(aCtx.mNode, root_ns);
 	    TNodeType rnotype = rno.Type();
-	    if (rnotype == ENt_Node) {
+	    if (rnotype == ENt_Seg || aTreatAsChromo) {
+		mutSegment(rno, aUpdOnly, mctx);
+	    } else if (rnotype == ENt_Node) {
 		MNode* mres = mutAddElem(rno, aUpdOnly, mctx);
-	    }
-	    else if (rnotype == ENt_Seg) {
-		mutate(rno, aUpdOnly, mctx);
-	    }
-	    else if (rnotype == ENt_Change) {
+	    } else if (rnotype == ENt_Change) {
 		//ChangeAttr(rno, aRunTime, aCheckSafety, aTrialMode, mctx);
-	    }
-	    else if (rnotype == ENt_Cont) {
-		//DoMutChangeCont(rno, aRunTime, aCheckSafety, aTrialMode, mctx);
-	    }
-	    else if (rnotype == ENt_Move) {
+	    } else if (rnotype == ENt_Cont) {
+		mutContent(rno, aUpdOnly, mctx);
+	    } else if (rnotype == ENt_Move) {
 		//MoveNode(rno, aRunTime, aTrialMode, mctx);
-	    }
-	    else if (rnotype == ENt_Import) {
+	    } else if (rnotype == ENt_Import) {
 		//ImportNode(rno, aRunTime, aTrialMode);
-	    }
-	    else if (rnotype == ENt_Rm) {
-		//RmNode(rno, aRunTime, aCheckSafety, aTrialMode, mctx);
-	    }
-	    else if (rnotype == ENt_Note) {
+	    } else if (rnotype == ENt_Rm) {
+		mutRemove(rno, aUpdOnly, mctx);
+	    } else if (rnotype == ENt_Note) {
 		// Comment, just accept
 		/*
-		iChromo->Root().AddChild(rno);
-		NotifyNodeMutated(rno, mctx);
-		*/
-	    }
-	    else {
+		   iChromo->Root().AddChild(rno);
+		   NotifyNodeMutated(rno, mctx);
+		   */
+	    } else {
 		//DoSpecificMut(rno, aRunTime, aTrialMode, mctx);
 	    }
 	    Logger()->SetContextMutId();
@@ -322,7 +327,6 @@ MNode* Node::getNode(const GUri& aUri, const MNode* aOwned) const
 	}
 	if (res) {
 	    // Blocking the result if it is not owned by requestor
-	    //if (!aOwned->owned()->isOwner(res->owner())) {
 	    if (!res->owned()->isOwner(aOwned->owner())) {
 		res = nullptr;
 	    }
@@ -358,10 +362,10 @@ MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
 	    if (!parent) {
 		// Probably external node not imported yet - ask env for resolving uri
 		/*!!
-		GUri pruri(prnturi);
-		MImportMgr* impmgr = iEnv->ImpsMgr();
-		parent = impmgr->OnUriNotResolved(node, pruri);
-		*/
+		  GUri pruri(prnturi);
+		  MImportMgr* impmgr = iEnv->ImpsMgr();
+		  parent = impmgr->OnUriNotResolved(node, pruri);
+		  */
 	    }
 	    if (parent) {
 		if (node == this) {
@@ -373,12 +377,14 @@ MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
 			mutadded = true;
 			// Mutate object ignoring run-time option. This is required to keep nodes chromo even for inherited nodes
 			// To avoid this inherited nodes chromo being attached we just don't attach inherited nodes chromo
-			TNs ns(aCtx.mNs);
-			ns.push_back(uelem);
-			MutCtx ctx(aCtx.mNode, ns);
-			uelem->mutate(aMut, false, aUpdOnly ? MutCtx(uelem, ns) : ctx);
+			if (aMut.Count() > 0) {
+			    TNs ns(aCtx.mNs);
+			    ns.push_back(uelem);
+			    MutCtx ctx(aCtx.mNode, ns);
+			    uelem->mutate(aMut, false, aUpdOnly ? MutCtx(uelem, ns) : ctx, true);
+			}
 		    } else {
-			Log(TLog(EErr, this) + "Adding node [" + uelem->name() + "] failed");
+			Log(TLog(EErr, this) + "Adding node [" + sname + "] failed");
 		    }
 		} else  {
 		    Log(TLog(EErr, this) + "Adding element [" + sname + "] in node {" + snode + "] - disabled");
@@ -394,6 +400,42 @@ MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
 	notifyNodeMutated(aMut, aCtx);
     }
     return uelem;
+}
+
+void Node::mutRemove(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
+{
+    string snode, sname;
+    MNode* targ = this;
+    if (aMut.AttrExists(ENa_Targ)) {
+	snode = aMut.Attr(ENa_Targ);
+	targ = getNode(snode);
+    }
+    sname = aMut.Attr(ENa_Id);
+    if (targ) {
+	MOwned* owned = owner()->at(sname);
+	owner()->detach(owner()->at(sname));
+	owned->deleteOwned();
+	//node->SetRemoved(aRunTime);
+	Log(TLog(EErr, this) + "Removed node [" + sname + "]");
+    } else {
+	Log(TLog(EErr, this) + "Removing node [" + sname + "] - target node found");
+    }
+    if (!aUpdOnly) {
+	notifyNodeMutated(aMut, aCtx);
+    }
+}
+
+void Node::mutContent(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
+{
+    string snode = aMut.Attr(ENa_MutNode);
+    string sdata = aMut.Attr(ENa_MutVal);
+    bool res = setContent(snode, sdata);
+    if (!res) {
+	Log(TLog(EErr, this) + "Failed changing content of [" + snode + "]");
+    }
+    if (!aUpdOnly) {
+	notifyNodeMutated(aMut, aCtx);
+    }
 }
 
 void Node::notifyNodeMutated(const ChromoNode& aMut, const MutCtx& aCtx)
@@ -412,3 +454,89 @@ void Node::onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const Mu
     }
 }
 
+
+
+
+MIface* Node::MContentOwner_getLif(const char *aType) 
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MContentOwner>(aType));
+    return res;
+}
+
+void Node::MContentOwner_doDump(int aLevel, int aIdt, ostream& aOs) const 
+{
+    for (int i = 0; i < contCount(); i++) {
+	const MContent* cont = getCont(i);
+	string data;
+	bool res = cont->getData(data);
+	offset(aIdt, aOs); aOs << "- "  << cont->contName() << ": " << (res ? data : "nil") << endl;
+	if (aLevel & ECODM_Recursive) {
+	    const MContentOwner* cowner = cont->lIf(cowner);
+	    if (cowner) {
+		cowner->doDump(aLevel, aIdt + Ifu::KDumpIndent, aOs);
+	    }
+	}
+    }
+}
+
+int Node::contCount() const 
+{
+    int res = 0;
+    int cnt = owner()->pcount();
+    for (int i = 0; i < cnt; i++) {
+	const MOwned* owned = owner()->pairAt(i);
+	const MContent* cont = owned->lIf(cont);
+	if (cont) res++;
+    }
+    return res;
+}
+
+MContent* Node::getCont(int aIdx) 
+{
+    MContent* res = nullptr;
+    int cnt = owner()->pcount();
+    int ci = -1;
+    for (int i = 0; i < cnt && ci != aIdx; i++) {
+	MOwned* owned = owner()->pairAt(i);
+	res = owned->lIf(res);
+	if (res) ci++;
+    }
+    return res;
+}
+
+const MContent* Node::getCont(int aIdx) const
+{
+    const MContent* res = nullptr;
+    int cnt = owner()->pcount();
+    int ci = -1;
+    for (int i = 0; i < cnt && ci != aIdx; i++) {
+	const MOwned* owned = owner()->pairAt(i);
+	res = owned->lIf(res);
+	if (res) ci++;
+    }
+    return res;
+}
+
+bool Node::getContent(const GUri& aCuri, string& aRes) const
+{
+    bool res = false;
+    const MNode* node = getNode(aCuri);
+    const MContent* cnode = node ? node->lIf(cnode) : nullptr;
+    if (cnode) {
+	res = cnode->getData(aRes);
+    }
+    return res;
+}
+
+bool Node::setContent(const GUri& aCuri, const string& aData)
+{
+    bool res = false;
+    MNode* node = getNode(aCuri);
+    MContent* cnode = node ? node->lIf(cnode) : nullptr;
+    if (cnode) {
+	res = cnode->setData(aData);
+    }
+    return res;
+
+}

@@ -5,6 +5,7 @@
 #include "mnode.h"
 #include "mowning.h"
 #include "nconn.h"
+#include "mecont.h"
 #include <cstring>
 
 
@@ -12,18 +13,24 @@ using namespace std;
 
 template<class T> MIface* checkLifs(const char* aType, MIface* aSelf) { return (strcmp(aType, T::Type()) == 0) ? dynamic_cast<T*>(aSelf) : nullptr;}
 
-// TODO YB Consider one NCP for owner-owned tree. Ref NTnip for example.
 /** @brief Native hierarchy node agent
- *
+ *  Supports native hier tree and content (DCE)
+ * TODO YB Consider one NCP for owner-owned tree. Ref NTnip for example.
  * */
-class Node : public MNode
+class Node : public MNode, public MContentOwner
 {
     public:
+	// NNode dump masks
 	enum TDumpMask {
 	    EDM_Base = 0x01,
 	    EDM_Comps = 0x02,
 	    EDM_Recursive = 0x04,
 	};
+	// MConentOwner dump masks
+	enum TCoDumpMask {
+	    ECODM_Recursive = 0x01,
+	};
+
 
     public:
 	class NCpOwned;
@@ -65,7 +72,8 @@ class Node : public MNode
 		virtual MIface* MOwned_getLif(const char *aType) override {
 		    MIface* res = nullptr;
 		    if (res = checkLifs<MOwned>(aType, this));
-		    if (res = mHost->checkLif<MNode>(aType));
+		    else if (res = mHost->checkLif<MNode>(aType));
+		    else if (res = mHost->checkLif<MContent>(aType));
 		    return res;
 		}
 		virtual string ownedId() const override { return mHost->name();}
@@ -88,18 +96,30 @@ class Node : public MNode
 	virtual void MNode_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	// From MNode
 	virtual string name() const override { return mName;}
-	virtual MNode* getComp(const string& aId) override;
-	virtual MNode* getNode(const GUri& aUri) override;
+	virtual const MNode* getComp(const string& aId) const override;
+	virtual MNode* getComp(const string& aId) override { return const_cast<MNode*>(const_cast<const Node*>(this)->getComp(aId));}
+	virtual const MNode* getNode(const GUri& aUri) const override;
+	virtual MNode* getNode(const GUri& aUri) override { return const_cast<MNode*>(const_cast<const Node*>(this)->getNode(aUri));}
 	virtual MNode* getNode(const string& aName, const TNs& aNs) override;
 	virtual void getUri(GUri& aUri, MNode* aBase = NULL) const override;
 	virtual void setCtx(MNode* aContext) override;
-	virtual void mutate(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx) override;
+	virtual void mutate(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx, bool aTreatAsChromo = false) override;
 	virtual MNode* createHeir(const string& aName, MNode* aContext) override;
 	virtual bool attachOwned(MNode* aOwned) override;
 	virtual TOwnerCp* owner() override { return &mCpOwner;}
 	virtual const TOwnerCp* owner() const override { return &mCpOwner;}
 	virtual TOwnedCp* owned() override { return &mCpOwned;}
 	virtual const TOwnedCp* owned() const override { return &mCpOwned;}
+	// From MContentOwner
+	virtual string MContentOwner_Uid() const override { return getUid<MContentOwner>();}
+	virtual MIface* MContentOwner_getLif(const char *aType) override;
+	virtual void MContentOwner_doDump(int aLevel, int aIdt, ostream& aOs) const override;
+	virtual int contCount() const override;
+	virtual MContent* getCont(int aIdx) override;
+	virtual const MContent* getCont(int aIdx) const override;
+	virtual bool getContent(const GUri& aCuri, string& aRes) const override;
+	virtual bool setContent(const GUri& aCuri, const string& aData) override;
+
     protected:
 	template<class T> MIface* checkLif(const char* aType) { return (strcmp(aType, T::Type()) == 0) ? dynamic_cast<T*>(this) : nullptr;}
 	void deleteOwned();
@@ -112,7 +132,11 @@ class Node : public MNode
 	void updateNs(TNs& aNs, const ChromoNode& aCnode);
 	MNode* getNode(const GUri& aUri, const MNode* aOwned) const;
 	bool isOwned(const MNode* aComp) const;
+	// Mutations
 	virtual MNode* mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx);
+	virtual void mutSegment(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx);
+	virtual void mutRemove(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx);
+	virtual void mutContent(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx);
 	void notifyNodeMutated(const ChromoNode& aMut, const MutCtx& aCtx);
 	virtual void onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx);
     protected:

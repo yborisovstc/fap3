@@ -4,7 +4,6 @@ AM_CPPFLAGS = -D_PLAT_LINUX_ -g -O0
 
 ut_fap3_lib_SOURCES = \
 		       ut_fap3_main.cpp \
-		       ut_cont.cpp \
 		       ut_node.cpp \
 		       ut_unit.cpp \
 		       ut_syst.cpp \

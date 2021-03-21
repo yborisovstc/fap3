@@ -45,7 +45,7 @@ class MutCtx
 class MNode: public MIface
 {
     public:
-	using TOwnerCp = MNcp<MOwner, MOwned>;
+	using TOwnerCp = NCpOmi2<MOwner, MOwned>;
 	using TOwnedCp = MNcp<MOwned, MOwner>;
 
     public:
@@ -60,7 +60,9 @@ class MNode: public MIface
 	virtual void MNode_doDump(int aLevel, int aIdt, ostream& aOs) const = 0;
 	// Local
 	virtual string name() const = 0;
+	virtual const MNode* getComp(const string& aId) const = 0;
 	virtual MNode* getComp(const string& aId) = 0;
+	virtual const MNode* getNode(const GUri& aUri) const = 0;
 	virtual MNode* getNode(const GUri& aUri) = 0;
 	MNode* getNodeS(const char* aUri) { return getNode(string(aUri));}
 	virtual MNode* getNode(const string& aName, const TNs& aNs) = 0;
@@ -71,7 +73,11 @@ class MNode: public MIface
 	 * @param aCtx  mutation context
 	 * */
 	virtual void setCtx(MNode* aContext) = 0;
-	virtual void mutate(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx) = 0;
+	/** @brief Apply mutation
+	 * @param aTreatAsChromo  apply the mut just as chromo ignoring mut part, workaround, ref ds_adcm_pamcc
+	 * */
+	// TODO YB to provide proper solution for ds_adcm_pamcc
+	virtual void mutate(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx, bool aTreatAsChromo = false) = 0;
 	virtual MNode* createHeir(const string& aName, MNode* aContext) = 0;
 	virtual bool attachOwned(MNode* aOwned) = 0;
 	virtual TOwnerCp* owner() = 0;
