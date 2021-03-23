@@ -32,7 +32,9 @@ class Elem: public Unit, public MElem
 	void notifyNodeMutated(const ChromoNode& aMut, const MutCtx& aCtx);
 	void notifyParentMutated(const TMut& aMut);
 	void setCrAttr(const string& aEType, const string& aName);
+	// From Node
 	virtual MNode* mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx) override;
+	virtual void mutContent(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx) override;
 	virtual void onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx) override;
     protected:
 	MChromo* mChromo; /*!< Chromo */

@@ -5,6 +5,7 @@
 
 Content::Content(const string &aName, MEnv* aEnv): Node(aName, aEnv)
 {
+    if (aName.empty()) mName = Type();
 }
 
 Content::~Content()

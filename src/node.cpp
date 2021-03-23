@@ -450,7 +450,7 @@ void Node::onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const Mu
     // Node is not inheritable, so nothing to do.
     if (Owner() && aCtx.mNode && aCtx.mNode != this) {
 	// Propagate to owner
-	Owner()->onOwnedMutated(owned(), aMut, aCtx);
+	Owner()->onOwnedMutated(aOwned, aMut, aCtx);
     }
 }
 

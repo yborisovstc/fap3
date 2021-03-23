@@ -3,13 +3,24 @@
 #include "guri.h"
 
 const char KSep = '.';
+const char KSelf = '$';
+const char KOwner = '^';
 
 const string GUri::nil = "nil";
 
 void GUri::parse(const string& aSrc)
 {
-    if (aSrc.size() > 0) {
-	mElems.clear();
+    mErr = true;
+    mElems.clear();
+    if (aSrc.size() == 1) {
+	if (aSrc.at(0) == KSelf) {
+	    mElems.push_back(string(1, KSelf));
+	} else if (aSrc.at(0) == KOwner) {
+	    mElems.push_back(string(1, KOwner));
+	} else {
+	    mErr = false;
+	}
+    } else if (aSrc.size() > 0) {
 	size_t beg = 0, pos = 0;
 	while (pos != string::npos) {
 	    pos = aSrc.find_first_of(KSep, beg); 
@@ -17,6 +28,8 @@ void GUri::parse(const string& aSrc)
 	    mElems.push_back(elem);
 	    beg = (pos == string::npos) ? string::npos : pos + 1;
 	}
+    } else {
+	mErr = false;
     }
 }
 

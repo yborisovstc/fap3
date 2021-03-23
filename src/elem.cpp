@@ -110,6 +110,14 @@ MNode* Elem::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
     return elem;
 }
 
+void Elem::mutContent(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
+{
+    if (!aUpdOnly) {
+	mChromo->Root().AddChild(aMut, true, false);
+    }
+    Node::mutContent(aMut, aUpdOnly, aCtx);
+}
+
 #if 0
 MNode* Elem::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 {
