@@ -25,6 +25,8 @@ class Env: public MEnv
 	virtual void constructSystem() override;
 	virtual MLogRec* Logger() override;
 	virtual MNode* Root() const override;
+	bool addProvider(MProvider* aProv) override;
+	void removeProvider(MProvider* aProv) override;
     protected:
 	MNode* mRoot;
 	string mSpecFile;

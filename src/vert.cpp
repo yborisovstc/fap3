@@ -4,11 +4,16 @@
 #include "vert.h"
 
 
+Vertu::Vertu(const string &aName, MEnv* aEnv): Unit(aName, aEnv)
+{
+    if (aName.empty()) mName = Type();
+}
+
 Vertu::~Vertu()
 {
 }
 
-MIface* Vertu::MUnit_getLif(const char *aType)
+MIface* Vertu::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
     if (res = checkLif<MVert>(aType));

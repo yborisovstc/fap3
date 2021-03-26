@@ -22,14 +22,13 @@ class Elem: public Unit, public MElem
 	virtual void MElem_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	// From MNode
 	virtual void mutate(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx, bool aTreatAsChromo = false) override;
-	virtual MNode* createHeir(const string& aName, MNode* aContext) override;
+	//virtual MNode* createHeir(const string& aName, MNode* aContext) override;
 	// From MElem
 	virtual MChromo& Chromos() override { return *mChromo;}
 	virtual void setParent(const string& aParent) override;
 	virtual bool appendChild(MNode* aChild) override;
     protected:
 	MNode* getMowner(MNode* aNode);
-	void notifyNodeMutated(const ChromoNode& aMut, const MutCtx& aCtx);
 	void notifyParentMutated(const TMut& aMut);
 	void setCrAttr(const string& aEType, const string& aName);
 	// From Node

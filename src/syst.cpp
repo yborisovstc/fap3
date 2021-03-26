@@ -25,6 +25,14 @@ bool CpIfrNode::resolve(const string& aName)
     }
     if (aName == mHost->provName()) {
 	// Requested provided iface - cannot be obtain via pairs - redirect to host
+	auto owner = mHost->Owner();
+	if (owner) {
+	    const MIfProvOwner* powno = owner->lIf(powno);
+	    const MUnit* pownu = powno ? powno->lIf(pownu): nullptr;
+	    if (powno && !findOwner(powno)) {
+		res = const_cast<MUnit*>(pownu)->resolveIface(aName, this->binded());
+	    }
+	}
     } else if (aName == mHost->reqName()) {
 	for (MVert* pair : mHost->mPairs) {
 	    MUnit* pairu = pair->lIf(pairu);
@@ -50,19 +58,32 @@ class CpIfrNodeRoot : public CpIfrNode
 };
 
 
+string ConnPointu::KReqName = "Required";
+string ConnPointu::KProvName = "Provided";
+
+ConnPointu::Cnt::~Cnt() {}
 
 ConnPointu::ConnPointu(const string &aName, MEnv* aEnv): Vertu(aName, aEnv)
 {
+    if (aName.empty()) mName = Type();
 }
 
-MIface* ConnPointu::MUnit_getLif(const char *aType)
+MIface* ConnPointu::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
     if (res = checkLif<MConnPoint>(aType));
-    else 
-	res = Vertu::MUnit_getLif(aType);
+    else res = Vertu::MNode_getLif(aType);
     return res;
 }
+
+MIface* ConnPointu::MVert_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MConnPoint>(aType));
+    else res = Vertu::MVert_getLif(aType);
+    return res;
+}
+
 
 MIface* ConnPointu::MIfProvOwner_getLif(const char *aType)
 {
@@ -75,14 +96,14 @@ MIface* ConnPointu::MIfProvOwner_getLif(const char *aType)
 string ConnPointu::provName() const
 {
     string res;
-    bool pres = getContent(res, KContProvided);
+    bool pres = getContent(KContProvided, res);
     return res;
 }
 
 string ConnPointu::reqName() const
 {
     string res;
-    bool pres = getContent(res, KContRequired);
+    bool pres = getContent(KContRequired, res);
     return res;
 }
 
@@ -113,3 +134,97 @@ void ConnPointu::onDisconnected()
 {
     invalidateIrm();
 }
+
+MContent* ConnPointu::getCont(int aIdx)
+{
+    MContent* res = nullptr;
+    if (aIdx == 0) res = &mProv;
+    else if (aIdx == 1) res = &mReq;
+    return res;
+}
+
+const MContent* ConnPointu::getCont(int aIdx) const
+{
+    const MContent* res = nullptr;
+    if (aIdx == 0) res = &mProv;
+    else if (aIdx == 1) res = &mReq;
+    return res;
+}
+
+bool ConnPointu::getContent(const GUri& aCuri, string& aRes) const
+{
+    bool res = true;
+    string name = aCuri;
+    if (name == KProvName)
+	res = mProv.getData(aRes);
+    else if (name == KReqName)
+	res = mReq.getData(aRes);
+    else res = false;
+    return res;
+}
+
+bool ConnPointu::setContent(const GUri& aCuri, const string& aData)
+{
+    bool res = true;
+    string name = aCuri;
+    if (name == KProvName)
+	res = mProv.setData(aData);
+    else if (name == KReqName)
+	res = mReq.setData(aData);
+    else res = false;
+    return res;
+}
+
+void ConnPointu::Cnt::MContent_doDump(int aLevel, int aIdt, ostream& aOs) const
+{
+    offset(aIdt, aOs);
+    cout << mName << ": " << mData << endl;
+}
+
+
+
+
+Syst::Syst(const string &aName, MEnv* aEnv): Elem(aName, aEnv)
+{
+    if (aName.empty()) mName = Type();
+}
+
+Syst::~Syst()
+{
+}
+
+MIface* Syst::doMOwnerGetLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MUnit>(aType));
+    else if (res = checkLif<MIfProvOwner>(aType));
+    return res;
+}
+
+void Syst::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
+{
+    string sp = aMut.Attr(ENa_P);
+    string sq = aMut.Attr(ENa_Q);
+    MNode* pn = getNode(sp);
+    MNode* qn = getNode(sq);
+    if (pn && qn) {
+	MVert* pv = pn->lIf(pv);
+	MVert* qv = qn->lIf(pv);
+	if (pv && qv) {
+	    bool res = MVert::connect(pv, qv);
+	    if (!res) {
+		Log(TLog(EErr, this) + "Failed connecting [" + sp + "] to [" + sq + "]");
+	    }
+	} else {
+	    Log(TLog(EErr, this) + "Connecting [" + sp + "] to [" + sq + "] -  [" + (pv ? sq : sp) + "] isn't connectable");
+	}
+    } else {
+	Log(TLog(EErr, this) + "Connecting [" + sp + "] to [" + sq + "] - cannot find [" + (pn ? sq : sp) + "]");
+    }
+    if (!aUpdOnly) {
+	mChromo->Root().AddChild(aMut, true, false);
+	notifyNodeMutated(aMut, aCtx);
+    }
+}
+
+

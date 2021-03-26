@@ -156,5 +156,14 @@ MNode* Env::Root() const
     return mRoot; 
 }
 
+bool Env::addProvider(MProvider* aProv)
+{
+    return mProvider->AddProvider(aProv);
+}
+
+void Env::removeProvider(MProvider* aProv)
+{
+    mProvider->RemoveProvider(aProv);
+}
 
 

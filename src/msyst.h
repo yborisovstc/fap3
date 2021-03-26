@@ -17,6 +17,19 @@ class MConnPoint: public MIface
 	virtual string reqName() const = 0;
 };
 
+/** @brief System embedded managing agent
+ * System delegates agent handling the requests
+ * */
+class MAgent: public MIface
+{
+    public:
+	static const char* Type() { return "MAgent";};
+	// From MIface
+	virtual string Uid() const override { return MAgent_Uid();}
+	virtual string MAgent_Uid() const = 0;
+};
+
+
 
 
 #endif

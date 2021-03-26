@@ -606,7 +606,7 @@
 
 			name = letter, { letter | digit | "_"};
 
-			uri = name, { "." , name }
+			uri = [name], { "." , name }
 			string = """ { symbol } """;
 		    </programlisting>
 		</sect4>

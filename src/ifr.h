@@ -2,6 +2,7 @@
 #define __FAP3_IFR_H
 
 #include  "mifr.h"
+#include  "ifu.h"
 
 #include "nconn.h"
 
@@ -14,7 +15,7 @@ class IfrNode : public NTnnp<MIfProv, MIfReq>, public MIfProv, protected MIfReq
 	IfrNode(MIfProvOwner* aOwner): NTnnp<MIfProv, MIfReq>(this, this), mValid(false), mOwner(aOwner) {}
 	virtual ~IfrNode() {}
 	// From MIfProv
-	virtual string MIfProv_Uid() const override { return MIfProv::Type();}
+	virtual string MIfProv_Uid() const override { return mOwner->Uid() + Ifu::KUidSepIc + MIfProv::Type();}
 	virtual string name() const override;
 	virtual MIfProv* first() const override;
 	virtual MIfProv* next() const override;
@@ -25,7 +26,7 @@ class IfrNode : public NTnnp<MIfProv, MIfReq>, public MIfProv, protected MIfReq
 	virtual MIface* iface() override { return nullptr;}
 	virtual const MIfProvOwner* owner() const override { return mOwner;}
 	// From MIfReq
-	virtual string MIfReq_Uid() const override { return MIfReq::Type();}
+	virtual string MIfReq_Uid() const override { return mOwner->Uid() + Ifu::KUidSepIc + MIfReq::Type();}
 	virtual MIfProv* next(MIfProv::TCp* aProvCp) const override;
     public:
 	MIfProv* findIface(const MIface* aIface);

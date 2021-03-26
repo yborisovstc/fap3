@@ -7,6 +7,7 @@
 
 Unit::Unit(const string &aName, MEnv* aEnv): Node(aName, aEnv)
 {
+    if (aName.empty()) mName = Type();
 }
 
 Unit::~Unit()
@@ -15,6 +16,14 @@ Unit::~Unit()
     for (auto item : mIrns) {
 	delete item;
     }
+}
+
+MIface* Unit::MNode_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MUnit>(aType));
+    else if (res = checkLif<MNode>(aType));
+    return res;
 }
 
 MIface* Unit::MUnit_getLif(const char *aType)
@@ -32,63 +41,6 @@ MIface* Unit::MIfProvOwner_getLif(const char *aType)
     if (res = checkLif<MUnit>(aType));
     return res;
 }
-
-
-bool Unit::getContent(string& aData, const string& aName) const
-{
-    bool res = false;
-    //MCont2* cont = mContent.provided()->node()->getContent(aName);
-    MCont2* cont = mContent.getContent(aName);
-    if (cont) {
-	res = cont->getData(aData);
-    }
-    return res;
-}
-
-bool Unit::setContent(const string& aData, const string& aName)
-{
-    bool res = false;
-    MCont2* cont = nullptr;
-    if (aName.empty() && Contu::isComplexContent(aData)) {
-	cont = &mContent;
-	res = true;
-    } else {
-	res = addContent(aName, !Contu::isComplexContent(aData));
-	if (res) {
-	    cont = mContent.getContent(aName);
-	}
-    }
-    if (res && cont) {
-	res = cont->setData(aData);
-    }
-    return res;
-}
-
-bool Unit::addContent(const string& aName, bool aLeaf)
-{
-    bool res = false;
-    CUri uri(aName);
-    MCont2* cont = &mContent;
-    int i = 0;
-    for (; i < uri.size(); i++) {
-	string name = uri.at(i);
-	MContNode2 *node = cont->node();
-	MCont2* nextCont = node ? node->at(name) : nullptr;
-	if (!nextCont) break;
-	cont = nextCont;
-    }
-    if (i < uri.size()) {
-	MContNode2* node = cont->node();
-	if (node) {
-	    CUri tail = uri.tail(i);
-	    res = node->addCont(tail, aLeaf);
-	}
-    } else { // Already exists
-	res = true;
-    }
-    return res;
-}
-
 
 bool Unit::resolveIface(const string& aName, TIfReqCp* aReq)
 {

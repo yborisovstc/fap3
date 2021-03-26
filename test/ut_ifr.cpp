@@ -40,18 +40,22 @@ void Ut_ifr::tearDown()
 void Ut_ifr::test_base_1()
 {
     cout << endl << "=== Test of base functionality ===" << endl;
-    MUnit* cpu1 = new ConnPointu("Cp1", nullptr);
-    MUnit* cpu2 = new ConnPointu("Cp2", nullptr);
-    MUnit* cpu3 = new ConnPointu("Cp3", nullptr);
-    MUnit* cpu4 = new ConnPointu("Cp3", nullptr);
+    MNode* cpu1 = new ConnPointu("Cp1", nullptr);
+    MNode* cpu2 = new ConnPointu("Cp2", nullptr);
+    MNode* cpu3 = new ConnPointu("Cp3", nullptr);
+    MNode* cpu4 = new ConnPointu("Cp3", nullptr);
     MVert* cpv1 = cpu1->lIf(cpv1);
     MVert* cpv2 = cpu2->lIf(cpv2);
     MVert* cpv3 = cpu3->lIf(cpv3);
     MVert* cpv4 = cpu4->lIf(cpv4);
-    cpu1->setContent("{ Provided:'Iface1' Required:'MConnPoint'}");
-    cpu2->setContent("{ Provided:'MConnPoint' Required:'Iface1'}");
-    cpu3->setContent("{ Provided:'MConnPoint' Required:'Iface1'}");
-    cpu4->setContent("{ Provided:'Iface1' Required:'MConnPoint'}");
+    cpu1->cntOw()->setContent("Provided", "Iface1");
+    cpu1->cntOw()->setContent("Required", "MConnPoint");
+    cpu2->cntOw()->setContent("Provided", "MConnPoint");
+    cpu2->cntOw()->setContent("Required", "Iface1");
+    cpu3->cntOw()->setContent("Provided", "MConnPoint");
+    cpu3->cntOw()->setContent("Required", "Iface1");
+    cpu4->cntOw()->setContent("Provided", "Iface1");
+    cpu4->cntOw()->setContent("Required", "MConnPoint");
     MConnPoint* cp1 = cpu1->lIf(cp1);
     bool res = MVert::connect(cpv1, cpv2);
     CPPUNIT_ASSERT_MESSAGE("Failed connecting cp1 - cp2", res);
@@ -59,7 +63,8 @@ void Ut_ifr::test_base_1()
     CPPUNIT_ASSERT_MESSAGE("Failed connecting cp1 - cp3", res);
     res = MVert::connect(cpv4, cpv3);
     CPPUNIT_ASSERT_MESSAGE("Failed connecting cp4 - cp3", res);
-    MIfProv* ifp = cpu1->defaultIfProv("MConnPoint");
+    MUnit* cpu1u = cpu1->lIf(cpu1u);
+    MIfProv* ifp = cpu1u->defaultIfProv("MConnPoint");
     MIfProv* prov = ifp->first();
     ifp->dump(0);
     CPPUNIT_ASSERT_MESSAGE("Failed getting MConnPoint provider", prov);

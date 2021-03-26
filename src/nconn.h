@@ -819,7 +819,7 @@ class NCpOnp : public MNcpp<TPif, TRif>
 	using TPair= typename MNcpp<TPif, TRif>::TPair;
 	using TPairs = set<TPair*>;
     public:
-	NCpOnp(TPif* aPx): mPx(aPx) {}
+	NCpOnp(TPif* aPx): mPair(nullptr), mPx(aPx) {}
 	virtual TPif* provided() override { return mPx;}
 	virtual const TPif* provided() const override { return mPx;}
 	virtual bool connect(TPair* aPair) override ;
@@ -860,7 +860,7 @@ bool NCpOnp<TPif, TRif>::detach(TPair* aPair)
 template <class TPif, class TRif>
 bool NCpOnp<TPif, TRif>::connect(TPair* aPair)
 {
-    assert(aPair && !aPair->isConnected(this) && !isConnected(mPair) == 0);
+    assert(aPair && !aPair->isConnected(this) && !isConnected(aPair));
     bool res = aPair->attach(this);
     if (res) {
 	res = attach(aPair);
@@ -871,7 +871,7 @@ bool NCpOnp<TPif, TRif>::connect(TPair* aPair)
 template <class TPif, class TRif>
 bool NCpOnp<TPif, TRif>::disconnect(TPair* aPair)
 {
-    assert(aPair && aPair->isConnected(this) && isConnected(mPair) == 0);
+    assert(aPair && aPair->isConnected(this) && isConnected(aPair));
     bool res = aPair->detach(this);
     if (res) {
 	res = detach(aPair);

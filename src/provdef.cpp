@@ -17,6 +17,7 @@
 #include "elem.h"
 #include "content.h"
 #include "chromo2.h"
+#include "syst.h"
 
 // TODO [YB] To import from build variable
 const string KModulesPath = "/usr/share/grayb/modules/";
@@ -27,7 +28,7 @@ const string KChromRarg_Chs = "chs";
 
 /** Native agents factory registry */
 const ProvDef::TFReg ProvDef::mReg ( {
-	Item<Node>(), Item<Unit>(), Item<Elem>(), Item<Content>(),
+	Item<Node>(), Item<Unit>(), Item<Elem>(), Item<Content>(), Item<Vertu>(), Item<Syst>(), Item<ConnPointu>(),
 /*
 	Item<Vertu>(), Item<Vertp>(), Item<Syst>(), Item<Systp>(), Item<Vert>(),
 	Item<ACapsule>(), Item<Edge>(), Item<Aedge>(), Item<AMod>(), Item<AImports>(),

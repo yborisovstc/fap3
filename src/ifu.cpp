@@ -8,6 +8,7 @@
 
 char Ifu::KEsc = '\\';
 char Ifu::KUidSep = '%';
+char Ifu::KUidSepIc = '-';
 int  Ifu::KDumpIndent = 3;
 
 Ifu::Ifu()

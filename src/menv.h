@@ -28,6 +28,10 @@ class MEnv : public MIface
 	virtual MLogRec* Logger() = 0;
 	/** @brief Gets root node */
 	virtual MNode* Root() const = 0;
+	/** @brief Adds provider */
+	virtual bool addProvider(MProvider* aProv) = 0;
+	/** @brief Removes provider */
+	virtual void removeProvider(MProvider* aProv) = 0;
 };
 
 

@@ -36,6 +36,7 @@ class MutCtx
 };
 
 
+class MContentOwner;
 
 /** @brief Native heirarchy node interface
  * Supports owner-owning relations, is changeable (non-persistenly mutable)
@@ -84,6 +85,8 @@ class MNode: public MIface
 	virtual const TOwnerCp* owner() const = 0;
 	virtual TOwnedCp* owned() = 0;
 	virtual const TOwnedCp* owned() const = 0;
+	virtual const MContentOwner* cntOw() const = 0;
+	virtual MContentOwner* cntOw() = 0;
 };
 
 

@@ -21,6 +21,7 @@ class Ifu
     public:
 	static char KEsc;
 	static char KUidSep;
+	static char KUidSepIc;  /*!< UID separator of internal component (not native hier) */
 	static int  KDumpIndent;
 };
 

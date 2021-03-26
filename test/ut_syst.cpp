@@ -2,25 +2,94 @@
 #include <unit.h>
 #include <syst.h>
 
+#include "env.h"
+#include "prov.h"
+
 #include <cppunit/extensions/HelperMacros.h>
 
-/*
- * This test of vertex/system layers
+
+
+/** @brief Test interface 1 */
+class MTIf1: public MIface{
+    public:
+	static const char* Type() { return "MTestIface1";}
+	// From MIface
+	virtual string Uid() const override { return MTIf1_Uid();}
+	virtual string MTIf1_Uid() const = 0;
+	virtual MIface* getLif(const char *aType) override { return MTIf1_getLif(aType);}
+	virtual MIface* MTIf1_getLif(const char *aType) = 0;
+};
+
+
+/**
+ * Test agent providing the ifaces
  */
+class TstAgt: public Node, public MAgent
+{
+    public:
+	class TestIface1: public MTIf1 {
+	    public:
+		TestIface1(TstAgt& aHost): mHost(aHost) {}
+		virtual ~TestIface1() {}
+		virtual string MTIf1_Uid() const override { return mHost.getUid<MTIf1>();}
+		virtual MIface* MTIf1_getLif(const char *aType) override {return nullptr;}
+	    private:
+		TstAgt& mHost;
+	};
+    public:
+	static const char* Type() { return "TstAgt";};
+	TstAgt(const string& aName = string(), MEnv* aEnv = NULL): Node(aName, aEnv) { }
+	virtual ~TstAgt() {}
+	virtual string MAgent_Uid() const { return getUid<MAgent>();}
+    private:
+	TestIface1 mIface1 = TestIface1(*this);
+};
+
+/**
+ * Agent provider for test agents
+ */
+class TstProv: public ProvBase
+{
+    public:
+	TstProv(const string& aName, MEnv* aEnv): ProvBase(aName, aEnv) {}
+	virtual ~TstProv() {}
+	// From ProvBase
+	virtual const TFReg& FReg() const override {return mReg;}
+	virtual void setChromoRslArgs(const string& aRargs) override {}
+	virtual void getChromoRslArgs(string& aRargs) override {}
+    private:
+	static const TFReg mReg;
+};
 
 
+const ProvBase::TFReg TstProv::mReg ({ Item<TstAgt>() });
+
+
+
+
+/** @brief This test of vertex/system layers
+*/
 class Ut_syst : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_syst);
-    CPPUNIT_TEST(test_vert_1);
-    CPPUNIT_TEST(test_cp_1);
+    //    CPPUNIT_TEST(test_vert_1);
+    //    CPPUNIT_TEST(test_cp_1);
+    //    CPPUNIT_TEST(test_syst_1);
+    //CPPUNIT_TEST(test_cp_2);
+    CPPUNIT_TEST(test_syst_cp_3);
     CPPUNIT_TEST_SUITE_END();
-public:
+    public:
     virtual void setUp();
     virtual void tearDown();
-private:
+    private:
     void test_vert_1();
     void test_cp_1();
+    void test_syst_1();
+    void test_cp_2();
+    void test_syst_cp_3();
+    private:
+    Env* mEnv;
+    TstProv* mProv;
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION( Ut_syst );
@@ -33,7 +102,7 @@ void Ut_syst::setUp()
 
 void Ut_syst::tearDown()
 {
-//    delete iEnv;
+    //    delete iEnv;
     CPPUNIT_ASSERT_EQUAL_MESSAGE("tearDown", 0, 0);
 }
 
@@ -55,7 +124,7 @@ void Ut_syst::test_vert_1()
     res = v1->isPair(v2);
     CPPUNIT_ASSERT_MESSAGE("Failed checking v1 not pair", !res);
 
-    
+
     delete vu1;
     delete vu2;
 }
@@ -65,12 +134,14 @@ void Ut_syst::test_vert_1()
 void Ut_syst::test_cp_1()
 {
     cout << endl << "=== Test of connpoint base functionality ===" << endl;
-    MUnit* cpu1 = new ConnPointu("Cp1", nullptr);
-    MUnit* cpu2 = new ConnPointu("Cp2", nullptr);
+    MNode* cpu1 = new ConnPointu("Cp1", nullptr);
+    MNode* cpu2 = new ConnPointu("Cp2", nullptr);
     MVert* cpv1 = cpu1->lIf(cpv1);
     MVert* cpv2 = cpu2->lIf(cpv2);
-    cpu1->setContent("{ Provided:'Iface1' Required:'Iface2'}");
-    cpu2->setContent("{ Provided:'Iface2' Required:'Iface1'}");
+    cpu1->cntOw()->setContent("Provided", "Iface1");
+    cpu1->cntOw()->setContent("Required", "Iface2");
+    cpu2->cntOw()->setContent("Provided", "Iface2");
+    cpu2->cntOw()->setContent("Required", "Iface1");
     MConnPoint* cp1 = cpu1->lIf(cp1);
     string cp1Prov = cp1->provName();
     bool res = cp1Prov == "Iface1";
@@ -87,7 +158,133 @@ void Ut_syst::test_cp_1()
     res = cpv1->isPair(cpv2);
     CPPUNIT_ASSERT_MESSAGE("Failed checking cpv1 not pair", !res);
 
-    
+
     delete cpu1;
     delete cpu2;
 }
+
+
+/** @brief Test of creating simple system containing connected vert
+ * */
+void Ut_syst::test_syst_1()
+{
+    cout << endl << "=== Test of creating simple system ===" << endl;
+
+    const string specn("ut_syst_1");
+    string ext = "chs";
+    string spec = specn + string(".") + "chs";
+    string log = specn + "_" + ext + ".log";
+    mEnv = new Env(spec, log);
+    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv);
+    //mEnv->ImpsMgr()->ResetImportsPaths();
+    //mEnv->ImpsMgr()->AddImportsPaths("../modules");
+    mEnv->constructSystem();
+    MNode* root = mEnv->Root();
+    MElem* eroot = root ? root->lIf(eroot) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get root", eroot);
+    GUri ruri;
+    root->getUri(ruri);
+    string ruris = ruri.toString();
+    root->dump(Node::EDM_Base | Node::EDM_Comps | Node::EDM_Recursive,0);
+    // Save root chromoe
+    eroot->Chromos().Save(specn + "_saved." + ext);
+    // Check connection
+    MNode* v1n = root->getNode("S1.V1");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get v1n", v1n);
+    MVert* v1v = v1n->lIf(v1v);
+    CPPUNIT_ASSERT_MESSAGE("Fail to get v1v", v1v);
+    MNode* v2n = root->getNode("S1.V2");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get v2n", v2n);
+    MVert* v2v = v2n->lIf(v2v);
+    CPPUNIT_ASSERT_MESSAGE("Fail to get v2v", v2v);
+    bool res = v1v->isPair(v2v);
+    CPPUNIT_ASSERT_MESSAGE("Fail to get pair of v1v", res);
+}
+
+/** @brief Test of connecting connpoints
+ * */
+void Ut_syst::test_cp_2()
+{
+    cout << endl << "=== Test of connecting connpoints ===" << endl;
+
+    const string specn("ut_cp_2");
+    string ext = "chs";
+    string spec = specn + string(".") + "chs";
+    string log = specn + "_" + ext + ".log";
+    mEnv = new Env(spec, log);
+    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv);
+    //mEnv->ImpsMgr()->ResetImportsPaths();
+    //mEnv->ImpsMgr()->AddImportsPaths("../modules");
+    mEnv->constructSystem();
+    MNode* root = mEnv->Root();
+    MElem* eroot = root ? root->lIf(eroot) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get root", eroot);
+    GUri ruri;
+    root->getUri(ruri);
+    string ruris = ruri.toString();
+    root->dump(Node::EDM_Base | Node::EDM_Comps | Node::EDM_Recursive,0);
+    // Save root chromoe
+    eroot->Chromos().Save(specn + "_saved." + ext);
+    // Check connection
+    MNode* cp1n = root->getNode("S1.Cp1");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get cp1n", cp1n);
+    MVert* cp1v = cp1n->lIf(cp1v);
+    CPPUNIT_ASSERT_MESSAGE("Fail to get cp1v", cp1v);
+    MNode* cp2n = root->getNode("S1.Cp2");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get cp2n", cp2n);
+    MVert* cp2v = cp2n->lIf(cp2v);
+    CPPUNIT_ASSERT_MESSAGE("Fail to get cp2v", cp2v);
+    bool res = cp1v->isPair(cp2v);
+    CPPUNIT_ASSERT_MESSAGE("Fail to get pair of cp1v", res);
+}
+
+
+/** @brief Test of resolving interface via connecting connpoints
+ * */
+void Ut_syst::test_syst_cp_3()
+{
+    cout << endl << "=== Test of resolving interface via connecting connpoints ===" << endl;
+
+    const string specn("ut_syst_cp_3");
+    string ext = "chs";
+    string spec = specn + string(".") + "chs";
+    string log = specn + "_" + ext + ".log";
+    mEnv = new Env(spec, log);
+    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv);
+    mProv = new TstProv("TestProv", mEnv);
+    bool res = mEnv->addProvider(mProv);
+    CPPUNIT_ASSERT_MESSAGE("Fail to add provider", res);
+    //mEnv->ImpsMgr()->ResetImportsPaths();
+    //mEnv->ImpsMgr()->AddImportsPaths("../modules");
+    mEnv->constructSystem();
+    MNode* root = mEnv->Root();
+    MElem* eroot = root ? root->lIf(eroot) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get root", eroot);
+    GUri ruri;
+    root->getUri(ruri);
+    string ruris = ruri.toString();
+    root->dump(Node::EDM_Base | Node::EDM_Comps | Node::EDM_Recursive,0);
+    // Save root chromoe
+    eroot->Chromos().Save(specn + "_saved." + ext);
+    // Check connection
+    MNode* cp1n = root->getNode("SS.S1.Cp1");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get cp1n", cp1n);
+    MVert* cp1v = cp1n->lIf(cp1v);
+    CPPUNIT_ASSERT_MESSAGE("Fail to get cp1v", cp1v);
+    MNode* cp2n = root->getNode("SS.Cp2");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get cp2n", cp2n);
+    MVert* cp2v = cp2n->lIf(cp2v);
+    CPPUNIT_ASSERT_MESSAGE("Fail to get cp2v", cp2v);
+    res = cp1v->isPair(cp2v);
+    CPPUNIT_ASSERT_MESSAGE("Fail to get pair of cp1v", res);
+    // Check iface resolution via connpoint
+    MUnit* cp2u = cp2n->lIf(cp2u);
+    CPPUNIT_ASSERT_MESSAGE("Fail to get cp2u", cp2u);
+    MIfProv* ifp = cp2u->defaultIfProv("MTIf1");
+    MIfProv* prov = ifp->first();
+    ifp->dump(0);
+    CPPUNIT_ASSERT_MESSAGE("Failed getting MConnPoint provider", prov);
+}
+
+
+

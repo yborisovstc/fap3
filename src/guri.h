@@ -18,6 +18,7 @@ class GUri
 	GUri(): mErr(false) {}
 	GUri(const GUri& aSrc): mElems(aSrc.mElems), mErr(aSrc.mErr) {}
 	GUri(const string& aSrc) { parse(aSrc);}
+	GUri(const char* aSrc): GUri(string(aSrc)) {}
 	int size() const { return mElems.size();}
 	const string& at(int aIdx) const { return mElems.at(aIdx);}
 	GUri tail(int aIdx) const;

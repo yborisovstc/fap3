@@ -43,6 +43,7 @@ class Node : public MNode, public MContentOwner
 	    NCpOwner(Node* aHost): NCpOmi2<MOwner, MOwned>(), mHost(aHost) {}
 	    // From MOwner
 	    virtual string MOwner_Uid() const {return mHost->getUid<MOwner>();}
+	    virtual MIface* MOwner_getLif(const char *aType) override { return mHost->doMOwnerGetLif(aType);}
 	    // Local
 	    virtual MOwned* bindedOwned() override { return mHost->owned();}
 	    virtual const MOwned* bindedOwned() const  { return mHost->owned();}
@@ -110,6 +111,8 @@ class Node : public MNode, public MContentOwner
 	virtual const TOwnerCp* owner() const override { return &mCpOwner;}
 	virtual TOwnedCp* owned() override { return &mCpOwned;}
 	virtual const TOwnedCp* owned() const override { return &mCpOwned;}
+	virtual const MContentOwner* cntOw() const override { return reinterpret_cast<const MContentOwner*>(this);}
+	virtual MContentOwner* cntOw() override  { return reinterpret_cast<MContentOwner*>(this);}
 	// From MContentOwner
 	virtual string MContentOwner_Uid() const override { return getUid<MContentOwner>();}
 	virtual MIface* MContentOwner_getLif(const char *aType) override;
@@ -132,13 +135,16 @@ class Node : public MNode, public MContentOwner
 	void updateNs(TNs& aNs, const ChromoNode& aCnode);
 	MNode* getNode(const GUri& aUri, const MNode* aOwned) const;
 	bool isOwned(const MNode* aComp) const;
+	virtual MIface* doMOwnerGetLif(const char *aType) { return nullptr;}
 	// Mutations
 	virtual MNode* mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx);
 	virtual void mutSegment(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx);
 	virtual void mutRemove(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx);
 	virtual void mutContent(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx);
+	virtual void mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx);
 	void notifyNodeMutated(const ChromoNode& aMut, const MutCtx& aCtx);
 	virtual void onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx);
+	static void offset(int aIndent, ostream& aOs);
     protected:
 	MEnv* mEnv = nullptr;
 	string mName;

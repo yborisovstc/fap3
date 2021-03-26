@@ -15,6 +15,8 @@ class MOwner : public MIface
 	// From MIface
 	virtual string Uid() const override { return MOwner_Uid();}
 	virtual string MOwner_Uid() const = 0;
+	virtual MIface* getLif(const char *aType) { return MOwner_getLif(aType);}
+	virtual MIface* MOwner_getLif(const char *aType) = 0;
 	// Local
 	virtual void getUri(GUri& aUri, MNode* aBase = nullptr) const = 0;
 	virtual MNode* getNode(const GUri& aUri, const MNode* aOwned) const = 0;

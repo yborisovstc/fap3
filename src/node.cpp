@@ -2,7 +2,7 @@
 #include "node.h"
 #include "chromo.h"
 
-void offset(int aIndent, ostream& aOs)
+void Node::offset(int aIndent, ostream& aOs)
 {
     for (int i = 0; i < aIndent; i++)  aOs << " ";
 }
@@ -269,6 +269,8 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
 		//ImportNode(rno, aRunTime, aTrialMode);
 	    } else if (rnotype == ENt_Rm) {
 		mutRemove(rno, aUpdOnly, mctx);
+	    } else if (rnotype == ENt_Conn) {
+		mutConnect(rno, aUpdOnly, mctx);
 	    } else if (rnotype == ENt_Note) {
 		// Comment, just accept
 		/*
@@ -308,7 +310,6 @@ void Node::setCtx(MNode* aContext)
     mContext = aContext;
 }
 
-// TODO Remove?
 MNode* Node::getNode(const GUri& aUri, const MNode* aOwned) const
 {
     MNode* res = nullptr;
@@ -437,6 +438,17 @@ void Node::mutContent(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 	notifyNodeMutated(aMut, aCtx);
     }
 }
+
+void Node::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
+{
+    string sp = aMut.Attr(ENa_P);
+    string sq = aMut.Attr(ENa_Q);
+    Log(TLog(EErr, this) + "Connecting [" + sp + "] to [" + sq + "] - not supported");
+    if (!aUpdOnly) {
+	notifyNodeMutated(aMut, aCtx);
+    }
+}
+
 
 void Node::notifyNodeMutated(const ChromoNode& aMut, const MutCtx& aCtx)
 {

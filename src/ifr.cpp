@@ -21,7 +21,8 @@ MIfProv* IfrNode::first() const
 	IfrNode* self = const_cast<IfrNode*>(this);
 	bool pres = self->resolve(nm);
 	if (pres && mValid) {
-	    res =  self->mCnode.firstLeaf()->provided();
+	    auto fl = self->mCnode.firstLeaf();
+	    res =  fl ? fl->provided() : nullptr;
 	}
     }
     return res;
@@ -115,10 +116,12 @@ void IfrNode::eraseInvalid()
 	auto prov = pair->provided();
 	if (!prov->isValid()) {
 	    binded()->disconnect(pair);
+	    // pairs container in binded is updated, starts from the firs
+	    pair = binded()->firstPair();
+	} else {
+	    pair = binded()->nextPair(pair);
 	}
-	pair = binded()->nextPair(pair);
     }
-
 }
 
 

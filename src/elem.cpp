@@ -7,6 +7,7 @@
 
 Elem::Elem(const string &aName, MEnv* aEnv): Unit(aName, aEnv)
 {
+    if (aName.empty()) mName = Type();
     mChromo = mEnv->provider()->createChromo();
     mChromo->Init(ENt_Node);
     setCrAttr(Type(), aName);
@@ -59,10 +60,6 @@ MNode* Elem::getMowner(MNode* aNode)
     return nullptr;
 }
 
-MNode* Elem::createHeir(const string& aName, MNode* aContext)
-{
-    return nullptr;
-}
 
 void Elem::setParent(const string& aParent)
 {
@@ -72,10 +69,6 @@ bool Elem::appendChild(MNode* aChild)
 {
     bool res = false;
     return res;
-}
-
-void Elem::notifyNodeMutated(const ChromoNode& aMut, const MutCtx& aCtx)
-{
 }
 
 void Elem::notifyParentMutated(const TMut& aMut)
