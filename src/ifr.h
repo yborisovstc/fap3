@@ -28,6 +28,7 @@ class IfrNode : public NTnnp<MIfProv, MIfReq>, public MIfProv, protected MIfReq
 	// From MIfReq
 	virtual string MIfReq_Uid() const override { return mOwner->Uid() + Ifu::KUidSepIc + MIfReq::Type();}
 	virtual MIfProv* next(MIfProv::TCp* aProvCp) const override;
+	virtual bool isRequestor(MIfProvOwner* aOwner) const override;
     public:
 	MIfProv* findIface(const MIface* aIface);
 	MIfProv* findOwner(const MIfProvOwner* aOwner);

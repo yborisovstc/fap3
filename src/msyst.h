@@ -27,6 +27,8 @@ class MAgent: public MIface
 	// From MIface
 	virtual string Uid() const override { return MAgent_Uid();}
 	virtual string MAgent_Uid() const = 0;
+	virtual MIface* getLif(const char *aType) override { return MAgent_getLif(aType);}
+	virtual MIface* MAgent_getLif(const char *aType) = 0;
 };
 
 

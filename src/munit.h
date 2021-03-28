@@ -7,15 +7,16 @@
 #include "guri.h"
 
 class MIfProv;
+class MIfReq;
 
 
 
 /** @brief Interface of element of interface resolution mechanism (IRM)
+ * Don't confuse with MIfProvOwner - it is for provider only whereas 
+ * MUnit is for some external client
  * */
 class MUnit: public MIface
 {
-    public:
-	using TIfReqCp = MNcpp<MIfReq, MIfProv>; /*!< IFR requestor connpoint type */
     public:
 	static const char* Type() { return "MUnit";}
 	virtual ~MUnit() {} // TODO to consider policy of system destruction
@@ -33,7 +34,7 @@ class MUnit: public MIface
 	 * It is only used by client requestor if the requestor hasn't resolution via this unit, i.e. hasn't 
 	 * connection to this unit iface provider
 	 * */
-	virtual bool resolveIface(const string& aName, TIfReqCp* aReq) = 0;
+	virtual bool resolveIface(const string& aName, MIfReq::TIfReqCp* aReq) = 0;
 };
 
 

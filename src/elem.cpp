@@ -30,7 +30,7 @@ MIface* Elem::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
     if (res = checkLif<MElem>(aType));
-    else Node::MNode_getLif(aType);
+    else res = Unit::MNode_getLif(aType);
     return res;
 }
 

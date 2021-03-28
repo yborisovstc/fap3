@@ -22,7 +22,7 @@ MIface* Unit::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
     if (res = checkLif<MUnit>(aType));
-    else if (res = checkLif<MNode>(aType));
+    else res = checkLif<MNode>(aType);
     return res;
 }
 
@@ -31,7 +31,7 @@ MIface* Unit::MUnit_getLif(const char *aType)
     MIface* res = nullptr;
     if (res = checkLif<MUnit>(aType));
     else if (res = checkLif<MIfProvOwner>(aType));
-    else res = MNode_getLif(aType);
+    else res = MNode_getLif(aType); //YB??
     return res;
 }
 
@@ -42,7 +42,7 @@ MIface* Unit::MIfProvOwner_getLif(const char *aType)
     return res;
 }
 
-bool Unit::resolveIface(const string& aName, TIfReqCp* aReq)
+bool Unit::resolveIface(const string& aName, MIfReq::TIfReqCp* aReq)
 {
     bool res = false;
     // Check if the requestor was already registered
@@ -75,7 +75,7 @@ MIfProv* Unit::defaultIfProv(const string& aName)
     return res;
 }
 
-IfrNode* Unit::createIfProv(const string& aName, TIfReqCp* aReq) const
+IfrNode* Unit::createIfProv(const string& aName, MIfReq::TIfReqCp* aReq) const
 {
     IfrNode* res = nullptr;
     if (aReq) {
@@ -105,3 +105,11 @@ void Unit::onIfpDisconnected(MIfProv* aProv)
     delete aProv;
 }
 
+
+void Unit::addIfpLeaf(MIface* aIfc, MIfReq::TIfReqCp* aReq)
+{
+	if (aIfc) {
+	IfrLeaf* lf = new IfrLeaf(this, aIfc);
+	aReq->connect(lf);
+    }
+}

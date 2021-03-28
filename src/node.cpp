@@ -2,12 +2,6 @@
 #include "node.h"
 #include "chromo.h"
 
-void Node::offset(int aIndent, ostream& aOs)
-{
-    for (int i = 0; i < aIndent; i++)  aOs << " ";
-}
-
-
 bool Node::NCpOwned::isOwner(const MOwner* aOwner) const
 {
     bool res = false;
@@ -40,13 +34,13 @@ MIface* Node::MNode_getLif(const char *aType)
 void Node::MNode_doDump(int aLevel, int aIdt, ostream& aOs) const
 {
     if (aLevel & EDM_Base) {
-	offset(aIdt, aOs); aOs << "Name: " << mName << endl;
+	Ifu::offset(aIdt, aOs); aOs << "Name: " << mName << endl;
     }
     if (aLevel & EDM_Comps) {
 	for (int i = 0; i < mCpOwner.pcount(); i++) {
 	    const MOwned* comp = mCpOwner.pairAt(i);
 	    const MNode* compn = comp->lIf(compn);
-	    offset(aIdt, aOs); aOs << "- "  << compn->name() << endl;
+	    Ifu::offset(aIdt, aOs); aOs << "- "  << compn->name() << endl;
 	    if (aLevel & EDM_Recursive) {
 		compn->doDump(EDM_Comps | EDM_Recursive, aIdt + Ifu::KDumpIndent, aOs);
 	    }
@@ -482,7 +476,7 @@ void Node::MContentOwner_doDump(int aLevel, int aIdt, ostream& aOs) const
 	const MContent* cont = getCont(i);
 	string data;
 	bool res = cont->getData(data);
-	offset(aIdt, aOs); aOs << "- "  << cont->contName() << ": " << (res ? data : "nil") << endl;
+	Ifu::offset(aIdt, aOs); aOs << "- "  << cont->contName() << ": " << (res ? data : "nil") << endl;
 	if (aLevel & ECODM_Recursive) {
 	    const MContentOwner* cowner = cont->lIf(cowner);
 	    if (cowner) {

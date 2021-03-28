@@ -16,6 +16,7 @@ libfap3_la_SOURCES = \
 		       menv.h \
 		       mlog.h \
 		       munit.h \
+		       mdata.h \
 		       ifu.h \
 		       ifu.cpp \
 		       env.h \
@@ -48,6 +49,12 @@ libfap3_la_SOURCES = \
 		       vert.cpp \
 		       syst.h \
 		       syst.cpp \
+		       rdata.h \
+		       rdata.cpp \
+		       data.h \
+		       data.cpp \
+		       des.h \
+		       des.cpp \
 		       chromo.h \
 		       chromo.cpp \
 		       chromo2.h \
@@ -63,6 +70,8 @@ include_HEADERS = \
 		  mecont.h \
 		  mnode.h \
 		  melem.h \
+		  mdata.h \
+		  mdes.h \
 		  miface.h
 
 

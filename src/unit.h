@@ -30,14 +30,16 @@ class Unit : public Node, public MUnit, public MIfProvOwner
 	virtual string MUnit_Uid() const override {  return getUid<MUnit>();}
 	virtual MIface* MUnit_getLif(const char *aType) override;
 	virtual MIfProv* defaultIfProv(const string& aName) override;
-	virtual bool resolveIface(const string& aName, TIfReqCp* aReq) override;
+	virtual bool resolveIface(const string& aName, MIfReq::TIfReqCp* aReq) override;
 	// From MIfProvOwner
 	virtual string MIfProvOwner_Uid() const override { return getUid<MIfProvOwner>();}
 	virtual MIface* MIfProvOwner_getLif(const char *aType) override;
+	virtual bool resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override { return false;}
 	virtual void onIfpDisconnected(MIfProv* aProv) override;
     protected:
-	virtual IfrNode* createIfProv(const string& aName, TIfReqCp* aReq) const;
+	virtual IfrNode* createIfProv(const string& aName, MIfReq::TIfReqCp* aReq) const;
 	void invalidateIrm();
+	void addIfpLeaf(MIface* aIfc, MIfReq::TIfReqCp* aReq);
     protected:
 	map<string, IfrNode*> mLocalIrn; /*!< Local IFR node */
 	list<IfrNode*> mIrns;  /*! IFR nodes */

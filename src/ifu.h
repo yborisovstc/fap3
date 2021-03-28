@@ -18,6 +18,7 @@ class Ifu
 	static size_t FindFirstCtrl(const string& aString, const char aCtrl, size_t aPos); 
 	static size_t FindFirstCtrl(const string& aString, const string& aCtrls, size_t aPos); 
 	static size_t FindRightDelim(const string& aString, char LeftDelim, char RightDelim, size_t aPos);
+	static void offset(int aIndent, ostream& aOs);
     public:
 	static char KEsc;
 	static char KUidSep;

@@ -42,12 +42,11 @@ class ConnPointu: public Vertu, public MConnPoint
     virtual MIface* MNode_getLif(const char *aType) override;
     // From MVert
     virtual MIface *MVert_getLif(const char *aType) override;
-    // From MVert::MCIface
-    virtual bool isCompatible(MCIface* aPair) const override;
     // From MConnPoint
     virtual string MConnPoint_Uid() const { return getUid<MConnPoint>();}
     virtual string provName() const override;
     virtual string reqName() const override;
+    virtual bool isCompatible(MVert* aPair, bool aExt) override;
     // From MIfProvOwner
     virtual MIface* MIfProvOwner_getLif(const char *aType) override;
     // From Node.MContentOwner
@@ -59,7 +58,7 @@ class ConnPointu: public Vertu, public MConnPoint
 
     protected:
     // From Unit
-    virtual IfrNode* createIfProv(const string& aName, TIfReqCp* aReq) const override;
+    virtual IfrNode* createIfProv(const string& aName, MIfReq::TIfReqCp* aReq) const override;
     // From Vertu
     virtual void onConnected() override;
     virtual void onDisconnected() override;
@@ -70,6 +69,22 @@ class ConnPointu: public Vertu, public MConnPoint
     static string KReqName;
     static string KProvName;
 };
+
+/** @brief Extender, monolitic, multicontent, unit. Redirects request for iface to internal CP of extention.
+ */
+class Extd: public Vertu
+{
+    public:
+	static const char* Type() { return "Extd";};
+	Extd(const string& aName = string(), MEnv* aEnv = NULL);
+	// From MVert
+	virtual bool isCompatible(MVert* aPair, bool aExt) override;
+	virtual MVert* getExtd() override;
+	virtual TDir getDir() const override;
+	// From Unit.MIfProvOwner
+	virtual bool resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+};
+
 
 
 /** @brief System, inheritable
@@ -85,6 +100,9 @@ class Syst : public Elem
 	// From Node
 	virtual void mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx) override;
 	virtual MIface* doMOwnerGetLif(const char *aType) override;
+    protected:
+	// From Unit
+	virtual IfrNode* createIfProv(const string& aName, MIfReq::TIfReqCp* aReq) const override;
 };
 
 

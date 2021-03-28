@@ -25,6 +25,7 @@ MIface* Vertu::MVert_getLif(const char *aType)
 {
     MIface* res = nullptr;
     if (res = checkLif<MVert>(aType));
+    else if (res = checkLif<MUnit>(aType));
     else res = MNode_getLif(aType);
     return res;
 }
@@ -63,9 +64,22 @@ bool Vertu::isConnected(MCIface* aPair) const
     return vp && mPairs.count(vp) == 1;
 }
 
+/*
 bool Vertu::isCompatible(MCIface* aPair) const
 {
     return dynamic_cast<MVert*>(aPair);
+}
+*/
+
+bool Vertu::isCompatible(MCIface* aPair) const
+{
+    bool res = false;
+    MVert* cp = aPair->lIf(cp);
+    if (cp) {
+	Vertu* self = const_cast<Vertu*>(this);
+	res = self->isCompatible(cp, false);
+    }
+    return res;
 }
 
 int Vertu::pairsCount() const

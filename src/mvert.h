@@ -18,7 +18,8 @@ class MVert: public MCIface
     public:
 	static const char* Type() { return "MVert";}
 	// From MCIface 
-	//virtual string provided() const override { return Type();}
+	virtual string MVert_Uid() const = 0;
+	virtual string Uid() const override { return MVert_Uid();}
 	virtual MIface *getLif(const char *aType) { return MVert_getLif(aType);}
 	virtual MIface *MVert_getLif(const char *aType) = 0;
 	/** @brief Indicates if connnectable is compatible */
@@ -34,12 +35,6 @@ class MVert: public MCIface
 	 * Is shows not only direct linkage (pairing) but also the linkage via components
 	 * */
 	virtual bool isLinked(const MVert* aPair, bool aDirect = false) const = 0;
-	// From MIface
-	virtual string MVert_Uid() const = 0;
-	virtual string Uid() const override { return MVert_Uid();}
-    protected:
-	//class EIfu: public Ifu { public: EIfu(); };
-	//static EIfu mIfu;
 };
 
 #endif

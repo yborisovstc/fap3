@@ -12,7 +12,7 @@
 /** @brief Test interface 1 */
 class MTIf1: public MIface{
     public:
-	static const char* Type() { return "MTestIface1";}
+	static const char* Type() { return "MTIf1";}
 	// From MIface
 	virtual string Uid() const override { return MTIf1_Uid();}
 	virtual string MTIf1_Uid() const = 0;
@@ -24,7 +24,7 @@ class MTIf1: public MIface{
 /**
  * Test agent providing the ifaces
  */
-class TstAgt: public Node, public MAgent
+class TstAgt: public Unit, public MAgent
 {
     public:
 	class TestIface1: public MTIf1 {
@@ -32,15 +32,37 @@ class TstAgt: public Node, public MAgent
 		TestIface1(TstAgt& aHost): mHost(aHost) {}
 		virtual ~TestIface1() {}
 		virtual string MTIf1_Uid() const override { return mHost.getUid<MTIf1>();}
-		virtual MIface* MTIf1_getLif(const char *aType) override {return nullptr;}
+		virtual MIface* MTIf1_getLif(const char *aType) override {return this;}
 	    private:
 		TstAgt& mHost;
 	};
     public:
 	static const char* Type() { return "TstAgt";};
-	TstAgt(const string& aName = string(), MEnv* aEnv = NULL): Node(aName, aEnv) { }
+	TstAgt(const string& aName = string(), MEnv* aEnv = NULL): Unit(aName, aEnv) { if (aName.empty()) mName = Type();}
 	virtual ~TstAgt() {}
 	virtual string MAgent_Uid() const { return getUid<MAgent>();}
+	MIface* MNode_getLif(const char *aType) override {
+	    MIface* res = nullptr;
+	    if (res = checkLif<MAgent>(aType));
+	    else res = checkLif<MNode>(aType);
+	    return res;
+	}
+	MIface* MAgent_getLif(const char *aType) override {
+	    MIface* res = nullptr;
+	    if (res = checkLif<MAgent>(aType));
+	    else res = checkLif<MUnit>(aType);
+	    return res;
+	}
+	// From Unit.MIfProvOwner
+	virtual bool resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override {
+	    bool res = false;
+	    if (aName == MTIf1::Type()) {
+		IfrLeaf* lf = new IfrLeaf(this, &mIface1);
+		aReq->connect(lf);
+		res = true;
+	    }
+	    return res;
+	}
     private:
 	TestIface1 mIface1 = TestIface1(*this);
 };
@@ -76,7 +98,8 @@ class Ut_syst : public CPPUNIT_NS::TestFixture
     //    CPPUNIT_TEST(test_cp_1);
     //    CPPUNIT_TEST(test_syst_1);
     //CPPUNIT_TEST(test_cp_2);
-    CPPUNIT_TEST(test_syst_cp_3);
+    //CPPUNIT_TEST(test_syst_cp_3);
+    CPPUNIT_TEST(test_syst_cpe_1);
     CPPUNIT_TEST_SUITE_END();
     public:
     virtual void setUp();
@@ -87,6 +110,7 @@ class Ut_syst : public CPPUNIT_NS::TestFixture
     void test_syst_1();
     void test_cp_2();
     void test_syst_cp_3();
+    void test_syst_cpe_1();
     private:
     Env* mEnv;
     TstProv* mProv;
@@ -277,11 +301,82 @@ void Ut_syst::test_syst_cp_3()
     CPPUNIT_ASSERT_MESSAGE("Fail to get cp2v", cp2v);
     res = cp1v->isPair(cp2v);
     CPPUNIT_ASSERT_MESSAGE("Fail to get pair of cp1v", res);
+    // Check MAgent resolution by Syst
+    MNode* s1n = root->getNode("SS.S1");
+    MUnit* s1u = s1n ? s1n->lIf(s1u) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get s1u", s1u);
+    MIfProv* ifp = s1u->defaultIfProv("MAgent");
+    MIfProv* maprov = ifp->first();
+    CPPUNIT_ASSERT_MESSAGE("Failed getting MAgent provider", maprov);
+    cout << endl << "=== Magents resolved by S1:" << endl;
+    while (maprov) {
+	cout << maprov->iface()->Uid() << endl;
+	maprov = maprov->next();
+    }
+    cout << endl;
+    cout << endl << "=== S1 MAgent default IFP dump:" << endl;
+    ifp->dump(0);
     // Check iface resolution via connpoint
     MUnit* cp2u = cp2n->lIf(cp2u);
     CPPUNIT_ASSERT_MESSAGE("Fail to get cp2u", cp2u);
-    MIfProv* ifp = cp2u->defaultIfProv("MTIf1");
+    ifp = cp2u->defaultIfProv("MTIf1");
     MIfProv* prov = ifp->first();
+    cout << endl << "=== CP2 MTIf1 default IFP dump:" << endl;
+    ifp->dump(0);
+    CPPUNIT_ASSERT_MESSAGE("Failed getting MConnPoint provider", prov);
+}
+
+
+/** @brief Test of resolving interface via extending chain
+ * */
+void Ut_syst::test_syst_cpe_1()
+{
+    cout << endl << "=== Test of resolving interface via extending chain ===" << endl;
+
+    const string specn("ut_syst_cpe_1");
+    string ext = "chs";
+    string spec = specn + string(".") + "chs";
+    string log = specn + "_" + ext + ".log";
+    mEnv = new Env(spec, log);
+    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv);
+    mProv = new TstProv("TestProv", mEnv);
+    bool res = mEnv->addProvider(mProv);
+    CPPUNIT_ASSERT_MESSAGE("Fail to add provider", res);
+    //mEnv->ImpsMgr()->ResetImportsPaths();
+    //mEnv->ImpsMgr()->AddImportsPaths("../modules");
+    mEnv->constructSystem();
+    MNode* root = mEnv->Root();
+    MElem* eroot = root ? root->lIf(eroot) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get root", eroot);
+    GUri ruri;
+    root->getUri(ruri);
+    string ruris = ruri.toString();
+    root->dump(Node::EDM_Base | Node::EDM_Comps | Node::EDM_Recursive,0);
+    // Save root chromoe
+    eroot->Chromos().Save(specn + "_saved." + ext);
+    // Check MAgent resolution by Syst
+    MNode* s1n = root->getNode("SS.S1");
+    MUnit* s1u = s1n ? s1n->lIf(s1u) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get s1u", s1u);
+    MIfProv* ifp = s1u->defaultIfProv("MAgent");
+    MIfProv* maprov = ifp->first();
+    CPPUNIT_ASSERT_MESSAGE("Failed getting MAgent provider", maprov);
+    cout << endl << "=== Magents resolved by S1:" << endl;
+    while (maprov) {
+	cout << maprov->iface()->Uid() << endl;
+	maprov = maprov->next();
+    }
+    cout << endl;
+    cout << endl << "=== S1 MAgent default IFP dump:" << endl;
+    ifp->dump(0);
+    // Check iface resolution via connpoint
+    MNode* cp2n = root->getNode("SS.Cp2");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get cp2n", cp2n);
+    MUnit* cp2u = cp2n->lIf(cp2u);
+    CPPUNIT_ASSERT_MESSAGE("Fail to get cp2u", cp2u);
+    ifp = cp2u->defaultIfProv("MTIf1");
+    MIfProv* prov = ifp->first();
+    cout << endl << "=== CP2 MTIf1 default IFP dump:" << endl;
     ifp->dump(0);
     CPPUNIT_ASSERT_MESSAGE("Failed getting MConnPoint provider", prov);
 }

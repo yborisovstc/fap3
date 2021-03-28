@@ -144,7 +144,6 @@ class Node : public MNode, public MContentOwner
 	virtual void mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx);
 	void notifyNodeMutated(const ChromoNode& aMut, const MutCtx& aCtx);
 	virtual void onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx);
-	static void offset(int aIndent, ostream& aOs);
     protected:
 	MEnv* mEnv = nullptr;
 	string mName;

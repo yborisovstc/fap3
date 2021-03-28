@@ -16,14 +16,15 @@ string IfrNode::name() const
 MIfProv* IfrNode::first() const
 {
     MIfProv* res = nullptr;
+    bool pres = true;
+    string nm = name();
+    IfrNode* self = const_cast<IfrNode*>(this);
     if (!mValid) {
-	string nm = name();
-	IfrNode* self = const_cast<IfrNode*>(this);
-	bool pres = self->resolve(nm);
-	if (pres && mValid) {
-	    auto fl = self->mCnode.firstLeaf();
-	    res =  fl ? fl->provided() : nullptr;
-	}
+	pres = self->resolve(nm);
+    }
+    if (pres && mValid) {
+	auto fl = self->mCnode.firstLeaf();
+	res =  fl ? fl->provided() : nullptr;
     }
     return res;
 }
@@ -39,18 +40,16 @@ MIfProv* IfrNode::next() const
     return res;
 }
 
+/* Default implementation just redirect the request to the owner
+ * Another solutionis is to use specific node that does resolution in 
+ * behalf of the owner.
+ * */
 bool IfrNode::resolve(const string& aName)
 {
+    mValid = mOwner->resolveIfc(aName, binded());
     // Cleanup the node - remove all invalid pairs
-    auto up = binded()->firstPair();
-    while (up) {
-	if (!up->provided()->isValid()) {
-	    binded()->disconnect(up);
-	} else {
-	    up = binded()->nextPair(up);
-	}
-    }
-    return false;
+    eraseInvalid();
+    return mValid;
 }
 
 MIfProv* IfrNode::next(MIfProv::TCp* aProvCp) const
@@ -60,12 +59,13 @@ MIfProv* IfrNode::next(MIfProv::TCp* aProvCp) const
 
 void IfrNode::MIfProv_doDump(int aLevel, int aIdt, ostream& aOs) const
 {
-    cout << string(aIdt, ' ') << "NODE [" << name() << "], Owner: " << mOwner->Uid() << ", Valid: " << mValid << endl;
+    Ifu::offset(aIdt, aOs);
+    aOs  << "[" << name() << "], " << mOwner->Uid() << ", Valid: " << mValid << endl;
     auto self = const_cast<IfrNode*>(this);
     auto pair = self->binded()->firstPair();
-    aIdt++;
+    aIdt += 2;
     while (pair) {
-	pair->provided()->dump(aIdt);
+	pair->provided()->doDump(aLevel, aIdt, aOs);
 	pair = self->binded()->nextPair(pair);
     }
 }
@@ -124,6 +124,14 @@ void IfrNode::eraseInvalid()
     }
 }
 
+bool IfrNode::isRequestor(MIfProvOwner* aOwner) const
+{
+    bool res = aOwner == mOwner;
+    if (!res && mPair) {
+	res = mPair->provided()->isRequestor(aOwner);
+    }
+    return res;
+}
 
 
 
@@ -146,7 +154,8 @@ MIfProv* IfrLeaf::next() const
 
 void IfrLeaf::MIfProv_doDump(int aLevel, int aIdt, ostream& aOs) const
 {
-    cout << string(aIdt,' ') << "LEAF [" << name() << "], Owner: " << mOwner->Uid() << ", Valid: " << mValid << ", Iface: " << (mIface ? mIface->Uid() : "null") << endl;
+    Ifu::offset(aIdt, aOs);
+    aOs  << "<" << name() << ">, " << mOwner->Uid() << ", Valid: " << mValid << ", Iface: " << (mIface ? mIface->Uid() : "null") << endl;
 }
 
 void IfrLeaf::setValid(bool aValid)

@@ -63,3 +63,9 @@ size_t Ifu::FindRightDelim(const string& aString, char aLeftDelim, char aRightDe
     return pos;
 }
 
+void Ifu::offset(int aIndent, ostream& aOs)
+{
+    for (int i = 0; i < aIndent; i++)  aOs << " ";
+}
+
+
