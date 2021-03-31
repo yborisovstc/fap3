@@ -113,3 +113,15 @@ void Unit::addIfpLeaf(MIface* aIfc, MIfReq::TIfReqCp* aReq)
 	aReq->connect(lf);
     }
 }
+
+bool Unit::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+{
+    bool res = false;
+    MIface* ifr = MNode_getLif(aName.c_str());
+    if (ifr /* && !findIface(ifr)YB??*/) {
+	IfrLeaf* lf = new IfrLeaf(this, ifr);
+	aReq->connect(lf);
+	res = true;
+    }
+    return res;
+}

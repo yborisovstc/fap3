@@ -45,8 +45,11 @@ bool Content::getData(string& aCont) const
 bool Content::setData(const string& aCont)
 {
     bool res = true;
-    mData = aCont;
-    mValid = true;
+    if (mData != aCont) {
+	mData = aCont;
+	mValid = true;
+	notifyContentChanged(this);
+    }
     return res;
 }
 
@@ -59,4 +62,35 @@ void Content::mutContent(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aC
     }
 }
 
+void Content::onContentChanged(const MContent* aCont)
+{
+    // Redirect to owner
+    notifyContentChanged(aCont);
+}
+
+void Content::notifyContentChanged(const MContent* aCont)
+{
+    MContentOwner* cowner = Owner()->lIf(cowner);
+    if (cowner) {
+	cowner->onContentChanged(this);
+    }
+}
+
+///// Cnt
+
+void Cnt::MContent_doDump(int aLevel, int aIdt, ostream& aOs) const
+{
+    Ifu::offset(aIdt, aOs);
+    cout << mName << ": " << mData << endl;
+}
+
+bool Cnt::setData(const string& aData)
+{
+    bool res = true;
+    if (mData != aData) {
+	mData = aData;
+	mHost.cntOwner()->onContentChanged(this);
+    }
+    return res;
+}
 

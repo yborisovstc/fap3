@@ -30,12 +30,9 @@ bool CpIfrNode::resolve(const string& aName)
     if (aName == mHost->provName()) {
 	// Requested provided iface - cannot be obtain via pairs - redirect to host
 	auto owner = mHost->Owner();
-	if (owner) {
-	    const MIfProvOwner* powno = owner->lIf(powno);
-	    const MUnit* pownu = powno ? powno->lIf(pownu): nullptr;
-	    if (powno && !findOwner(powno)) {
-		res = const_cast<MUnit*>(pownu)->resolveIface(aName, this->binded());
-	    }
+	const MUnit* ownu = owner ? owner->lIf(ownu): nullptr;
+	if (ownu) {
+	    res = const_cast<MUnit*>(ownu)->resolveIface(aName, this->binded());
 	}
     } else if (aName == mHost->reqName()) {
 	for (MVert* pair : mHost->mPairs) {
@@ -65,7 +62,6 @@ class CpIfrNodeRoot : public CpIfrNode
 string ConnPointu::KReqName = "Required";
 string ConnPointu::KProvName = "Provided";
 
-ConnPointu::Cnt::~Cnt() {}
 
 ConnPointu::ConnPointu(const string &aName, MEnv* aEnv): Vertu(aName, aEnv)
 {
@@ -157,7 +153,7 @@ bool ConnPointu::getContent(const GUri& aCuri, string& aRes) const
 	res = mProv.getData(aRes);
     else if (name == KReqName)
 	res = mReq.getData(aRes);
-    else res = false;
+    else res = Vertu::getContent(aCuri, aRes);
     return res;
 }
 
@@ -169,14 +165,8 @@ bool ConnPointu::setContent(const GUri& aCuri, const string& aData)
 	res = mProv.setData(aData);
     else if (name == KReqName)
 	res = mReq.setData(aData);
-    else res = false;
+    else res = Vertu::setContent(aCuri, aData);
     return res;
-}
-
-void ConnPointu::Cnt::MContent_doDump(int aLevel, int aIdt, ostream& aOs) const
-{
-    Ifu::offset(aIdt, aOs);
-    cout << mName << ": " << mData << endl;
 }
 
 bool ConnPointu::isCompatible(MVert* aPair, bool aExt)
@@ -409,7 +399,7 @@ MIface* Syst::doMOwnerGetLif(const char *aType)
 {
     MIface* res = nullptr;
     if (res = checkLif<MUnit>(aType));
-    else if (res = checkLif<MIfProvOwner>(aType));
+    else if (res = checkLif<MUnit>(aType));
     return res;
 }
 

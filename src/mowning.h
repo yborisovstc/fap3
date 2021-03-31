@@ -23,6 +23,7 @@ class MOwner : public MIface
 	virtual MOwned* bindedOwned() = 0;
 	virtual const MOwned* bindedOwned() const = 0;
 	virtual void onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx) = 0;
+	virtual void onOwnedAttached(MOwned* aOwned) = 0;
 };
 
 

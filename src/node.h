@@ -60,6 +60,7 @@ class Node : public MNode, public MContentOwner
 		virtual MNode* getNode(const GUri& aUri, const MNode* aOwned) const override { return mHost->getNode(aUri, aOwned);}
 		virtual void onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx) override {
 		    return mHost->onOwnedMutated(aOwned, aMut, aCtx);}
+		virtual void onOwnedAttached(MOwned* aOwned) override { mHost->onOwnedAttached(aOwned);}
 	    private:
 		Node* mHost;
 	};
@@ -70,13 +71,7 @@ class Node : public MNode, public MContentOwner
 		NCpOwned(Node* aHost): NCpOi2<MOwned, MOwner>(), mHost(aHost) {}
 		// From MOwned
 		virtual string MOwned_Uid() const {return mHost->getUid<MOwned>();}
-		virtual MIface* MOwned_getLif(const char *aType) override {
-		    MIface* res = nullptr;
-		    if (res = checkLifs<MOwned>(aType, this));
-		    else if (res = mHost->checkLif<MNode>(aType));
-		    else if (res = mHost->checkLif<MContent>(aType));
-		    return res;
-		}
+		virtual MIface* MOwned_getLif(const char *aType) override { return mHost->MOwned_getLif(aType);}
 		virtual string ownedId() const override { return mHost->name();}
 		virtual bool isOwner(const MOwner* aOwner) const override;
 		virtual void deleteOwned() override { delete mHost;}
@@ -85,7 +80,6 @@ class Node : public MNode, public MContentOwner
 	    private:
 		Node* mHost;
 	};
-
 
     public:
 	static const char* Type() { return "Node";}
@@ -122,6 +116,7 @@ class Node : public MNode, public MContentOwner
 	virtual const MContent* getCont(int aIdx) const override;
 	virtual bool getContent(const GUri& aCuri, string& aRes) const override;
 	virtual bool setContent(const GUri& aCuri, const string& aData) override;
+	virtual void onContentChanged(const MContent* aCont) override {}
 
     protected:
 	template<class T> MIface* checkLif(const char* aType) { return (strcmp(aType, T::Type()) == 0) ? dynamic_cast<T*>(this) : nullptr;}
@@ -129,6 +124,7 @@ class Node : public MNode, public MContentOwner
 	MOwner* Owner();
 	const MOwner* Owner() const;
 	template<class T> string getUid() const {return getUriS() + Ifu::KUidSep + T::Type();}
+	string getUid(const string& aCompName, const string& aIfName) const {return getUriS() + Ifu::KUidSepIc + aCompName + Ifu::KUidSep + aIfName;}
 	inline MLogRec* Logger() const {return mEnv ? mEnv->Logger(): nullptr; }
 	inline void Log(const TLog& aRec) const { Logger()->Write(aRec);};
 	inline MProvider* Provider() const {return mEnv ? mEnv->provider(): nullptr; }
@@ -136,6 +132,7 @@ class Node : public MNode, public MContentOwner
 	MNode* getNode(const GUri& aUri, const MNode* aOwned) const;
 	bool isOwned(const MNode* aComp) const;
 	virtual MIface* doMOwnerGetLif(const char *aType) { return nullptr;}
+	virtual MIface* MOwned_getLif(const char *aType);
 	// Mutations
 	virtual MNode* mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx);
 	virtual void mutSegment(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx);
@@ -143,7 +140,9 @@ class Node : public MNode, public MContentOwner
 	virtual void mutContent(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx);
 	virtual void mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx);
 	void notifyNodeMutated(const ChromoNode& aMut, const MutCtx& aCtx);
+	// MOwner events handlers
 	virtual void onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx);
+	virtual void onOwnedAttached(MOwned* aOwned);
     protected:
 	MEnv* mEnv = nullptr;
 	string mName;

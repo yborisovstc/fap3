@@ -34,16 +34,29 @@ class Unit : public Node, public MUnit, public MIfProvOwner
 	// From MIfProvOwner
 	virtual string MIfProvOwner_Uid() const override { return getUid<MIfProvOwner>();}
 	virtual MIface* MIfProvOwner_getLif(const char *aType) override;
-	virtual bool resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override { return false;}
+	virtual bool resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
 	virtual void onIfpDisconnected(MIfProv* aProv) override;
     protected:
 	virtual IfrNode* createIfProv(const string& aName, MIfReq::TIfReqCp* aReq) const;
 	void invalidateIrm();
 	void addIfpLeaf(MIface* aIfc, MIfReq::TIfReqCp* aReq);
+	template<class T> void getIfs(MNode* aObj, vector<T*>& aRes);
     protected:
 	map<string, IfrNode*> mLocalIrn; /*!< Local IFR node */
 	list<IfrNode*> mIrns;  /*! IFR nodes */
 };
+
+template<class T> void Unit::getIfs(MNode* aObj, vector<T*>& aRes)
+{
+    MUnit* obju = aObj->lIf(obju);
+    MIfProv* ifp = obju ? obju->defaultIfProv(T::Type()) : nullptr;
+    MIfProv* maprov = ifp ? ifp->first() : nullptr;
+    while (maprov) {
+	T* res = dynamic_cast<T*>(maprov->iface());
+	aRes.push_back(res);
+	maprov = maprov->next();
+    }
+}
 
 #endif // __FAP3_UNIT_H
 

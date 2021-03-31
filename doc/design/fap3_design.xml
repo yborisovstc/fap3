@@ -237,6 +237,9 @@
 		<listitem>
 			Avoid necessity of having dedicated chromo for mutation in inheritable agents. Ref <xref linkend="ds_adcm"/> for details.
 		</listitem>
+		<listitem>
+		    Modify DES cycle to avoid polling the comps but keep the lists of active/updated in owner. Ref <xref linkend="ds_mdc"/> for details.
+		</listitem>
 	    </itemizedlist>
 	</sect2>
 	<sect2 id="ds_itr_dp"><title>Dependent projects</title>
@@ -975,6 +978,9 @@
 		    transform mut to segment in mutAddEem. Let's use workaround ATM, ref code Node::mutate() aTreatAsChromo param.</simpara>
 	    </sect3>
 	</sect2>
+    </sect1>
+
+    <sect1 id="ds_mdc"><title>Modify DES cycle to avoid polling the comps but keep the lists of active/updated in owner.</title>
     </sect1>
 
     <sect1 id="ds_mcrc"><title>Redesign chromo to make it really copyable.</title>

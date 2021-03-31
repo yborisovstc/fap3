@@ -76,28 +76,30 @@ class MDVarSet: public MIface
 template <class T> class MDtGet: public MIface
 {
     public:
-	static const string Stype() { return string("MDtGet_") +  T::TypeSig();}
-	static const char* Type() { return Stype().c_str();};
+	static const string mType;
+	static const char* Type() { return mType.c_str();};
 	// From MIface
-	virtual string Uid() const override { return Stype();}
+	virtual string Uid() const override { return mType;}
 	// Local
 	virtual void DtGet(T& aData) = 0;
 };
 
+template<class T> const string MDtGet<T>::mType = string("MDtGet_") + T::TypeSig();
 
 /** @brief Generic data setter interface
  * */
 template <class T> class MDtSet: public MIface
 {
     public:
-	static const string Stype() { return string("MDtSet_") +  T::TypeSig();}
-	static const char* Type() { return Stype().c_str();};
+	static const string mType;
+	static const char* Type() { return mType.c_str();};
 	// From MIface
-	virtual string Uid() const override { return Stype();}
+	virtual string Uid() const override { return mType;}
 	// Local
 	virtual void DtSet(const T& aData) = 0;
 };
 
+template<class T> const string MDtSet<T>::mType = string("MDtSet_") + T::TypeSig();
 
 // Matrix
 template <class T> class MMtrGet: public MIface

@@ -6,7 +6,6 @@ AM_INIT_AUTOMAKE([-Wall])
 AC_CONFIG_FILES([
 		 Makefile
 		 src/Makefile
-		 clm/Makefile
 		 test/Makefile
 		 ])
 

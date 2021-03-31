@@ -48,6 +48,7 @@ class MContentOwner: public MIface
 	virtual const MContent* getCont(int aIdx) const = 0;
 	virtual bool getContent(const GUri& aCuri, string& aRes) const = 0;
 	virtual bool setContent(const GUri& aCuri, const string& aData) = 0;
+	virtual void onContentChanged(const MContent* aCont) = 0;
 };
 
 #endif

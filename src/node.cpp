@@ -282,6 +282,9 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
 bool Node::attachOwned(MNode* aOwned)
 {
     bool res = owner()->connect(aOwned->owned());
+    if (res) {
+	onOwnedAttached(aOwned->owned());
+    }
     return res;
 }
 
@@ -443,7 +446,6 @@ void Node::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
     }
 }
 
-
 void Node::notifyNodeMutated(const ChromoNode& aMut, const MutCtx& aCtx)
 {
     if (Owner() && aCtx.mNode && aCtx.mNode != this) {
@@ -460,8 +462,9 @@ void Node::onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const Mu
     }
 }
 
-
-
+void Node::onOwnedAttached(MOwned* aOwned)
+{
+}
 
 MIface* Node::MContentOwner_getLif(const char *aType) 
 {
@@ -546,3 +549,12 @@ bool Node::setContent(const GUri& aCuri, const string& aData)
     return res;
 
 }
+
+MIface* Node::MOwned_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MNode>(aType));
+    else if (res = checkLif<MContent>(aType));
+    return res;
+}
+

@@ -6,33 +6,15 @@
 
 #include "vert.h"
 #include "elem.h"
+#include "content.h"
 
 /** @brief Connection point, non-inheritable
  * Don't use Nodes content owner but uses custom conext
  * Has only 2 contents: Provided and Required
  * */
-class ConnPointu: public Vertu, public MConnPoint
+class ConnPointu: public Vertu, public MConnPoint, public Cnt::Host
 {
     friend class CpIfrNode;
-
-    public:
-    /** @brief Custom content */
-    class Cnt : public MContent {
-	public:
-	    Cnt(ConnPointu& aHost, const string& aName): mHost(aHost), mName(aName) {}
-	    virtual ~Cnt();
-	    // From MContent
-	    virtual string MContent_Uid() const override { return mHost.getUid<MContent>();}
-	    virtual MIface* MContent_getLif(const char *aType) override { return nullptr;}
-	    virtual void MContent_doDump(int aLevel, int aIdt, ostream& aOs) const override;
-	    virtual string contName() const override { return mName;}
-	    virtual bool getData(string& aData) const override { aData = mData; return true;}
-	    virtual bool setData(const string& aData) override { mData = aData; return true;}
-	private:
-	    const string& mName;
-	    string mData;
-	    ConnPointu& mHost;
-    };
 
     public:
     static const char* Type() { return "ConnPointu";}
@@ -42,11 +24,11 @@ class ConnPointu: public Vertu, public MConnPoint
     virtual MIface* MNode_getLif(const char *aType) override;
     // From MVert
     virtual MIface *MVert_getLif(const char *aType) override;
+    virtual bool isCompatible(MVert* aPair, bool aExt) override;
     // From MConnPoint
     virtual string MConnPoint_Uid() const { return getUid<MConnPoint>();}
     virtual string provName() const override;
     virtual string reqName() const override;
-    virtual bool isCompatible(MVert* aPair, bool aExt) override;
     // From MIfProvOwner
     virtual MIface* MIfProvOwner_getLif(const char *aType) override;
     // From Node.MContentOwner
@@ -55,6 +37,9 @@ class ConnPointu: public Vertu, public MConnPoint
     virtual const MContent* getCont(int aIdx) const override;
     virtual bool getContent(const GUri& aCuri, string& aRes) const override;
     virtual bool setContent(const GUri& aCuri, const string& aData) override;
+    // From Cnt.Host
+    virtual string getCntUid(const string& aName, const string& aIfName) const override { return getUid(aName, aIfName);}
+    virtual MContentOwner* cntOwner() override { return this;}
 
     protected:
     // From Unit

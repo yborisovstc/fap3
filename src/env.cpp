@@ -135,6 +135,14 @@ void Env::constructSystem()
 		*/
 		Logger()->Write(EInfo, mRoot, "Completed of creating system");
 		// Set launcher
+
+		for (int i = 0; i < mRoot->owner()->pcount(); i++) {
+		    MOwned* comp = mRoot->owner()->pairAt(i);
+		    MLauncher* desl = comp ? comp->lIf(desl) : nullptr;
+		    if (desl) {
+			mLauncher = desl; break;
+		    }
+		}
 		/*
 		mLauncher = dynamic_cast<MLauncher*>(mRoot->MUnit::GetSIfi(MLauncher::Type()));
 		if (mLauncher == NULL) {
@@ -166,4 +174,18 @@ void Env::removeProvider(MProvider* aProv)
     mProvider->RemoveProvider(aProv);
 }
 
+bool Env::RunSystem(int aCount)
+{
+    bool res = false;
+    if (mLauncher) {
+	res = mLauncher->Run(aCount);
+    } else {
+	Logger()->WriteFormat("Env: Failed running system - launcher isn't found");
+    }
+    return res;
+}
 
+bool Env::StopSystem()
+{
+    return mLauncher ? mLauncher->Stop() : false;
+}

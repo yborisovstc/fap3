@@ -53,8 +53,12 @@ libfap3_la_SOURCES = \
 		       rdata.cpp \
 		       data.h \
 		       data.cpp \
+		       func.h \
+		       func.cpp \
 		       des.h \
 		       des.cpp \
+		       dest.h \
+		       dest.cpp \
 		       chromo.h \
 		       chromo.cpp \
 		       chromo2.h \
@@ -72,6 +76,7 @@ include_HEADERS = \
 		  melem.h \
 		  mdata.h \
 		  mdes.h \
+		  mlauncher.h \
 		  miface.h
 
 

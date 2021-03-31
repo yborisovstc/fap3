@@ -3,6 +3,7 @@
 
 #include "menv.h"
 #include "mnode.h"
+#include "mlauncher.h"
 #include "factr.h"
 
 class Logrec;
@@ -25,6 +26,8 @@ class Env: public MEnv
 	virtual void constructSystem() override;
 	virtual MLogRec* Logger() override;
 	virtual MNode* Root() const override;
+	virtual bool RunSystem(int aCount = 0) override;
+	virtual bool StopSystem() override;
 	bool addProvider(MProvider* aProv) override;
 	void removeProvider(MProvider* aProv) override;
     protected:
@@ -34,6 +37,7 @@ class Env: public MEnv
 	MChromo* mChromo;
 	Factory* mProvider;
 	Logrec* mLogger;
+	MLauncher* mLauncher = nullptr; /*!< Model's launcher */
 
 };
 
