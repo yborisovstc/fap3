@@ -25,12 +25,12 @@ class IfrNode : public NTnnp<MIfProv, MIfReq>, public MIfProv, protected MIfReq
 	virtual void setValid(bool aValid) override;
 	virtual MIface* iface() override { return nullptr;}
 	virtual const MIfProvOwner* owner() const override { return mOwner;}
+	virtual MIfProv* findIface(const MIface* aIface) override;
 	// From MIfReq
 	virtual string MIfReq_Uid() const override { return mOwner->Uid() + Ifu::KUidSepIc + MIfReq::Type();}
 	virtual MIfProv* next(MIfProv::TCp* aProvCp) const override;
 	virtual bool isRequestor(MIfProvOwner* aOwner) const override;
     public:
-	MIfProv* findIface(const MIface* aIface);
 	MIfProv* findOwner(const MIfProvOwner* aOwner);
 	void eraseInvalid();
     protected:
@@ -56,6 +56,7 @@ class IfrLeaf : public NCpOnp<MIfProv, MIfReq>, public MIfProv
 	virtual void MIfProv_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	virtual bool isValid() const override { return mValid;}
 	virtual void setValid(bool aValid) override;
+	virtual MIfProv* findIface(const MIface* aIface) override { return nullptr;}
     protected:
 	bool mValid;
 	MIfProvOwner* mOwner;

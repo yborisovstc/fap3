@@ -103,7 +103,7 @@ class BdVar: public MDVar, public MUpdatable, public MDVarGet, public MDVarSet, 
 	virtual string MUpdatable_Uid() const override { return mHost->GetDvarUid(this);}
 	virtual bool update() override;
 	// From MDVarGet
-	virtual string MDVarGet_Uid() const override {return Type();}
+	virtual string MDVarGet_Uid() const override {return mHost->GetDvarUid(this);}
 	virtual string VarGetIfid() const override;
 	virtual MIface* DoGetDObj(const char *aName) override;
 	// From MDVarSet

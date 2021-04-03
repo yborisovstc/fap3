@@ -60,7 +60,7 @@ MIface* State::MNode_getLif(const char *aType)
     if (res = checkLif<MDesSyncable>(aType));
     else if (res = checkLif<MDesInpObserver>(aType));
     else if (res = checkLif<MConnPoint>(aType));
-    else if (res = checkLif<MDVarGet>(aType));
+    else if (res = checkLifs<MDVarGet>(aType, dynamic_cast<MDVarGet*>(mCdata)));
     else if (res = checkLif<MDVarSet>(aType));
     else res = Vertu::MNode_getLif(aType);
     return res;
@@ -269,14 +269,15 @@ void State::onContentChanged(const MContent* aCont)
 bool State::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 {
     bool res = true;
-    Vertu::resolveIfc(aName, aReq);
     if (aName == provName()) {
 	MIface* ifr = mCdata->MDVar_getLif(aName.c_str());
-	if (ifr) {
+	if (ifr && !aReq->binded()->provided()->findIface(ifr)) {
 	    IfrLeaf* lf = new IfrLeaf(this, ifr);
 	    aReq->connect(lf);
 	    res = true;
 	}
+    } else {
+	Vertu::resolveIfc(aName, aReq);
     }
     return res;
 }
@@ -322,6 +323,11 @@ bool State::isCompatible(MVert* aPair, bool aExt)
     return res;
 }
 
+string State::GetDvarUid(const MDVar* aComp) const
+{
+    string name =  (aComp == mPdata) ? "Pdata" : "Cdata";
+    return getUid(name, MDVar::Type()); 
+}
 
 
 

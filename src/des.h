@@ -86,6 +86,7 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 	// From MBdVarHost
 	virtual MDVarGet* HGetInp(const void* aRmt) override;
 	virtual void HOnDataChanged(const void* aRmt) override;
+	virtual string GetDvarUid(const MDVar* aComp) const;
 	// From MDVarSet
 	virtual string MDVarSet_Uid() const override {return getUid<MDVarSet>();}
 	virtual string VarGetSIfid();

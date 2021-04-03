@@ -105,8 +105,8 @@ class Node : public MNode, public MContentOwner
 	virtual const TOwnerCp* owner() const override { return &mCpOwner;}
 	virtual TOwnedCp* owned() override { return &mCpOwned;}
 	virtual const TOwnedCp* owned() const override { return &mCpOwned;}
-	virtual const MContentOwner* cntOw() const override { return reinterpret_cast<const MContentOwner*>(this);}
-	virtual MContentOwner* cntOw() override  { return reinterpret_cast<MContentOwner*>(this);}
+	virtual const MContentOwner* cntOw() const override;
+	virtual MContentOwner* cntOw() override;
 	// From MContentOwner
 	virtual string MContentOwner_Uid() const override { return getUid<MContentOwner>();}
 	virtual MIface* MContentOwner_getLif(const char *aType) override;

@@ -73,10 +73,13 @@ void IfrNode::MIfProv_doDump(int aLevel, int aIdt, ostream& aOs) const
 void IfrNode::setValid(bool aValid)
 {
     mValid = aValid;
-    if (mPair && !aValid) {
-	auto down = mPair->binded();
-	if (down) {
-	    down->provided()->setValid(aValid);
+    if (!aValid) {
+	// Propagate invalidation to owner to mark all branch invalid
+	if (mPair) {
+	    auto down = mPair->binded();
+	    if (down) {
+		down->provided()->setValid(aValid);
+	    }
 	}
     }
 }

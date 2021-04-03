@@ -30,15 +30,22 @@ bool CpIfrNode::resolve(const string& aName)
     if (aName == mHost->provName()) {
 	// Requested provided iface - cannot be obtain via pairs - redirect to host
 	auto owner = mHost->Owner();
-	const MUnit* ownu = owner ? owner->lIf(ownu): nullptr;
-	if (ownu) {
+	MUnit* ownu = owner ? const_cast<MOwner*>(owner)->lIf(ownu): nullptr;
+	MIfProvOwner* owno = ownu ? ownu->lIf(owno) : nullptr;
+	MIfProv* prov = findOwner(owno);
+	if (prov) {
+	    prov->resolve(aName);
+	} else if (ownu) {
 	    res = const_cast<MUnit*>(ownu)->resolveIface(aName, this->binded());
 	}
     } else if (aName == mHost->reqName()) {
 	for (MVert* pair : mHost->mPairs) {
 	    MUnit* pairu = pair->lIf(pairu);
 	    MIfProvOwner* pairo = pairu->lIf(pairo);
-	    if (!findOwner(pairo)) {
+	    MIfProv* prov = findOwner(pairo);
+	    if (prov) {
+		prov->resolve(aName);
+	    } else {
 		res = pairu->resolveIface(aName, this->binded());
 	    }
 	}
@@ -119,6 +126,7 @@ IfrNode* ConnPointu::createIfProv(const string& aName, MIfReq::TIfReqCp* aReq) c
     return res;
 }
 
+/*
 void ConnPointu::onConnected()
 {
     invalidateIrm();
@@ -128,6 +136,7 @@ void ConnPointu::onDisconnected()
 {
     invalidateIrm();
 }
+*/
 
 MContent* ConnPointu::getCont(int aIdx)
 {

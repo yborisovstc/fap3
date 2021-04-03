@@ -558,3 +558,13 @@ MIface* Node::MOwned_getLif(const char *aType)
     return res;
 }
 
+
+const MContentOwner* Node::cntOw() const
+{
+    return dynamic_cast<const MContentOwner*>(this);
+}
+
+MContentOwner* Node::cntOw()
+{
+    return dynamic_cast<MContentOwner*>(this);
+}

@@ -119,7 +119,7 @@ class MBdVarHost
 	virtual MDVarGet* HGetInp(const void* aRmt) = 0;
 	virtual void HOnDataChanged(const void* aRmt) = 0;
 	virtual string GetUid() { return "?";}
-	virtual string GetDvarUid(const MDVar* aComp) const { return "BdVar";}
+	virtual string GetDvarUid(const MDVar* aComp) const = 0;
 };
 
 template <typename T>

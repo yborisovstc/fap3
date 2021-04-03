@@ -410,17 +410,28 @@
 	<sect2 id="ds_irm_ut"><title>How to update <xref linkend="gls_irm"/> tree?</title>
 	    <sect3><title>Intro</title>
 		<simpara>The tree created in result of iface request needs to be updated according to the system changes. For instance if system node provided
-		    iface is removed then the tree corresponde branch needs to be removed too. How can we implement this updatae of IRM tree?</simpara>
+		    iface is removed then the tree corresponds branch needs to be removed too. How can we implement this updatae of IRM tree?</simpara>
 		<simpara>In FAP3 the invalidation apporach was applied: the whole branch is marked as invalid on any provider update, this causes 
 		    the cache update on the iface next request.</simpara>
 	    </sect3>
-	    <sect3 id="ds_irm_ut_inv"><title>Solution: branch invalidation</title>
+	    <sect3 id="ds_irm_ut_inv"><title>Solution: branch invalidation via setting invalid indication</title>
 		<sect4><title>Intro</title>
 		    <simpara>This is same approach as FAP2 applied.</simpara>
 		</sect4>
 		<sect4><title>How current node has to be updated.</title>
 		    <simpara>It is not enough that the current provider "passes" all potential providers and refresh the tree. It is also required to
 			go thru all up pairs after that and remove the pairs that are still invalid.</simpara>
+		    <simpara>Is this approach effective? It is implemented (I stay on ac6c810e11a16f1) but has sowe drowbacks - we need to apply quite complicated schema to 
+			refresh providers tree: when we resolve iface after invalidating current node we need to check if the potential provider already
+			exists in the tree (ref IfrNode::findOwner). This should be done in any resolution methods, so needs to be very carefull to not
+			avoid this checking, otherwise there will be duplicated branches in providers tree. Why don't just remove the whole providers tree in
+			case of invalidating (ref <xref linkend="ds_irm_ut_rb"/>)? Probably the idea was that the valid branches to providers can be re-used.  </simpara>
+		    <sect5><title>Seems there is the problem in the current implementation.</title>
+			<simpara>When the invalidated node is refreshed, it is marked as valid, but when the invalidated providers node is checked on existence
+			    then we just omit redirecting to it and it stays invalid.</simpara>
+		    </sect5>
+		</sect4>
+		<sect4 id="ds_irm_ut_rb"><title>Solution#2: remove the branch</title>
 		</sect4>
 	    </sect3>
 	    <sect3 id="ds_irm_ut_own"><title>Providers owner iface, notification of provider updated</title>
@@ -428,10 +439,10 @@
 		    <simpara>We need to support owning of iface providers nodes, the proper way for that is introducing specific iface for the owner.</simpara>
 		    <simpara>Also the owner iface shall support notification of provider update. This will solve the FAP2 IRM problem
 		    <ulink url="../../../grayb/doc/design/index.html#ds_i_nrn"/> </simpara>
-		</sect4>
-	    </sect3>
-	</sect2>
-    </sect1>
+	    </sect4>
+	</sect3>
+    </sect2>
+</sect1>
 
     <sect1 id="ds_sn"><title>System navigation improvement. Access restrictions</title>
 	<sect2><title>Intro</title>

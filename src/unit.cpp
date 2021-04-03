@@ -46,11 +46,13 @@ bool Unit::resolveIface(const string& aName, MIfReq::TIfReqCp* aReq)
 {
     bool res = false;
     // Check if the requestor was already registered
-    bool connected = false;
+    MIfProv* prov = nullptr;
     for (auto item : mIrns) {
-	if (item->isConnected(aReq)) { connected = true; break;}
+	if (item->isConnected(aReq)) { prov = item; break;}
     }
-    if (!connected) {
+    if (prov) {
+	prov->resolve(aName);
+    } else {
 	IfrNode* node = createIfProv(aName, aReq);
 	mIrns.push_back(node);
 	res = node->connect(aReq);

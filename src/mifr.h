@@ -31,6 +31,7 @@ class MIfProv: public MIface
 	virtual void MIfProv_doDump(int aLevel, int aIdt, ostream& aOs) const =0;
 	virtual bool isValid() const = 0;
 	virtual void setValid(bool aValid) = 0;
+	virtual MIfProv* findIface(const MIface* aIface) = 0;
 };
 
 /** @brief Interface of interface requestor in iface resolution mechanism
