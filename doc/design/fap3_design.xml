@@ -416,25 +416,37 @@
 	    </sect3>
 	    <sect3 id="ds_irm_ut_inv"><title>Solution: branch invalidation via setting invalid indication</title>
 		<sect4><title>Intro</title>
-		    <simpara>This is same approach as FAP2 applied.</simpara>
+		    <simpara>The generic approach is clear. But the questions remain what nodes to mark invalid and how to refresh resolution then.
+			This is same approach as FAP2 applied ATM. Revised the approach. Implemented <xref linkend="ds_irm_ut_inv_cno"/> as most
+			    safe.</simpara>
 		</sect4>
-		<sect4><title>How current node has to be updated.</title>
+		<sect4 id="ds_irm_ut_ib"><title>Solution#1 Current one. Invalidata the whole branch.</title>
 		    <simpara>It is not enough that the current provider "passes" all potential providers and refresh the tree. It is also required to
 			go thru all up pairs after that and remove the pairs that are still invalid.</simpara>
 		    <simpara>Is this approach effective? It is implemented (I stay on ac6c810e11a16f1) but has sowe drowbacks - we need to apply quite complicated schema to 
 			refresh providers tree: when we resolve iface after invalidating current node we need to check if the potential provider already
 			exists in the tree (ref IfrNode::findOwner). This should be done in any resolution methods, so needs to be very carefull to not
 			avoid this checking, otherwise there will be duplicated branches in providers tree. Why don't just remove the whole providers tree in
-			case of invalidating (ref <xref linkend="ds_irm_ut_rb"/>)? Probably the idea was that the valid branches to providers can be re-used.  </simpara>
-		    <sect5><title>Seems there is the problem in the current implementation.</title>
-			<simpara>When the invalidated node is refreshed, it is marked as valid, but when the invalidated providers node is checked on existence
-			    then we just omit redirecting to it and it stays invalid.</simpara>
-		    </sect5>
+			case of invalidating (ref <xref linkend="ds_irm_ut_inv_rb"/>)? Probably the idea was that the valid branches to providers can be re-used.  </simpara>
+		    <simpara> Seems there is the problem in the current implementation:
+			When the invalidated node is refreshed, it is marked as valid, but when the invalidated providers node is checked on existence
+			then we just omit redirecting to it and it stays invalid. So with this approach we need to check if the node already exists in the path
+			and if the node is invalid then request it for resolving. There is obvious drawback: each resolution code needs to be created very
+			carefully to not avoid this checking of node existence.</simpara>
+		    <simpara>
+		    </simpara>
 		</sect4>
-		<sect4 id="ds_irm_ut_rb"><title>Solution#2: remove the branch</title>
+		<sect4 id="ds_irm_ut_inv_rb"><title>Solution#2: remove the branch</title>
+		    <simpara>This solution seems not effective. Indeed, what is the reason of removing owners of invalidated node? Actually the owners are not
+			invalid, the current node invalidation doesn't affect the owners validity. The only reason would be to initiate the chan of resolution.</simpara>
+		</sect4>
+		<sect4 id="ds_irm_ut_inv_cno"><title>Solution#3: invalidate only current node, remove owned tree, resolve invalid node in leafs tree-walk.</title>
+		    <simpara>With this approach we don't need to check existence of node in each resolving procedure, ref <xref linkend="ds_irm_ut_inv"/>
+			We just need to modify the leafs three-walk to check if the node is invalid so refresh resolution.
+		    </simpara>
 		</sect4>
 	    </sect3>
-	    <sect3 id="ds_irm_ut_own"><title>Providers owner iface, notification of provider updated</title>
+	    <sect3 id="ds_irm_ut_inv_own"><title>Providers owner iface, notification of provider updated</title>
 		<sect4><title>Intro</title>
 		    <simpara>We need to support owning of iface providers nodes, the proper way for that is introducing specific iface for the owner.</simpara>
 		    <simpara>Also the owner iface shall support notification of provider update. This will solve the FAP2 IRM problem
@@ -444,48 +456,48 @@
     </sect2>
 </sect1>
 
-    <sect1 id="ds_sn"><title>System navigation improvement. Access restrictions</title>
-	<sect2><title>Intro</title>
-	    <simpara>There is the gap in FAP2 desing: the access to system nodes is not restricted. So any node can access to any node. This can cause the models
-		unreliability.</simpara>
-	</sect2>
-	<sect2><title>GUri improvement: avoid upward navigation</title>
-	    <sect3><title>Intro</title>
-		<simpara>In FAP2 GUri can specify upward navigation, for instance navigation thru owner to root, direct access root etc. This needs to
-		    be disabled. So we don't need such navigation at all. Instead we can have "special nodes" that can be accessed via GUri. Special nodes need
-		    to have named specifically, prefix '_' can be used for instance. Owner can be such special node also.
-		    such special node.</simpara>
-	    </sect3>
-	    <sect3><title>Usecase: agents accesses neighbours in owning container.</title>
-		<simpara>This is very common case when agent is placed in system so it needs access to other components of this system, e.g to system coppnoints.
-		    The agents acs in this case as system's confidant so it is reasonable it has the access to system's internals. How this use-case can be
-		    supported? </simpara>
-		<simpara>The solution can be as: the agent uses URI with special node "owner", so the navigation goes thru the owner, the client acces the owner
-		    via MOwner iface, passing self as the argument. Thus the owner can handle this request specifically - it can check if the requestor is 
-		    an agent and event verify if such agent has rights for access to owner's components.</simpara>
-	    </sect3>
-	    <sect3><title>Use-case: fap2-vis VrController - unit adapter gets path to managed agent upward.</title>
-		<simpara>So agent needs access upward its owner.</simpara>
-	    </sect3>
-	    <sect3><title>Use-case: creating node from parent located in arbitrary layer of hier.</title>
-	    </sect3>
-	    <sect3><title>Approach#1: node reference in owner.</title>
-		<simpara>The idea is that sub-system needs to ask its owner to get required node - owner is the only sub-system "window to the world". The owner
-		    prepares the reference to the node for it's components. What is the reference? This is the node that proxies some ifaces, MUnit in case of
-		    ref to parent.</simpara>
-		<simpara>It some "deep" located node requires access to much upper layer than all the owners have to create such references.</simpara>
-		<simpara>With this approach the owners responsibility is to create "environment" for its compoments.</simpara>
-	    </sect3>
-	</sect2>
-	<sect2><title>Namespaces support</title>
-	    <sect3><title>Use-case: native units</title>
-		<simpara>Native units is specific units category, they cannot be accessed via navigation thru native hier. Specific rule is used in FAP2 to
-		    distinguish native units in URI: native units are identified by single name.</simpara>
-	    </sect3>
-	</sect2>
-    </sect1>
+<sect1 id="ds_sn"><title>System navigation improvement. Access restrictions</title>
+    <sect2><title>Intro</title>
+	<simpara>There is the gap in FAP2 desing: the access to system nodes is not restricted. So any node can access to any node. This can cause the models
+	    unreliability.</simpara>
+    </sect2>
+    <sect2><title>GUri improvement: avoid upward navigation</title>
+	<sect3><title>Intro</title>
+	    <simpara>In FAP2 GUri can specify upward navigation, for instance navigation thru owner to root, direct access root etc. This needs to
+		be disabled. So we don't need such navigation at all. Instead we can have "special nodes" that can be accessed via GUri. Special nodes need
+		to have named specifically, prefix '_' can be used for instance. Owner can be such special node also.
+		such special node.</simpara>
+	</sect3>
+	<sect3><title>Usecase: agents accesses neighbours in owning container.</title>
+	    <simpara>This is very common case when agent is placed in system so it needs access to other components of this system, e.g to system coppnoints.
+		The agents acs in this case as system's confidant so it is reasonable it has the access to system's internals. How this use-case can be
+		supported? </simpara>
+	    <simpara>The solution can be as: the agent uses URI with special node "owner", so the navigation goes thru the owner, the client acces the owner
+		via MOwner iface, passing self as the argument. Thus the owner can handle this request specifically - it can check if the requestor is 
+		an agent and event verify if such agent has rights for access to owner's components.</simpara>
+	</sect3>
+	<sect3><title>Use-case: fap2-vis VrController - unit adapter gets path to managed agent upward.</title>
+	    <simpara>So agent needs access upward its owner.</simpara>
+	</sect3>
+	<sect3><title>Use-case: creating node from parent located in arbitrary layer of hier.</title>
+	</sect3>
+	<sect3><title>Approach#1: node reference in owner.</title>
+	    <simpara>The idea is that sub-system needs to ask its owner to get required node - owner is the only sub-system "window to the world". The owner
+		prepares the reference to the node for it's components. What is the reference? This is the node that proxies some ifaces, MUnit in case of
+		ref to parent.</simpara>
+	    <simpara>It some "deep" located node requires access to much upper layer than all the owners have to create such references.</simpara>
+	    <simpara>With this approach the owners responsibility is to create "environment" for its compoments.</simpara>
+	</sect3>
+    </sect2>
+    <sect2><title>Namespaces support</title>
+	<sect3><title>Use-case: native units</title>
+	    <simpara>Native units is specific units category, they cannot be accessed via navigation thru native hier. Specific rule is used in FAP2 to
+		distinguish native units in URI: native units are identified by single name.</simpara>
+	</sect3>
+    </sect2>
+</sect1>
 
-    <sect1 id="ds_cli"><title>Chromo language improvement</title>
+<sect1 id="ds_cli"><title>Chromo language improvement</title>
 	<sect2><title>Intro</title>
 	    <simpara><xref linkend="gls_dmc"/> chromo was prototyped in the scope of fap2, ref <ulink url="../../../grayb/doc/design/index.html#ds_chr2_dmc_proto"/> so
 		it was decided that fap3 has to support <xref linkend="gls_dmc"/> chromo language.</simpara>

@@ -23,7 +23,7 @@ MIfProv* IfrNode::first() const
 	pres = self->resolve(nm);
     }
     if (pres && mValid) {
-	auto fl = self->mCnode.firstLeaf();
+	auto fl = self->firstLeafB();
 	res =  fl ? fl->provided() : nullptr;
     }
     return res;
@@ -73,6 +73,8 @@ void IfrNode::MIfProv_doDump(int aLevel, int aIdt, ostream& aOs) const
 void IfrNode::setValid(bool aValid)
 {
     mValid = aValid;
+    erase();
+    /*
     if (!aValid) {
 	// Propagate invalidation to owner to mark all branch invalid
 	if (mPair) {
@@ -82,6 +84,7 @@ void IfrNode::setValid(bool aValid)
 	    }
 	}
     }
+    */
 }
 
 MIfProv* IfrNode::findIface(const MIface* aIface)
@@ -127,6 +130,16 @@ void IfrNode::eraseInvalid()
     }
 }
 
+void IfrNode::erase()
+{
+    auto pair = binded()->firstPair();
+    while (pair) {
+	auto prov = pair->provided();
+	binded()->disconnect(pair);
+	pair = binded()->firstPair(); // pairs container in binded is updated, starts from the firs
+    }
+}
+
 bool IfrNode::isRequestor(MIfProvOwner* aOwner) const
 {
     bool res = aOwner == mOwner;
@@ -136,7 +149,37 @@ bool IfrNode::isRequestor(MIfProvOwner* aOwner) const
     return res;
 }
 
+// Override firstLeaf, nextLeaf to resolve invalidated node
+IfrNode::TSelf* IfrNode::firstLeafB()
+{
+    TSelf* res = nullptr;
+    if (!mValid) {
+	string nm = name();
+	bool pres = resolve(nm);
+    }
+    if (mValid) {
+	res = NTnnp<MIfProv, MIfReq>::firstLeafB();
+    }
+    return res;
+}
 
+IfrNode::TPair* IfrNode::nextLeaf(TPair* aLeaf)
+{
+    TPair* res = nullptr;
+    if (!mValid) {
+	string nm = name();
+	bool pres = resolve(nm);
+    }
+    if (mValid) {
+	NTnnp<MIfProv, MIfReq>::nextLeaf(aLeaf);
+    }
+    return res;
+}
+
+
+
+
+//// IfrLeaf
 
 string IfrLeaf::name() const
 {
@@ -164,12 +207,14 @@ void IfrLeaf::MIfProv_doDump(int aLevel, int aIdt, ostream& aOs) const
 void IfrLeaf::setValid(bool aValid)
 {
     mValid = aValid;
+    /*
     if (mPair && !aValid) {
 	auto down = mPair->binded();
 	if (down) {
 	    down->provided()->setValid(aValid);
 	}
     }
+    */
 }
 
 

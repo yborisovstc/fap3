@@ -123,6 +123,8 @@ class MNcpp
 	virtual TPair* firstPair() = 0;
 	virtual TPair* nextPair(TPair* aPair) = 0;
 	virtual TPair* firstLeaf() = 0;
+	/** @brief gets first leaf of binded */
+	virtual TSelf* firstLeafB() = 0;
 	virtual TPair* nextLeaf(TPair* aLeaf) = 0;
 	/** @brief Gets next leaf from the leaf */
 	virtual TSelf* nextLeaf() = 0;
@@ -428,6 +430,7 @@ class NCpOmip : public MNcpp<TPif, TRif>
 	virtual TPair* firstPair() { return  nullptr;}
 	virtual TPair* nextPair(TPair* aPair) { return nullptr;}
 	virtual TPair* firstLeaf() override { return nullptr;}
+	virtual TSelf* firstLeafB() override { return nullptr;}
 	virtual TPair* nextLeaf(TPair* aLeaf) override { return nullptr;}
 	virtual TSelf* nextLeaf() override { return nullptr;}
     public:
@@ -526,6 +529,7 @@ class NCpOip : public MNcpp<TPif, TRif>
 	virtual TPair* firstPair() { return  nullptr;}
 	virtual TPair* nextPair(TPair* aPair) { return nullptr;}
 	virtual TPair* firstLeaf() override { return nullptr;}
+	virtual TSelf* firstLeafB() override { return nullptr;}
 	virtual TPair* nextLeaf(TPair* aLeaf) override { return nullptr;}
 	virtual TSelf* nextLeaf() override { return nullptr;}
     public:
@@ -719,16 +723,17 @@ class NCpOmnp : public MNcpp<TPif, TRif>
 	    TPair* res = nullptr;
 	    auto pair = firstPair();
 	    while (pair) {
-		if (res = pair->binded() ? pair->binded()->firstLeaf() : pair) break;
+		if (res = pair->binded() ? pair->firstLeafB() : pair) break;
 		pair = nextPair(pair);
 	    }
 	    return res;
 	}
+	virtual TSelf* firstLeafB() override { return nullptr;}
 	virtual TPair* nextLeaf(TPair* aLeaf) override {
 	    TPair* res = nullptr;
 	    auto np = nextPair(aLeaf);
 	    if (np) {
-		res = np->binded() ? np->binded()->firstLeaf() : np;
+		res = np->binded() ? np->firstLeafB() : np;
 	    } else if (binded()) {
 		res = binded()->nextLeaf();
 	    }
@@ -832,6 +837,7 @@ class NCpOnp : public MNcpp<TPif, TRif>
 	virtual TPair* firstPair() { return  mPair;}
 	virtual TPair* nextPair(TPair* aPair) { return nullptr;}
 	virtual TPair* firstLeaf() override { return nullptr;}
+	virtual TSelf* firstLeafB() override { return binded() ? binded()->firstLeaf() : nullptr;}
 	virtual TPair* nextLeaf(TPair* aLeaf) override { return nullptr;}
 	virtual TSelf* nextLeaf() override {
 	    return mPair ? mPair->nextLeaf(this) : nullptr;

@@ -30,9 +30,13 @@ class IfrNode : public NTnnp<MIfProv, MIfReq>, public MIfProv, protected MIfReq
 	virtual string MIfReq_Uid() const override { return mOwner->Uid() + Ifu::KUidSepIc + MIfReq::Type();}
 	virtual MIfProv* next(MIfProv::TCp* aProvCp) const override;
 	virtual bool isRequestor(MIfProvOwner* aOwner) const override;
+	// From MNCpp
+	virtual TSelf* firstLeafB() override;
+	virtual TPair* nextLeaf(TPair* aLeaf) override;
     public:
 	MIfProv* findOwner(const MIfProvOwner* aOwner);
 	void eraseInvalid();
+	void erase();
     protected:
 	bool mValid;
 	MIfProvOwner* mOwner;

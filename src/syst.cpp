@@ -31,23 +31,11 @@ bool CpIfrNode::resolve(const string& aName)
 	// Requested provided iface - cannot be obtain via pairs - redirect to host
 	auto owner = mHost->Owner();
 	MUnit* ownu = owner ? const_cast<MOwner*>(owner)->lIf(ownu): nullptr;
-	MIfProvOwner* owno = ownu ? ownu->lIf(owno) : nullptr;
-	MIfProv* prov = findOwner(owno);
-	if (prov) {
-	    prov->resolve(aName);
-	} else if (ownu) {
-	    res = const_cast<MUnit*>(ownu)->resolveIface(aName, this->binded());
-	}
+	res = const_cast<MUnit*>(ownu)->resolveIface(aName, this->binded());
     } else if (aName == mHost->reqName()) {
 	for (MVert* pair : mHost->mPairs) {
 	    MUnit* pairu = pair->lIf(pairu);
-	    MIfProvOwner* pairo = pairu->lIf(pairo);
-	    MIfProv* prov = findOwner(pairo);
-	    if (prov) {
-		prov->resolve(aName);
-	    } else {
-		res = pairu->resolveIface(aName, this->binded());
-	    }
+	    res = pairu->resolveIface(aName, this->binded());
 	}
     }
     eraseInvalid();
