@@ -11,6 +11,7 @@ libfap3_la_SOURCES = \
 		       mplugin.h \
 		       mprov.h \
 		       mowning.h \
+		       minh.h \
 		       nconn.h \
 		       necont.h \
 		       menv.h \
@@ -74,6 +75,7 @@ include_HEADERS = \
 		  mecont.h \
 		  mnode.h \
 		  melem.h \
+		  minh.h \
 		  mdata.h \
 		  mdes.h \
 		  mlauncher.h \

@@ -6,6 +6,7 @@ ut_fap3_lib_SOURCES = \
 		       ut_fap3_main.cpp \
 		       ut_node.cpp \
 		       ut_unit.cpp \
+		       ut_elem.cpp \
 		       ut_syst.cpp \
 		       ut_ifr.cpp \
 		       ut_chromo2.cpp \

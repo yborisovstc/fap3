@@ -14,6 +14,13 @@ using namespace std;
 class Ifu
 {
     public:
+	// Dump masks
+	enum TDm {
+	    EDM_Recursive = 0x01,
+	    EDM_Base = 0x02,
+	    EDM_Comps = 0x04,
+	};
+    public:
 	Ifu();
 	static size_t FindFirstCtrl(const string& aString, const char aCtrl, size_t aPos); 
 	static size_t FindFirstCtrl(const string& aString, const string& aCtrls, size_t aPos); 

@@ -5,7 +5,7 @@
 
 
 
-Elem::Elem(const string &aName, MEnv* aEnv): Unit(aName, aEnv)
+Elem::Elem(const string &aName, MEnv* aEnv): Unit(aName, aEnv), mInode(this, this)
 {
     if (aName.empty()) mName = Type();
     mChromo = mEnv->provider()->createChromo();
@@ -30,6 +30,7 @@ MIface* Elem::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
     if (res = checkLif<MElem>(aType));
+    else if (res = checkLif<MParent>(aType));
     else res = Unit::MNode_getLif(aType);
     return res;
 }
@@ -65,12 +66,6 @@ void Elem::setParent(const string& aParent)
 {
 }
 
-bool Elem::appendChild(MNode* aChild)
-{
-    bool res = false;
-    return res;
-}
-
 void Elem::notifyParentMutated(const TMut& aMut)
 {
 }
@@ -103,6 +98,18 @@ MNode* Elem::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
     return elem;
 }
 
+void Elem::mutAddElemOnCreated(MNode* aCreated, MNode* aParent)
+{
+    // Attach created elem to parent
+    MElem* heire = aCreated->lIf(heire);
+    if (heire) {
+	MParent* parent = aParent->lIf(parent);
+	if (parent) {
+	    parent->attachChild(heire->asChild());
+	}
+    }
+}
+
 void Elem::mutContent(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 {
     if (!aUpdOnly) {
@@ -110,101 +117,6 @@ void Elem::mutContent(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
     }
     Node::mutContent(aMut, aUpdOnly, aCtx);
 }
-
-#if 0
-MNode* Elem::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
-{
-    assert(!aMut.AttrExists(ENa_Comp));
-    string snode = aMut.Attr(ENa_Targ);
-    string sparent = aMut.Attr(ENa_Parent);
-    string sname = aMut.Name();
-    TNs ns = aCtx.mNs;
-    updateNs(ns, aMut);
-    bool mutadded = false;
-    bool res = false;
-    Log(TLog(EInfo, this) + "Adding element [" + sname + "]");
-
-    assert(!sname.empty());
-    MNode* uelem = NULL;
-    MNode* node = snode.empty() ? this: getNode(snode, ns);
-    if (node) {
-	// Obtain parent first
-	MNode *parent = NULL;
-	// Check if the parent is specified
-	if (!sparent.empty()) {
-	    // Check the parent scheme
-	    GUri prnturi(sparent);
-	    // Resolving parent ref basing on target, ref ds_umt_rtnsu_rbs
-	    parent = node->getNode(prnturi, ns);
-	    if (!parent) {
-		// Probably external node not imported yet - ask env for resolving uri
-		/*!!
-		GUri pruri(prnturi);
-		MImportMgr* impmgr = iEnv->ImpsMgr();
-		parent = impmgr->OnUriNotResolved(node, pruri);
-		*/
-	    }
-	    if (parent) {
-		if (node == this) {
-		    // Create heir from the parent
-		    uelem = parent->createHeir(sname, NULL);
-		    if (uelem) {
-			node->attachOwned(uelem);
-		    }
-		    MElem* elem = uelem ? uelem->lIf(elem) : nullptr;
-		    if (elem) {
-			// TODO [YB] Seems to be just temporal solution. To consider using context instead.
-			// Make heir based on the parent: re-parent the heir (currently it's of grandparent's parent) and clean the chromo
-			ChromoNode croot = elem->Chromos().Root();
-			croot.SetAttr(ENa_Parent, sparent);
-			if (!snode.empty()) {
-			    croot.SetAttr(ENa_MutNode, snode);
-			}
-			if (!aMut.Attr(ENa_NS).empty()) {
-			    croot.SetAttr(ENa_NS, aMut.Attr(ENa_NS));
-			}
-			elem->setParent(NULL);
-			MElem* eparent = parent ? parent->lIf(eparent) : nullptr;
-			res = eparent  ? eparent->appendChild(uelem) : false;
-			if (res) {
-			    if (!aUpdOnly) {
-				// Copy just top node, not recursivelly, ref ds_daa_chrc_va
-				ChromoNode ech = elem->Chromos().Root();
-				ChromoNode chn = mChromo->Root().AddChild(ech, true, false);
-				notifyNodeMutated(ech, aCtx);
-				mutadded = true;
-			    } else {
-				mutadded = true;
-			    }
-			    // Mutate object ignoring run-time option. This is required to keep nodes chromo even for inherited nodes
-			    // To avoid this inherited nodes chromo being attached we just don't attach inherited nodes chromo
-			    TNs ns(aCtx.mNs);
-			    ns.push_back(uelem);
-			    MutCtx ctx(aCtx.mNode, ns);
-			    uelem->mutate(aMut, false, aUpdOnly ? MutCtx(uelem, ns) : ctx);
-			}
-			else {
-			    Log(TLog(EErr, this) + "Adding node [" + uelem->name() + "] failed");
-			    delete elem;
-			}
-		    }
-		} else  {
-		    Log(TLog(EErr, this) + "Adding element [" + sname + "] in node {" + snode + "] - disabled");
-		}
-	    } else {
-		Logger()->Write(EErr, this, "Creating [%s] - parent [%s] not found", sname.c_str(), sparent.c_str());
-	    }
-	}
-    } else  {
-	Logger()->Write(EErr, this, "Creating elem [%s] in node [%s] - cannot find node", sname.c_str(), snode.c_str());
-    }
-    if (!aUpdOnly && !mutadded) {
-	ChromoNode chn = mChromo->Root().AddChild(aMut, true, false);
-	notifyNodeMutated(chn, aCtx);
-    }
-    return uelem;
-}
-#endif
 
 void Elem::onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx)
 {
@@ -221,3 +133,115 @@ void Elem::onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const Mu
     Node::onOwnedMutated(aOwned, aMut, aCtx);
 }
 
+MNode* Elem::createHeir(const string& aName, MNode* aContext)
+{
+    MNode* heir = nullptr;
+    if (Provider()->isProvided(this)) {
+	heir = Provider()->createNode(name(), aName, mEnv);
+	heir->setCtx(aContext);
+    } else {
+	assert(parent());
+	heir = parent()->createHeirPrnt(aName, aContext);
+	if (heir) {
+	    // Mutate bare child with original parent chromo, updating only to have clean heir's chromo
+	    heir->mutate(mChromo->Root(), false, MutCtx(), true);
+	} else {
+	    Log(TLog(EErr, this) + "Failed creating heir [" + aName + "]");
+	}
+    }
+    return heir;
+}
+
+MIface* Elem::MParent_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    return res;
+}
+
+void Elem::MParent_doDump(int aLevel, int aIdt, ostream& aOs) const
+{
+    Elem* self = const_cast<Elem*>(this);
+    if (aLevel & Ifu::EDM_Base) {
+	Ifu::offset(aIdt, aOs); aOs << "Name: " << name() << endl;
+    }
+    if (aLevel & Ifu::EDM_Comps) {
+	auto pair = self->mInode.binded()->firstPair();
+	while (pair) {
+	    const MChild* child = pair->provided();
+	    Ifu::offset(aIdt, aOs); aOs << "- " << child->Uid() << endl;
+	    if (aLevel & Ifu::EDM_Recursive) {
+		child->doDump(Ifu::EDM_Comps | Ifu::EDM_Recursive, aIdt + Ifu::KDumpIndent, aOs);
+	    }
+	    pair = self->mInode.binded()->nextPair(pair);
+	}
+    }
+}
+
+void Elem::onChildDeleting(MChild* aChild)
+{
+}
+
+bool Elem::onChildRenaming(MChild* aChild, const string& aNewName)
+{
+    bool res = false;
+    return res;
+}
+
+MIface* Elem::MChild_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    return res;
+}
+
+void Elem::MChild_doDump(int aLevel, int aIdt, ostream& aOs) const
+{
+    Elem* self = const_cast<Elem*>(this);
+    if (aLevel & Ifu::EDM_Base) {
+	Ifu::offset(aIdt, aOs); aOs << "Name: " << name() << endl;
+    }
+    if (aLevel & Ifu::EDM_Comps) {
+	auto pair = self->mInode.binded()->firstPair();
+	while (pair) {
+	    const MChild* child = pair->provided();
+	    Ifu::offset(aIdt, aOs); aOs << "- " << child->Uid() << endl;
+	    if (aLevel & Ifu::EDM_Recursive) {
+		child->doDump(Ifu::EDM_Comps | Ifu::EDM_Recursive, aIdt + Ifu::KDumpIndent, aOs);
+	    }
+	    pair = self->mInode.binded()->nextPair(pair);
+	}
+    }
+}
+
+void Elem::onParentDeleting(MParent* aParent)
+{
+}
+
+MNode* Elem::createHeirPrnt(const string& aName, MNode* aContext)
+{
+    return createHeir(aName, aContext);
+}
+
+MParent* Elem::parent()
+{
+    return mInode.firstPair()->provided();
+}
+
+bool Elem::attachChild(MChild* aChild)
+{
+    return mInode.binded()->connect(aChild->cP());
+}
+
+MChild* Elem::asChild()
+{
+    return mInode.provided();
+}
+
+MParent* Elem::asParent()
+{
+    return mInode.binded()->provided();
+}
+
+MChild::TCp* Elem::cP()
+{
+    return &mInode;
+}

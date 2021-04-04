@@ -38,9 +38,7 @@ bool CpIfrNode::resolve(const string& aName)
 	    res = pairu->resolveIface(aName, this->binded());
 	}
     }
-    eraseInvalid();
     mValid = res;
-
     return res;
 }
 
@@ -113,18 +111,6 @@ IfrNode* ConnPointu::createIfProv(const string& aName, MIfReq::TIfReqCp* aReq) c
     }
     return res;
 }
-
-/*
-void ConnPointu::onConnected()
-{
-    invalidateIrm();
-}
-
-void ConnPointu::onDisconnected()
-{
-    invalidateIrm();
-}
-*/
 
 MContent* ConnPointu::getCont(int aIdx)
 {
@@ -248,50 +234,6 @@ bool Extd::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
     }
     return res;
 }
-
-/*
-void Extd::UpdateIfi(const string& aName, const TICacheRCtx& aCtx)
-{
-    TBool resg = EFalse;
-    TIfRange rr;
-    TICacheRCtx ctx(aCtx); ctx.push_back(this);
-    MIface* res = (MIface*) DoGetObj(aName.c_str());
-    if (res != NULL) {
-	InsertIfCache(aName, aCtx, this, res);
-    }
-    if (res == NULL) {
-	// Redirect to internal point or pair depending on the requiestor
-	MUnit* intcp = GetExtd();
-	if (intcp != NULL && !ctx.IsInContext(intcp)) {
-	    rr = intcp->GetIfi(aName, ctx);
-	    InsertIfCache(aName, aCtx, intcp, rr);
-	    resg = resg || (rr.first != rr.second);
-	}
-	else {
-	    TInt count = PairsCount();
-	    for (TInt ct = 0; ct < count; ct++) {
-		MVert* pair = GetPair(ct);
-		MUnit* ep = pair->GetObj(ep);
-		if (ep != NULL && !ctx.IsInContext(ep)) {
-		    rr = ep->GetIfi(aName, ctx);
-		    InsertIfCache(aName, aCtx, ep, rr);
-		    resg = resg || (rr.first != rr.second);
-		}
-	    }
-	}
-    }
-    // Responsible pairs not found, redirect to upper layer
-    if (rr.first == rr.second && iMan != NULL) {
-	MUnit* hostmgr = GetMan();
-	MUnit* mgr = hostmgr->Name() == "Capsule" ? hostmgr->GetMan() : hostmgr;
-	if (mgr != NULL && !ctx.IsInContext(mgr)) {
-	    rr = mgr->GetIfi(aName, ctx);
-	    InsertIfCache(aName, aCtx, mgr, rr);
-	    resg = resg || (rr.first != rr.second);
-	}
-    }
-}
-*/
 
 bool Extd::isCompatible(MVert* aPair, bool aExt)
 {

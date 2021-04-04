@@ -61,7 +61,7 @@ void Ut_des::test_des_1()
     GUri ruri;
     root->getUri(ruri);
     string ruris = ruri.toString();
-    root->dump(Node::EDM_Base | Node::EDM_Comps | Node::EDM_Recursive,0);
+    root->dump(Ifu::EDM_Base | Ifu::EDM_Comps | Ifu::EDM_Recursive,0);
     // Save root chromoe
     eroot->Chromos().Save(specn + "_saved." + ext);
     // Run 
@@ -104,7 +104,7 @@ void Ut_des::test_des_ifr_inval_1()
     GUri ruri;
     root->getUri(ruri);
     string ruris = ruri.toString();
-    root->dump(Node::EDM_Base | Node::EDM_Comps | Node::EDM_Recursive,0);
+    root->dump(Ifu::EDM_Base | Ifu::EDM_Comps | Ifu::EDM_Recursive,0);
     // Save root chromoe
     eroot->Chromos().Save(specn + "_saved." + ext);
     // Run 
@@ -121,8 +121,7 @@ void Ut_des::test_des_ifr_inval_1()
     delete chr;
     res = mEnv->RunSystem(2);
     // Verify the state
-    /*
-    MNode* stn = root->getNode("Launcher.Ds1.St1");
+    MNode* stn = root->getNode("Launcher.Ds1.St2");
     CPPUNIT_ASSERT_MESSAGE("Fail to get stn", stn);
     MDVarGet* vg = stn->lIf(vg);
     CPPUNIT_ASSERT_MESSAGE("Fail to get stn vg", vg);
@@ -130,9 +129,7 @@ void Ut_des::test_des_ifr_inval_1()
     CPPUNIT_ASSERT_MESSAGE("Fail to get stn dgi", dgi);
     Sdata<int> val;
     dgi->DtGet(val);
-    CPPUNIT_ASSERT_MESSAGE("Wrong final state valud", val.mData = 4);
-    */
-    
+    CPPUNIT_ASSERT_MESSAGE("Wrong final state valud", val.mData = 20);
 
     delete mEnv;
 }

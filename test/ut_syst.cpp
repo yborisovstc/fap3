@@ -209,7 +209,7 @@ void Ut_syst::test_syst_1()
     GUri ruri;
     root->getUri(ruri);
     string ruris = ruri.toString();
-    root->dump(Node::EDM_Base | Node::EDM_Comps | Node::EDM_Recursive,0);
+    root->dump(Ifu::EDM_Base | Ifu::EDM_Comps | Ifu::EDM_Recursive,0);
     // Save root chromoe
     eroot->Chromos().Save(specn + "_saved." + ext);
     // Check connection
@@ -246,7 +246,7 @@ void Ut_syst::test_cp_2()
     GUri ruri;
     root->getUri(ruri);
     string ruris = ruri.toString();
-    root->dump(Node::EDM_Base | Node::EDM_Comps | Node::EDM_Recursive,0);
+    root->dump(Ifu::EDM_Base | Ifu::EDM_Comps | Ifu::EDM_Recursive,0);
     // Save root chromoe
     eroot->Chromos().Save(specn + "_saved." + ext);
     // Check connection
@@ -287,7 +287,7 @@ void Ut_syst::test_syst_cp_3()
     GUri ruri;
     root->getUri(ruri);
     string ruris = ruri.toString();
-    root->dump(Node::EDM_Base | Node::EDM_Comps | Node::EDM_Recursive,0);
+    root->dump(Ifu::EDM_Base | Ifu::EDM_Comps | Ifu::EDM_Recursive,0);
     // Save root chromoe
     eroot->Chromos().Save(specn + "_saved." + ext);
     // Check connection
@@ -351,7 +351,7 @@ void Ut_syst::test_syst_cpe_1()
     GUri ruri;
     root->getUri(ruri);
     string ruris = ruri.toString();
-    root->dump(Node::EDM_Base | Node::EDM_Comps | Node::EDM_Recursive,0);
+    root->dump(Ifu::EDM_Base | Ifu::EDM_Comps | Ifu::EDM_Recursive,0);
     // Save root chromoe
     eroot->Chromos().Save(specn + "_saved." + ext);
     // Check MAgent resolution by Syst

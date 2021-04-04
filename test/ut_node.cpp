@@ -19,7 +19,8 @@ class Ut_node : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST_SUITE(Ut_node);
 //    CPPUNIT_TEST(test_nav_1);
 //    CPPUNIT_TEST(test_cont_1);
-    CPPUNIT_TEST(test_cre_1);
+//    CPPUNIT_TEST(test_cre_1);
+    CPPUNIT_TEST(test_node_aul_1);
     CPPUNIT_TEST_SUITE_END();
 public:
     virtual void setUp();
@@ -28,6 +29,7 @@ private:
     void test_nav_1();
     void test_cont_1();
     void test_cre_1();
+    void test_node_aul_1();
 private:
     Env* mEnv;
 };
@@ -168,9 +170,40 @@ void Ut_node::test_cre_1()
     GUri ruri;
     root->getUri(ruri);
     string ruris = ruri.toString();
-    root->dump(Node::EDM_Base | Node::EDM_Comps | Node::EDM_Recursive,0);
+    root->dump(Ifu::EDM_Base | Ifu::EDM_Comps | Ifu::EDM_Recursive,0);
     // Save root chromoe
     eroot->Chromos().Save(specn + "_saved." + ext);
 }
  
+/** @brief Test of access to upper layers
+ * */
+void Ut_node::test_node_aul_1()
+{
+    cout << endl << "=== Test of access to upper layer ===" << endl;
+
+    const string specn("ut_node_aul_1");
+    string ext = "chs";
+    string spec = specn + string(".") + "chs";
+    string log = specn + "_" + ext + ".log";
+    mEnv = new Env(spec, log);
+    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv);
+    mEnv->constructSystem();
+    MNode* root = mEnv->Root();
+    MElem* eroot = root ? root->lIf(eroot) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get root", eroot);
+    GUri ruri;
+    root->getUri(ruri);
+    string ruris = ruri.toString();
+    root->dump(Ifu::EDM_Base | Ifu::EDM_Comps | Ifu::EDM_Recursive,0);
+    // Save root chromoe
+    eroot->Chromos().Save(specn + "_saved." + ext);
+    MNode* n1_1 = root->getNode("N1.N1_1");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get n1_1", n1_1);
+    // Try to access owner 
+    MNode* n1 = n1_1->getNode(".MyRoot.N1");
+    CPPUNIT_ASSERT_MESSAGE("Fail to deny access to n1", !n1);
+
+}
+ 
+
 

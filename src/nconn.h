@@ -123,7 +123,10 @@ class MNcpp
 	virtual TPair* firstPair() = 0;
 	virtual TPair* nextPair(TPair* aPair) = 0;
 	virtual TPair* firstLeaf() = 0;
-	/** @brief gets first leaf of binded */
+	/** @brief gets first leaf of binded
+	 * Allows to override leafs tree-travarsal behavour in treish topology
+	 * Is required for IRM invalidation solution#3, ref ds_irm_ut_inv_cno
+	 * */
 	virtual TSelf* firstLeafB() = 0;
 	virtual TPair* nextLeaf(TPair* aLeaf) = 0;
 	/** @brief Gets next leaf from the leaf */
@@ -740,26 +743,10 @@ class NCpOmnp : public MNcpp<TPif, TRif>
 	    return res;
 	}
 	virtual TSelf* nextLeaf() override { return nullptr;}
-    public:
-	/*
-	TPair* next(TPair* aPair) const {
-	    TPair* res = nullptr;
-	    auto it = mPairs.find(aPair);
-	    if (it != mPairs.end())  res = *(++it);
-	    return res;
-	};
-	TPair* first() const {
-	    TPair* res = nullptr;
-	    auto it = mPairs.begin();
-	    if (it != mPairs.end())  {
-		res = *it;
-		if (res->binded()) {
-		    res = res->first();
-		}
-	    }
-	    return res;
-	}
-	*/
+	// Local
+	virtual int pcount() const { return mPairs.size(); }
+	virtual const TPair* pairAt(int aInd) const { for (auto it = mPairs.begin(); it != mPairs.end(); it++) if (aInd-- == 0) return *it; return nullptr; }
+	virtual TPair* pairAt(int aInd) { for (auto it = mPairs.begin(); it != mPairs.end(); it++) if (aInd-- == 0) return *it; return nullptr; }
     protected:
 	TPairs mPairs;
 	TPif* mPx;
@@ -986,7 +973,7 @@ class NTnip : public NCpOip<TProv, TReq>
 };
 
 
-/** @brief Native net tree node, not identified sub-nodes
+/** @brief Native net tree node, not indexed sub-nodes
  * */
 template <class TProv, class TReq>
 class NTnnp : public NCpOnp<TProv, TReq>

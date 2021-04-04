@@ -7,6 +7,9 @@
 #include "guri.h"
 #include "menv.h"
 
+class MChild;
+class MParent;
+
 /** @brief Interface of mutable agent
  *
  * */
@@ -24,8 +27,8 @@ class MElem: public MIface
 	// Local
 	virtual MChromo& Chromos() = 0;
 	virtual void setParent(const string& aParent) = 0;
-	virtual bool appendChild(MNode* aChild) = 0;
-	
+	virtual MChild* asChild() = 0;
+	virtual MParent* asParent() = 0;
 };
 
 

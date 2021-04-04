@@ -358,6 +358,12 @@
 		</sect4>
 	    </sect3>
 	</sect2>
+	<sect2><title>How to simplify the desing of native net.</title>
+	    <sect3><title>Intro</title>
+		<simpara>Current implementation of native net is quite complicated and not convenient in use. How can we simplify it. Look for instance
+		    at firstLeafB().</simpara>
+	    </sect3>
+	</sect2>
     </sect1>
 
     <sect1><title></title>
@@ -493,6 +499,30 @@
 	<sect3><title>Use-case: native units</title>
 	    <simpara>Native units is specific units category, they cannot be accessed via navigation thru native hier. Specific rule is used in FAP2 to
 		distinguish native units in URI: native units are identified by single name.</simpara>
+	</sect3>
+    </sect2>
+    <sect2><title>Access for upper layer. Parents, modules.</title>
+	<sect3><title>Intro</title>
+	    <simpara>Even the generic rule of access restriction is to not allow access to upper layer of native hier, sometimes such access is
+		required. The example is creating "library" of systems and then use them to create heir in lower layer. Another example is 
+		the modules.</simpara>
+	</sect3>
+	<sect3><title>Approach#1: special nodes</title>
+	    <sect4><title>Intro</title>
+		<simpara>Special names (predefined?) are introduced, started let's say with underscore, _Import for instance. This names are handled by environment
+		    when getting access to the nodes named that names.</simpara>
+	    </sect4>
+	    <sect4><title>Criticism</title>
+		<simpara>It is unconvenient to use special name in case if we just have some system defined that needs to be used to create heir in
+		    lower layer.</simpara>
+	    </sect4>
+	</sect3>
+	<sect3><title>Using implicit namespace for getting parent</title>
+	    <sect4><title>Intro</title>
+		<simpara>For getting the parent specific version of getNode() is used. This version gets implicit namespaces. We can utilize
+		    implicit namespace line "all owners" plus _Imports plus all owners _Modules etc. "All owners" namespace should be for name only whereas
+		    special names can resolve uri also.</simpara>
+	    </sect4>
 	</sect3>
     </sect2>
 </sect1>

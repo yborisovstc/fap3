@@ -33,16 +33,16 @@ MIface* Node::MNode_getLif(const char *aType)
 
 void Node::MNode_doDump(int aLevel, int aIdt, ostream& aOs) const
 {
-    if (aLevel & EDM_Base) {
+    if (aLevel & Ifu::EDM_Base) {
 	Ifu::offset(aIdt, aOs); aOs << "Name: " << mName << endl;
     }
-    if (aLevel & EDM_Comps) {
+    if (aLevel & Ifu::EDM_Comps) {
 	for (int i = 0; i < mCpOwner.pcount(); i++) {
 	    const MOwned* comp = mCpOwner.pairAt(i);
 	    const MNode* compn = comp->lIf(compn);
 	    Ifu::offset(aIdt, aOs); aOs << "- "  << compn->name() << endl;
-	    if (aLevel & EDM_Recursive) {
-		compn->doDump(EDM_Comps | EDM_Recursive, aIdt + Ifu::KDumpIndent, aOs);
+	    if (aLevel & Ifu::EDM_Recursive) {
+		compn->doDump(Ifu::EDM_Comps | Ifu::EDM_Recursive, aIdt + Ifu::KDumpIndent, aOs);
 	    }
 	}
     }
@@ -290,12 +290,12 @@ bool Node::attachOwned(MNode* aOwned)
 
 MNode* Node::createHeir(const string& aName, MNode* aContext)
 {
-    MNode* uheir = NULL;
+    MNode* uheir = nullptr;
     if (Provider()->isProvided(this)) {
 	uheir = Provider()->createNode(name(), aName, mEnv);
 	uheir->setCtx(aContext);
     } else {
-	Logger()->Write(EErr, this, "The parent is not provided: [%s]: -->", aName.c_str());
+	Log(TLog(EInfo, this) + "The parent [" + aName + "] is not of provided");
     }
     return uheir;
 }
@@ -381,6 +381,7 @@ MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
 			    MutCtx ctx(aCtx.mNode, ns);
 			    uelem->mutate(aMut, false, aUpdOnly ? MutCtx(uelem, ns) : ctx, true);
 			}
+			mutAddElemOnCreated(uelem, parent);
 		    } else {
 			Log(TLog(EErr, this) + "Adding node [" + sname + "] failed");
 		    }
@@ -480,7 +481,7 @@ void Node::MContentOwner_doDump(int aLevel, int aIdt, ostream& aOs) const
 	string data;
 	bool res = cont->getData(data);
 	Ifu::offset(aIdt, aOs); aOs << "- "  << cont->contName() << ": " << (res ? data : "nil") << endl;
-	if (aLevel & ECODM_Recursive) {
+	if (aLevel & Ifu::EDM_Recursive) {
 	    const MContentOwner* cowner = cont->lIf(cowner);
 	    if (cowner) {
 		cowner->doDump(aLevel, aIdt + Ifu::KDumpIndent, aOs);
