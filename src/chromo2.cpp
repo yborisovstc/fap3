@@ -21,6 +21,7 @@ const char KT_Escape = '\\';
 const char KT_MutAdd = ':';
 const char KT_MutConn = '~';
 const char KT_MutComment = '#';
+const char KT_MutImport = '+';
 const char KT_MutContent = '=';
 const char KT_MutRemove = '!';
 const char KT_UriSep = '.';
@@ -1474,6 +1475,11 @@ void Chromo2Mdl::rdp_mut(istream& aIs, C2MdlNode& aMnode)
 		    aIs.seekg(pos, aIs.beg); // Backtrack
 		    ResetErr();
 		    rdp_mut_remove(aIs, aMnode);
+		    if (IsError()) {
+			aIs.seekg(pos, aIs.beg); // Backtrack
+			ResetErr();
+			rdp_mut_import(aIs, aMnode);
+		    }
 		}
 	    }
 	}
@@ -1733,7 +1739,6 @@ void Chromo2Mdl::rdp_mut_content(istream& aIs, C2MdlNode& aMnode)
     }
 }
 
-
 void Chromo2Mdl::rdp_mut_comment(istream& aIs, C2MdlNode& aMnode)
 {
     char c = aIs.get();
@@ -1751,6 +1756,26 @@ void Chromo2Mdl::rdp_mut_comment(istream& aIs, C2MdlNode& aMnode)
 	SetErr(aIs, RDPE_MissingMutSmb);
     }
 }
+
+void Chromo2Mdl::rdp_mut_import(istream& aIs, C2MdlNode& aMnode)
+{
+    char c = aIs.get();
+    if (c == KT_MutImport) {
+	rdp_sep(aIs);
+	if (!IsError()) {
+	    string name;
+	    rdp_name(aIs, name);
+	    if (!IsError()) {
+		aMnode.mMut.mR = string(1, KT_MutImport);
+		aMnode.mMut.mQ = name;
+	    }
+	}
+    } else {
+	SetErr(aIs, RDPE_MissingMutSmb);
+    }
+}
+
+
 
 void Chromo2Mdl::rdp_mut_remove(istream& aIs, C2MdlNode& aMnode)
 {

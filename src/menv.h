@@ -5,6 +5,21 @@
 #include "mprov.h"
 #include "mlog.h"
 
+
+/** @brief Imprort manager interface
+ * */
+class MImportMgr
+{
+    public:
+	virtual void GetModulesNames(vector<string>& aModules) const = 0;
+	virtual void ResetImportsPaths() = 0;
+	virtual void AddImportsPaths(const string& aPaths) = 0;
+	virtual string GetModulePath(const string& aModName) const = 0;
+	virtual bool Import(const string& aUri) = 0;
+};
+
+
+
 /** @brief Execution environment interface
  * */
 class MEnv : public MIface
@@ -26,6 +41,8 @@ class MEnv : public MIface
 	virtual void constructSystem() = 0;
 	/** @brief Gets logger instance */
 	virtual MLogRec* Logger() = 0;
+	/** @brief Gets import manager */
+	virtual MImportMgr* ImpsMgr() = 0;
 	/** @brief Gets root node */
 	virtual MNode* Root() const = 0;
 	/** @brief Adds provider */
@@ -36,6 +53,8 @@ class MEnv : public MIface
 	virtual bool RunSystem(int aCount = 0) = 0;
 	/** @brief Stops DES */
 	virtual bool StopSystem() = 0;
+	/** @brier Gets modules relative Uri */
+	virtual string modulesUri() const = 0;
 };
 
 

@@ -48,6 +48,7 @@ class Node : public MNode, public MContentOwner
 		virtual void onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx) override {
 		    return mHost->onOwnedMutated(aOwned, aMut, aCtx);}
 		virtual void onOwnedAttached(MOwned* aOwned) override { mHost->onOwnedAttached(aOwned);}
+		virtual void getModules(vector<MNode*>& aModules) override { mHost->getModules(aModules);}
 	    private:
 		Node* mHost;
 	};
@@ -120,12 +121,14 @@ class Node : public MNode, public MContentOwner
 	bool isOwned(const MNode* aComp) const;
 	virtual MIface* doMOwnerGetLif(const char *aType) { return nullptr;}
 	virtual MIface* MOwned_getLif(const char *aType);
+	void getModules(vector<MNode*>& aModules);
 	// Mutations
 	virtual MNode* mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx);
 	virtual void mutSegment(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx);
 	virtual void mutRemove(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx);
 	virtual void mutContent(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx);
 	virtual void mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx);
+	virtual void mutImport(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx);
 	void notifyNodeMutated(const ChromoNode& aMut, const MutCtx& aCtx);
 	virtual void mutAddElemOnCreated(MNode* aCreated, MNode* aParent) {}
 	// MOwner events handlers

@@ -142,7 +142,7 @@ MNode* Node::getNode(const string& aName, const TNs& aNs)
     GUri uri(aName);
     // Resolving name in current context/native first
     res = getNode(uri);
-    if (!res && uri.isName()) {
+    if (!res/* && uri.isName()*/) {
 	// Then in namespaces
 	// Applied namespaces priority approach, ref I_NRC
 	for (auto nsit = aNs.rbegin(); nsit != aNs.rend() && !res; nsit++) {
@@ -260,7 +260,7 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
 	    } else if (rnotype == ENt_Move) {
 		//MoveNode(rno, aRunTime, aTrialMode, mctx);
 	    } else if (rnotype == ENt_Import) {
-		//ImportNode(rno, aRunTime, aTrialMode);
+		mutImport(rno, aUpdOnly, mctx);
 	    } else if (rnotype == ENt_Rm) {
 		mutRemove(rno, aUpdOnly, mctx);
 	    } else if (rnotype == ENt_Conn) {
@@ -356,7 +356,9 @@ MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
 	    // Check the parent scheme
 	    GUri prnturi(sparent);
 	    // Resolving parent ref basing on target, ref ds_umt_rtnsu_rbs
-	    parent = node->getNode(prnturi, ns);
+	    TNs pns = ns; // Parent namaspace
+	    getModules(pns);
+	    parent = node->getNode(prnturi, pns);
 	    if (!parent) {
 		// Probably external node not imported yet - ask env for resolving uri
 		/*!!
@@ -377,7 +379,7 @@ MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
 			// To avoid this inherited nodes chromo being attached we just don't attach inherited nodes chromo
 			if (aMut.Count() > 0) {
 			    TNs ns(aCtx.mNs);
-			    ns.push_back(uelem);
+			    //ns.push_back(uelem);
 			    MutCtx ctx(aCtx.mNode, ns);
 			    uelem->mutate(aMut, false, aUpdOnly ? MutCtx(uelem, ns) : ctx, true);
 			}
@@ -446,6 +448,21 @@ void Node::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 	notifyNodeMutated(aMut, aCtx);
     }
 }
+
+void Node::mutImport(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
+{
+    auto* impmgr = mEnv->ImpsMgr();
+    assert(impmgr);
+    string srcs = aMut.Attr(ENa_Id);
+    bool res = impmgr->Import(srcs);
+    if (!res) {
+	Log(TLog(EErr, this) + "Importing [" + srcs + "] failed");
+    }
+    if (!aUpdOnly) {
+	notifyNodeMutated(aMut, aCtx);
+    }
+}
+
 
 void Node::notifyNodeMutated(const ChromoNode& aMut, const MutCtx& aCtx)
 {
@@ -568,4 +585,15 @@ const MContentOwner* Node::cntOw() const
 MContentOwner* Node::cntOw()
 {
     return dynamic_cast<MContentOwner*>(this);
+}
+
+void Node::getModules(vector<MNode*>& aModules)
+{
+    MNode* mdl = getNode(mEnv->modulesUri());
+    if (mdl) {
+	aModules.push_back(mdl);
+    }
+    if (Owner()) {
+	Owner()->getModules(aModules);
+    }
 }
