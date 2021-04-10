@@ -12,7 +12,7 @@
 class Ut_des : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_des);
-    //CPPUNIT_TEST(test_des_1);
+    CPPUNIT_TEST(test_des_1);
     CPPUNIT_TEST(test_des_ifr_inval_1);
     CPPUNIT_TEST_SUITE_END();
     public:
@@ -76,7 +76,7 @@ void Ut_des::test_des_1()
     CPPUNIT_ASSERT_MESSAGE("Fail to get stn dgi", dgi);
     Sdata<int> val;
     dgi->DtGet(val);
-    CPPUNIT_ASSERT_MESSAGE("Wrong final state valud", val.mData = 4);
+    CPPUNIT_ASSERT_MESSAGE("Wrong final state valud", val.mData == 4);
     
 
     delete mEnv;
@@ -129,7 +129,7 @@ void Ut_des::test_des_ifr_inval_1()
     CPPUNIT_ASSERT_MESSAGE("Fail to get stn dgi", dgi);
     Sdata<int> val;
     dgi->DtGet(val);
-    CPPUNIT_ASSERT_MESSAGE("Wrong final state valud", val.mData = 20);
+    CPPUNIT_ASSERT_MESSAGE("Wrong final state valud", val.mData == 20);
 
     delete mEnv;
 }

@@ -11,9 +11,9 @@ template<class T> Func* FAddDt<T>::Create(Host* aHost, const string& aString)
     if (aString.empty()) {
 	// Weak negotiation, basing on inputs only
 	bool inpok = true;
-	TInps inps;
-	aHost->GetInps(EInp, false, inps);
-	for (auto dget : inps) {
+	MIfProv::TIfaces* inps = aHost->GetInps(EInp, MDVarGet::Type(), false);
+	for (auto dgeti : *inps) {
+	    MDVarGet* dget = dynamic_cast<MDVarGet*>(dgeti);
 	    MDtGet<T>* dfget = dget->lIf(dfget);
 	    if (!dfget) { inpok = false; break; }
 	}
@@ -36,10 +36,10 @@ template<class T> MIface *FAddDt<T>::getLif(const char *aName)
 template<class T> void FAddDt<T>::DtGet(T& aData)
 {
     bool res = true;
-    TInps inps;
-    mHost.GetInps(EInp, false, inps);
+    MIfProv::TIfaces* inps = mHost.GetInps(EInp, MDVarGet::Type(), false);
     bool first = true;
-    for (auto dget : inps) {
+    if (inps) for (auto dgeti : *inps) {
+	MDVarGet* dget = dynamic_cast<MDVarGet*>(dgeti);
 	MDtGet<T>* dfget = dget->GetDObj(dfget);
 	if (dfget) {
 	    T arg = aData;
@@ -56,9 +56,9 @@ template<class T> void FAddDt<T>::DtGet(T& aData)
 	    res = false; break;
 	}
     }
-    inps.clear();
-    mHost.GetInps(EInpN, false, inps);
-    for (auto dget : inps) {
+    inps = mHost.GetInps(EInpN, MDVarGet::Type(), false);
+    if (inps) for (auto dgeti : *inps) {
+	MDVarGet* dget = dynamic_cast<MDVarGet*>(dgeti);
 	MDtGet<T>* dfget = dget->GetDObj(dfget);
 	if (dfget) {
 	    T arg = aData;
@@ -98,19 +98,12 @@ template <class T> string FAddDt<T>::GetInpExpType(int aId) const
 
 
 // Just to keep templated methods in cpp
-class Fhost: public Func::Host
-{
-    public: 
-	virtual void GetInps(int aId, bool opt, Func::TInps& aRes) {}
-	virtual void OnFuncContentChanged() {}
-	virtual string GetInpUri(int aId) const { return string();}
-	virtual void log(TLogRecCtg aCtg, const string& aMsg) {}
-};
+class Fhost: public Func::Host { };
 
 void Init()
 {
-    Fhost host;
-    FAddDt<Sdata<int>>::Create(&host, "");
+    Fhost* host = nullptr;
+    FAddDt<Sdata<int>>::Create(host, "");
 }
 
 

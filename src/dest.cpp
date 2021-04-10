@@ -114,14 +114,18 @@ string TrVar::GetInpUri(int aId) const
     else return string();
 }
 
-void TrVar::GetInps(int aId, bool aOpt, Func::TInps& aRes)
+MIfProv::TIfaces* TrVar::GetInps(int aId, const string& aIfName, bool aOpt)
 {
+    MIfProv::TIfaces* res = nullptr;  
     MNode* inp = getNode(GetInpUri(aId));
     if (inp) {
-	getIfs(inp, aRes);
+	MUnit* inpu = inp->lIf(inpu);
+	MIfProv* ifp = inpu ? inpu->defaultIfProv(aIfName) : nullptr;
+	res = ifp ? ifp->ifaces() : nullptr;
     } else if (!aOpt) {
 	Log(TLog(EErr, this) + "Cannot get input  [" + GetInpUri(aId) + "]");
     }
+    return res;
 }
 
 void TrVar::OnFuncContentChanged()

@@ -1,6 +1,8 @@
 #ifndef __FAP3_IFR_H
 #define __FAP3_IFR_H
 
+#include  <vector>
+
 #include  "mifr.h"
 #include  "ifu.h"
 
@@ -24,6 +26,7 @@ class IfrNode : public NTnnp<MIfProv, MIfReq>, public MIfProv, protected MIfReq
 	virtual bool isValid() const override { return mValid;}
 	virtual void setValid(bool aValid) override;
 	virtual MIface* iface() override { return nullptr;}
+	virtual TIfaces* ifaces() override { return nullptr;}
 	virtual const MIfProvOwner* owner() const override { return mOwner;}
 	virtual MIfProv* findIface(const MIface* aIface) override;
 	// From MIfReq
@@ -56,6 +59,7 @@ class IfrLeaf : public NCpOnp<MIfProv, MIfReq>, public MIfProv
 	virtual MIfProv* next() const override;
 	virtual bool resolve(const string& aName) override {return false;}
 	virtual MIface* iface() override { return mIface;}
+	virtual TIfaces* ifaces() override { return nullptr;}
 	virtual const MIfProvOwner* owner() const override { return mOwner;}
 	virtual void MIfProv_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	virtual bool isValid() const override { return mValid;}
@@ -76,9 +80,11 @@ class IfrNodeRoot : public IfrNode
 	IfrNodeRoot(MIfProvOwner* aOwner, const string& aIfName): IfrNode(aOwner), mName(aIfName) {};
 	// From MIfProv
 	virtual string name() const override { return mName;}
+	virtual void setValid(bool aValid) override;
+	virtual TIfaces* ifaces() override;
     protected:
 	string mName;
-
+	TIfaces mIcache;  /*!< Cache of ifaces, ref ds_irm_cr */
 };
 
 #endif

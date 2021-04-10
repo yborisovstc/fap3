@@ -26,6 +26,7 @@ class MIfProv: public MIface
 	virtual MIfProv* next() const = 0;
 	virtual bool resolve(const string& aName) = 0;
 	virtual MIface* iface() = 0;
+	virtual TIfaces* ifaces() = 0;
 	virtual const MIfProvOwner* owner() const = 0;
 	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { MIfProv_doDump(aLevel, aIdt, aOs);}
 	virtual void MIfProv_doDump(int aLevel, int aIdt, ostream& aOs) const =0;

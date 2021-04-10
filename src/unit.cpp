@@ -90,10 +90,14 @@ IfrNode* Unit::createIfProv(const string& aName, MIfReq::TIfReqCp* aReq) const
 void Unit::invalidateIrm()
 {
     for (auto node : mIrns) {
-	node->setValid(false);
+	if (node->isValid()) {
+	    node->setValid(false);
+	}
     }
     for (auto node : mLocalIrn) {
-	node.second->setValid(false);
+	if (node.second->isValid()) {
+	    node.second->setValid(false);
+	}
     }
 }
 

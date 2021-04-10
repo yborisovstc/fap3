@@ -3,6 +3,7 @@
 #define __FAP3_FUNC_H
 
 #include "mdata.h"
+#include "mifr.h"
 #include "log.h"
 
 /** @brief Executive part of function 
@@ -11,11 +12,10 @@ class Func
 {
     public:
 	enum { EInp1 = 0, EInp2, EInp3, EInp4 };
-	using TInps = vector<MDVarGet*>;
     public:
 	class Host {
 	    public: 
-	    virtual void GetInps(int aId, bool opt, TInps& aRes) = 0;
+	    virtual MIfProv::TIfaces* GetInps(int aId, const string& aIfName, bool aOpt) = 0;
 	    virtual void OnFuncContentChanged() = 0;
 	    virtual string GetInpUri(int aId) const = 0;
 	    virtual bool IsLogLevel(int aLevel) const { return false; }
@@ -30,12 +30,6 @@ class Func
 	virtual string GetInpExpType(int aId) const { return "<?>";};
 	/** @brief Helper. Gets value from MDVarGet */
 	template <typename T> static bool GetData(MDVarGet* aDvget, T& aData);
-    protected:
-	MDVarGet* GetInp(int aId, bool aOpt) {
-	    TInps inps;
-	    mHost.GetInps(aId, aOpt, inps);
-	    return inps.empty() ? nullptr : inps.at(0);
-	}
     protected:
 	Host& mHost;
 };

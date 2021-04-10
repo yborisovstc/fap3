@@ -72,19 +72,11 @@ void IfrNode::MIfProv_doDump(int aLevel, int aIdt, ostream& aOs) const
 
 void IfrNode::setValid(bool aValid)
 {
+    assert(mValid != aValid);
     mValid = aValid;
-    erase();
-    /*
     if (!aValid) {
-	// Propagate invalidation to owner to mark all branch invalid
-	if (mPair) {
-	    auto down = mPair->binded();
-	    if (down) {
-		down->provided()->setValid(aValid);
-	    }
-	}
+	erase();
     }
-    */
 }
 
 MIfProv* IfrNode::findIface(const MIface* aIface)
@@ -207,14 +199,38 @@ void IfrLeaf::MIfProv_doDump(int aLevel, int aIdt, ostream& aOs) const
 void IfrLeaf::setValid(bool aValid)
 {
     mValid = aValid;
-    /*
-    if (mPair && !aValid) {
-	auto down = mPair->binded();
-	if (down) {
-	    down->provided()->setValid(aValid);
-	}
-    }
-    */
 }
 
+///// IfrNodeRoot
 
+MIfProv::TIfaces* IfrNodeRoot::ifaces()
+{
+    TIfaces* res = nullptr;
+    bool pres = false;
+    if (!mValid) {
+	string nm = name();
+	auto self = const_cast<IfrNodeRoot*>(this);
+	pres = self->resolve(nm);
+	if (pres) {
+	    res = &mIcache;
+	}
+    } else {
+	res = &mIcache;
+    }
+    return res;
+}
+
+void IfrNodeRoot::setValid(bool aValid)
+{
+    IfrNode::setValid(aValid);
+    if (aValid) {
+	// Update iface cache
+	mIcache.clear();
+	MIfProv* maprov = first();
+	while (maprov) {
+	    auto res = maprov->iface();
+	    mIcache.push_back(res);
+	    maprov = maprov->next();
+	}
+    }
+}

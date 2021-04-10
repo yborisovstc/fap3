@@ -38,7 +38,7 @@ bool CpIfrNode::resolve(const string& aName)
 	    res = pairu->resolveIface(aName, this->binded());
 	}
     }
-    mValid = res;
+    setValid(res);
     return res;
 }
 
@@ -47,10 +47,44 @@ class CpIfrNodeRoot : public CpIfrNode
     public:
 	CpIfrNodeRoot(MIfProvOwner* aOwner, const string& aIfName, const ConnPointu* aHost): CpIfrNode(aOwner, aHost), mName(aIfName) {}
 	virtual string name() const override { return mName;}
+	virtual void setValid(bool aValid) override;
+	virtual TIfaces* ifaces() override;
     private:
 	string mName;
+	TIfaces mIcache;  /*!< Cache of ifaces, ref ds_irm_cr */
 };
 
+MIfProv::TIfaces* CpIfrNodeRoot::ifaces()
+{
+    TIfaces* res = nullptr;
+    bool pres = false;
+    if (!mValid) {
+	string nm = name();
+	auto self = const_cast<CpIfrNodeRoot*>(this);
+	pres = self->resolve(nm);
+	if (pres) {
+	    res = &mIcache;
+	}
+    } else {
+	res = &mIcache;
+    }
+    return res;
+}
+
+void CpIfrNodeRoot::setValid(bool aValid)
+{
+    CpIfrNode::setValid(aValid);
+    if (aValid) {
+	// Update iface cache
+	mIcache.clear();
+	MIfProv* maprov = first();
+	while (maprov) {
+	    auto res = maprov->iface();
+	    mIcache.push_back(res);
+	    maprov = maprov->next();
+	}
+    }
+}
 
 string ConnPointu::KReqName = "Required";
 string ConnPointu::KProvName = "Provided";
