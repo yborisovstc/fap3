@@ -23,6 +23,7 @@ class Node : public MNode, public MContentOwner
 	class NCpOwned;
 
 	/** @brief Owner connection point, one-to-many
+	 * TODO implement via tree node, ref MParent/MChild impl in Elem
 	 * */
 	class NCpOwner : public NCpOmi2<MOwner, MOwned> {
 	    friend class Node;
@@ -85,9 +86,9 @@ class Node : public MNode, public MContentOwner
 	virtual MNode* getNode(const GUri& aUri) override { return const_cast<MNode*>(const_cast<const Node*>(this)->getNode(aUri));}
 	virtual MNode* getNode(const string& aName, const TNs& aNs) override;
 	virtual void getUri(GUri& aUri, MNode* aBase = NULL) const override;
-	virtual void setCtx(MNode* aContext) override;
+	virtual void setCtx(MOwner* aContext) override;
 	virtual void mutate(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx, bool aTreatAsChromo = false) override;
-	virtual MNode* createHeir(const string& aName, MNode* aContext) override;
+	virtual MNode* createHeir(const string& aName) override;
 	virtual bool attachOwned(MNode* aOwned) override;
 	virtual TOwnerCp* owner() override { return &mCpOwner;}
 	virtual const TOwnerCp* owner() const override { return &mCpOwner;}
@@ -137,7 +138,7 @@ class Node : public MNode, public MContentOwner
     protected:
 	MEnv* mEnv = nullptr;
 	string mName;
-	MNode* mContext = nullptr;
+	MOwner* mContext = nullptr;
     public:
 	NCpOwner mCpOwner = NCpOwner(this);
 	NCpOwned mCpOwned = NCpOwned(this);

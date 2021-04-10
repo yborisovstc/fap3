@@ -82,4 +82,4 @@ include_HEADERS = \
 		  miface.h
 
 
-libfap3_la_LDFLAGS = -rdynamic -no-undefined -lrt
+libfap3_la_LDFLAGS = -rdynamic -no-undefined -lrt -ldl

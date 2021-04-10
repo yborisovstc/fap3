@@ -133,17 +133,18 @@ void Elem::onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const Mu
     Node::onOwnedMutated(aOwned, aMut, aCtx);
 }
 
-MNode* Elem::createHeir(const string& aName, MNode* aContext)
+MNode* Elem::createHeir(const string& aName)
 {
     MNode* heir = nullptr;
     if (Provider()->isProvided(this)) {
 	heir = Provider()->createNode(name(), aName, mEnv);
-	heir->setCtx(aContext);
     } else {
 	assert(parent());
-	heir = parent()->createHeirPrnt(aName, aContext);
+	heir = parent()->createHeirPrnt(aName);
 	if (heir) {
 	    // Mutate bare child with original parent chromo, updating only to have clean heir's chromo
+	    heir->setCtx(nullptr);
+	    heir->setCtx(Owner());
 	    heir->mutate(mChromo->Root(), false, MutCtx(), true);
 	} else {
 	    Log(TLog(EErr, this) + "Failed creating heir [" + aName + "]");
@@ -216,9 +217,9 @@ void Elem::onParentDeleting(MParent* aParent)
 {
 }
 
-MNode* Elem::createHeirPrnt(const string& aName, MNode* aContext)
+MNode* Elem::createHeirPrnt(const string& aName)
 {
-    return createHeir(aName, aContext);
+    return createHeir(aName);
 }
 
 MParent* Elem::parent()

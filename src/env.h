@@ -62,6 +62,8 @@ class Env: public MEnv
 	bool addProvider(MProvider* aProv) override;
 	void removeProvider(MProvider* aProv) override;
 	virtual string modulesUri() const override;
+	virtual bool setEVar(const string& aName, const string& aValue) override;
+	virtual bool getEVar(const string& aName, string& aValue) const override;
     protected:
 	MNode* mRoot;
 	string mSpecFile;
@@ -71,6 +73,7 @@ class Env: public MEnv
 	Logrec* mLogger;
 	MLauncher* mLauncher = nullptr; /*!< Model's launcher */
 	ImportsMgr* mImpMgr;
+	map<string, string> mEVars;
 
 };
 

@@ -73,13 +73,13 @@ class MNode: public MIface
 	 * @param aChange  to not save the mut in chromo but do change only
 	 * @param aCtx  mutation context
 	 * */
-	virtual void setCtx(MNode* aContext) = 0;
+	virtual void setCtx(MOwner* aContext) = 0;
 	/** @brief Apply mutation
 	 * @param aTreatAsChromo  apply the mut just as chromo ignoring mut part, workaround, ref ds_adcm_pamcc
 	 * */
 	// TODO YB to provide proper solution for ds_adcm_pamcc
 	virtual void mutate(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx, bool aTreatAsChromo = false) = 0;
-	virtual MNode* createHeir(const string& aName, MNode* aContext) = 0;
+	virtual MNode* createHeir(const string& aName) = 0;
 	virtual bool attachOwned(MNode* aOwned) = 0;
 	virtual TOwnerCp* owner() = 0;
 	virtual const TOwnerCp* owner() const = 0;

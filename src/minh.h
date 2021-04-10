@@ -26,7 +26,7 @@ class MParent : public MIface
 	virtual void onChildDeleting(MChild* aChild) = 0;
 	virtual bool onChildRenaming(MChild* aChild, const string& aNewName) = 0;
 	/** @brief Create heir as parent */
-	virtual MNode* createHeirPrnt(const string& aName, MNode* aContext) = 0;
+	virtual MNode* createHeirPrnt(const string& aName) = 0;
 	virtual bool attachChild(MChild* aChild) = 0;
 };
 

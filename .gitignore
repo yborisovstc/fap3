@@ -72,3 +72,4 @@ ut-grayb-lib
 Makefile
 .*.chs
 *.out
+clm/fapm

@@ -288,20 +288,18 @@ bool Node::attachOwned(MNode* aOwned)
     return res;
 }
 
-MNode* Node::createHeir(const string& aName, MNode* aContext)
+MNode* Node::createHeir(const string& aName)
 {
     MNode* uheir = nullptr;
     if (Provider()->isProvided(this)) {
 	uheir = Provider()->createNode(name(), aName, mEnv);
-	uheir->setCtx(aContext);
     } else {
 	Log(TLog(EInfo, this) + "The parent [" + aName + "] is not of provided");
     }
     return uheir;
 }
 
-
-void Node::setCtx(MNode* aContext)
+void Node::setCtx(MOwner* aContext)
 {
     assert(!mContext && aContext || !aContext);
     mContext = aContext;
@@ -370,7 +368,7 @@ MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
 	    if (parent) {
 		if (node == this) {
 		    // Create heir from the parent
-		    uelem = parent->createHeir(sname, NULL);
+		    uelem = parent->createHeir(sname);
 		    if (uelem) {
 			node->attachOwned(uelem);
 			notifyNodeMutated(aMut, aCtx);
@@ -593,7 +591,8 @@ void Node::getModules(vector<MNode*>& aModules)
     if (mdl) {
 	aModules.push_back(mdl);
     }
-    if (Owner()) {
-	Owner()->getModules(aModules);
+    MOwner* owner = mContext ? mContext : Owner();
+    if (owner) {
+	owner->getModules(aModules);
     }
 }

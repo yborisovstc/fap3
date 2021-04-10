@@ -25,7 +25,7 @@ class Elem: public Unit, public MElem, public MParent, public MChild
 	virtual void MElem_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	// From MNode
 	virtual void mutate(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx, bool aTreatAsChromo = false) override;
-	virtual MNode* createHeir(const string& aName, MNode* aContext) override;
+	virtual MNode* createHeir(const string& aName) override;
 	// From MElem
 	virtual MChromo& Chromos() override { return *mChromo;}
 	virtual void setParent(const string& aParent) override;
@@ -37,7 +37,7 @@ class Elem: public Unit, public MElem, public MParent, public MChild
 	virtual void MParent_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	virtual void onChildDeleting(MChild* aChild) override;
 	virtual bool onChildRenaming(MChild* aChild, const string& aNewName) override;
-	virtual MNode* createHeirPrnt(const string& aName, MNode* aContext) override;
+	virtual MNode* createHeirPrnt(const string& aName) override;
 	virtual bool attachChild(MChild* aChild) override;
 	// From MChild
 	virtual string MChild_Uid() const override {return getUid<MParent>();}

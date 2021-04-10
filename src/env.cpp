@@ -331,3 +331,21 @@ string Env::modulesUri() const
 {
     return KModulesName;
 }
+
+
+bool Env::setEVar(const string& aName, const string& aValue)
+{
+    mEVars.insert(pair<string, string>(aName, aValue));
+    return true;
+}
+
+bool Env::getEVar(const string& aName, string& aValue) const
+{
+    bool res = false;
+    if (mEVars.count(aName) > 0) {
+	aValue = mEVars.at(aName);
+	res = true;
+    }
+    return res;
+
+}

@@ -7,6 +7,8 @@
 
 
 #include <mprov.h>
+#include <mchromo.h>
+#include <melem.h>
 #include <mlog.h>
 
 #include "monitor.h"
@@ -57,7 +59,7 @@ void Monitor::initEnv(bool aVerbose)
     }
     for (auto evar : mEVars) {
 	// TODO Updata env to return error from SetEVar
-	mEnv->SetEVar(evar.first, evar.second);
+	mEnv->setEVar(evar.first, evar.second);
     }
 }
 
@@ -65,7 +67,7 @@ void Monitor::initEnv(bool aVerbose)
 void Monitor::runModel()
 {
     assert(mEnv != nullptr);
-    mEnv->ConstructSystem();
+    mEnv->constructSystem();
     if (mEnv->Root() != NULL) {
 	bool res = mEnv->RunSystem();
 	if (!res) {
@@ -111,7 +113,8 @@ bool Monitor::setLogFile(const string& aPath)
 bool Monitor::saveProfilerData()
 {
     // Save profiler data to file
-    bool res = mEnv->Profiler()->SaveToFile(mProfName);
+    bool res = true;
+    //res = mEnv->profiler()->SaveToFile(mProfName);
     return res;
 }
 
@@ -149,6 +152,7 @@ bool Monitor::run()
 
 bool Monitor::copyFile(const string& aSrcFname, const string& aDstFname)
 {
+    return false;
 }
 
 bool Monitor::convertSpec()
@@ -156,14 +160,14 @@ bool Monitor::convertSpec()
     bool res = true;
     initEnv();
     string chromo_fext = mSpecName.substr(mSpecName.find_last_of(".") + 1);
-    MProvider* prov = mEnv->Provider();
-    MChromo* chr = prov->CreateChromo(chromo_fext);
+    MProvider* prov = mEnv->provider();
+    MChromo* chr = prov->createChromo(chromo_fext);
     chr->SetFromFile(mSpecName);
     if (chr->IsError()) {
 	cout << "Pos: " << chr->Error().mPos << " -- " << chr->Error().mText << endl;
     }
     string ochromo_fext = mCSpecName.substr(mCSpecName.find_last_of(".") + 1);
-    MChromo* ochr = prov->CreateChromo(ochromo_fext);
+    MChromo* ochr = prov->createChromo(ochromo_fext);
     ochr->Convert(*chr);
     ochr->Save(mCSpecName);
  
@@ -209,13 +213,13 @@ bool Monitor::formatSpec()
 	storeStdinToFile(sname);
     }
     initEnv(false);
-    MProvider* prov = mEnv->Provider();
-    MChromo* chr = prov->CreateChromo(K_Chr2Ext);
+    MProvider* prov = mEnv->provider();
+    MChromo* chr = prov->createChromo(K_Chr2Ext);
     chr->SetFromFile(sname);
     if (chr->IsError()) {
 	cout << "Pos: " << chr->Error().mPos << " -- " << chr->Error().mText << endl;
     }
-    MChromo* ochr = prov->CreateChromo(K_Chr2Ext);
+    MChromo* ochr = prov->createChromo(K_Chr2Ext);
     ochr->Convert(*chr);
     ochr->Save(sname);
     outputFileToStdout(sname);
@@ -236,9 +240,9 @@ InputHandler* Monitor::createHandler(const string& aCmd)
 bool Monitor::saveModel(const string& aPath)
 {
     bool res = false;
-    MUnit* uroot = mEnv->Root();
-    MElem* root = uroot->GetObj(root);
-    if (root != nullptr) {
+    MNode* uroot = mEnv->Root();
+    MElem* root = uroot ? uroot->lIf(root) : nullptr;
+    if (root) {
 	// Check getting chromo 
 	root->Chromos().Save(aPath);
     }
@@ -272,6 +276,7 @@ class IhRun: public InputHandler
 	    if (!sdres) {
 		cout << "Error on saving profile data to file";
 	    }
+	    return true;
 	}
 };
 

@@ -55,6 +55,10 @@ class MEnv : public MIface
 	virtual bool StopSystem() = 0;
 	/** @brier Gets modules relative Uri */
 	virtual string modulesUri() const = 0;
+	/** @brier Sets environment variable */
+	virtual bool setEVar(const string& aName, const string& aValue) = 0;
+	/** @brier Gets environment variable */
+	virtual bool getEVar(const string& aName, string& aValue) const = 0;
 };
 
 
