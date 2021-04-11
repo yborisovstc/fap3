@@ -56,7 +56,15 @@ bool Content::setData(const string& aCont)
 void Content::mutContent(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 {
     string snode = aMut.Attr(ENa_MutNode);
-    Log(TLog(EErr, this) + "Changing content of [" + snode + "] - not supported");
+    if (snode.empty()) {
+	string sdata = aMut.Attr(ENa_MutVal);
+	bool res = setData(sdata);
+	if (!res) {
+	    Log(TLog(EErr, this) + "Failed setting content [" + sdata + "]");
+	}
+    } else {
+	Log(TLog(EErr, this) + "Changing content of [" + snode + "] - not supported");
+    }
     if (!aUpdOnly) {
 	notifyNodeMutated(aMut, aCtx);
     }

@@ -654,9 +654,9 @@
 			parent = uri;
 
 			#ifdef _DCE_
-			mutation_content = node_uri, separator "=" separator, content_value;
+			mutation_content = [ node_uri, separator ] "=" separator, content_value;
 			#else
-			mutation_content = content_uri, separator "=" separator, content_value;
+			mutation_content = [ content_uri, separator ] "=" separator, content_value;
 			#endif // _DCE_
 
 			mutation_import = "+" separator, module_uri;

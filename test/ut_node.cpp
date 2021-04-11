@@ -19,8 +19,8 @@ class Ut_node : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST_SUITE(Ut_node);
 //    CPPUNIT_TEST(test_nav_1);
 //    CPPUNIT_TEST(test_cont_1);
-//    CPPUNIT_TEST(test_cre_1);
-    CPPUNIT_TEST(test_node_aul_1);
+    CPPUNIT_TEST(test_cre_1);
+//    CPPUNIT_TEST(test_node_aul_1);
     CPPUNIT_TEST_SUITE_END();
 public:
     virtual void setUp();
@@ -173,6 +173,14 @@ void Ut_node::test_cre_1()
     root->dump(Ifu::EDM_Base | Ifu::EDM_Comps | Ifu::EDM_Recursive,0);
     // Save root chromoe
     eroot->Chromos().Save(specn + "_saved." + ext);
+    // Verify c12 content
+    MNode* n1 = root->getNode("n1");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get n1", n1);
+    MContentOwner* n1co = n1->lIf(n1co);
+    CPPUNIT_ASSERT_MESSAGE("Fail to get n1co", n1co);
+    string c12cd;
+    bool cres = n1co->getContent("c12", c12cd);
+    CPPUNIT_ASSERT_MESSAGE("Wrong n1 c12 content", c12cd == "Default");
 }
  
 /** @brief Test of access to upper layers

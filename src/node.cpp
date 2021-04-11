@@ -415,7 +415,7 @@ void Node::mutRemove(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 	owner()->detach(owner()->at(sname));
 	owned->deleteOwned();
 	//node->SetRemoved(aRunTime);
-	Log(TLog(EErr, this) + "Removed node [" + sname + "]");
+	Log(TLog(EInfo, this) + "Removed node [" + sname + "]");
     } else {
 	Log(TLog(EErr, this) + "Removing node [" + sname + "] - target node found");
     }

@@ -1714,28 +1714,43 @@ void Chromo2Mdl::rdp_mut_connect(istream& aIs, C2MdlNode& aMnode)
 
 void Chromo2Mdl::rdp_mut_content(istream& aIs, C2MdlNode& aMnode)
 {
-    string uri;
-    rdp_uri(aIs, uri);
-    if (!IsError()) {
+    streampos pos = aIs.tellg();
+    char c = aIs.get();
+    if (c == KT_MutContent) {
 	rdp_sep(aIs);
 	if (!IsError()) {
-	    char c = aIs.get();
-	    if (c == KT_MutContent) {
-		rdp_sep(aIs);
-		if (!IsError()) {
-		    string value;
-		    rdp_string(aIs, value);
-		    if (!IsError()) {
-			aMnode.mMut.mP = uri;
-			aMnode.mMut.mR = string(1, KT_MutContent);
-			aMnode.mMut.mQ = value;
-		    }
-		}
-	    } else {
-		SetErr(aIs, RDPE_MissingMutSmb);
+	    string value;
+	    rdp_string(aIs, value);
+	    if (!IsError()) {
+		aMnode.mMut.mR = string(1, KT_MutContent);
+		aMnode.mMut.mQ = value;
 	    }
 	}
     } else {
+	aIs.seekg(pos, aIs.beg); // Backtrack
+	ResetErr();
+	string uri;
+	rdp_uri(aIs, uri);
+	if (!IsError()) {
+	    rdp_sep(aIs);
+	    if (!IsError()) {
+		char c = aIs.get();
+		if (c == KT_MutContent) {
+		    rdp_sep(aIs);
+		    if (!IsError()) {
+			string value;
+			rdp_string(aIs, value);
+			if (!IsError()) {
+			    aMnode.mMut.mP = uri;
+			    aMnode.mMut.mR = string(1, KT_MutContent);
+			    aMnode.mMut.mQ = value;
+			}
+		    }
+		} else {
+		    SetErr(aIs, RDPE_MissingMutSmb);
+		}
+	    }
+	}
     }
 }
 
