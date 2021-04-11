@@ -80,9 +80,11 @@ MIfProv* Unit::defaultIfProv(const string& aName)
 IfrNode* Unit::createIfProv(const string& aName, MIfReq::TIfReqCp* aReq) const
 {
     IfrNode* res = nullptr;
-    if (aReq) {
-	Unit* self = const_cast<Unit*>(this);
+    Unit* self = const_cast<Unit*>(this);
+    if (!aReq) {  // No requestor, create root node
 	res = new IfrNodeRoot(self, aName);
+    } else {  // There is a requestor, created regular node
+	res = new IfrNode(self); 
     }
     return res;
 }

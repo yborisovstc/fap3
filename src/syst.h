@@ -14,49 +14,46 @@
  * */
 class ConnPointu: public Vertu, public MConnPoint, public Cnt::Host
 {
-    friend class CpIfrNode;
-
     public:
-    static const char* Type() { return "ConnPointu";}
-    ConnPointu(const string &aName, MEnv* aEnv);
-    virtual ~ConnPointu() {}
-    // From MNode
-    virtual MIface* MNode_getLif(const char *aType) override;
-    // From MVert
-    virtual MIface *MVert_getLif(const char *aType) override;
-    virtual bool isCompatible(MVert* aPair, bool aExt) override;
-    // From MConnPoint
-    virtual string MConnPoint_Uid() const { return getUid<MConnPoint>();}
-    virtual string provName() const override;
-    virtual string reqName() const override;
-    // From MIfProvOwner
-    virtual MIface* MIfProvOwner_getLif(const char *aType) override;
-    // From Node.MContentOwner
-    virtual int contCount() const override { return 2;}
-    virtual MContent* getCont(int aIdx) override;
-    virtual const MContent* getCont(int aIdx) const override;
-    virtual bool getContent(const GUri& aCuri, string& aRes) const override;
-    virtual bool setContent(const GUri& aCuri, const string& aData) override;
-    // From Cnt.Host
-    virtual string getCntUid(const string& aName, const string& aIfName) const override { return getUid(aName, aIfName);}
-    virtual MContentOwner* cntOwner() override { return this;}
+	static const char* Type() { return "ConnPointu";}
+	ConnPointu(const string &aName, MEnv* aEnv);
+	virtual ~ConnPointu() {}
+	// From MNode
+	virtual MIface* MNode_getLif(const char *aType) override;
+	// From MVert
+	virtual MIface *MVert_getLif(const char *aType) override;
+	virtual bool isCompatible(MVert* aPair, bool aExt) override;
+	// From MConnPoint
+	virtual string MConnPoint_Uid() const { return getUid<MConnPoint>();}
+	virtual string provName() const override;
+	virtual string reqName() const override;
+	// From MIfProvOwner
+	virtual MIface* MIfProvOwner_getLif(const char *aType) override;
+	// From Node.MContentOwner
+	virtual int contCount() const override { return 2;}
+	virtual MContent* getCont(int aIdx) override;
+	virtual const MContent* getCont(int aIdx) const override;
+	virtual bool getContent(const GUri& aCuri, string& aRes) const override;
+	virtual bool setContent(const GUri& aCuri, const string& aData) override;
+	// From Cnt.Host
+	virtual string getCntUid(const string& aName, const string& aIfName) const override { return getUid(aName, aIfName);}
+	virtual MContentOwner* cntOwner() override { return this;}
+    protected:
+	// From Unit.MIfProvOwner
+	virtual bool resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	// From Vertu
+	//virtual void onConnected() override;
+	//virtual void onDisconnected() override;
 
     protected:
-    // From Unit
-    virtual IfrNode* createIfProv(const string& aName, MIfReq::TIfReqCp* aReq) const override;
-    // From Vertu
-    //virtual void onConnected() override;
-    //virtual void onDisconnected() override;
-
-    protected:
-    Cnt mReq = Cnt(*this, KReqName);
-    Cnt mProv = Cnt(*this, KProvName);
-    static string KReqName;
-    static string KProvName;
+	Cnt mReq = Cnt(*this, KReqName);
+	Cnt mProv = Cnt(*this, KProvName);
+	static string KReqName;
+	static string KProvName;
 };
 
 /** @brief Extender, monolitic, multicontent, unit. Redirects request for iface to internal CP of extention.
- */
+*/
 class Extd: public Vertu
 {
     public:
@@ -86,8 +83,8 @@ class Syst : public Elem
 	virtual void mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx) override;
 	virtual MIface* doMOwnerGetLif(const char *aType) override;
     protected:
-	// From Unit
-	virtual IfrNode* createIfProv(const string& aName, MIfReq::TIfReqCp* aReq) const override;
+	// From Unit.MIfProvOwner
+	virtual bool resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
 };
 
 

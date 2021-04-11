@@ -46,7 +46,10 @@ MIfProv* IfrNode::next() const
  * */
 bool IfrNode::resolve(const string& aName)
 {
-    mValid = mOwner->resolveIfc(aName, binded());
+    bool valid = mOwner->resolveIfc(aName, binded());
+    if (mValid != valid) {
+	setValid(valid);
+    }
     // Cleanup the node - remove all invalid pairs
     eraseInvalid();
     return mValid;

@@ -4,88 +4,6 @@
 const string KContProvided = "Provided";
 const string KContRequired = "Required";
 
-/** @brief CP specific IFR node
- * CP delegates IF resolution to this node. This is one option of IFR design
- * Another option is to request MIfProvOwner to resolve, ref MIfProvOwner::getIfaces()
- * */
-class CpIfrNode: public IfrNode
-{
-    public:
-	CpIfrNode(MIfProvOwner* aOwner, const ConnPointu* aHost): IfrNode(aOwner), mHost(aHost) {};
-	// From MIfProv
-	virtual bool resolve(const string& aName) override;
-    private:
-	const ConnPointu* mHost;
-};
-
-bool CpIfrNode::resolve(const string& aName)
-{
-    bool res = true;
-    ConnPointu* host = const_cast<ConnPointu*>(mHost);
-    MIface* ifr = host->MNode_getLif(aName.c_str());
-    if (ifr && !findIface(ifr)) {
-	IfrLeaf* lf = new IfrLeaf(mOwner, ifr);
-	mCnode.connect(lf);
-    }
-    if (aName == mHost->provName()) {
-	// Requested provided iface - cannot be obtain via pairs - redirect to host
-	auto owner = mHost->Owner();
-	MUnit* ownu = owner ? const_cast<MOwner*>(owner)->lIf(ownu): nullptr;
-	res = const_cast<MUnit*>(ownu)->resolveIface(aName, this->binded());
-    } else if (aName == mHost->reqName()) {
-	for (MVert* pair : mHost->mPairs) {
-	    MUnit* pairu = pair->lIf(pairu);
-	    res = pairu->resolveIface(aName, this->binded());
-	}
-    }
-    setValid(res);
-    return res;
-}
-
-class CpIfrNodeRoot : public CpIfrNode
-{
-    public:
-	CpIfrNodeRoot(MIfProvOwner* aOwner, const string& aIfName, const ConnPointu* aHost): CpIfrNode(aOwner, aHost), mName(aIfName) {}
-	virtual string name() const override { return mName;}
-	virtual void setValid(bool aValid) override;
-	virtual TIfaces* ifaces() override;
-    private:
-	string mName;
-	TIfaces mIcache;  /*!< Cache of ifaces, ref ds_irm_cr */
-};
-
-MIfProv::TIfaces* CpIfrNodeRoot::ifaces()
-{
-    TIfaces* res = nullptr;
-    bool pres = false;
-    if (!mValid) {
-	string nm = name();
-	auto self = const_cast<CpIfrNodeRoot*>(this);
-	pres = self->resolve(nm);
-	if (pres) {
-	    res = &mIcache;
-	}
-    } else {
-	res = &mIcache;
-    }
-    return res;
-}
-
-void CpIfrNodeRoot::setValid(bool aValid)
-{
-    CpIfrNode::setValid(aValid);
-    if (aValid) {
-	// Update iface cache
-	mIcache.clear();
-	MIfProv* maprov = first();
-	while (maprov) {
-	    auto res = maprov->iface();
-	    mIcache.push_back(res);
-	    maprov = maprov->next();
-	}
-    }
-}
-
 string ConnPointu::KReqName = "Required";
 string ConnPointu::KProvName = "Provided";
 
@@ -131,18 +49,6 @@ string ConnPointu::reqName() const
 {
     string res;
     bool pres = getContent(KContRequired, res);
-    return res;
-}
-
-IfrNode* ConnPointu::createIfProv(const string& aName, MIfReq::TIfReqCp* aReq) const
-{
-    IfrNode* res = nullptr;
-    ConnPointu* self = const_cast<ConnPointu*>(this);
-    if (!aReq) {
-	res = new CpIfrNodeRoot(self, aName, this);
-    } else {
-	res = new CpIfrNode(self, this);
-    }
     return res;
 }
 
@@ -219,6 +125,28 @@ bool ConnPointu::isCompatible(MVert* aPair, bool aExt)
     return res;
 }
 
+
+bool ConnPointu::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+{
+    bool res = true;
+    MIface* ifr = MNode_getLif(aName.c_str()); // Local
+    if (ifr) {
+	addIfpLeaf(ifr, aReq);
+    }
+    if (aName == provName()) {
+	// Requested provided iface - cannot be obtain via pairs - redirect to host
+	auto owner = Owner();
+	MUnit* ownu = owner ? const_cast<MOwner*>(owner)->lIf(ownu): nullptr;
+	res = const_cast<MUnit*>(ownu)->resolveIface(aName, aReq);
+    } else if (aName == reqName()) {
+	// Requested required iface - redirect to pairs
+	for (MVert* pair : mPairs) {
+	    MUnit* pairu = pair->lIf(pairu);
+	    res = pairu->resolveIface(aName, aReq);
+	}
+    }
+    return res;
+}
 
 
 
@@ -302,62 +230,6 @@ MVert::TDir Extd::getDir() const
 // System
 
 
-class SystIfrNode: public IfrNode
-{
-    public:
-	SystIfrNode(MIfProvOwner* aOwner, const Syst* aHost): IfrNode(aOwner), mHost(aHost) {};
-	virtual bool resolve(const string& aName) override;
-    private:
-	const Syst* mHost;
-};
-
-class SystIfrNodeRoot : public SystIfrNode
-{
-    public:
-	SystIfrNodeRoot(MIfProvOwner* aOwner, const string& aIfName, const Syst* aHost): SystIfrNode(aOwner, aHost), mName(aIfName) {}
-	virtual string name() const override { return mName;}
-    private:
-	string mName;
-};
-
-bool SystIfrNode::resolve(const string& aName)
-{
-    bool res = true;
-    Syst* host = const_cast<Syst*>(mHost);
-    MIface* ifr = host->MNode_getLif(aName.c_str());
-    if (ifr && !findIface(ifr)) {
-	IfrLeaf* lf = new IfrLeaf(mOwner, ifr);
-	mCnode.connect(lf);
-    }
-    if (aName == MAgent::Type()) {
-	for (int i = 0; i < host->mCpOwner.pcount(); i++) {
-	    MOwned* comp = host->mCpOwner.pairAt(i);
-	    MNode* compn = comp->lIf(compn);
-	    MAgent* compa = compn ? compn->lIf(compa) : nullptr;
-	    if (compa) {
-		if (compa && !findIface(compa)) {
-		    IfrLeaf* lf = new IfrLeaf(mOwner, compa);
-		    mCnode.connect(lf);
-		}
-	    }
-	}
-    } else {
-	// Redirect to agents
-	MIfProv* ifp = host->defaultIfProv(MAgent::Type());
-	MIfProv* maprov = ifp->first();
-	while (maprov) {
-	    MUnit* agtu = maprov ? maprov->iface()->lIf(agtu) : nullptr;
-	    if (agtu && !findIface(agtu)) {
-		res = agtu->resolveIface(aName, this->binded());
-	    }
-	    maprov = maprov->next();
-	}
-    }
-    mValid = res;
-    return res;
-}
-
-
 
 Syst::Syst(const string &aName, MEnv* aEnv): Elem(aName, aEnv)
 {
@@ -402,10 +274,36 @@ void Syst::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
     }
 }
 
-IfrNode* Syst::createIfProv(const string& aName, MIfReq::TIfReqCp* aReq) const
+bool Syst::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 {
-    Syst* self = const_cast<Syst*>(this);
-    return aReq ? new SystIfrNode(self, this) : new SystIfrNodeRoot(self, aName, this);
+    bool res = true;
+    MIface* ifr = MNode_getLif(aName.c_str());
+    if (ifr) {
+	addIfpLeaf(ifr, aReq);
+    }
+    if (aName == MAgent::Type()) {
+	for (int i = 0; i < mCpOwner.pcount(); i++) {
+	    MOwned* comp = mCpOwner.pairAt(i);
+	    MNode* compn = comp->lIf(compn);
+	    MAgent* compa = compn ? compn->lIf(compa) : nullptr;
+	    if (compa) {
+		addIfpLeaf(ifr, aReq);
+	    }
+	}
+    } else {
+	// Redirect to agents
+	MIfProv* ifp = defaultIfProv(MAgent::Type());
+	MIfProv* maprov = ifp->first();
+	while (maprov) {
+	    MUnit* agtu = maprov ? maprov->iface()->lIf(agtu) : nullptr;
+	    if (agtu) {
+		res = agtu->resolveIface(aName, aReq);
+	    }
+	    maprov = maprov->next();
+	}
+    }
+    return res;
 }
+
 
 

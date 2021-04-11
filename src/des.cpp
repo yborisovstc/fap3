@@ -146,7 +146,7 @@ MDVarGet* State::HGetInp(const void* aRmt)
 	MNode* inpn = getNode("Inp");
 	MUnit* inpu = inpn->lIf(inpu);
 	MIfProv* difp = inpu->defaultIfProv(MDVarGet::Type());
-	MIfProv* ifp = difp->first();
+	MIfProv* ifp = difp ? difp->first() : nullptr;
 	if (ifp) {
 	    res = dynamic_cast<MDVarGet*>(ifp->iface());
 	} else {
@@ -272,8 +272,7 @@ bool State::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
     if (aName == provName()) {
 	MIface* ifr = mCdata->MDVar_getLif(aName.c_str());
 	if (ifr && !aReq->binded()->provided()->findIface(ifr)) {
-	    IfrLeaf* lf = new IfrLeaf(this, ifr);
-	    aReq->connect(lf);
+	    addIfpLeaf(ifr, aReq);
 	    res = true;
 	}
     } else {
