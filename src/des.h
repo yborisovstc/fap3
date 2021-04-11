@@ -31,21 +31,6 @@ class CpStateOutp: public ConnPointu
 	CpStateOutp(const string& aName = string(), MEnv* aEnv = NULL);
 };
 
-#if 0
-class CpStateOutp: public Vertu, public MConnPoint
-{
-    public:
-	static const char* Type() { return "CpStateOutp";};
-	CpStateOutp(const string& aName = string(), MEnv* aEnv = NULL);
-	// From MVert
-	virtual bool isCompatible(MVert* aPair, bool aExt) override;
-	// From MConnPoint
-	virtual string MConnPoint_Uid() const {return getUid<MConnPoint>();}
-	virtual string provName() const override;
-	virtual string reqName() const override;
-};
-#endif
-
 
 /** @brief State, non-inhritable, monolitic, using host unit base organs, combined chain
  *
@@ -109,7 +94,7 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 	// Local
 	void setUpdated();
 	void setActivated();
-    private:
+    protected:
 	BdVar* mPdata;   //<! Preparing (updating) phase data
 	BdVar* mCdata;   //<! Confirming phase data
 	static const string KCont_Value;
@@ -157,6 +142,8 @@ class DesLauncher: public Des, public MLauncher
     public:
 	static const char* Type() { return "DesLauncher";};
 	DesLauncher(const string& aName = string(), MEnv* aEnv = NULL);
+	// From Node.MIface
+	virtual MIface* MNode_getLif(const char *aType) override;
 	// From MOwned
 	virtual MIface* MOwned_getLif(const char *aType) override;
 	// From MLauncher

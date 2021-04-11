@@ -261,35 +261,19 @@ void Env::constructSystem()
 		//MutCtx mc(mRoot, mRoot);
 		MutCtx mc(mRoot);
 		mRoot->mutate(root, false, mc, true);
-		/*
-		Pclock(PEvents::Env_End_Constr, mRoot);
-		gettimeofday(&tp, NULL);
-		long int fin_us = tp.tv_sec * 1000000 + tp.tv_usec;
-		ss << (fin_us - beg_us);
-		TInt cpc = mRoot->GetCapacity();
-		TInt cpi = iImpMgr->GetImportsContainer() ? iImpMgr->GetImportsContainer()->GetCapacity() : 0;
-		Logger()->Write(EInfo, mRoot, "Completed of creating system, nodes: %d, imported: %d, time, us: %s", cpc,  cpi, ss.str().c_str());
-		*/
 		Logger()->Write(EInfo, mRoot, "Completed of creating system");
 		// Set launcher
-
-		for (int i = 0; i < mRoot->owner()->pcount(); i++) {
+		mLauncher = mRoot->lIf(mLauncher);
+		if (!mLauncher) for (int i = 0; i < mRoot->owner()->pcount(); i++) {
 		    MOwned* comp = mRoot->owner()->pairAt(i);
 		    MLauncher* desl = comp ? comp->lIf(desl) : nullptr;
 		    if (desl) {
 			mLauncher = desl; break;
 		    }
 		}
-		/*
-		mLauncher = dynamic_cast<MLauncher*>(mRoot->MUnit::GetSIfi(MLauncher::Type()));
-		if (mLauncher == NULL) {
-		    Logger()->Write(EErr, NULL, "Cannot find launcher");
-		}
-		*/
 	    } else {
 		Logger()->WriteFormat("Env: cannot create root elem");
 	    }
-	    //Pdur(PEvents::Dur_Env_Constr);
 	}
     }
 }

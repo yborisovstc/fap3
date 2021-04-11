@@ -1,0 +1,3 @@
+Adp : Elem {
+    # "DES adapter";
+}

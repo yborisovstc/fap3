@@ -20,6 +20,7 @@
 #include "syst.h"
 #include "des.h"
 #include "dest.h"
+#include "desio.h"
 
 // TODO [YB] To import from build variable
 const string KModulesPath = "/usr/share/grayb/modules/";
@@ -32,7 +33,7 @@ const string KChromRarg_Chs = "chs";
 const ProvDef::TFReg ProvDef::mReg ( {
 	Item<Node>(), Item<Unit>(), Item<Elem>(), Item<Content>(), Item<Vertu>(), Item<Syst>(), Item<ConnPointu>(),
 	Item<Extd>(), Item<State>(), Item<Des>(), Item<TrAddVar>(),  Item<CpStateInp>(),  Item<CpStateOutp>(), 
-	Item<DesLauncher>(), 
+	Item<DesLauncher>(), Item<Sout>(), 
 	});
 
 

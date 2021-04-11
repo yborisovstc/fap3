@@ -1,6 +1,7 @@
 *.swp
 *.swo
 *.txt
+!readme.txt
 *.html
 configure
 autom4te.cache

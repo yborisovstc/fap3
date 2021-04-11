@@ -322,5 +322,9 @@ string BdVar::GetValue()
     return res;
 }
 
+bool BdVar::IsValid() const
+{
+    return mData ? mData->IsValid() : false;
+}
 
 

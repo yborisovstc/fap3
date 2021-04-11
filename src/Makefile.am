@@ -60,6 +60,9 @@ libfap3_la_SOURCES = \
 		       des.cpp \
 		       dest.h \
 		       dest.cpp \
+		       desio.h \
+		       desio.cpp \
+		       chromo.h \
 		       chromo.h \
 		       chromo.cpp \
 		       chromo2.h \

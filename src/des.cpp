@@ -129,7 +129,7 @@ void State::confirm()
 
 void State::setUpdated()
 {
-    MDesObserver* obs = Owner()->lIf(obs);
+    MDesObserver* obs = Owner() ? Owner()->lIf(obs) : nullptr;
     if (obs)
 	obs->onUpdated(this);
 }
@@ -381,7 +381,7 @@ void Des::onActivated(MDesSyncable* aComp)
 void Des::onUpdated(MDesSyncable* aComp)
 {
     if (mUpdated.empty()) { // Notify owner
-	MDesObserver* obs = Owner()->lIf(obs);
+	MDesObserver* obs = Owner() ? Owner()->lIf(obs) : nullptr;
 	if (obs) obs->onUpdated(this);
     }
     mUpdated.push_back(aComp);
@@ -452,7 +452,8 @@ bool DesLauncher::Stop()
 
 void DesLauncher::OnIdle()
 {
-    this_thread::sleep_for(std::chrono::milliseconds(1));
+    //this_thread::sleep_for(std::chrono::milliseconds(1));
+    mStop = true;
 }
 
 MIface* DesLauncher::MOwned_getLif(const char *aType)
@@ -463,6 +464,10 @@ MIface* DesLauncher::MOwned_getLif(const char *aType)
     return res;
 }
 
-
-
-
+MIface* DesLauncher::MNode_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MLauncher>(aType));
+    else res = Des::MNode_getLif(aType);
+    return res;
+}

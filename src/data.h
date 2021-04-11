@@ -98,7 +98,7 @@ class BdVar: public MDVar, public MUpdatable, public MDVarGet, public MDVarSet, 
 	bool ToString(string& aType, string& aData);
 	virtual bool FromString(const string& aData); 
 	virtual bool ToString(string& aData); 
-	virtual bool IsValid() const { return mData != NULL ? mData->IsValid() : false;};
+	virtual bool IsValid() const;
 	// From MUpdatable
 	virtual string MUpdatable_Uid() const override { return mHost->GetDvarUid(this);}
 	virtual bool update() override;
