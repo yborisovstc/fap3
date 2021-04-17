@@ -93,17 +93,30 @@
 		    Approach of multi-agent system definition that describes the model's structure directly. 
 		    Ref <xref linkend="ds_smc"/> for discussion regarding chromo desing approaches.
 		    Ref <xref linkend="gls_osm"/> for anoter design approach.</para></glossdef> </glossentry>
+
 	<glossentry id="gls_dmc"><glossterm>DMC</glossterm> <acronym>DHC</acronym>
 	    <glossdef> <para>Dependent Mutations Chromosome</para> <para>
 		Chromo definition approach when the mutation can have other mutaions (of node type) as the operands.
 		This approach helps defining the model with anonymous nodes that is especially effective for <xref linkend="gls_des"/> models.
 		    Ref <ulink url="../../../grayb/doc/design/index.html#gls_dmc"/> for original glossary. </para></glossdef> </glossentry>
+
+	<glossentry id="gls_ddmc"><glossterm>DDMC</glossterm> <acronym>DHC</acronym>
+	    <glossdef> <para>
+		Direct Dependent Mutations Chromosome structure.
+		Chromo structure that directly aligned to
+		    <xref linkend="gls_dmc"/>.
+			This approach allows to have single unified chromo representation.  Ref
+		    <ulink url="ds_ddmc"/> for details.
+	</para></glossdef> </glossentry>
+
 	<glossentry id="gls_ccn"><glossterm>CCN</glossterm> <acronym>CCN</acronym>
 	    <glossdef> <para>Compact (and customized) Chromo Notation, approach that focus on having compact notation of model chromo.
 		    This allows effectivelly creating the model via 'manually' creating chromo of it. Another solution
 		    is Native Chromo Notation, ref <xref linkend="gls_ncn"/>. </para></glossdef> </glossentry>
+
 	<glossentry id="gls_clm"><glossterm>CLM</glossterm> <acronym>CLM</acronym>
-	    <glossdef> <para>Command Line Monitor application <xref linkend="ds_clm"/> </para></glossdef> </glossentry>
+	    <glossdef> <para>Command Line Monitor application <ulink url="../../../grayb/doc/design/index.html#gls_clm"/> for original glossary </para></glossdef> </glossentry>
+
 	<glossentry id="gls_cmt"><glossterm>CMT</glossterm> <acronym>CMT</acronym>
 	    <glossdef> <para>Combined Mutation Target.  The approach of specifying target in mutation spec when mutation target and change targets are
 		    spedified separately. With this approach the target specified with two mutation attribute, ref also <xref linkend="gls_umt"/> for
@@ -261,6 +274,7 @@
 		<listitem>
 		    Modify DES cycle to avoid polling the comps but keep the lists of active/updated in owner. Ref <xref linkend="ds_mdc"/> for details.
 		</listitem>
+		<listitem>Implement <xref linkend="gls_ddmc"/>, ref <xref linkend="ds_ddmc"/></listitem>
 	    </itemizedlist>
 	</sect2>
 	<sect2 id="ds_itr_dp"><title>Dependent projects</title>
@@ -900,13 +914,44 @@
 		</itemizedlist>
 	    </sect3>
 	</sect2>
-	<sect2><title>Extended <xref linkend="gls_osm"/> - <xref linkend="gls_eosm"/></title>
+	<sect2 id="ds_eosm"><title>Extended <xref linkend="gls_osm"/> - <xref linkend="gls_eosm"/></title>
 	    <sect3><title>Intro</title>
 		<simpara>
-		    Current <xref linend="gls_osm"/> generates "inconvenient" bad readeable output chromo. The question is if the approach 
+		    Current <xref linkend="gls_osm"/> implementation  generates "inconvenient" bad readeable output chromo. The question is if the approach 
 			can be improved by enabling segments propagation to the output chromo.
 			Ref <xref linkend="ds_cli_sno_s1"/> and <xref linkend="ds_cli_sno_s2"/> that introduce the possible approaches to this.
 		</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_ddmc"><title>Direct <xref linkend="gls_dmc"/> chromo structure - <xref linkend="gls_ddmc"/></title>
+	    <sect3><title>Intro</title>
+		<simpara>The main idea is that current chromo is actually a complex tree. For instance: Q arg of connection mut can be 
+		    simple URI. Or it can be dependent creation mut (in that case the actual Q arg is P arg of this dependent creation mut). Or
+		    it can depend on namespace segment, in that case conn mut Q arg is this namespace segment "namespace" context.</simpara>
+		<simpara>So there actual relation between connection mut Q arg and another dependent mut parameter. However in the current
+		    chromo2 implementation this relation doesn't exists explicitly. The relation is implemented via name (ID); the name is resolved
+		    on chromo parsing phase and the relation is set.</simpara>
+		<simpara>This approach is quite reasonable. In result of <xref linkend="gls_dmc"/> chromo parsing we get simple <xref linkend="gls_osm"/> chromo
+		    where the dependencies are resolved via the names (ID) substitution and stated in form of name references in the model native hier.
+		    So what is the problem here? The problem is that the original chromo and
+		    parsed chromo has different structure. The ouput chromo can be "reused" but its representation is not convenient.
+		    The possible solution is to convert it back to <xref linkend="gls_dmc"/> but this complicates the whole process.</simpara>
+		<simpara>Is it possible to have chromo structure aligned with the structure of <xref linkend="gls_dmc"/> chromo syntax?</simpara>
+	    </sect3>
+	    <sect3><title>Solution#1 References of given type to depending mutation.</title>
+		<sect4><title>Intro</title>
+		    <simpara>Mut include args both as values and references to depending mutation. The reference is typed. The types
+			means what depending mutation parameter the reference is to. Actually we can define default reference for each mutation type and
+			use this default relation type. For instance mut of type "creation" has default relation to name of created node; mut
+			of type "segment" has default relation the name of context (it is assumed that either the name of context is unambiguos,
+			i.e eihter the context is single, or same value both for target and namespace).  </simpara>
+		    <simpara>It is possible to have the chain of references. For instance connection attr Q references to namespace segment mut
+			(i.e. to namespace context value). The namespace context value in turn references to mut of "creation" type (i.e to 
+			name of created node).</simpara>
+		</sect4>
+		<sect4><title>How to apply the mutation with the reference.</title>
+		    <simpara>If the mut being applied has the ref then the ref is applied first.</simpara>
+		</sect4>
 	    </sect3>
 	</sect2>
     </sect1>

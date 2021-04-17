@@ -183,23 +183,6 @@ class Chromo2Mdl: public MChromoMdl
 	void rdp_context_namespace_ext(istream& aIs, C2MdlNode& aMnode, C2MdlNode& aDepSeg);
 	
     protected:
-	/** @brief Parses chromo spec
-	 * */
-	void ParseChromo(istream& aIs, streampos aStart, streampos aEnd, C2MdlNode& aMnode);
-	/** @brief Parses mutation
-	 * @param  aDepNode  the sign that the parsed node is DMC dependency of parent node 
-	 * */
-	void ParseCnodeMut(istream& aIs, streampos aStart, streampos aEnd, C2MdlNode& aMnode, bool aRoot, bool aDepNode);
-	/** @brief Parses chromo node
-	 * @param  aMnode    parent node
-	 * @param  aDepNode  the sign that the parsed node is DMC dependency of parent node 
-	 * */
-	void ParseCnodeChromo(istream& aIs, streampos aStart, streampos aEnd, C2MdlNode& aMnode, bool aRoot, bool aDepNode);
-	void ParseContext(vector<string>& aLexs, streampos aPos, C2MdlNode& aMnode);
-	/** @brief Parses context
-	 * @param aMnode the node of context
-	 * */
-	void ParseContext2(const TLex& aLexs, streampos aPos, C2MdlNode& aMnode);
 	/** @brief Sets error */
 	void SetErr(istream& aIs, const string& aDescr);
 	/** @brief Resets error */
