@@ -1,3 +1,3 @@
 Root : DesLauncher {
-    : Sout { Value = "SS Hello World"; }
+    : Sout { = "SS Hello World!"; }
 }

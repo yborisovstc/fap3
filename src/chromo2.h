@@ -227,6 +227,7 @@ class Chromo2Mdl: public MChromoMdl
 	/** @brief Dumps model node
 	 * */
 	void DumpMnode(const C2MdlNode& aNode, int aLevel) const;
+	streampos spos(istream& aIs) { return aIs.tellg();}
     protected:
 	C2MdlNode mRoot;
 	CError mErr;           //!< Error data

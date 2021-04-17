@@ -1,15 +1,16 @@
 MyRoot : Elem {
     Launcher :  DesLauncher {
+        About : Content;
+        About < = "Test";
         Ds1 : Des {
             St1 : State {
                 = "SI 0";
                 Debug : Content { Update : Content { = "y"; } }
             }
-            Const_1 : State { = "SI 1"; }
-            Add : TrAddVar;
-            St1.Inp ~ Add;
-            Add.Inp ~ St1;
-            Add.Inp ~ Const_1;
+            St1.Inp ~ : TrAddVar @ {
+                Inp ~ St1;
+                Inp ~  : State { = "SI 1"; };
+            };
         }
     }
 }

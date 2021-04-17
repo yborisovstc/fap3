@@ -120,16 +120,19 @@ void Elem::mutContent(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 
 void Elem::onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx)
 {
-    ChromoNode anode = mChromo->Root().AddChild(aMut);
+    ChromoNode anode = mChromo->Root().AddChild(aMut, true, false);
     const MNode* onode = aOwned->lIf(onode);
+    assert(!anode.AttrExists(ENa_Targ));
     GUri nuri;
     onode->getUri(nuri, this);
-    if (anode.AttrExists(ENa_Targ)) {
-	string starg = anode.Attr(ENa_Targ);
-	nuri.append(starg);
-    }
     anode.SetAttr(ENa_Targ, nuri);
-
+    // Adding namespace
+    if (!aCtx.mNs.empty()) {
+	MNode* ns = aCtx.mNs.at(0);
+	GUri nsuri;
+	ns->getUri(nsuri, const_cast<MNode*>(onode));
+	anode.SetAttr(ENa_NS, nsuri);
+    }
     Node::onOwnedMutated(aOwned, aMut, aCtx);
 }
 

@@ -1404,7 +1404,7 @@ void Chromo2Mdl::rdp_name(istream& aIs, string& aRes)
 {
     char c = aIs.get();
     aRes.clear();
-    if (isalpha(c)) {
+    if (isalpha(c) || (c == '_')) {
 	do {
 	    aRes.push_back(c);
 	    c = aIs.get();
@@ -1531,24 +1531,27 @@ void Chromo2Mdl::rdp_chromo_node(istream& aIs, C2MdlNode& aMnode)
 
 void Chromo2Mdl::rdp_segment(istream& aIs, C2MdlNode& aMnode)
 {
+    streampos pos = aIs.tellg(); // Debug
     char c = aIs.get();
     if (c == KT_ChromoStart) {
 	rdp_sep(aIs);
 	if (!IsError()) {
 	    rdp_chromo_node(aIs, aMnode);
-	    do {
-		rdp_sep(aIs);
-		if (!IsError()) {
-		    c = aIs.get();
-		    if (c == KT_ChromoEnd) {
-		    } else {
-			aIs.seekg(-1, aIs.cur);
-			rdp_chromo_node(aIs, aMnode);
-			if (!IsError()) {
+	    if (!IsError()) {
+		do {
+		    rdp_sep(aIs);
+		    if (!IsError()) {
+			c = aIs.get();
+			if (c == KT_ChromoEnd) {
+			} else {
+			    aIs.seekg(-1, aIs.cur);
+			    rdp_chromo_node(aIs, aMnode);
+			    if (!IsError()) {
+			    }
 			}
 		    }
-		}
-	    } while (!IsError() && c != KT_ChromoEnd);
+		} while (!IsError() && c != KT_ChromoEnd);
+	    }
 	}
     } else {
 	SetErr(aIs, RDPE_MissingChromo);
@@ -1675,16 +1678,26 @@ void Chromo2Mdl::rdp_mut_connect(istream& aIs, C2MdlNode& aMnode)
 			if (IsError()) {
 			    aIs.seekg(pos, aIs.beg); // Backtrack
 			    ResetErr();
-			    rdp_mut_create(aIs, node);
+			    rdp_mut_create_chromo(aIs, node);
 			    if (IsError()) {
 				aIs.seekg(pos, aIs.beg); // Backtrack
 				ResetErr();
-				string parent;
-				rdp_uri(aIs, parent);
-				if (!IsError()) {
+				rdp_mut_create(aIs, node);
+				if (IsError()) {
+				    aIs.seekg(pos, aIs.beg); // Backtrack
+				    ResetErr();
+				    string parent;
+				    rdp_uri(aIs, parent);
+				    if (!IsError()) {
+					aMnode.mMut.mP = name;
+					aMnode.mMut.mR = string(1, KT_MutConn);
+					aMnode.mMut.mQ = parent;
+				    }
+				} else {
+				    aMnode.mOwner->mChromo.push_back(node);
 				    aMnode.mMut.mP = name;
 				    aMnode.mMut.mR = string(1, KT_MutConn);
-				    aMnode.mMut.mQ = parent;
+				    aMnode.mMut.mQ = node.mMut.mP;
 				}
 			    } else {
 				aMnode.mOwner->mChromo.push_back(node);
@@ -1976,6 +1989,7 @@ void Chromo2Mdl::rdp_model_spec(istream& aIs, streampos aStart, C2MdlNode& aMnod
 
 void Chromo2Mdl::rdp_sep(istream& aIs)
 {
+    streampos pos = aIs.tellg(); // Debug
     char c = aIs.get();
     if (IsSep(c)) {
 	do {

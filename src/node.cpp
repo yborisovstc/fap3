@@ -129,6 +129,7 @@ void Node::updateNs(TNs& aNs, const ChromoNode& aCnode)
 	if (nsu == NULL) {
 	    Log(TLog(EErr, this) + "Cannot find namespace [" + ns + "]");
 	} else {
+	    aNs.clear(); // Override namespace by explicitly stated one
 	    aNs.push_back(nsu);
 	}
     }
@@ -157,8 +158,8 @@ MNode* Node::getNode(const string& aName, const TNs& aNs)
 void Node::mutSegment(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 {
     bool res = true;
-    TNs root_ns = aCtx.mNs;
-    updateNs(root_ns, aMut); //!!
+    TNs root_ns; // Don't propagate context from upper layer, ref ds_cli_sno_s3
+    updateNs(root_ns, aMut);
 
     MNode* targ = this; // Base target
     string starg;
@@ -183,7 +184,7 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
 {
     bool res = true;
     TNs root_ns = aCtx.mNs;
-    updateNs(root_ns, aMut); //!!
+    updateNs(root_ns, aMut);
 
     ChromoNode rno = aMut;
     Logger()->SetContextMutId(rno.LineId());

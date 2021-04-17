@@ -40,7 +40,7 @@ static const int KStatecDlog_Obs = 6;  // Observers
 static const int KStatecDlog_ObsIfr = 7;  // Observers ifaces routing
 
 
-const string State::KCont_Value = "Value";
+const string State::KCont_Value = "";
 
 
 State::State(const string& aName, MEnv* aEnv): Vertu(aName, aEnv), mPdata(NULL), mCdata(NULL)
@@ -430,10 +430,10 @@ bool DesLauncher::Run(int aCount)
     int cnt = 0;
     while (!mStop && (aCount == 0 || cnt++ < aCount)) {
 	if (!mActive.empty()) {
-	    Log(TLog(EErr, this) + ">>> Update [" + to_string(cnt) + "]");
+	    Log(TLog(EInfo, this) + ">>> Update [" + to_string(cnt) + "]");
 	    update();
 	    if (!mUpdated.empty()) {
-		Log(TLog(EErr, this) + ">>> Confirm [" + to_string(cnt) + "]");
+		Log(TLog(EInfo, this) + ">>> Confirm [" + to_string(cnt) + "]");
 		confirm();
 	    }
 	} else {

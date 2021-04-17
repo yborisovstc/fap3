@@ -252,8 +252,8 @@ void Syst::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 {
     string sp = aMut.Attr(ENa_P);
     string sq = aMut.Attr(ENa_Q);
-    MNode* pn = getNode(sp);
-    MNode* qn = getNode(sq);
+    MNode* pn = getNode(sp, aCtx.mNs);
+    MNode* qn = getNode(sq, aCtx.mNs);
     if (pn && qn) {
 	MVert* pv = pn->lIf(pv);
 	MVert* qv = qn->lIf(pv);

@@ -1,6 +1,5 @@
 MyRoot : Elem {
     n1 : Node {
-        # "c13 : Content < = Default"; 
         n1_1 : Node;
         n1_1 < n1_1_1 : Node;
         c12 : Content { = "Default"; }
