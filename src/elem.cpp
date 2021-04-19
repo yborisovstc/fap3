@@ -36,11 +36,6 @@ MIface* Elem::MNode_getLif(const char *aType)
 }
 
 
-void Elem::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, bool aTreatAsChromo)
-{
-    Node::mutate(aMut, aUpdOnly, aCtx, aTreatAsChromo);
-}
-
 // TODO Roughtly implemeted, re-implement
 
 MNode* Elem::getMowner(MNode* aNode)
@@ -88,12 +83,36 @@ void Elem::setCrAttr(const string& aEType, const string& aName)
     croot.SetAttr(ENa_Parent, ptype);
 }
 
+void Elem::mutate(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx, bool aTreatAsChromo)
+{
+    if (!aChange && !aTreatAsChromo) {
+	if (aTreatAsChromo) {
+	    MutCtx mctx(aCtx);
+	    Unit::mutate(aMut, aChange, mctx, aTreatAsChromo);
+	} else {
+	    //auto it = mChromo->Root().Find(aCtx.mParent);
+	    //if (it == const_cast<const ChromoNode&>(mChromo->Root()).End()) {
+	    if (true) {
+		ChromoNode mut = mChromo->Root().AddChild(aMut, true, true);
+		MutCtx mctx(aCtx);
+		//MutCtx mctx(aCtx.mNode, aCtx.mNs, *mut.Parent());
+		Unit::mutate(aMut, aChange, mctx, aTreatAsChromo);
+	    }
+	}
+    } else {
+	MutCtx mctx(aCtx);
+	Unit::mutate(aMut, aChange, mctx, aTreatAsChromo);
+    }
+}
+
+/*
+   void Elem::mutSegment(const ChromoNode& aMut, bool aChange, const MutCtx& aCtx)
+   {
+   }
+*/
+
 MNode* Elem::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 {
-    if (!aUpdOnly) {
-	// Copy just top node, not recursivelly, ref ds_daa_chrc_va
-	mChromo->Root().AddChild(aMut, true, false);
-    }
     MNode* elem = Node::mutAddElem(aMut, aUpdOnly, aCtx);
     return elem;
 }
@@ -120,20 +139,24 @@ void Elem::mutContent(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 
 void Elem::onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx)
 {
-    ChromoNode anode = mChromo->Root().AddChild(aMut, true, false);
-    const MNode* onode = aOwned->lIf(onode);
-    assert(!anode.AttrExists(ENa_Targ));
-    GUri nuri;
-    onode->getUri(nuri, this);
-    anode.SetAttr(ENa_Targ, nuri);
-    // Adding namespace
-    if (!aCtx.mNs.empty()) {
-	MNode* ns = aCtx.mNs.at(0);
-	GUri nsuri;
-	ns->getUri(nsuri, const_cast<MNode*>(onode));
-	anode.SetAttr(ENa_NS, nsuri);
+    //auto it = mChromo->Root().Find(aCtx.mParent);
+    //if (it == const_cast<const ChromoNode&>(mChromo->Root()).End()) {
+    if (aCtx.mNode && aCtx.mNode != this) {
+	ChromoNode anode = mChromo->Root().AddChild(aMut, true, true);
+	const MNode* onode = aOwned->lIf(onode);
+	assert(!anode.AttrExists(ENa_Targ));
+	GUri nuri;
+	onode->getUri(nuri, this);
+	anode.SetAttr(ENa_Targ, nuri);
+	// Adding namespace
+	if (!aCtx.mNs.empty()) {
+	    MNode* ns = aCtx.mNs.at(0);
+	    GUri nsuri;
+	    ns->getUri(nsuri, const_cast<MNode*>(onode));
+	    anode.SetAttr(ENa_NS, nsuri);
+	}
+	Node::onOwnedMutated(aOwned, aMut, aCtx);
     }
-    Node::onOwnedMutated(aOwned, aMut, aCtx);
 }
 
 MNode* Elem::createHeir(const string& aName)

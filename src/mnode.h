@@ -7,6 +7,7 @@
 #include "guri.h"
 #include "menv.h"
 #include "mowning.h"
+#include "chromo.h"
 #include "nconn.h"
 
 
@@ -26,13 +27,15 @@ class TNs: public vector<MNode*>
 class MutCtx
 {
     public:
-	MutCtx(const MutCtx& aSrc): mNode(aSrc.mNode), mNs(aSrc.mNs) {}
+	MutCtx(const MutCtx& aSrc): mNode(aSrc.mNode), mNs(aSrc.mNs), mParent(aSrc.mParent) {}
+	MutCtx(const MNode* aNode, const TNs& aNs, const ChromoNode& aParent): mNode(aNode), mNs(aNs), mParent(aParent) {}
 	MutCtx(const MNode* aNode, const TNs& aNs): mNode(aNode), mNs(aNs) {}
 	MutCtx(const MNode* aNode): mNode(aNode) {}
 	MutCtx(): mNode(nullptr) {}
     public:
 	const MNode* mNode; //!< Node
 	TNs mNs;     //!< Name spaces
+	ChromoNode mParent;   /*!< Mutation parent */
 };
 
 
@@ -65,7 +68,7 @@ class MNode: public MIface
 	virtual MNode* getComp(const string& aId) = 0;
 	virtual const MNode* getNode(const GUri& aUri) const = 0;
 	virtual MNode* getNode(const GUri& aUri) = 0;
-	MNode* getNodeS(const char* aUri) { return getNode(string(aUri));}
+	virtual MNode* getNodeS(const char* aUri)  = 0;
 	virtual MNode* getNode(const string& aName, const TNs& aNs) = 0;
 	virtual void getUri(GUri& aUri, MNode* aBase = NULL) const = 0;
 	string getUriS(MNode* aBase = NULL) const { GUri uri; getUri(uri, aBase); return uri.toString();}

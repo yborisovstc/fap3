@@ -161,6 +161,7 @@ void Node::mutSegment(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
     TNs root_ns; // Don't propagate context from upper layer, ref ds_cli_sno_s3
     updateNs(root_ns, aMut);
 
+    //TODO !! This handling of target isn't needed. This is done in mutate.
     MNode* targ = this; // Base target
     string starg;
     if (aMut.AttrExists(ENa_Targ) /* && (aMut.Type() != ENt_Node) */) {
@@ -175,7 +176,8 @@ void Node::mutSegment(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
     for (ChromoNode::Const_Iterator rit = aMut.Begin(); rit != aMut.End() && res; rit++)
     {
 	ChromoNode rno = (*rit);
-	MutCtx mctx(aUpdOnly ? targ : aCtx.mNode, root_ns);
+	//MutCtx mctx(aUpdOnly ? targ : aCtx.mNode, root_ns, aCtx.mParent);
+	MutCtx mctx(this, root_ns, aCtx.mParent);
 	targ->mutate(rno, false, mctx);
     }
 }
@@ -243,12 +245,12 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
 	    }
 	    // Redirect the mut to target: no run-time to keep the mut in internal nodes
 	    // Propagate till target owning comp if run-time to keep hidden all muts from parent
-	    MutCtx mctx(aUpdOnly ?targ : aCtx.mNode, root_ns);
+	    MutCtx mctx(aUpdOnly ?targ : aCtx.mNode, root_ns, aCtx.mParent);
 	    targ->mutate(rno, false, mctx);
 	} else  {
 	    // Local mutation
 	    rno.RmAttr(ENa_Targ);
-	    MutCtx mctx(aCtx.mNode, root_ns);
+	    MutCtx mctx(aCtx.mNode, root_ns, aCtx.mParent);
 	    TNodeType rnotype = rno.Type();
 	    if (rnotype == ENt_Seg || aTreatAsChromo) {
 		mutSegment(rno, aUpdOnly, mctx);
@@ -330,6 +332,11 @@ MNode* Node::getNode(const GUri& aUri, const MNode* aOwned) const
 	}
     } 
     return res;
+}
+
+MNode* Node::getNodeS(const char* aUri)
+{
+    return getNode(string(aUri));
 }
 
 MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)

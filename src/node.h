@@ -85,6 +85,7 @@ class Node : public MNode, public MContentOwner
 	virtual const MNode* getNode(const GUri& aUri) const override;
 	virtual MNode* getNode(const GUri& aUri) override { return const_cast<MNode*>(const_cast<const Node*>(this)->getNode(aUri));}
 	virtual MNode* getNode(const string& aName, const TNs& aNs) override;
+	virtual MNode* getNodeS(const char* aUri)  override;
 	virtual void getUri(GUri& aUri, MNode* aBase = NULL) const override;
 	virtual void setCtx(MOwner* aContext) override;
 	virtual void mutate(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx, bool aTreatAsChromo = false) override;

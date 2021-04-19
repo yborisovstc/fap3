@@ -269,7 +269,6 @@ void Syst::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 	Log(TLog(EErr, this) + "Connecting [" + sp + "] to [" + sq + "] - cannot find [" + (pn ? sq : sp) + "]");
     }
     if (!aUpdOnly) {
-	mChromo->Root().AddChild(aMut, true, false);
 	notifyNodeMutated(aMut, aCtx);
     }
 }

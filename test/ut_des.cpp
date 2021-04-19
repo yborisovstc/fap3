@@ -66,6 +66,14 @@ void Ut_des::test_des_1()
     root->dump(Ifu::EDM_Base | Ifu::EDM_Comps | Ifu::EDM_Recursive,0);
     // Save root chromoe
     eroot->Chromos().Save(specn + "_saved." + ext);
+
+    MNode* launcher = root->getNode("Launcher");
+    MElem* lre = launcher->lIf(lre);
+    MNode* ds1 = root->getNode("Launcher.Ds1");
+    MElem* ds1e = ds1->lIf(ds1e);
+    cout << endl << "= Ds1 chromo dump =" << endl;
+    ds1e->Chromos().Root().Dump();
+
     // Run 
     bool res = mEnv->RunSystem(4);
     CPPUNIT_ASSERT_MESSAGE("Failed running system", eroot);

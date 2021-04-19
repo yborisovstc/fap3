@@ -275,7 +275,8 @@ ChromoNode& ChromoNode::operator=(const ChromoNode& aNode)
 {
     // TODO [YB] Wrong to assign model because its base is not assignable (Base). To redesign.
 //    iMdl = aNode.iMdl; iHandle = aNode.iHandle;
-    assert(&iMdl == &aNode.iMdl);
+    assert(&iMdl == NULL || &iMdl == &aNode.iMdl);
+    iMdl = aNode.iMdl;
     iHandle = aNode.iHandle;
     return *this;
 }
@@ -396,6 +397,23 @@ ChromoNode::Iterator ChromoNode::Find(TNodeType aType, const string& aName, TNod
     }
     return res;
 };
+
+ChromoNode::Const_Iterator ChromoNode::Find(const ChromoNode aNode) const
+{
+    auto res = End();
+    for (auto it = Begin(); it != End(); it++) {
+	const ChromoNode& node = (*it);
+	if (node == aNode) {
+	    res = it;  break;
+	} else {
+	    res = node.Find(aNode);
+	    if (res != node.End()) {
+		break;
+	    }
+	}
+    }
+    return res;
+}
 
 int ChromoNode::GetLocalSize()
 {

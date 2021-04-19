@@ -174,6 +174,7 @@ class ChromoNode
 	ChromoNode::Iterator Find(TNodeType aType, const string& aName);
 	ChromoNode::Const_Iterator Find(TNodeType aType, const string& aName) const;
 	ChromoNode::Iterator Find(TNodeType aType, const string& aName, TNodeAttr aAttr, const string& aAttrVal);
+	ChromoNode::Const_Iterator Find(const ChromoNode aNode) const;
 	ChromoNode::Iterator GetChildOwning(const ChromoNode& aNode) const;
 	void Dump() const;
 	void DumpBackTree() const;
