@@ -65,7 +65,7 @@ class MNode: public MIface
 	virtual MNode* getComp(const string& aId) = 0;
 	virtual const MNode* getNode(const GUri& aUri) const = 0;
 	virtual MNode* getNode(const GUri& aUri) = 0;
-	MNode* getNodeS(const char* aUri) { return getNode(string(aUri));}
+	virtual MNode* getNodeS(const char* aUri) = 0;
 	virtual MNode* getNode(const string& aName, const TNs& aNs) = 0;
 	virtual void getUri(GUri& aUri, MNode* aBase = NULL) const = 0;
 	string getUriS(MNode* aBase = NULL) const { GUri uri; getUri(uri, aBase); return uri.toString();}

@@ -50,6 +50,7 @@ class Elem: public Unit, public MElem, public MParent, public MChild
 	void notifyParentMutated(const TMut& aMut);
 	void setCrAttr(const string& aEType, const string& aName);
 	// From Node
+	//virtual void mutSegment(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx) override;
 	virtual MNode* mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx) override;
 	virtual void mutAddElemOnCreated(MNode* aCreated, MNode* aParent);
 	virtual void mutContent(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx) override;
