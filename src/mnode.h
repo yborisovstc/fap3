@@ -7,6 +7,7 @@
 #include "guri.h"
 #include "menv.h"
 #include "mowning.h"
+#include "mobserv.h"
 #include "nconn.h"
 
 

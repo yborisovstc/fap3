@@ -5,15 +5,10 @@
 #include <map>
 #include <list>
 
-#include "nconn.h"
 #include "munit.h"
-#include "mcontent.h"
 #include "node.h"
 
-#include "cont.h"
-#include "cont2.h"
 #include "ifr.h"
-#include "ifu.h"
 
 using namespace std;
 

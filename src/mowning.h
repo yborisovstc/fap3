@@ -45,6 +45,7 @@ class MOwned : public MIface
 	virtual string ownedId() const = 0;
 	virtual void deleteOwned() = 0;
 	virtual bool isOwner(const MOwner* aOwner) const = 0;
+	virtual void onAttached() = 0;
 };
 
 

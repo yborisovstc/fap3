@@ -15,7 +15,7 @@ bool Node::NCpOwned::isOwner(const MOwner* aOwner) const
 
 
 
-Node::Node(const string &aName, MEnv* aEnv): mName(aName.empty() ? Type() : aName), mEnv(aEnv)
+Node::Node(const string &aName, MEnv* aEnv): mName(aName.empty() ? Type() : aName), mEnv(aEnv), mOcp(this)
 {
 } 
 
@@ -28,6 +28,12 @@ MIface* Node::MNode_getLif(const char *aType)
     MIface* res = nullptr;
     if (res = checkLif<MNode>(aType));
     else if (res = checkLif<MContentOwner>(aType));
+    return res;
+}
+
+MIface* Node::MObservable_getLif(const char *aType)
+{
+    MIface* res = nullptr;
     return res;
 }
 
@@ -287,6 +293,7 @@ bool Node::attachOwned(MNode* aOwned)
     bool res = owner()->connect(aOwned->owned());
     if (res) {
 	onOwnedAttached(aOwned->owned());
+	aOwned->owned()->onAttached();
     }
     return res;
 }
@@ -308,11 +315,12 @@ void Node::setCtx(MOwner* aContext)
     mContext = aContext;
 }
 
-MNode* Node::getNode(const GUri& aUri, const MNode* aOwned) const
+MNode* Node::getNodeOwd(const GUri& aUri, const MNode* aOwned) const
 {
     MNode* res = nullptr;
     Node* self = const_cast<Node*>(this);
     if (aUri.isAbsolute()) {
+	// Standard access, just absolute URI
 	if (Owner()) {
 	    res = Owner()->getNode(aUri, aOwned); 
 	} else {
@@ -330,7 +338,7 @@ MNode* Node::getNode(const GUri& aUri, const MNode* aOwned) const
 		res = nullptr;
 	    }
 	}
-    } 
+    }	
     return res;
 }
 
@@ -488,6 +496,12 @@ void Node::onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const Mu
 
 void Node::onOwnedAttached(MOwned* aOwned)
 {
+    // Notify the observers
+    auto* obs = mOcp.firstPair();
+    while (obs) {
+	obs->provided()->onObsOwnedAttached(this, aOwned);
+	obs = mOcp.nextPair(obs);
+    }
 }
 
 MIface* Node::MContentOwner_getLif(const char *aType) 
@@ -593,6 +607,18 @@ MContentOwner* Node::cntOw()
     return dynamic_cast<MContentOwner*>(this);
 }
 
+bool Node::addObserver(MObserver::TCp* aObs)
+{
+    bool res = mOcp.connect(aObs);
+    return res;
+}
+
+bool Node::rmObserver(MObserver::TCp* aObs)
+{
+    bool res = mOcp.disconnect(aObs);
+    return res;
+}
+
 void Node::getModules(vector<MNode*>& aModules)
 {
     MNode* mdl = getNode(mEnv->modulesUri());
@@ -604,3 +630,12 @@ void Node::getModules(vector<MNode*>& aModules)
 	owner->getModules(aModules);
     }
 }
+
+MIface* Node::doMOwnerGetLif(const char *aType)
+{
+    MIface* res = nullptr;
+    // TODO Vulnerabilty, consider to configure the access
+    if (res = checkLif<MObservable>(aType));
+    return res;
+}
+

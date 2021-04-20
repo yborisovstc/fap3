@@ -77,11 +77,33 @@ include_HEADERS = \
 		  mprov.h \
 		  mecont.h \
 		  mnode.h \
+		  munit.h \
 		  melem.h \
+		  mvert.h \
+		  msyst.h \
+		  mdes.h \
 		  minh.h \
 		  mdata.h \
-		  mdes.h \
 		  mlauncher.h \
+		  mifr.h \
+		  mcontent.h \
+		  mowning.h \
+		  mchromo.h \
+		  mobserv.h \
+		  nconn.h \
+		  rdata.h \
+		  node.h \
+		  unit.h \
+		  elem.h \
+		  vert.h \
+		  syst.h \
+		  des.h \
+		  ifu.h \
+		  ifr.h \
+		  guri.h \
+		  curi.h \
+		  chromo.h \
+		  content.h \
 		  miface.h
 
 

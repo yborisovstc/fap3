@@ -245,6 +245,7 @@ MIface* Syst::doMOwnerGetLif(const char *aType)
     MIface* res = nullptr;
     if (res = checkLif<MUnit>(aType));
     else if (res = checkLif<MUnit>(aType));
+    else res = Unit::doMOwnerGetLif(aType);
     return res;
 }
 
@@ -304,5 +305,19 @@ bool Syst::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
     return res;
 }
 
+MNode* Syst::getNodeOwd(const GUri& aUri, const MNode* aOwned) const
+{
+    MNode* res = nullptr;
+    // Get owned access accroding to the policy
+    // Using simple policy atm: grant access to any agents
+    if (aUri.isAbsolute()) {
+	res = Node::getNodeOwd(aUri, aOwned);
+    } else {
+	const MAgent* mag = aOwned->lIf(mag);
+	if (mag) {
+	}
+    }
+    return res;
+}
 
 

@@ -412,6 +412,112 @@ MIface* Des::doMOwnerGetLif(const char *aType)
 }
 
 
+///// ADES
+
+ADes::ADes(const string &aName, MEnv* aEnv): Unit(aName, aEnv), mOrCp(this)
+{
+    if (aName.empty()) mName = Type();
+}
+
+MIface* ADes::MNode_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MDesSyncable>(aType));
+    else if (res = checkLif<MAgent>(aType));
+    else if (res = checkLif<MDesObserver>(aType));
+    else res = Unit::MNode_getLif(aType);
+    return res;
+}
+
+MIface* ADes::MAgent_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MDesSyncable>(aType));
+    else if (res = checkLif<MAgent>(aType));
+    else if (res = checkLif<MDesObserver>(aType));
+    return res;
+}
+
+void ADes::update()
+{
+    while (!mActive.empty()) {
+	auto comp = mActive.front();
+	try {
+	    comp->update();
+	} catch (std::exception e) {
+	    Log(TLog(EErr, this) + "Error on update [" + comp->Uid() + "]");
+	}
+	mActive.pop_front();
+    }
+}
+
+void ADes::confirm()
+{
+    while (!mUpdated.empty()) {
+	auto comp = mUpdated.front();
+	comp->confirm();
+	mUpdated.pop_front();
+    }
+}
+
+void ADes::onActivated(MDesSyncable* aComp)
+{
+    if (mActive.empty()) { // Notify owner
+	MDesObserver* obs = Owner()->lIf(obs);
+	if (obs) obs->onActivated(this);
+    }
+    mActive.push_back(aComp);
+}
+
+void ADes::onUpdated(MDesSyncable* aComp)
+{
+    if (mUpdated.empty()) { // Notify owner
+	MDesObserver* obs = Owner() ? Owner()->lIf(obs) : nullptr;
+	if (obs) obs->onUpdated(this);
+    }
+    mUpdated.push_back(aComp);
+}
+
+void ADes::onOwnedAttached(MOwned* aOwned)
+{
+    MDesSyncable* os = aOwned->lIf(os);
+    if (os) {
+	mActive.push_back(os);
+    }
+}
+
+MIface* ADes::MOwned_getLif(const char *aType)
+{
+    MIface* res = NULL;
+    if (res = checkLif<MDesSyncable>(aType));
+    else res = Unit::MOwned_getLif(aType);
+    return res;
+}
+
+MIface* ADes::MObserver_getLif(const char *aType)
+{
+    return nullptr;
+}
+
+void ADes::onObsOwnedAttached(MObservable* aObl, MOwned* aOwned)
+{
+    MDesSyncable* os = aOwned->lIf(os);
+    if (os) {
+	onActivated(os);
+    }
+}
+
+void ADes::onOwnerAttached()
+{
+    bool res = false;
+    MObservable* obl = Owner()->lIf(obl);
+    if (obl) {
+	res = obl->addObserver(&mOrCp);
+    }
+    if (!res) {
+	Logger()->Write(EErr, this, "Cannot attach to observer");
+    }
+}
 
 //// DesLauncher
 

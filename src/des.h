@@ -103,7 +103,6 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 
 
 /** @brief DES system
- * Intended to be embedded in systems
 * */
 class Des: public Syst, public MDesSyncable, public MDesObserver
 {
@@ -131,6 +130,53 @@ class Des: public Syst, public MDesSyncable, public MDesObserver
 	list<MDesSyncable*> mActive;     /*!< Active compoments */
 	list<MDesSyncable*> mUpdated;     /*!< Updated compoments */
 };
+
+/** @brief DES agent
+ * Intended to be embedded into host system
+ * TODO Do we really need it? It cannot be embedded to ordinary system, but to DES
+ * (it needs owner to be MDesObserver or resolve this iface). Consider to remove.
+* */
+class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver, public MObserver
+{
+    public:
+	using TObserverCp = NCpOnp<MObserver, MObservable>;
+    public:
+	static const char* Type() { return "ADes";};
+	ADes(const string& aName = string(), MEnv* aEnv = NULL);
+	// From Node.MIface
+	virtual MIface* MNode_getLif(const char *aType) override;
+	// From Node
+	virtual void onOwnedAttached(MOwned* aOwned) override;
+	virtual MIface* MOwned_getLif(const char *aType);
+	// From Node.MContentOwner
+	virtual void onContentChanged(const MContent* aCont) override {}
+	// From MDesSyncable
+	virtual string MDesSyncable_Uid() const override {return getUid<MDesSyncable>();}
+	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+	virtual void update() override;
+	virtual void confirm() override;
+	// From MDesObserver
+	virtual string MDesObserver_Uid() const override {return getUid<MDesObserver>();}
+	virtual void onActivated(MDesSyncable* aComp) override;
+	virtual void onUpdated(MDesSyncable* aComp) override;
+	// From MAgent
+	virtual string MAgent_Uid() const override {return getUid<MAgent>();}
+	virtual MIface* MAgent_getLif(const char *aType) override;
+	virtual void onHostContentChanged(const MContent* aCont) override {}
+	// From MObserver
+	virtual string MObserver_Uid() const  override {return getUid<MObserver>();}
+	virtual MIface* MObserver_getLif(const char *aType) override;
+	virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override;
+    protected:
+	// From Node
+	virtual void onOwnerAttached() override;
+    protected:
+	list<MDesSyncable*> mActive;     /*!< Active compoments */
+	list<MDesSyncable*> mUpdated;    /*!< Updated compoments */
+	TObserverCp mOrCp;               /*!< Observer connpoint */ 
+};
+
+
 
 
 
