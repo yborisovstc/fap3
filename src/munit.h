@@ -35,6 +35,13 @@ class MUnit: public MIface
 	 * connection to this unit iface provider
 	 * */
 	virtual bool resolveIface(const string& aName, MIfReq::TIfReqCp* aReq) = 0;
+	/** @brief Gets first iface resolved
+	 * */
+	template<class T> T* getSif(T* aInst) {
+	    auto prov = defaultIfProv(T::Type());
+	    MIface* ifc = prov->ifaces().empty() ? nullptr : prov->ifaces().at(0);
+	    return aInst = dynamic_cast<T*>(ifc);
+	}
 };
 
 

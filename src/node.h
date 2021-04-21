@@ -108,6 +108,7 @@ class Node : public MNode, public MContentOwner, public MObservable
 	virtual int contCount() const override;
 	virtual MContent* getCont(int aIdx) override;
 	virtual const MContent* getCont(int aIdx) const override;
+	virtual const MContent* getCont(const GUri& aUri) const override;
 	virtual bool getContent(const GUri& aCuri, string& aRes) const override;
 	virtual bool setContent(const GUri& aCuri, const string& aData) override;
 	virtual void onContentChanged(const MContent* aCont) override {}

@@ -588,6 +588,14 @@ bool Node::setContent(const GUri& aCuri, const string& aData)
 
 }
 
+const MContent* Node::getCont(const GUri& aUri) const
+{
+    const MContent* res = nullptr;
+    const MNode* node = getNode(aUri);
+    res = node ? node->lIf(res) : nullptr;
+    return res;
+}
+
 MIface* Node::MOwned_getLif(const char *aType)
 {
     MIface* res = nullptr;

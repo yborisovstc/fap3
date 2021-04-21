@@ -46,6 +46,7 @@ class MContentOwner: public MIface
 	/** @brief Gets owned content by given index */
 	virtual MContent* getCont(int aIdx) = 0;
 	virtual const MContent* getCont(int aIdx) const = 0;
+	virtual const MContent* getCont(const GUri& aUri) const = 0;
 	virtual bool getContent(const GUri& aCuri, string& aRes) const = 0;
 	virtual bool setContent(const GUri& aCuri, const string& aData) = 0;
 	virtual void onContentChanged(const MContent* aCont) = 0;

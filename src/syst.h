@@ -68,6 +68,26 @@ class Extd: public Vertu
 };
 
 
+/** @brief Socket, monolitic.
+*/
+class Socket: public Vert, public MSocket
+{
+    public:
+	static const char* Type() { return "Socket";};
+	Socket(const string& aName = string(), MEnv* aEnv = NULL);
+	// From MVert
+	virtual bool isCompatible(MVert* aPair, bool aExt) override;
+	virtual MVert* getExtd() override;
+	virtual TDir getDir() const override;
+	// From Unit.MIfProvOwner
+	virtual bool resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	// From MSocket
+	virtual string MSocket_Uid() const override  { return getUid<MSocket>();}
+	virtual int PinsCount() const override;
+	virtual MNode* GetPin(int aInd) override;
+};
+
+
 
 /** @brief System, inheritable
  * Isn't connectable itlelf but can represent itself via connpoints

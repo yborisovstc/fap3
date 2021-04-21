@@ -100,7 +100,8 @@ class Ut_syst : public CPPUNIT_NS::TestFixture
     //    CPPUNIT_TEST(test_syst_1);
     //CPPUNIT_TEST(test_cp_2);
     //CPPUNIT_TEST(test_syst_cp_3);
-    CPPUNIT_TEST(test_syst_cpe_1);
+    CPPUNIT_TEST(test_syst_sock_1);
+    //CPPUNIT_TEST(test_syst_cpe_1);
     CPPUNIT_TEST_SUITE_END();
     public:
     virtual void setUp();
@@ -111,6 +112,7 @@ class Ut_syst : public CPPUNIT_NS::TestFixture
     void test_syst_1();
     void test_cp_2();
     void test_syst_cp_3();
+    void test_syst_sock_1();
     void test_syst_cpe_1();
     private:
     Env* mEnv;
@@ -380,7 +382,50 @@ void Ut_syst::test_syst_cpe_1()
     cout << endl << "=== CP2 MTIf1 default IFP dump:" << endl;
     ifp->dump(0);
     CPPUNIT_ASSERT_MESSAGE("Failed getting MConnPoint provider", prov);
+
+    delete mEnv;
 }
 
+
+
+/** @brief Test of socket
+ * */
+void Ut_syst::test_syst_sock_1()
+{
+    cout << endl << "=== Test of socket ===" << endl;
+
+    const string specn("ut_syst_sock_1");
+    string ext = "chs";
+    string spec = specn + string(".") + "chs";
+    string log = specn + "_" + ext + ".log";
+    mEnv = new Env(spec, log);
+    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv);
+    mProv = new TstProv("TestProv", mEnv);
+    bool res = mEnv->addProvider(mProv);
+    CPPUNIT_ASSERT_MESSAGE("Fail to add provider", res);
+    //mEnv->ImpsMgr()->ResetImportsPaths();
+    //mEnv->ImpsMgr()->AddImportsPaths("../modules");
+    mEnv->constructSystem();
+    MNode* root = mEnv->Root();
+    MElem* eroot = root ? root->lIf(eroot) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get root", eroot);
+    GUri ruri;
+    root->getUri(ruri);
+    string ruris = ruri.toString();
+    root->dump(Ifu::EDM_Base | Ifu::EDM_Comps | Ifu::EDM_Recursive,0);
+    // Save root chromoe
+    eroot->Chromos().Save(specn + "_saved." + ext);
+    // Verify if the sockets are connected
+    MNode* s1n = root->getNode("S1.Sock1");
+    MVert* s1v = s1n->lIf(s1v);
+    CPPUNIT_ASSERT_MESSAGE("Fail to get s1v", s1v);
+    MNode* s2n = root->getNode("S1.Sock2");
+    MVert* s2v = s2n->lIf(s2v);
+    CPPUNIT_ASSERT_MESSAGE("Fail to get s2v", s2v);
+    bool conn = s2v->isPair(s1v);
+    CPPUNIT_ASSERT_MESSAGE("Fail: sockets are not connected", conn);
+
+    delete mEnv;
+}
 
 

@@ -18,6 +18,24 @@ class MConnPoint: public MIface
 	virtual string reqName() const = 0;
 };
 
+class MNode;
+
+/** @brief Socket interface
+ * */
+class MSocket: public MIface
+{
+    public:
+	static const char* Type() { return "MSocket";};
+	// From MIface
+	virtual string Uid() const override { return MSocket_Uid();}
+	virtual string MSocket_Uid() const = 0;
+	// Local
+	virtual int PinsCount() const = 0;
+	virtual MNode* GetPin(int aInd) = 0;
+};
+
+
+
 /** @brief System embedded managing agent
  * System delegates agent handling the requests
  * */

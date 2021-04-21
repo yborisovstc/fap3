@@ -125,7 +125,6 @@ bool ConnPointu::isCompatible(MVert* aPair, bool aExt)
     return res;
 }
 
-
 bool ConnPointu::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 {
     bool res = true;
@@ -226,9 +225,112 @@ MVert::TDir Extd::getDir() const
 }
 
 
+//// Socket
+
+Socket::Socket(const string& aName, MEnv* aEnv): Vert(aName, aEnv)
+{
+    if (aName.empty()) mName = Type();
+    setContent(KContDir, KContDir_Val_Regular);
+}
+
+bool Socket::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+{
+    bool res = false;
+    MIface* ifc = MNode_getLif(aName.c_str());
+    if (ifc) { // Local iface
+	addIfpLeaf(ifc, aReq);
+    } else {
+	// Redirect to internal point or pair depending on the requiestor
+	MVert* intcp = getExtd();
+	MUnit* intcpu = intcp ? intcp->lIf(intcpu) : nullptr;
+	MIfProvOwner* intcpo = intcpu ? intcpu->lIf(intcpo) : nullptr;
+	if (intcpo && aReq->provided()->isRequestor(intcpo)) {
+	    // Redirect to pairs
+	    for (int i = 0; i < pairsCount(); i++) {
+		MVert* pair = getPair(i);
+		MUnit* pairu = pair ? pair->lIf(pairu) : nullptr;  
+		MIfProvOwner* pairo = pairu ? pairu->lIf(pairo) : nullptr;
+		if (pairo && aReq->provided()->isRequestor(pairo)) {
+		    res = pairu->resolveIface(aName, aReq);
+		}
+	    }
+	} else {
+	    // Redirect to internal CP
+	    MUnit* intcpu = intcp->lIf(intcpu);  
+	    res = intcpu->resolveIface(aName, aReq);
+	}
+    }
+    return res;
+}
+
+bool Socket::isCompatible(MVert* aPair, bool aExt)
+{
+    bool res = true;
+    // Going thru connectable components and check their compatibility
+    bool ext = aExt;
+    MVert *cp = aPair;
+    MVert* ecp = aPair->getExtd(); 
+    // Checking if the pair is Extender
+    if (ecp) {
+	ext = !ext;
+	cp = ecp;
+    }
+    if (cp) {
+	MNode* cpn = cp->lIf(cpn);
+	for (int ci = 0; ci < owner()->pcount() && res; ci++) {
+	    auto comp = owner()->pairAt(ci)->provided();
+	    MVert* compv = comp->lIf(compv);
+	    if (compv) {
+		MNode* compn = comp->lIf(compn);
+		MNode* pcomp = cpn->getNode(compn->name());
+		if (pcomp) {
+		    MVert* pcompv = pcomp->lIf(pcompv);
+		    res = compv->isCompatible(pcompv, ext);
+		} else {
+		    res = false;
+		}
+	    }
+	}
+    }
+    return res;
+}
+
+MVert* Socket::getExtd()
+{
+    MVert* res = nullptr;
+    return res;
+}
+
+MVert::TDir Socket::getDir() const
+{
+    TDir res = ERegular;
+    string cdir;
+    getContent(KContDir, cdir);
+    if (cdir == KContDir_Val_Inp) res = EInp;
+    else if (cdir == KContDir_Val_Out) res = EOut;
+    return res;
+}
+
+int Socket::PinsCount() const
+{
+    int res = 0;
+    for (int i = 0; i < owner()->pcount(); i++) {
+	const MOwned* comp = owner()->pairAt(i)->provided();
+	const MVert* compv = comp->lIf(compv);
+	if (compv) res++;
+    }
+    return res;
+}
+
+MNode* Socket::GetPin(int aInd)
+{
+    MNode* res = nullptr;
+    return res;
+}
+
+
 
 // System
-
 
 
 Syst::Syst(const string &aName, MEnv* aEnv): Elem(aName, aEnv)
@@ -240,11 +342,16 @@ Syst::~Syst()
 {
 }
 
+/** TODO Vulnerability: access to many ifaces. This is required for embedded agents.
+ *  Maybe it makes sense to have owner API getting owned as arg, so owner can analyze
+ *  if the owned if agent. We also can have system propery with the policy of getting
+ *  access to ifaces
+ * */
 MIface* Syst::doMOwnerGetLif(const char *aType)
 {
     MIface* res = nullptr;
     if (res = checkLif<MUnit>(aType));
-    else if (res = checkLif<MUnit>(aType));
+    else if (res = checkLif<MContentOwner>(aType));
     else res = Unit::doMOwnerGetLif(aType);
     return res;
 }

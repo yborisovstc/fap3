@@ -271,6 +271,13 @@ class NCpOmi2 : public MNcp<TPif, TRif>
 	virtual int pcount() const { return mPairs.size(); }
 	virtual const TPair* pairAt(int aInd) const { for (auto it = mPairs.begin(); it != mPairs.end(); it++) if (aInd-- == 0) return it->second; return nullptr; }
 	virtual TPair* pairAt(int aInd) { for (auto it = mPairs.begin(); it != mPairs.end(); it++) if (aInd-- == 0) return it->second; return nullptr; }
+	virtual TPair* firstPair() { return mPairs.size() > 0 ? mPairs.begin()->second : nullptr;}
+	virtual TPair* nextPair(TPair* aPair) {
+	    string id; aPair->getId(id);
+	    auto it = mPairs.find(id); it++;
+	    auto res = (it != mPairs.end()) ? it->second : nullptr; 
+	    return res;
+	}
     protected:
 	TPairs mPairs;
 };
