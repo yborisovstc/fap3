@@ -69,7 +69,9 @@ MIface* State::MNode_getLif(const char *aType)
 void State::setActivated()
 {
     // Propagate activation to owner
-    MDesObserver* obs = Owner()->lIf(obs);
+    //MDesObserver* obs = Owner()->lIf(obs);
+    MUnit* ownu = Owner()->lIf(ownu);
+    MDesObserver* obs = ownu->getSif(obs);
     if (obs) {
 	obs->onActivated(this);
     }
@@ -129,7 +131,9 @@ void State::confirm()
 
 void State::setUpdated()
 {
-    MDesObserver* obs = Owner() ? Owner()->lIf(obs) : nullptr;
+    //MDesObserver* obs = Owner() ? Owner()->lIf(obs) : nullptr;
+    MUnit* ownu = Owner()->lIf(ownu);
+    MDesObserver* obs = ownu->getSif(obs);
     if (obs)
 	obs->onUpdated(this);
 }
@@ -414,7 +418,7 @@ MIface* Des::doMOwnerGetLif(const char *aType)
 
 ///// ADES
 
-ADes::ADes(const string &aName, MEnv* aEnv): Unit(aName, aEnv), mOrCp(this)
+ADes::ADes(const string &aName, MEnv* aEnv): Unit(aName, aEnv), mOrCp(this), mAgtCp(this)
 {
     if (aName.empty()) mName = Type();
 }
@@ -433,7 +437,7 @@ MIface* ADes::MAgent_getLif(const char *aType)
 {
     MIface* res = nullptr;
     if (res = checkLif<MDesSyncable>(aType));
-    else if (res = checkLif<MAgent>(aType));
+    else if (res = checkLif<MUnit>(aType)); // To allow client to request IFR
     else if (res = checkLif<MDesObserver>(aType));
     return res;
 }
@@ -463,7 +467,12 @@ void ADes::confirm()
 void ADes::onActivated(MDesSyncable* aComp)
 {
     if (mActive.empty()) { // Notify owner
-	MDesObserver* obs = Owner()->lIf(obs);
+	// Get access to owners owner via MAhost iface
+	MAhost* ahost = mAgtCp.firstPair()->provided();
+	MNode* ahn = ahost->lIf(ahn);
+	MOwner* ahno = ahn->owned()->at();
+	MUnit* ahnou = ahno->lIf(ahnou);
+	MDesObserver* obs = ahnou->getSif(obs);
 	if (obs) obs->onActivated(this);
     }
     mActive.push_back(aComp);
@@ -472,18 +481,15 @@ void ADes::onActivated(MDesSyncable* aComp)
 void ADes::onUpdated(MDesSyncable* aComp)
 {
     if (mUpdated.empty()) { // Notify owner
-	MDesObserver* obs = Owner() ? Owner()->lIf(obs) : nullptr;
+	// Get access to owners owner via MAhost iface
+	MAhost* ahost = mAgtCp.firstPair()->provided();
+	MNode* ahn = ahost->lIf(ahn);
+	MOwner* ahno = ahn->owned()->at();
+	MUnit* ahnou = ahno->lIf(ahnou);
+	MDesObserver* obs = ahnou->getSif(obs);
 	if (obs) obs->onUpdated(this);
     }
     mUpdated.push_back(aComp);
-}
-
-void ADes::onOwnedAttached(MOwned* aOwned)
-{
-    MDesSyncable* os = aOwned->lIf(os);
-    if (os) {
-	mActive.push_back(os);
-    }
 }
 
 MIface* ADes::MOwned_getLif(const char *aType)
@@ -516,6 +522,12 @@ void ADes::onOwnerAttached()
     }
     if (!res) {
 	Logger()->Write(EErr, this, "Cannot attach to observer");
+    }
+    // Registering in agent host
+    MActr* ac = Owner()->lIf(ac);
+    res = ac->attachAgent(&mAgtCp);
+    if (!res) {
+	Logger()->Write(EErr, this, "Cannot attach to host");
     }
 }
 

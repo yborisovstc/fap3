@@ -12,10 +12,10 @@
 class Ut_des : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_des);
-    //CPPUNIT_TEST(test_des_1);
+    CPPUNIT_TEST(test_des_1);
     CPPUNIT_TEST(test_des_ades_1);
-    //CPPUNIT_TEST(test_des_dmc_1);
-    //CPPUNIT_TEST(test_des_ifr_inval_1);
+    CPPUNIT_TEST(test_des_dmc_1);
+    CPPUNIT_TEST(test_des_ifr_inval_1);
     CPPUNIT_TEST_SUITE_END();
     public:
     virtual void setUp();
@@ -248,12 +248,12 @@ void Ut_des::test_des_ifr_inval_1()
     CPPUNIT_ASSERT_MESSAGE("Failed running system", eroot);
     // Connect St1 to Add2.Inp and check the connection works
     MChromo* chr = mEnv->provider()->createChromo();
-    chr->SetFromSpec("{ Add2.Inp ~ St1; }");
+    chr->SetFromSpec("e : Elem { Add2.Inp ~ St1; }");
     MNode* ds1 = root->getNode("Launcher.Ds1");
     CPPUNIT_ASSERT_MESSAGE("Fail to get da1", ds1);
     cout << endl << "Connecting Add2.Inp ~ St1" << endl;
     mEnv->Logger()->Write(EInfo, nullptr, "=== Connecting Add2.Inp ~ St1 ===");
-    ds1->mutate(chr->Root(), false, MutCtx());
+    ds1->mutate(chr->Root(), false, MutCtx(), true);
     delete chr;
     res = mEnv->RunSystem(2);
     // Verify the state

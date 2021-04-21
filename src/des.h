@@ -139,6 +139,7 @@ class Des: public Syst, public MDesSyncable, public MDesObserver
 class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver, public MObserver
 {
     public:
+	using TAgtCp = NCpOnp<MAgent, MAhost>;  /*!< Agent conn point */
 	using TObserverCp = NCpOnp<MObserver, MObservable>;
     public:
 	static const char* Type() { return "ADes";};
@@ -146,7 +147,6 @@ class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver
 	// From Node.MIface
 	virtual MIface* MNode_getLif(const char *aType) override;
 	// From Node
-	virtual void onOwnedAttached(MOwned* aOwned) override;
 	virtual MIface* MOwned_getLif(const char *aType);
 	// From Node.MContentOwner
 	virtual void onContentChanged(const MContent* aCont) override {}
@@ -174,6 +174,7 @@ class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver
 	list<MDesSyncable*> mActive;     /*!< Active compoments */
 	list<MDesSyncable*> mUpdated;    /*!< Updated compoments */
 	TObserverCp mOrCp;               /*!< Observer connpoint */ 
+	TAgtCp mAgtCp;                   /*!< Agent connpoint */ 
 };
 
 

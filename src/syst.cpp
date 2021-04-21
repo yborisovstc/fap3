@@ -132,16 +132,18 @@ bool ConnPointu::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
     if (ifr) {
 	addIfpLeaf(ifr, aReq);
     }
-    if (aName == provName()) {
-	// Requested provided iface - cannot be obtain via pairs - redirect to host
-	auto owner = Owner();
-	MUnit* ownu = owner ? const_cast<MOwner*>(owner)->lIf(ownu): nullptr;
-	res = const_cast<MUnit*>(ownu)->resolveIface(aName, aReq);
-    } else if (aName == reqName()) {
-	// Requested required iface - redirect to pairs
-	for (MVert* pair : mPairs) {
-	    MUnit* pairu = pair->lIf(pairu);
-	    res = pairu->resolveIface(aName, aReq);
+    if (!ifr) { // TODO this disables both local and remote ifaces. To fix
+	if (aName == provName()) {
+	    // Requested provided iface - cannot be obtain via pairs - redirect to host
+	    auto owner = Owner();
+	    MUnit* ownu = owner ? const_cast<MOwner*>(owner)->lIf(ownu): nullptr;
+	    res = const_cast<MUnit*>(ownu)->resolveIface(aName, aReq);
+	} else if (aName == reqName()) {
+	    // Requested required iface - redirect to pairs
+	    for (MVert* pair : mPairs) {
+		MUnit* pairu = pair->lIf(pairu);
+		res = pairu->resolveIface(aName, aReq);
+	    }
 	}
     }
     return res;
@@ -333,7 +335,7 @@ MNode* Socket::GetPin(int aInd)
 // System
 
 
-Syst::Syst(const string &aName, MEnv* aEnv): Elem(aName, aEnv)
+Syst::Syst(const string &aName, MEnv* aEnv): Elem(aName, aEnv), mAgtCp(this)
 {
     if (aName.empty()) mName = Type();
 }
@@ -352,6 +354,7 @@ MIface* Syst::doMOwnerGetLif(const char *aType)
     MIface* res = nullptr;
     if (res = checkLif<MUnit>(aType));
     else if (res = checkLif<MContentOwner>(aType));
+    else if (res = checkLif<MActr>(aType));
     else res = Unit::doMOwnerGetLif(aType);
     return res;
 }
@@ -394,7 +397,7 @@ bool Syst::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	    MNode* compn = comp->lIf(compn);
 	    MAgent* compa = compn ? compn->lIf(compa) : nullptr;
 	    if (compa) {
-		addIfpLeaf(ifr, aReq);
+		addIfpLeaf(compa, aReq);
 	    }
 	}
     } else {
@@ -424,6 +427,27 @@ MNode* Syst::getNodeOwd(const GUri& aUri, const MNode* aOwned) const
 	if (mag) {
 	}
     }
+    return res;
+}
+
+bool Syst::attachAgent(MAgent::TCp* aAgt)
+{
+    bool res = false;
+    res = mAgtCp.connect(aAgt);
+    return res;
+}
+
+bool Syst::detachAgent(MAgent::TCp* aAgt)
+{
+    bool res = false;
+    res = mAgtCp.disconnect(aAgt);
+    return res;
+}
+
+MIface* Syst::MAhost_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MNode>(aType));
     return res;
 }
 

@@ -93,8 +93,10 @@ class Socket: public Vert, public MSocket
  * Isn't connectable itlelf but can represent itself via connpoints
  * Can contain connectables and connect them
  * */
-class Syst : public Elem
+class Syst : public Elem, public MAhost, public MActr
 {
+    public:
+	using TAgtCp = NCpOmnp<MAhost, MAgent>;
     public:
 	static const char* Type() { return "Syst";}
 	Syst(const string &aName, MEnv* aEnv);
@@ -102,11 +104,20 @@ class Syst : public Elem
 	// From Node
 	virtual void mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx) override;
 	virtual MIface* doMOwnerGetLif(const char *aType) override;
+	// From MActr
+	virtual string MActr_Uid() const override {return getUid<MActr>();}
+	virtual bool attachAgent(MAgent::TCp* aAgt) override;
+	virtual bool detachAgent(MAgent::TCp* aAgt) override;
+	// From MAhost
+	virtual string MAhost_Uid() const override {return getUid<MAhost>();}
+	virtual MIface* MAhost_getLif(const char *aType) override;
     protected:
 	// From Node
 	virtual MNode* getNodeOwd(const GUri& aUri, const MNode* aOwned) const override;
 	// From Unit.MIfProvOwner
 	virtual bool resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+    protected:
+	TAgtCp mAgtCp;  /*!< Agents connpoint */
 };
 
 

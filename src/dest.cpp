@@ -75,7 +75,7 @@ MIface* TrBase::doMOwnerGetLif(const char *aType)
 
 ///// TrVar
 
-TrVar::TrVar(const string &aName, MEnv* aEnv): TrBase(aName, aEnv)
+TrVar::TrVar(const string &aName, MEnv* aEnv): TrBase(aName, aEnv), mFunc(nullptr)
 {
     if (aName.empty()) mName = Type();
 }

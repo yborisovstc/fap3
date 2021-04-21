@@ -755,6 +755,7 @@ THandle Chromo2Mdl::SetFromSpec(const string& aSpec)
     is.seekg(0, is.end);
     streampos end = is.tellg();
     //ParseCnodeChromo(is, beg, end, mRoot, true, false);
+    rdp_model_spec(is, beg, mRoot);
     mRoot.BindTree(NULL);
     //DumpMnode(mRoot, 0);
     return &mRoot;

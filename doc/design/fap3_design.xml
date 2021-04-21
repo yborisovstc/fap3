@@ -1057,175 +1057,200 @@
 	    </sect3>
 	    <sect3><title>Content nodes (properties) are distinguish from ohter nodes.</title>
 		<simpara>
-		    We need to means of distinguishing of MCont node from other. This is required to process properties in a separate manner, ref
-			use-cases <xref linkend="ds_dce_uc_01"/>,  <xref linkend="ds_dce_uc_02"/>
-		    </simpara>
-		</sect3>
-		<sect3><title>Content provider specific mutation - "set value"</title>
-		    <simpara>
-			Interesting but if keeping content is the ability just Content nodes then the mutation "Content" gets only MCont specific, ref
-			<xref linkend="ds_cii_ascl"/> for related desing item.
-		    </simpara>
-		</sect3>
-		<sect3 id="ds_dce_dso_coi"><title>Do we need to have also iface for content owner?</title>
-		    <simpara>
-			This iface could be indented for nodes that owns content provider. The iface could contain FAP2-like content API -
-			to get content by name, URI etc. Potentially this will be simple wrappers over narive hier and MCont but potentially the iface
-			can make content desing more clear.
-		    </simpara>
-		</sect3>
-		<sect3><title>How to notify of content change.</title>
-		    <simpara>
-			<simpara>
-			    Current FAP Unit supports notification of content changed and agent changed. How this will be desingned in 
-			    <xref linkend="gls_dce"/>
-			</simpara>
-			<simpara>
-			    Ref <xref linkend="ds_itr_sp_rnac"/> regarding re-desing of notification scheme. There will not be dedicated notif of 
-				content change. Instead it is up Prop owner to observe the notif of Prop change and generate it's own "Changed" notif.
-			</simpara>
-			<simpara></simpara>
-		    </simpara>
-		</sect3>
-	    </sect2>
-	</sect1>
-
-	<sect1 id="ds_chmc"><title>Creating heir: using mutation context.</title>
-	    <sect2><title>Intro</title>
-		<simpara>
-		    In FAP2 the problem of mutating of "temporary" nodes (ref
-		    <ulink url="../../../grayb/doc/design/index.html#ds_daa_itn"/>) is solved with solution 
-		    <ulink url="../../../grayb/doc/design/index.html#kds_daa_itn_sfo"/> - mutation context is used. Is this solution suitable with FAP3 dsign?
+		    We need to means of distinguishing of MCont node from other. This is required to process properties in a separate manner, ref use-cases
+		    <xref linkend="ds_dce_uc_01"/>,  <xref linkend="ds_dce_uc_02"/>
 		</simpara>
-		<simpara>On FAP2 the problem initially was with distributed models - in such model Uid() is used as node ID so the regular ID based on native hier
-		    doesn't work for temp nodes not attached to hier yet.</simpara>
-	    </sect2>
-	    <sect2><title>Why dont't attach the heir to the parent.</title>
-		<simpara>From the first glance it is ok just to attach the hier to parent before mutating by parents chromo. However this straighforward
-		    approach has some drawbacks. Firt one is that attaching the hier shall cause the IRM tree invalidating. This can cause a big overhead especially
-		    if parents chain is quite long.</simpara>
-	    </sect2>
-	    <sect2><title>Keep current solution but have context as MOwner.</title>
-		<simpara>So we can use the current solution - using the context. The only change would be to have context as MOwner to restrict the access.</simpara>
-	    </sect2>
-	</sect1>
-
-	<sect1 id="ds_urd"><title>URI re-desing</title>
-	    <sect2><title>Use-cases</title>
-		<sect3><title>URI can designates both absolute and relative path to node.</title>
-		</sect3>
-	    </sect2>
-	    <sect2><title>Design outline</title>
-		<sect3><title>Absolution vs relation.</title>
-		    <simpara>Absolute URI has mostleft relation symbol.</simpara>
-		</sect3>
-	    </sect2>
-	</sect1>
-
-	<sect1><title>Chromo of element: Node or Segment?</title>
-	    <sect2><title>Intro</title>
+	    </sect3>
+	    <sect3><title>Content provider specific mutation - "set value"</title>
 		<simpara>
-		    Originally the chromo of element is the mut of Node type. It contains name and parent. The idea was that the chromo should be
-		    the whole info to create this elem. But this logic is not quite reasonable - actually Node mut is the mut to create the node and add it
-		    to the owner as its comp. Node mut is the mut of the owner actually. What is the mut of element itself is the segment of this Node mut -
-		    it is the mut the has to be applied to elements parent to get the element.
-		    So the question is if we need elem chromo to be Node mut or segment?
+		    Interesting but if keeping content is the ability just Content nodes then the mutation "Content" gets only MCont specific, ref
+		    <xref linkend="ds_cii_ascl"/> for related desing item.
 		</simpara>
-		<simpara>In other words: what is chromo of element: mut of adding the element to owner or mut the element parent? </simpara>
-		<simpara>The rationale of Node variant is that it tells "Get the given parent and mutate it via given segment".</simpara>
-	    </sect2>
-	</sect1>
-
-	<sect1 id="sec_att"><title>Is it possible to avoid using "attached" property.</title>
-	    <sect2><title>Intro</title>
+	    </sect3>
+	    <sect3 id="ds_dce_dso_coi"><title>Do we need to have also iface for content owner?</title>
 		<simpara>
-		    In FAP2 the <xref linkend="gls_osm"/> mutation solution uses agent "attached-to-chromo" property to decide if the agent mutation
-			needs to be propagated or not. However this property is rather trkcky calculated. The question is if this property
-			is fundamental part of <xref linkend="gls_osm"/> mutation process or can be replaced by simpler mechanism.
-		    </simpara>
-		</sect2>
-		<sect2><title>Approach#1: using mutation context.</title>
+		    This iface could be indented for nodes that owns content provider. The iface could contain FAP2-like content API -
+		    to get content by name, URI etc. Potentially this will be simple wrappers over narive hier and MCont but potentially the iface
+		    can make content desing more clear.
+		</simpara>
+	    </sect3>
+	    <sect3><title>How to notify of content change.</title>
+		<simpara>
 		    <simpara>
-			"Deattached" agents are the agents created by parent in the scope of parents creating its hier. So if we set mutation context as 
-			the created hier then we can use the context to stop propagating the mutation.
+			Current FAP Unit supports notification of content changed and agent changed. How this will be desingned in 
+			<xref linkend="gls_dce"/>
 		    </simpara>
-		</sect2>
-	    </sect1>
-
-	    <sect1 id="ds_f2dw"><title>FAP2 design gaps and weaknesses</title> <sect2 id="ds_f2dw_isr"><title>Ifaces identification scheme is restricted.</title>
-		    <simpara>In <xref linkend="gls_fap2"/> the only ifaces have identification. The focus was to provide native hier creating iface (MUnit) with
-			safe identification mechanism. Other ifaces are identified via MUnit identification plus iface type - so the identifiation scheme is restricted,
-			there is no rule to identify given iface in case of MUnit node includes number of ifaces of same type.
-			Ref <xref linkend="ds_uinn_id"/> for the desing consideration.</simpara>
-		</sect2>
-		<sect2 id="ds_f2dw_ccnu"><title>Creating complex native unit is not supported safely</title>
-		    <simpara>It is often required to create "complex" native unit, adding componentes, changing context etc. This is more effective that create
-			the unit spec in module. But this direct creation of "complex" native unit is not supported properly.</simpara>
-		</sect2>
-	    </sect1>
-
-	    <sect1><title>Giving "Changeable" ability to Node</title>
-		<sect2><title>Intro</title>
 		    <simpara>
-			Currently the only MElem is truly mutable, even Unit also can be changed. It make sense to generalize mutable/changeable desing.
-			We can give changeable ability to lower layer, havng method "Mutate" in it. The method actually will change but not mutate
-			(the term "Change" designates here the ability to be changed but not propagate this change to childs).
+			Ref <xref linkend="ds_itr_sp_rnac"/> regarding re-desing of notification scheme. There will not be dedicated notif of 
+			    content change. Instead it is up Prop owner to observe the notif of Prop change and generate it's own "Changed" notif.
 		    </simpara>
-		</sect2>
-	    </sect1>
+		    <simpara></simpara>
+		</simpara>
+	    </sect3>
+	</sect2>
+    </sect1>
 
-	    <sect1><title>Having pre-created Root node in the model.</title>
-		<sect2><title>Intro</title>
-		    <simpara>
-			Currently the root is created via rather tricky procedure: env gets it's parent from chromo and creates it. More reasonable
-			would be just pre-create "true Root" and then mutate it with given chromo.
-		    </simpara>
-		</sect2>
-	    </sect1>
+    <sect1 id="ds_chmc"><title>Creating heir: using mutation context.</title>
+	<sect2><title>Intro</title>
+	    <simpara>
+		In FAP2 the problem of mutating of "temporary" nodes (ref
+		<ulink url="../../../grayb/doc/design/index.html#ds_daa_itn"/>) is solved with solution 
+		<ulink url="../../../grayb/doc/design/index.html#kds_daa_itn_sfo"/> - mutation context is used. Is this solution suitable with FAP3 dsign?
+	    </simpara>
+	    <simpara>On FAP2 the problem initially was with distributed models - in such model Uid() is used as node ID so the regular ID based on native hier
+		doesn't work for temp nodes not attached to hier yet.</simpara>
+	</sect2>
+	<sect2><title>Why dont't attach the heir to the parent.</title>
+	    <simpara>From the first glance it is ok just to attach the hier to parent before mutating by parents chromo. However this straighforward
+		approach has some drawbacks. Firt one is that attaching the hier shall cause the IRM tree invalidating. This can cause a big overhead especially
+		if parents chain is quite long.</simpara>
+	</sect2>
+	<sect2><title>Keep current solution but have context as MOwner.</title>
+	    <simpara>So we can use the current solution - using the context. The only change would be to have context as MOwner to restrict the access.</simpara>
+	</sect2>
+    </sect1>
 
-	    <sect1 id="ds_adcm"><title>Avoid necessity of having dedicated chromo for mutation in inheritable agents.</title>
-		<sect2><title>Intro</title>
-		    <simpara>
-			In FAP2 base inheritable agent Elem contains two chromo: one for mutation and another for chromo of itslef. This creates overheads in
-			design. 
-		    </simpara>
-		</sect2>
-		<sect2><title>The reason why it was designed that way in FAP2</title>
-		    <simpara>
-			There is known dilemma in mutable agent - what is the change object - mutation (<xref linkend="gls_cam"/> approach) or
-			    chromo (list of mutations) (<xref linkend="gls_cac"/> approach). In FAP2 it was assumed
-				the the change object is chromo. So the design was corresponding: there was emvedded "mutation" member of Chromo type. Incoming
-				mutation went to this chromo and then the whole chromo was applied.
-			</simpara>
-		    </sect2>
-		    <sect2><title>Initial design considerations</title>
-			<sect3><title>Can be the dilemma solved in favor of "change is mutaion"?</title>
-			    <simpara>
-				Current desing of Chromo2 allows mutation containing chromo. Each mutaion node contains chromo segment. So let's
-				apply <xref linkend="gls_cam"/> for FAP3.
-			    </simpara>
-			</sect3>
-		    </sect2>
-		    <sect2 id="ds_adcm_pamcc"><title>Problem with applying mutation_create_chromo.</title>
-			<sect3><title>Intro</title>
-			    <simpara>
-				Wiht <xref linkend="gls_cam"/> in FAP3 the problem occurs whent we apply mutation_create_chromo. To apply
-				    this mutation we need to apply "create" mutation first and then the embedded chromo as segment. But for
-				    that we need to transform the given mut to segment. Current chromo design doesn't allow to do it properly till
-				<xref linkend="ds_mcrc"/> is not done. 
-			    </simpara>
-			    <simpara>There are two options: #1 to disable mutation_create_chromo at all, #2 to have <xref linkend="ds_mcrc"/> done and 
-				transform mut to segment in mutAddEem. Let's use workaround ATM, ref code Node::mutate() aTreatAsChromo param.</simpara>
-			</sect3>
-		    </sect2>
-		</sect1>
+    <sect1 id="ds_urd"><title>URI re-desing</title>
+	<sect2><title>Use-cases</title>
+	    <sect3><title>URI can designates both absolute and relative path to node.</title>
+	    </sect3>
+	</sect2>
+	<sect2><title>Design outline</title>
+	    <sect3><title>Absolution vs relation.</title>
+		<simpara>Absolute URI has mostleft relation symbol.</simpara>
+	    </sect3>
+	</sect2>
+    </sect1>
 
-		<sect1 id="ds_mdc"><title>Modify DES cycle to avoid polling the comps but keep the lists of active/updated in owner.</title>
-		</sect1>
+    <sect1><title>Chromo of element: Node or Segment?</title>
+	<sect2><title>Intro</title>
+	    <simpara>
+		Originally the chromo of element is the mut of Node type. It contains name and parent. The idea was that the chromo should be
+		the whole info to create this elem. But this logic is not quite reasonable - actually Node mut is the mut to create the node and add it
+		to the owner as its comp. Node mut is the mut of the owner actually. What is the mut of element itself is the segment of this Node mut -
+		it is the mut the has to be applied to elements parent to get the element.
+		So the question is if we need elem chromo to be Node mut or segment?
+	    </simpara>
+	    <simpara>In other words: what is chromo of element: mut of adding the element to owner or mut the element parent? </simpara>
+	    <simpara>The rationale of Node variant is that it tells "Get the given parent and mutate it via given segment".</simpara>
+	</sect2>
+    </sect1>
 
-		<sect1 id="ds_mcrc"><title>Redesign chromo to make it really copyable.</title>
-		</sect1>
+    <sect1 id="sec_att"><title>Is it possible to avoid using "attached" property.</title>
+	<sect2><title>Intro</title>
+	    <simpara>
+		In FAP2 the
+		<xref linkend="gls_osm"/> mutation solution uses agent "attached-to-chromo" property to decide if the agent mutation
+		    needs to be propagated or not. However this property is rather trkcky calculated. The question is if this property
+		    is fundamental part of
+		<xref linkend="gls_osm"/> mutation process or can be replaced by simpler mechanism.
+	    </simpara>
+	</sect2>
+	<sect2><title>Approach#1: using mutation context.</title>
+	    <simpara>
+		"Deattached" agents are the agents created by parent in the scope of parents creating its hier. So if we set mutation context as 
+		the created hier then we can use the context to stop propagating the mutation.
+	    </simpara>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_f2dw"><title>FAP2 design gaps and weaknesses</title>
+	<sect2 id="ds_f2dw_isr"><title>Ifaces identification scheme is restricted.</title>
+	    <simpara>In <xref linkend="gls_fap2"/> the only ifaces have identification. The focus was to provide native hier creating iface (MUnit) with
+		safe identification mechanism. Other ifaces are identified via MUnit identification plus iface type - so the identifiation scheme is restricted,
+		there is no rule to identify given iface in case of MUnit node includes number of ifaces of same type.
+		Ref <xref linkend="ds_uinn_id"/> for the desing consideration.</simpara>
+	</sect2>
+	<sect2 id="ds_f2dw_ccnu"><title>Creating complex native unit is not supported safely</title>
+	    <simpara>It is often required to create "complex" native unit, adding componentes, changing context etc. This is more effective that create
+		the unit spec in module. But this direct creation of "complex" native unit is not supported properly.</simpara>
+	</sect2>
+    </sect1>
+
+    <sect1><title>Giving "Changeable" ability to Node</title>
+	<sect2><title>Intro</title>
+	    <simpara>
+		Currently the only MElem is truly mutable, even Unit also can be changed. It make sense to generalize mutable/changeable desing.
+		We can give changeable ability to lower layer, havng method "Mutate" in it. The method actually will change but not mutate
+		(the term "Change" designates here the ability to be changed but not propagate this change to childs).
+	    </simpara>
+	</sect2>
+    </sect1>
+
+    <sect1><title>Having pre-created Root node in the model.</title>
+	<sect2><title>Intro</title>
+	    <simpara>
+		Currently the root is created via rather tricky procedure: env gets it's parent from chromo and creates it. More reasonable
+		would be just pre-create "true Root" and then mutate it with given chromo.
+	    </simpara>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_adcm"><title>Avoid necessity of having dedicated chromo for mutation in inheritable agents.</title>
+	<sect2><title>Intro</title>
+	    <simpara>
+		In FAP2 base inheritable agent Elem contains two chromo: one for mutation and another for chromo of itslef. This creates overheads in
+		design. 
+	    </simpara>
+	</sect2>
+	<sect2><title>The reason why it was designed that way in FAP2</title>
+	    <simpara>
+		There is known dilemma in mutable agent - what is the change object - mutation (
+		<xref linkend="gls_cam"/> approach) or chromo (list of mutations) (
+		<xref linkend="gls_cac"/> approach). In FAP2 it was assumed
+		    the the change object is chromo. So the design was corresponding: there was emvedded "mutation" member of Chromo type. Incoming
+		    mutation went to this chromo and then the whole chromo was applied.
+	    </simpara>
+	</sect2>
+	<sect2><title>Initial design considerations</title>
+	    <sect3><title>Can be the dilemma solved in favor of "change is mutaion"?</title>
+		<simpara>
+		    Current desing of Chromo2 allows mutation containing chromo. Each mutaion node contains chromo segment. So let's
+		    apply <xref linkend="gls_cam"/> for FAP3.
+		</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_adcm_pamcc"><title>Problem with applying mutation_create_chromo.</title>
+	    <sect3><title>Intro</title>
+		<simpara>
+		    Wiht <xref linkend="gls_cam"/> in FAP3 the problem occurs whent we apply mutation_create_chromo. To apply
+			this mutation we need to apply "create" mutation first and then the embedded chromo as segment. But for
+			that we need to transform the given mut to segment. Current chromo design doesn't allow to do it properly till
+		    <xref linkend="ds_mcrc"/> is not done. 
+		</simpara>
+		<simpara>There are two options: #1 to disable mutation_create_chromo at all, #2 to have <xref linkend="ds_mcrc"/> done and 
+		    transform mut to segment in mutAddEem. Let's use workaround ATM, ref code Node::mutate() aTreatAsChromo param.</simpara>
+	    </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_mdc"><title>Modify DES cycle to avoid polling the comps but keep the lists of active/updated in owner.</title>
+    </sect1>
+
+    <sect1 id="ds_mcrc"><title>Redesign chromo to make it really copyable.</title>
+    </sect1>
+
+    <sect1 id="ds_ams"><title>Agents mechanism support</title>
+	<sect2><title>Intro</title>
+	    <simpara>We have <xref linkend="ds_sn"/> implemented in FAP3. So now the MOwner interface doesn't provide the MNode iface to 
+		node components. How can we support embedded agents desing approach in that case? Agents normally requires full access to 
+		agents manageable host.</simpara>
+	</sect2>
+	<sect2><title>Solution#1 Special connection point for agents.</title>
+	    <sect3><title>Intro</title>
+		<simpara>The idea is to have dedicated interfaces for agent and host (there is already iface MAgent defined for agents) and
+		    dedicated connection point in system and agents to connect them. MOwner APIs needs to be extended by the method of
+		    connecting agent or better to introduce interim iface to connect (it is not proper idea to add the method to MOwner iface
+		    that doesn't know of agents at all). So the agents will request the owner to connect is as agent.</simpara>
+	    </sect3>
+	    <sect3><title>How restrictions policy can be applied.</title>
+		<simpara>With this approach the system (host) can decide if it accepts connection request from agent or not. This mechanism can
+		    be even extended - the system can ask some agents to accept connecting new agent. So we can simply customize the policies with 
+		    special agents.</simpara>
+	    </sect3>
+	</sect2>
+    </sect1>
 
 
-	    </article>
+</article>
 
