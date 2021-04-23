@@ -35,10 +35,14 @@ MIface* Unit::MUnit_getLif(const char *aType)
     return res;
 }
 
+/**
+ * MNode - to support of owner-owned deps when IFR
+ * */
 MIface* Unit::MIfProvOwner_getLif(const char *aType)
 {
     MIface* res = nullptr;
     if (res = checkLif<MUnit>(aType));
+    else if (res = checkLif<MNode>(aType));
     return res;
 }
 
@@ -133,3 +137,13 @@ bool Unit::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
     }
     return res;
 }
+
+MIface* Unit::doMOwnerGetLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MUnit>(aType)); // To enable ifr request to owner
+    else res = Node::doMOwnerGetLif(aType);
+    return res;
+}
+
+

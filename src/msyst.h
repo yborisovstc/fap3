@@ -5,6 +5,7 @@
 #include "mecont.h"
 
 #include "nconn.h"
+#include "mifr.h"
 
 
 /** @brief Connection point interface
@@ -34,6 +35,9 @@ class MSocket: public MIface
 	// Local
 	virtual int PinsCount() const = 0;
 	virtual MNode* GetPin(int aInd) = 0;
+	/** @brief Gets pin in IFR context
+	 * */
+	virtual MNode* GetPin(MIfReq::TIfReqCp* aReq) = 0;
 };
 
 

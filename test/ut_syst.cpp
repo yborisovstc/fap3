@@ -424,6 +424,11 @@ void Ut_syst::test_syst_sock_1()
     CPPUNIT_ASSERT_MESSAGE("Fail to get s2v", s2v);
     bool conn = s2v->isPair(s1v);
     CPPUNIT_ASSERT_MESSAGE("Fail: sockets are not connected", conn);
+    // Verify IFR
+    MNode* s1p1n = root->getNode("S1.Sock1.Pin1");
+    MUnit* s1p1u = s1p1n->lIf(s1p1u);
+    MTIf1* ifc1 = s1p1u->getSif(ifc1);
+    CPPUNIT_ASSERT_MESSAGE("Fail to get ifc1", ifc1);
 
     delete mEnv;
 }

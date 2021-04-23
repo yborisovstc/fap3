@@ -10,6 +10,7 @@
 
 
 /** @brief Interface resolution tree node
+ * TODO isn't this design overkill? Why don't just directly proxy node NTnnp to owner?
  * */
 class IfrNode : public NTnnp<MIfProv, MIfReq>, public MIfProv, protected MIfReq
 {
@@ -33,6 +34,7 @@ class IfrNode : public NTnnp<MIfProv, MIfReq>, public MIfProv, protected MIfReq
 	virtual string MIfReq_Uid() const override { return mOwner->Uid() + Ifu::KUidSepIc + MIfReq::Type();}
 	virtual MIfProv* next(MIfProv::TCp* aProvCp) const override;
 	virtual bool isRequestor(MIfProvOwner* aOwner) const override;
+	virtual const MIfProvOwner* rqOwner() const override { return mOwner;}
 	// From MNCpp
 	virtual TSelf* firstLeafB() override;
 	virtual TPair* nextLeaf(TPair* aLeaf) override;

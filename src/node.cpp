@@ -362,6 +362,7 @@ MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
     assert(!sname.empty());
     MNode* uelem = NULL;
     MNode* node = snode.empty() ? this: getNode(snode, ns);
+    node = this; //!!
     if (node) {
 	// Obtain parent first
 	MNode *parent = NULL;
@@ -397,7 +398,7 @@ MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
 			    MutCtx ctx(aCtx.mNode, ns);
 			    uelem->mutate(aMut, false, aUpdOnly ? MutCtx(uelem, ns) : ctx, true);
 			}
-			mutAddElemOnCreated(uelem, parent);
+			parent->attachHeir(uelem);
 		    } else {
 			Log(TLog(EErr, this) + "Adding node [" + sname + "] failed");
 		    }
@@ -646,4 +647,16 @@ MIface* Node::doMOwnerGetLif(const char *aType)
     if (res = checkLif<MObservable>(aType));
     return res;
 }
+
+bool Node::isOwned(const MNode* aNode) const
+{
+    bool res = false;
+    for (int i = 0; i < owner()->pcount() && !res; i++) {
+	const MOwned* comp = mCpOwner.pairAt(i);
+	const MNode* compn = comp->lIf(compn);
+	res = aNode == compn;
+    }
+    return res;
+}
+
 

@@ -137,7 +137,7 @@ bool ConnPointu::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	    // Requested provided iface - cannot be obtain via pairs - redirect to host
 	    auto owner = Owner();
 	    MUnit* ownu = owner ? const_cast<MOwner*>(owner)->lIf(ownu): nullptr;
-	    res = const_cast<MUnit*>(ownu)->resolveIface(aName, aReq);
+	    res = ownu ? ownu->resolveIface(aName, aReq) : false;
 	} else if (aName == reqName()) {
 	    // Requested required iface - redirect to pairs
 	    for (MVert* pair : mPairs) {
@@ -235,31 +235,81 @@ Socket::Socket(const string& aName, MEnv* aEnv): Vert(aName, aEnv)
     setContent(KContDir, KContDir_Val_Regular);
 }
 
+MIface* Socket::MNode_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MSocket>(aType));
+    else res = Vert::MNode_getLif(aType);
+    return res;
+}
+
 bool Socket::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 {
     bool res = false;
     MIface* ifc = MNode_getLif(aName.c_str());
     if (ifc) { // Local iface
 	addIfpLeaf(ifc, aReq);
+	res = true;
     } else {
-	// Redirect to internal point or pair depending on the requiestor
-	MVert* intcp = getExtd();
-	MUnit* intcpu = intcp ? intcp->lIf(intcpu) : nullptr;
-	MIfProvOwner* intcpo = intcpu ? intcpu->lIf(intcpo) : nullptr;
-	if (intcpo && aReq->provided()->isRequestor(intcpo)) {
-	    // Redirect to pairs
-	    for (int i = 0; i < pairsCount(); i++) {
-		MVert* pair = getPair(i);
-		MUnit* pairu = pair ? pair->lIf(pairu) : nullptr;  
-		MIfProvOwner* pairo = pairu ? pairu->lIf(pairo) : nullptr;
-		if (pairo && aReq->provided()->isRequestor(pairo)) {
-		    res = pairu->resolveIface(aName, aReq);
+	MIfReq::TIfReqCp* req = aReq->binded()->firstPair();
+	const MIfProvOwner* reqo = req ? req->provided()->rqOwner() : nullptr;
+	MNode* reqn = const_cast<MNode*>(reqo ? reqo->lIf(reqn) : nullptr); // Current requestor as node
+	if (isOwned(reqn)) {
+	    // Request from internal CP.
+	    if (!mPairs.empty()) {
+		// There are pairs. Redirect to piars. 
+		for (auto it = mPairs.begin(); it != mPairs.end(); it++) {
+		    MVert* pair = *it;
+		    MUnit* pairu = pair->lIf(pairu);
+		    if (pairu) {
+			res |= pairu->resolveIface(aName, aReq);
+		    }
+		}
+	    } else {
+		// No pairs. Redirect to owner.
+		MUnit* owu = Owner()->lIf(owu);
+		if (owu) {
+		    res |= owu->resolveIface(aName, aReq);
 		}
 	    }
 	} else {
-	    // Redirect to internal CP
-	    MUnit* intcpu = intcp->lIf(intcpu);  
-	    res = intcpu->resolveIface(aName, aReq);
+	    // Request from not outside
+	    // Assuming the request is from pair
+	    MNode* apair = nullptr; // Assosiated pair in requestors
+	    MNode* pcomp = nullptr;
+	    bool isextd = false;
+	    while(reqn && !pcomp) {
+		MVert* cp = reqn->lIf(cp); // Current requestor as connpoint
+		// Update extention option if met extention in context
+		if (cp) {
+		    apair = nullptr;
+		    if (cp->isCompatible(this, isextd)) {
+			isextd ^= true;
+			MVert* extd = cp->getExtd();
+			if (extd != this) {
+			    MNode* extdn = extd ? extd->lIf(extdn) : nullptr;
+			    apair = extdn ? extdn : reqn;
+			}
+		    }
+		}
+		if (apair) {
+		    // Find associated pairs pin within the context
+		    MSocket* apairs = apair->lIf(apairs);
+		    if (apairs != NULL) {
+			MNode* pereq = apairs->GetPin(req);
+			if (pereq) {
+			    pcomp = getNode(pereq->name());
+			}
+		    }
+		}
+		req = req->binded()->firstPair();
+	    }
+	    if (pcomp) {
+		MUnit* pcompu = pcomp->lIf(pcompu);
+		if (pcompu) {
+		    res |= pcompu->resolveIface(aName, aReq);
+		}
+	    }
 	}
     }
     return res;
@@ -327,6 +377,18 @@ int Socket::PinsCount() const
 MNode* Socket::GetPin(int aInd)
 {
     MNode* res = nullptr;
+    return res;
+}
+
+MNode* Socket::GetPin(MIfReq::TIfReqCp* aReq)
+{
+    MNode* res = nullptr;
+    MIfReq::TIfReqCp* req = aReq;
+    const MIfProvOwner* reqo = aReq ? req->provided()->rqOwner() : nullptr;
+    const MNode* reqn = reqo ? reqo->lIf(reqn) : nullptr; // Current requestor as node
+    if (isOwned(reqn)) {
+	res = const_cast<MNode*>(reqn);
+    }
     return res;
 }
 

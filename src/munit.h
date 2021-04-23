@@ -39,7 +39,7 @@ class MUnit: public MIface
 	 * */
 	template<class T> T* getSif(T* aInst) {
 	    auto prov = defaultIfProv(T::Type());
-	    MIface* ifc = prov->ifaces()->empty() ? nullptr : prov->ifaces()->at(0);
+	    MIface* ifc = (prov && prov->ifaces()) ? (prov->ifaces()->empty() ? nullptr : prov->ifaces()->at(0)) : nullptr;
 	    return aInst = dynamic_cast<T*>(ifc);
 	}
 };

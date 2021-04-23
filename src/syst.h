@@ -75,6 +75,8 @@ class Socket: public Vert, public MSocket
     public:
 	static const char* Type() { return "Socket";};
 	Socket(const string& aName = string(), MEnv* aEnv = NULL);
+	// From MNode
+	virtual MIface* MNode_getLif(const char *aType) override;
 	// From MVert
 	virtual bool isCompatible(MVert* aPair, bool aExt) override;
 	virtual MVert* getExtd() override;
@@ -85,6 +87,7 @@ class Socket: public Vert, public MSocket
 	virtual string MSocket_Uid() const override  { return getUid<MSocket>();}
 	virtual int PinsCount() const override;
 	virtual MNode* GetPin(int aInd) override;
+	virtual MNode* GetPin(MIfReq::TIfReqCp* aReq) override;
 };
 
 
@@ -116,6 +119,8 @@ class Syst : public Elem, public MAhost, public MActr
 	virtual MNode* getNodeOwd(const GUri& aUri, const MNode* aOwned) const override;
 	// From Unit.MIfProvOwner
 	virtual bool resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	// Local
+	bool isComp(MIfProvOwner* aNode) const;
     protected:
 	TAgtCp mAgtCp;  /*!< Agents connpoint */
 };

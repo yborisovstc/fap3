@@ -17,7 +17,7 @@
 class Ut_elem : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_elem);
-//    CPPUNIT_TEST(test_elem_inh_1);
+    CPPUNIT_TEST(test_elem_inh_1);
     CPPUNIT_TEST(test_elem_imp_1);
     CPPUNIT_TEST_SUITE_END();
 public:

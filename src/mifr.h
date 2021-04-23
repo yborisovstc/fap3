@@ -50,6 +50,8 @@ class MIfReq: public MIface
 	virtual MIfProv* next(MIfProv::TCp* aProvCp) const = 0;
 	/** @brief Indicates if giver owner is requestors chain */
 	virtual bool isRequestor(MIfProvOwner* aOwner) const = 0;
+	/** @brief Gets the owner */
+	virtual const MIfProvOwner* rqOwner() const = 0;
 };
 
 /** @brief Interface provider owner

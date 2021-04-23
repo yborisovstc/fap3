@@ -103,16 +103,14 @@ MNode* Elem::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
     return elem;
 }
 
-void Elem::mutAddElemOnCreated(MNode* aCreated, MNode* aParent)
+bool Elem::attachHeir(MNode* aHeir)
 {
-    // Attach created elem to parent
-    MElem* heire = aCreated->lIf(heire);
+    bool res = false;
+    MElem* heire = aHeir->lIf(heire);
     if (heire) {
-	MParent* parent = aParent->lIf(parent);
-	if (parent) {
-	    parent->attachChild(heire->asChild());
-	}
+	res = attachChild(heire->asChild());
     }
+    return res;
 }
 
 void Elem::mutContent(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)

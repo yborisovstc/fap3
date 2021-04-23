@@ -94,6 +94,7 @@ class Node : public MNode, public MContentOwner, public MObservable
 	virtual void setCtx(MOwner* aContext) override;
 	virtual void mutate(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx, bool aTreatAsChromo = false) override;
 	virtual MNode* createHeir(const string& aName) override;
+	virtual bool attachHeir(MNode* aHeir) override { return false;}
 	virtual bool attachOwned(MNode* aOwned) override;
 	virtual TOwnerCp* owner() override { return &mCpOwner;}
 	virtual const TOwnerCp* owner() const override { return &mCpOwner;}
@@ -142,7 +143,6 @@ class Node : public MNode, public MContentOwner, public MObservable
 	virtual void mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx);
 	virtual void mutImport(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx);
 	void notifyNodeMutated(const ChromoNode& aMut, const MutCtx& aCtx);
-	virtual void mutAddElemOnCreated(MNode* aCreated, MNode* aParent) {}
 	// MOwner events handlers
 	virtual void onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx);
 	virtual void onOwnedAttached(MOwned* aOwned);

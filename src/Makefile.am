@@ -104,6 +104,10 @@ include_HEADERS = \
 		  curi.h \
 		  chromo.h \
 		  content.h \
+		  prov.h \
+		  chromo2.h \
+		  env.h \
+		  factr.h \
 		  miface.h
 
 
