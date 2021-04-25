@@ -65,29 +65,33 @@ const MNode* Node::getComp(const string& aId) const
 const MNode* Node::getNode(const GUri& aUri) const
 {
     const MNode* res = nullptr;
-    if (aUri.isAbsolute()) {
-	//Owner()->getNode(aUri, this);
-	if (Owner()) {
-	    res = Owner()->getNode(aUri, this); 
-	} else {
-	    // Root
-	    if (aUri.size() > 2) {
-		res = getComp(aUri.at(2));
-		for (int i = 3; i < aUri.size() && res; i++) {
-		    res = res->getComp(aUri.at(i));
+    if (aUri.size() == 0) {
+	res = this;
+    } else {
+	if (aUri.isAbsolute()) {
+	    //Owner()->getNode(aUri, this);
+	    if (Owner()) {
+		res = Owner()->getNode(aUri, this); 
+	    } else {
+		// Root
+		if (aUri.size() > 2) {
+		    res = getComp(aUri.at(2));
+		    for (int i = 3; i < aUri.size() && res; i++) {
+			res = res->getComp(aUri.at(i));
+		    }
 		}
 	    }
+	} else {
+	    res = getComp(aUri.at(0));
+	    for (int i = 1; i < aUri.size() && res; i++) {
+		res = res->getComp(aUri.at(i));
+	    }
 	}
-    } else {
-	res = getComp(aUri.at(0));
-	for (int i = 1; i < aUri.size() && res; i++) {
-	    res = res->getComp(aUri.at(i));
-	}
-    }
-    if (!res && aUri.size() == 1) {
-	// Try native
-	if (mEnv && mEnv->provider()) {
-	    res = mEnv->provider()->getNode(aUri.at(0));
+	if (!res && aUri.size() == 1) {
+	    // Try native
+	    if (mEnv && mEnv->provider()) {
+		res = mEnv->provider()->getNode(aUri.at(0));
+	    }
 	}
     }
     return res;
@@ -167,28 +171,19 @@ void Node::mutSegment(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
     TNs root_ns; // Don't propagate context from upper layer, ref ds_cli_sno_s3
     updateNs(root_ns, aMut);
 
-    //TODO !! This handling of target isn't needed. This is done in mutate.
-    MNode* targ = this; // Base target
-    string starg;
-    if (aMut.AttrExists(ENa_Targ) /* && (aMut.Type() != ENt_Node) */) {
-	starg = aMut.Attr(ENa_Targ);
-	targ = getNode(starg, root_ns);
-	if (!targ) {
-	    targ = getNode(starg, root_ns);
-	    Log(TLog(EErr, this) + "Cannot find target node [" + starg + "]");
-	    res = false;
-	}
-    }
     for (ChromoNode::Const_Iterator rit = aMut.Begin(); rit != aMut.End() && res; rit++)
     {
 	ChromoNode rno = (*rit);
-	//MutCtx mctx(aUpdOnly ? targ : aCtx.mNode, root_ns, aCtx.mParent);
 	MutCtx mctx(this, root_ns);
-	targ->mutate(rno, false, mctx);
+	try {
+	    mutate(rno, aUpdOnly, mctx);
+	} catch (std::exception e) {
+	    Logger()->Write(EErr, this, "Unspecified error on mutation");
+	}
     }
 }
 
-void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, bool aTreatAsChromo)
+void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, bool aTreatAsChromo, bool aLocal)
 {
     bool res = true;
     TNs root_ns = aCtx.mNs;
@@ -211,7 +206,7 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
 	    //	assert(false);
 	}
     }
-    if (exs_targ) {
+    if (exs_targ && !aLocal) {
 	starg = rno.Attr(ENa_Targ);
 	targ = targ->getNode(starg, root_ns);
 	if (!targ) {
@@ -232,30 +227,12 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
     if (res) {
 	if (targ != this) {
 	    // Targeted mutation
-	    rno.RmAttr(ENa_Targ);
-	    if (rno.AttrExists(ENa_MutNode)) {
-		rno.RmAttr(ENa_MutNode);
-	    }
-	    // Correcting target if the mut is component related
-	    TNodeType mtype = rno.Type();
-	    if (mtype == ENt_Change || mtype == ENt_Rm) {
-		// Mutation is for component only, find the comp mutable owner
-		/*
-		   aoftarg = getMowner(targ);
-		   eftarg = aoftarg->lIf(eftarg);
-		   if (targ != aoftarg) {
-		   string newTargUri = targ->getUriS(aoftarg);
-		   rno.SetAttr(ENa_Targ, newTargUri);
-		   }
-		   */
-	    }
 	    // Redirect the mut to target: no run-time to keep the mut in internal nodes
 	    // Propagate till target owning comp if run-time to keep hidden all muts from parent
 	    MutCtx mctx(aUpdOnly ?targ : aCtx.mNode, root_ns);
-	    targ->mutate(rno, false, mctx);
+	    targ->mutate(rno, aUpdOnly, mctx, aTreatAsChromo, true);
 	} else  {
 	    // Local mutation
-	    rno.RmAttr(ENa_Targ);
 	    MutCtx mctx(aCtx.mNode, root_ns);
 	    TNodeType rnotype = rno.Type();
 	    if (rnotype == ENt_Seg || aTreatAsChromo) {
@@ -280,8 +257,6 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
 		   iChromo->Root().AddChild(rno);
 		   NotifyNodeMutated(rno, mctx);
 		   */
-	    } else {
-		//DoSpecificMut(rno, aRunTime, aTrialMode, mctx);
 	    }
 	    Logger()->SetContextMutId();
 	}
@@ -350,7 +325,6 @@ MNode* Node::getNodeS(const char* aUri)
 MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 {
     assert(!aMut.AttrExists(ENa_Comp));
-    string snode = aMut.Attr(ENa_Targ);
     string sparent = aMut.Attr(ENa_Parent);
     string sname = aMut.Name();
     TNs ns = aCtx.mNs;
@@ -361,56 +335,46 @@ MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
 
     assert(!sname.empty());
     MNode* uelem = NULL;
-    MNode* node = snode.empty() ? this: getNode(snode, ns);
-    node = this; //!!
-    if (node) {
-	// Obtain parent first
-	MNode *parent = NULL;
-	// Check if the parent is specified
-	if (!sparent.empty()) {
-	    // Check the parent scheme
-	    GUri prnturi(sparent);
-	    // Resolving parent ref basing on target, ref ds_umt_rtnsu_rbs
-	    TNs pns = ns; // Parent namaspace
-	    getModules(pns);
-	    parent = node->getNode(prnturi, pns);
-	    if (!parent) {
-		// Probably external node not imported yet - ask env for resolving uri
-		/*!!
-		  GUri pruri(prnturi);
-		  MImportMgr* impmgr = iEnv->ImpsMgr();
-		  parent = impmgr->OnUriNotResolved(node, pruri);
-		  */
-	    }
-	    if (parent) {
-		if (node == this) {
-		    // Create heir from the parent
-		    uelem = parent->createHeir(sname);
-		    if (uelem) {
-			node->attachOwned(uelem);
-			notifyNodeMutated(aMut, aCtx);
-			mutadded = true;
-			// Mutate object ignoring run-time option. This is required to keep nodes chromo even for inherited nodes
-			// To avoid this inherited nodes chromo being attached we just don't attach inherited nodes chromo
-			if (aMut.Count() > 0) {
-			    TNs ns(aCtx.mNs);
-			    //ns.push_back(uelem);
-			    MutCtx ctx(aCtx.mNode, ns);
-			    uelem->mutate(aMut, false, aUpdOnly ? MutCtx(uelem, ns) : ctx, true);
-			}
-			parent->attachHeir(uelem);
-		    } else {
-			Log(TLog(EErr, this) + "Adding node [" + sname + "] failed");
-		    }
-		} else  {
-		    Log(TLog(EErr, this) + "Adding element [" + sname + "] in node {" + snode + "] - disabled");
-		}
-	    } else {
-		Logger()->Write(EErr, this, "Creating [%s] - parent [%s] not found", sname.c_str(), sparent.c_str());
-	    }
+    // Obtain parent first
+    MNode *parent = NULL;
+    // Check if the parent is specified
+    if (!sparent.empty()) {
+	// Check the parent scheme
+	GUri prnturi(sparent);
+	// Resolving parent ref basing on target, ref ds_umt_rtnsu_rbs
+	TNs pns = ns; // Parent namaspace
+	getModules(pns);
+	parent = getNode(prnturi, pns);
+	if (!parent) {
+	    // Probably external node not imported yet - ask env for resolving uri
+	    /*!!
+	      GUri pruri(prnturi);
+	      MImportMgr* impmgr = iEnv->ImpsMgr();
+	      parent = impmgr->OnUriNotResolved(node, pruri);
+	      */
 	}
-    } else  {
-	Logger()->Write(EErr, this, "Creating elem [%s] in node [%s] - cannot find node", sname.c_str(), snode.c_str());
+	if (parent) {
+	    // Create heir from the parent
+	    uelem = parent->createHeir(sname);
+	    if (uelem) {
+		attachOwned(uelem);
+		notifyNodeMutated(aMut, aCtx);
+		mutadded = true;
+		// Mutate object ignoring run-time option. This is required to keep nodes chromo even for inherited nodes
+		// To avoid this inherited nodes chromo being attached we just don't attach inherited nodes chromo
+		if (aMut.Count() > 0) {
+		    TNs ns(aCtx.mNs);
+		    //ns.push_back(uelem);
+		    MutCtx ctx(aCtx.mNode, ns);
+		    uelem->mutate(aMut, false, aUpdOnly ? MutCtx(uelem, ns) : ctx, true);
+		}
+		parent->attachHeir(uelem);
+	    } else {
+		Log(TLog(EErr, this) + "Adding node [" + sname + "] failed");
+	    }
+	} else {
+	    Logger()->Write(EErr, this, "Creating [%s] - parent [%s] not found", sname.c_str(), sparent.c_str());
+	}
     }
     if (!aUpdOnly && !mutadded) {
 	notifyNodeMutated(aMut, aCtx);
@@ -421,21 +385,12 @@ MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
 void Node::mutRemove(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 {
     string snode, sname;
-    MNode* targ = this;
-    if (aMut.AttrExists(ENa_Targ)) {
-	snode = aMut.Attr(ENa_Targ);
-	targ = getNode(snode);
-    }
     sname = aMut.Attr(ENa_Id);
-    if (targ) {
-	MOwned* owned = owner()->at(sname);
-	owner()->detach(owner()->at(sname));
-	owned->deleteOwned();
-	//node->SetRemoved(aRunTime);
-	Log(TLog(EInfo, this) + "Removed node [" + sname + "]");
-    } else {
-	Log(TLog(EErr, this) + "Removing node [" + sname + "] - target node found");
-    }
+    MOwned* owned = owner()->at(sname);
+    owner()->detach(owner()->at(sname));
+    owned->deleteOwned();
+    //node->SetRemoved(aRunTime);
+    Log(TLog(EInfo, this) + "Removed node [" + sname + "]");
     if (!aUpdOnly) {
 	notifyNodeMutated(aMut, aCtx);
     }

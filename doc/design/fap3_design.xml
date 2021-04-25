@@ -401,9 +401,6 @@
 	</sect2>
     </sect1>
 
-    <sect1><title></title>
-    </sect1>
-
     <sect1 id="ds_uinn"><title>Units identification in native net.</title>
 	<sect2><title>Intro</title>
 	    <simpara>It is common practice to use anonymous units of any type (even native net units). For instance ifaces set obtained via iface resolution
@@ -505,6 +502,14 @@
 		    <simpara>Currently the client requests the root node by the iface name. The Node owning the IRM node uses std::map to keep the nodes.
 			So the access to root node also is quite time-consuming. How to simplify the access.</simpara>
 		</sect4>
+	    </sect3>
+	</sect2>
+	<sect2><title>Proposal of <xref linkend="gls_irm"/> desing improvement</title>
+	    <sect3><title>Intro</title>
+		<simpara>The current desing (1641500c15) seems a bit overkill. IfrNode implements both provider and requester ifaces. IfrNode also
+		    includes ref to the owning node as MIfProvOwner dedicated iface. Can we simplify the design utilizing NTnnp ifaces proxy feature so that the 
+		    owning node acts as the provider and requestor.</simpara>
+		<simpara>Do we really need MUnit iface? Why don't use directly MIfProv?</simpara>
 	    </sect3>
 	</sect2>
     </sect1>

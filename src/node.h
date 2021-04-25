@@ -92,7 +92,7 @@ class Node : public MNode, public MContentOwner, public MObservable
 	virtual MNode* getNodeS(const char* aUri)  override;
 	virtual void getUri(GUri& aUri, MNode* aBase = NULL) const override;
 	virtual void setCtx(MOwner* aContext) override;
-	virtual void mutate(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx, bool aTreatAsChromo = false) override;
+	virtual void mutate(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx, bool aTreatAsChromo = false, bool aLocal = false) override;
 	virtual MNode* createHeir(const string& aName) override;
 	virtual bool attachHeir(MNode* aHeir) override { return false;}
 	virtual bool attachOwned(MNode* aOwned) override;

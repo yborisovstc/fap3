@@ -79,7 +79,7 @@ class MNode: public MIface
 	 * @param aTreatAsChromo  apply the mut just as chromo ignoring mut part, workaround, ref ds_adcm_pamcc
 	 * */
 	// TODO YB to provide proper solution for ds_adcm_pamcc
-	virtual void mutate(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx, bool aTreatAsChromo = false) = 0;
+	virtual void mutate(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx, bool aTreatAsChromo = false, bool aLocal = false) = 0;
 	virtual MNode* createHeir(const string& aName) = 0;
 	virtual bool attachHeir(MNode* aHeir) = 0;
 	virtual bool attachOwned(MNode* aOwned) = 0;

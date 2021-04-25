@@ -83,12 +83,12 @@ void Elem::setCrAttr(const string& aEType, const string& aName)
     croot.SetAttr(ENa_Parent, ptype);
 }
 
-void Elem::mutate(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx, bool aTreatAsChromo)
+void Elem::mutate(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx, bool aTreatAsChromo, bool aLocal)
 {
     if (!aChange && !aTreatAsChromo) {
 	ChromoNode mut = mChromo->Root().AddChild(aMut, true, true);
     }
-    Unit::mutate(aMut, aChange, aCtx, aTreatAsChromo);
+    Unit::mutate(aMut, aChange, aCtx, aTreatAsChromo, aLocal);
 }
 
 /*
@@ -113,14 +113,6 @@ bool Elem::attachHeir(MNode* aHeir)
     return res;
 }
 
-void Elem::mutContent(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
-{
-    if (!aUpdOnly) {
-	mChromo->Root().AddChild(aMut, true, false);
-    }
-    Node::mutContent(aMut, aUpdOnly, aCtx);
-}
-
 void Elem::onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx)
 {
     //auto it = mChromo->Root().Find(aCtx.mParent);
@@ -128,7 +120,6 @@ void Elem::onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const Mu
     if (aCtx.mNode && aCtx.mNode != this) {
 	ChromoNode anode = mChromo->Root().AddChild(aMut, true, true);
 	const MNode* onode = aOwned->lIf(onode);
-	assert(!anode.AttrExists(ENa_Targ));
 	GUri nuri;
 	onode->getUri(nuri, this);
 	anode.SetAttr(ENa_Targ, nuri);
@@ -155,7 +146,13 @@ MNode* Elem::createHeir(const string& aName)
 	    // Mutate bare child with original parent chromo, updating only to have clean heir's chromo
 	    heir->setCtx(nullptr);
 	    heir->setCtx(Owner());
-	    heir->mutate(mChromo->Root(), false, MutCtx(), true);
+	    heir->mutate(mChromo->Root(), true, MutCtx(), true);
+	    // Mutated with parent's own chromo - so panent's name is the type now.
+	    // TODO Seems wrong, why name, should be URI.
+	    MElem* heire = heir->lIf(heire);
+	    if (heire) {
+		heire->Chromos().Root().SetAttr(ENa_Parent, name());
+	    }
 	} else {
 	    Log(TLog(EErr, this) + "Failed creating heir [" + aName + "]");
 	}

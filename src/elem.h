@@ -24,7 +24,7 @@ class Elem: public Unit, public MElem, public MParent, public MChild
 	virtual MIface* MElem_getLif(const char *aType) override;
 	virtual void MElem_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	// From MNode
-	virtual void mutate(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx, bool aTreatAsChromo = false) override;
+	virtual void mutate(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx, bool aTreatAsChromo = false, bool aLocal = false) override;
 	virtual MNode* createHeir(const string& aName) override;
 	virtual bool attachHeir(MNode* aHeir) override;
 	// From MElem
@@ -53,7 +53,6 @@ class Elem: public Unit, public MElem, public MParent, public MChild
 	// From Node
 	//virtual void mutSegment(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx) override;
 	virtual MNode* mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx) override;
-	virtual void mutContent(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx) override;
 	virtual void onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx) override;
 	MParent* parent();
     protected:
