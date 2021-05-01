@@ -43,7 +43,7 @@ static const int KStatecDlog_ObsIfr = 7;  // Observers ifaces routing
 const string State::KCont_Value = "";
 
 
-State::State(const string& aName, MEnv* aEnv): Vertu(aName, aEnv), mPdata(NULL), mCdata(NULL)
+State::State(const string& aName, MEnv* aEnv): Vertu(aName, aEnv), mPdata(NULL), mCdata(NULL), mNotified(false)
 {
     if (aName.empty()) mName = Type();
     mPdata = new BdVar(this);
@@ -114,6 +114,7 @@ void State::NotifyInpsUpdated()
 
 void State::confirm()
 {
+    mNotified = false;
     MUpdatable* upd = mCdata;
     if (upd != NULL) {
 	string old_value;
@@ -134,8 +135,10 @@ void State::setUpdated()
     //MDesObserver* obs = Owner() ? Owner()->lIf(obs) : nullptr;
     MUnit* ownu = Owner()->lIf(ownu);
     MDesObserver* obs = ownu->getSif(obs);
-    if (obs)
+    if (obs && !mNotified) {
 	obs->onUpdated(this);
+	mNotified = true;
+    }
 }
 
 void State::onInpUpdated()
@@ -337,7 +340,7 @@ string State::GetDvarUid(const MDVar* aComp) const
 
 /// DES
 
-Des::Des(const string &aName, MEnv* aEnv): Syst(aName, aEnv)
+Des::Des(const string &aName, MEnv* aEnv): Syst(aName, aEnv), mNotified(false)
 {
     if (aName.empty()) mName = Type();
 }
@@ -366,6 +369,7 @@ void Des::update()
 
 void Des::confirm()
 {
+    mNotified = false;
     while (!mUpdated.empty()) {
 	auto comp = mUpdated.front();
 	comp->confirm();
@@ -384,9 +388,12 @@ void Des::onActivated(MDesSyncable* aComp)
 
 void Des::onUpdated(MDesSyncable* aComp)
 {
-    if (mUpdated.empty()) { // Notify owner
+    if (!mNotified) { // Notify owner
 	MDesObserver* obs = Owner() ? Owner()->lIf(obs) : nullptr;
-	if (obs) obs->onUpdated(this);
+	if (obs) {
+	    obs->onUpdated(this);
+	    mNotified = true;
+	}
     }
     mUpdated.push_back(aComp);
 }
@@ -415,10 +422,21 @@ MIface* Des::doMOwnerGetLif(const char *aType)
     return res;
 }
 
+void Des::MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const
+{
+    cout << "Active:" << endl;
+    for (auto item : mActive) {
+	cout << item->Uid() << endl;
+    }
+    cout << "Updated:" << endl;
+    for (auto item : mUpdated) {
+	cout << item->Uid() << endl;
+    }
+}
 
 ///// ADES
 
-ADes::ADes(const string &aName, MEnv* aEnv): Unit(aName, aEnv), mOrCp(this), mAgtCp(this)
+ADes::ADes(const string &aName, MEnv* aEnv): Unit(aName, aEnv), mOrCp(this), mAgtCp(this), mNotified(false)
 {
     if (aName.empty()) mName = Type();
 }
@@ -457,6 +475,7 @@ void ADes::update()
 
 void ADes::confirm()
 {
+    mNotified = false;
     while (!mUpdated.empty()) {
 	auto comp = mUpdated.front();
 	comp->confirm();
@@ -480,14 +499,17 @@ void ADes::onActivated(MDesSyncable* aComp)
 
 void ADes::onUpdated(MDesSyncable* aComp)
 {
-    if (mUpdated.empty()) { // Notify owner
+    if (!mNotified) { // Notify owner
 	// Get access to owners owner via MAhost iface
 	MAhost* ahost = mAgtCp.firstPair()->provided();
 	MNode* ahn = ahost->lIf(ahn);
 	MOwner* ahno = ahn->owned()->at();
 	MUnit* ahnou = ahno->lIf(ahnou);
 	MDesObserver* obs = ahnou->getSif(obs);
-	if (obs) obs->onUpdated(this);
+	if (obs) {
+	    obs->onUpdated(this);
+	    mNotified = true;
+	}
     }
     mUpdated.push_back(aComp);
 }
@@ -530,6 +552,19 @@ void ADes::onOwnerAttached()
 	Logger()->Write(EErr, this, "Cannot attach to host");
     }
 }
+
+void ADes::MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const
+{
+    cout << "Active:" << endl;
+    for (auto item : mActive) {
+	cout << item->Uid() << endl;
+    }
+    cout << "Updated:" << endl;
+    for (auto item : mUpdated) {
+	cout << item->Uid() << endl;
+    }
+}
+
 
 //// DesLauncher
 

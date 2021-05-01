@@ -17,6 +17,8 @@ void GUri::parse(const string& aSrc)
 	    mElems.push_back(string(1, KSelf));
 	} else if (aSrc.at(0) == KOwner) {
 	    mElems.push_back(string(1, KOwner));
+	} else if (isalpha(aSrc.at(0))) {
+	    mElems.push_back(aSrc);
 	} else {
 	    mErr = false;
 	}

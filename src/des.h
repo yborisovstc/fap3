@@ -99,6 +99,7 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 	BdVar* mCdata;   //<! Confirming phase data
 	static const string KCont_Value;
 	Cnt mValue = Cnt(*this, KCont_Value);
+	bool mNotified;  //<! Sign of that State notified observers
 };
 
 
@@ -119,7 +120,7 @@ class Des: public Syst, public MDesSyncable, public MDesObserver
 	virtual void onContentChanged(const MContent* aCont) override {}
 	// From MDesSyncable
 	virtual string MDesSyncable_Uid() const override {return getUid<MDesSyncable>();}
-	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	virtual void update() override;
 	virtual void confirm() override;
 	// From MDesObserver
@@ -129,6 +130,7 @@ class Des: public Syst, public MDesSyncable, public MDesObserver
     protected:
 	list<MDesSyncable*> mActive;     /*!< Active compoments */
 	list<MDesSyncable*> mUpdated;     /*!< Updated compoments */
+	bool mNotified;  //<! Sign of that State notified observers
 };
 
 /** @brief DES agent
@@ -152,7 +154,7 @@ class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver
 	virtual void onContentChanged(const MContent* aCont) override {}
 	// From MDesSyncable
 	virtual string MDesSyncable_Uid() const override {return getUid<MDesSyncable>();}
-	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	virtual void update() override;
 	virtual void confirm() override;
 	// From MDesObserver
@@ -175,6 +177,7 @@ class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver
 	list<MDesSyncable*> mUpdated;    /*!< Updated compoments */
 	TObserverCp mOrCp;               /*!< Observer connpoint */ 
 	TAgtCp mAgtCp;                   /*!< Agent connpoint */ 
+	bool mNotified;                  //<! Sign of that State notified observers
 };
 
 

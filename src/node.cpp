@@ -600,6 +600,7 @@ MIface* Node::doMOwnerGetLif(const char *aType)
     MIface* res = nullptr;
     // TODO Vulnerabilty, consider to configure the access
     if (res = checkLif<MObservable>(aType));
+    else if (res = checkLif<MContentOwner>(aType));
     return res;
 }
 

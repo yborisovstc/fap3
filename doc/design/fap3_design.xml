@@ -511,6 +511,8 @@
 		    owning node acts as the provider and requestor.</simpara>
 		<simpara>Do we really need MUnit iface? Why don't use directly MIfProv?</simpara>
 	    </sect3>
+	    <sect3><title>How to access IfrNode attributes, mValid for instance.</title>
+	    </sect3>
 	</sect2>
     </sect1>
 

@@ -80,7 +80,7 @@ void Content::notifyContentChanged(const MContent* aCont)
 {
     MContentOwner* cowner = Owner()->lIf(cowner);
     if (cowner) {
-	cowner->onContentChanged(this);
+	cowner->onContentChanged(aCont);
     }
 }
 

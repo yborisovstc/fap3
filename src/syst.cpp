@@ -510,7 +510,18 @@ MIface* Syst::MAhost_getLif(const char *aType)
 {
     MIface* res = nullptr;
     if (res = checkLif<MNode>(aType));
+    else if (res = checkLif<MContentOwner>(aType)); // To get agent an access to content
     return res;
 }
 
+void Syst::onContentChanged(const MContent* aCont)
+{
+    Elem::onContentChanged(aCont);
+    // Notify agents
+    auto agtCp = mAgtCp.firstPair();
+    while (agtCp) {
+	agtCp->provided()->onHostContentChanged(aCont);
+	agtCp = mAgtCp.nextPair(agtCp);
+    }
+}
 

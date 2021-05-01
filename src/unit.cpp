@@ -26,6 +26,14 @@ MIface* Unit::MNode_getLif(const char *aType)
     return res;
 }
 
+MIface* Unit::MOwned_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MUnit>(aType)); // Enagle IRM from owner
+    else res = Node::MOwned_getLif(aType);
+    return res;
+}
+
 MIface* Unit::MUnit_getLif(const char *aType)
 {
     MIface* res = nullptr;
@@ -146,4 +154,10 @@ MIface* Unit::doMOwnerGetLif(const char *aType)
     return res;
 }
 
+void Unit::onOwnedAttached(MOwned* aOwned)
+{
+    Node::onOwnedAttached(aOwned);
+    // Invalidate IRM
+    invalidateIrm();
+}
 

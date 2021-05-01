@@ -21,6 +21,7 @@ class Unit : public Node, public MUnit, public MIfProvOwner
 	virtual ~Unit();
 	// From MNode
 	virtual MIface* MNode_getLif(const char *aType) override;
+	virtual MIface* MOwned_getLif(const char *aType);
 	// From MUnit
 	virtual string MUnit_Uid() const override {  return getUid<MUnit>();}
 	virtual MIface* MUnit_getLif(const char *aType) override;
@@ -37,6 +38,7 @@ class Unit : public Node, public MUnit, public MIfProvOwner
 	void addIfpLeaf(MIface* aIfc, MIfReq::TIfReqCp* aReq);
 	// From Node
 	virtual MIface* doMOwnerGetLif(const char *aType) override;
+	virtual void onOwnedAttached(MOwned* aOwned) override;
     protected:
 	map<string, IfrNode*> mLocalIrn; /*!< Local IFR node */
 	list<IfrNode*> mIrns;  /*! IFR nodes */
