@@ -47,8 +47,9 @@ class MContentOwner;
 class MNode: public MIface
 {
     public:
-	using TOwnerCp = NCpOmi2<MOwner, MOwned>;
-	using TOwnedCp = MNcp<MOwned, MOwner>;
+	//!using TOwnerCp = NCpOmi2<MOwner, MOwned>;
+	using TOwnerCp = MNcpp<MOwner, MOwned>;
+	using TOwnedCp = MNcpp<MOwned, MOwner>;
 
     public:
 	// From MIface

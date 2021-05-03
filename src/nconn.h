@@ -120,8 +120,16 @@ class MNcpp
 	virtual void dump(int aIdt) const {}
 	/** @brief Gets binded connpoint, in tree node for instance, ref ds_nn_tree_bc */
 	virtual TPair* binded() = 0;
+	const TPair* binded() const { const_cast<const TPair*>(const_cast<TSelf*>(this)->binded());}
 	virtual TPair* firstPair() = 0;
 	virtual TPair* nextPair(TPair* aPair) = 0;
+	/** @brief Gets pairs count */
+	virtual int pcount() const = 0;
+	virtual const TPair* pairAt(int aInd) const = 0;
+	virtual TPair* pairAt(const string aId) = 0;
+	virtual const TPair* pairAt(const string aId) const = 0;
+	virtual TPair* pairAt(int aInd) = 0;
+	/** @brief gets first leaf */
 	virtual TPair* firstLeaf() = 0;
 	/** @brief gets first leaf of binded
 	 * Allows to override leafs tree-travarsal behavour in treish topology
@@ -268,9 +276,9 @@ class NCpOmi2 : public MNcp<TPif, TRif>
 	virtual const TPair* at(const string aId) const { return mPairs.count(aId) > 0 ? mPairs.at(aId) : nullptr;;}
 	virtual TPair* at(const string aId) { return mPairs.count(aId) > 0 ? mPairs.at(aId) : nullptr;;}
 	// Local
-	virtual int pcount() const { return mPairs.size(); }
-	virtual const TPair* pairAt(int aInd) const { for (auto it = mPairs.begin(); it != mPairs.end(); it++) if (aInd-- == 0) return it->second; return nullptr; }
-	virtual TPair* pairAt(int aInd) { for (auto it = mPairs.begin(); it != mPairs.end(); it++) if (aInd-- == 0) return it->second; return nullptr; }
+	virtual int pcount() const override { return mPairs.size(); }
+	virtual const TPair* pairAt(int aInd) const override { for (auto it = mPairs.begin(); it != mPairs.end(); it++) if (aInd-- == 0) return it->second; return nullptr; }
+	virtual TPair* pairAt(int aInd) override { for (auto it = mPairs.begin(); it != mPairs.end(); it++) if (aInd-- == 0) return it->second; return nullptr; }
 	virtual TPair* firstPair() { return mPairs.size() > 0 ? mPairs.begin()->second : nullptr;}
 	virtual TPair* nextPair(TPair* aPair) {
 	    string id; aPair->getId(id);
@@ -415,6 +423,7 @@ template <class TPif, class TRif>
 class NCpOmip : public MNcpp<TPif, TRif>
 {
     public:
+	using TThis = NCpOmip<TPif, TRif>;
 	using TSelf= typename MNcpp<TPif, TRif>::TSelf;
 	using TPair= typename MNcpp<TPif, TRif>::TPair;
 	using TPairs = map<string, TPair*>;
@@ -443,10 +452,11 @@ class NCpOmip : public MNcpp<TPif, TRif>
 	virtual TSelf* firstLeafB() override { return nullptr;}
 	virtual TPair* nextLeaf(TPair* aLeaf) override { return nullptr;}
 	virtual TSelf* nextLeaf() override { return nullptr;}
-    public:
-	// Local
-	int count() const { return mPairs.size();}
-	TPair* at(const string& aId) const { return mPairs.count(aId) > 0 ? mPairs.at(aId) : nullptr;}
+	virtual int pcount() const override { return mPairs.size(); }
+	virtual const TPair* pairAt(int aInd) const override { for (auto it = mPairs.begin(); it != mPairs.end(); it++) if (aInd-- == 0) return it->second; return nullptr; }
+	virtual TPair* pairAt(int aInd) override { for (auto it = mPairs.begin(); it != mPairs.end(); it++) if (aInd-- == 0) return it->second; return nullptr; }
+	virtual TPair* pairAt(const string aId) { return mPairs.count(aId) > 0 ? mPairs.at(aId) : nullptr;}
+	virtual const TPair* pairAt(const string aId) const { return const_cast<const TPair*>(const_cast<TThis*>(this)->pairAt(aId));}
     protected:
 	TPairs mPairs;
 	TPif* mPx;
@@ -455,12 +465,14 @@ class NCpOmip : public MNcpp<TPif, TRif>
 template <class TPif, class TRif>
 NCpOmip<TPif, TRif>::~NCpOmip()
 {
+    /* TODO To design the destruction properly. This solution doesn't work for embedded nodes
     while (!mPairs.empty()) {
 	auto it = mPairs.begin();
 	TPair* pair = it->second;
 	disconnect(pair);
 	delete pair;
     }
+    */
 }
 
 template <class TPif, class TRif>
@@ -517,6 +529,7 @@ bool NCpOmip<TPif, TRif>::isConnected(TPair* aPair) const
  * @tparam TPif  type of provided interface
  * @tparam TPair type of pair
  * */
+// TODO seems same as NCpOnp, why is it needed? 
 template <class TPif, class TRif>
 class NCpOip : public MNcpp<TPif, TRif>
 {
@@ -709,6 +722,7 @@ template <class TPif, class TRif>
 class NCpOmnp : public MNcpp<TPif, TRif>
 {
     public:
+	using TThis= typename NCpOmnp<TPif, TRif>::TSelf;
 	using TSelf= typename MNcpp<TPif, TRif>::TSelf;
 	using TPair= typename MNcpp<TPif, TRif>::TPair;
 	using TPairs = set<TPair*>;
@@ -750,10 +764,11 @@ class NCpOmnp : public MNcpp<TPif, TRif>
 	    return res;
 	}
 	virtual TSelf* nextLeaf() override { return nullptr;}
-	// Local
-	virtual int pcount() const { return mPairs.size(); }
-	virtual const TPair* pairAt(int aInd) const { for (auto it = mPairs.begin(); it != mPairs.end(); it++) if (aInd-- == 0) return *it; return nullptr; }
-	virtual TPair* pairAt(int aInd) { for (auto it = mPairs.begin(); it != mPairs.end(); it++) if (aInd-- == 0) return *it; return nullptr; }
+	virtual int pcount() const override { return mPairs.size(); }
+	virtual const TPair* pairAt(int aInd) const override { for (auto it = mPairs.begin(); it != mPairs.end(); it++) if (aInd-- == 0) return *it; return nullptr; }
+	virtual TPair* pairAt(int aInd) override { for (auto it = mPairs.begin(); it != mPairs.end(); it++) if (aInd-- == 0) return *it; return nullptr; }
+	virtual TPair* pairAt(const string aId) { return nullptr;}
+	virtual const TPair* pairAt(const string aId) const { return nullptr;}
     protected:
 	TPairs mPairs;
 	TPif* mPx;
@@ -836,6 +851,13 @@ class NCpOnp : public MNcpp<TPif, TRif>
 	virtual TSelf* nextLeaf() override {
 	    return mPair ? mPair->nextLeaf(this) : nullptr;
 	}
+	virtual int pcount() const override {return mPair ? 1 : 0;}
+	virtual const TPair* pairAt(int aInd) const override { assert (aInd < pcount()); return mPair;}
+	virtual TPair* pairAt(int aInd) override { assert (aInd < pcount()); return mPair;}
+	virtual TPair* pairAt(const string aId) override { return nullptr;}
+	virtual const TPair* pairAt(const string aId) const { return nullptr;}
+	// Local
+	void resetPx() {mPx = nullptr;}
     protected:
 	TPair* mPair;
 	TPif* mPx;
@@ -967,16 +989,29 @@ bool NCOmi<TProv, TReq>::isConnected(TPair* aPair) const
 /** @brief Native net tree node, identified sub-nodes
  * */
 template <class TProv, class TReq>
-class NTnip : public NCpOip<TProv, TReq>
+class NTnip : public NCpOnp<TProv, TReq>
 {
     public:
-	using TNode = NCpOmip<TReq, TProv>;
+	using TScp = NCpOnp<TProv, TReq>;  /*!< Self connpoint type */
+	using TPair = typename TScp::TPair;
+	using TCnode = NCpOmip<TReq, TProv>; /*!< Complement node (pole) type */
     public:
-	NTnip(TProv* aProvPx, TReq* aReqPx): NCpOip<TProv, TReq>(aProvPx), mOwnerCp(aReqPx) {}
-	NCpOmip<TReq, TProv>& ownerCp() { return mOwnerCp;}
-	const NCpOmip<TReq, TProv>& ownerCp() const { return mOwnerCp;}
+	class Cnode: public TCnode {
+	    public:
+		Cnode(TReq* aPx, NTnip* aHost): TCnode(aPx), mHost(aHost) {}
+		// From MNcpp
+		virtual typename TCnode::TPair* binded() override { return mHost->cnodeBinded();}
+	    private:
+		NTnip* mHost;
+	};
+    public:
+	NTnip(TProv* aProvPx, TReq* aReqPx): NCpOnp<TProv, TReq>(aProvPx), mCnode(aReqPx) {}
+	// From MNcpp
+	virtual typename TScp::TPair* binded() override { return &mCnode;}
+	// Local
+	virtual typename TCnode::TPair* cnodeBinded() { return this;}
     protected:
-	NCpOmip<TReq, TProv> mOwnerCp;
+	TCnode mCnode;
 };
 
 

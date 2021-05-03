@@ -12,7 +12,6 @@ Unit::Unit(const string &aName, MEnv* aEnv): Node(aName, aEnv)
 
 Unit::~Unit()
 {
-    deleteOwned();
     for (auto item : mIrns) {
 	delete item;
     }
@@ -146,11 +145,11 @@ bool Unit::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
     return res;
 }
 
-MIface* Unit::doMOwnerGetLif(const char *aType)
+MIface* Unit::MOwner_getLif(const char *aType)
 {
     MIface* res = nullptr;
     if (res = checkLif<MUnit>(aType)); // To enable ifr request to owner
-    else res = Node::doMOwnerGetLif(aType);
+    else res = Node::MOwner_getLif(aType);
     return res;
 }
 

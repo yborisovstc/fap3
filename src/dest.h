@@ -18,7 +18,7 @@ class TrBase: public CpStateOutp
 	static const char* Type() { return "TrBase";}
 	TrBase(const string& aName = string(), MEnv* aEnv = NULL);
 	// From Node
-	virtual MIface* doMOwnerGetLif(const char *aType) override;
+	virtual MIface* MOwner_getLif(const char *aType) override;
 	// From MVert
 	virtual MIface *MVert_getLif(const char *aType) override;
 	//virtual bool isCompatible(MVert* aPair, bool aExt) override;

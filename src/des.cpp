@@ -207,12 +207,12 @@ MIface* State::MOwned_getLif(const char *aType)
     return res;
 }
 
-MIface* State::doMOwnerGetLif(const char *aType)
+MIface* State::MOwner_getLif(const char *aType)
 {
     MIface* res = NULL;
     if (res = checkLif<MDesSyncable>(aType)); // ??
     else if(res = checkLif<MUnit>(aType));  // IFR from inputs
-    else res = Vertu::doMOwnerGetLif(aType);
+    else res = Vertu::MOwner_getLif(aType);
     return res;
 }
 
@@ -414,11 +414,11 @@ MIface* Des::MOwned_getLif(const char *aType)
     return res;
 }
 
-MIface* Des::doMOwnerGetLif(const char *aType)
+MIface* Des::MOwner_getLif(const char *aType)
 {
     MIface* res = NULL;
     if (res = checkLif<MDesObserver>(aType)); // Notifying from owned 
-    else res = Syst::doMOwnerGetLif(aType);
+    else res = Syst::MOwner_getLif(aType);
     return res;
 }
 
@@ -489,7 +489,7 @@ void ADes::onActivated(MDesSyncable* aComp)
 	// Get access to owners owner via MAhost iface
 	MAhost* ahost = mAgtCp.firstPair()->provided();
 	MNode* ahn = ahost->lIf(ahn);
-	MOwner* ahno = ahn->owned()->at();
+	MOwner* ahno = ahn->owned()->pairAt(0)->provided();
 	MUnit* ahnou = ahno->lIf(ahnou);
 	MDesObserver* obs = ahnou->getSif(obs);
 	if (obs) obs->onActivated(this);
@@ -503,7 +503,7 @@ void ADes::onUpdated(MDesSyncable* aComp)
 	// Get access to owners owner via MAhost iface
 	MAhost* ahost = mAgtCp.firstPair()->provided();
 	MNode* ahn = ahost->lIf(ahn);
-	MOwner* ahno = ahn->owned()->at();
+	MOwner* ahno = ahn->owned()->pairAt(0)->provided();
 	MUnit* ahnou = ahno->lIf(ahnou);
 	MDesObserver* obs = ahnou->getSif(obs);
 	if (obs) {

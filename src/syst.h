@@ -106,7 +106,7 @@ class Syst : public Elem, public MAhost, public MActr
 	virtual ~Syst();
 	// From Node
 	virtual void mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx) override;
-	virtual MIface* doMOwnerGetLif(const char *aType) override;
+	virtual MIface* MOwner_getLif(const char *aType) override;
 	// From Node.MContentOwner
 	virtual void onContentChanged(const MContent* aCont) override;
 	// From MActr
@@ -117,8 +117,6 @@ class Syst : public Elem, public MAhost, public MActr
 	virtual string MAhost_Uid() const override {return getUid<MAhost>();}
 	virtual MIface* MAhost_getLif(const char *aType) override;
     protected:
-	// From Node
-	virtual MNode* getNodeOwd(const GUri& aUri, const MNode* aOwned) const override;
 	// From Unit.MIfProvOwner
 	virtual bool resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
 	// Local

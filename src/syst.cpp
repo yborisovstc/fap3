@@ -411,13 +411,13 @@ Syst::~Syst()
  *  if the owned if agent. We also can have system propery with the policy of getting
  *  access to ifaces
  * */
-MIface* Syst::doMOwnerGetLif(const char *aType)
+MIface* Syst::MOwner_getLif(const char *aType)
 {
     MIface* res = nullptr;
     if (res = checkLif<MUnit>(aType));
     else if (res = checkLif<MContentOwner>(aType));
     else if (res = checkLif<MActr>(aType));
-    else res = Unit::doMOwnerGetLif(aType);
+    else res = Unit::MOwner_getLif(aType);
     return res;
 }
 
@@ -454,8 +454,8 @@ bool Syst::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	addIfpLeaf(ifr, aReq);
     }
     if (aName == MAgent::Type()) {
-	for (int i = 0; i < mCpOwner.pcount(); i++) {
-	    MOwned* comp = mCpOwner.pairAt(i);
+	for (int i = 0; i < owner()->pcount(); i++) {
+	    MOwned* comp = owner()->pairAt(i)->provided();
 	    MNode* compn = comp->lIf(compn);
 	    MAgent* compa = compn ? compn->lIf(compa) : nullptr;
 	    if (compa) {
@@ -472,21 +472,6 @@ bool Syst::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 		res = agtu->resolveIface(aName, aReq);
 	    }
 	    maprov = maprov->next();
-	}
-    }
-    return res;
-}
-
-MNode* Syst::getNodeOwd(const GUri& aUri, const MNode* aOwned) const
-{
-    MNode* res = nullptr;
-    // Get owned access accroding to the policy
-    // Using simple policy atm: grant access to any agents
-    if (aUri.isAbsolute()) {
-	res = Node::getNodeOwd(aUri, aOwned);
-    } else {
-	const MAgent* mag = aOwned->lIf(mag);
-	if (mag) {
 	}
     }
     return res;

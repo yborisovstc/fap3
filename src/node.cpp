@@ -2,25 +2,18 @@
 #include "node.h"
 #include "chromo.h"
 
-bool Node::NCpOwned::isOwner(const MOwner* aOwner) const
-{
-    bool res = false;
-    if (aOwner == at()) {
-	res = true;
-    } else if (at() && at()->bindedOwned()) {
-	res = at()->bindedOwned()->isOwner(aOwner);
-    }
-    return res;
-}
 
-
-
-Node::Node(const string &aName, MEnv* aEnv): mName(aName.empty() ? Type() : aName), mEnv(aEnv), mOcp(this)
+Node::Node(const string &aName, MEnv* aEnv): mName(aName.empty() ? Type() : aName), mEnv(aEnv), mOcp(this), mOnode(this, this)
 {
 } 
 
 Node::~Node()
 {
+    auto owdCp = owner()->firstPair();
+    while (owdCp) {
+	owdCp->provided()->deleteOwned();
+	owdCp = owner()->firstPair();
+    }
 }
 
 MIface* Node::MNode_getLif(const char *aType)
@@ -37,14 +30,27 @@ MIface* Node::MObservable_getLif(const char *aType)
     return res;
 }
 
+bool Node::isOwner(const MOwner* aOwner) const
+{
+    bool res = false;
+    if (owned()->pcount() > 0) {
+	if (aOwner == owned()->pairAt(0)->provided()) {
+	    res = true;
+	} else if (owned()->pairAt(0) && owned()->pairAt(0)->provided()->bindedOwned()) {
+	    res = owned()->pairAt(0)->provided()->bindedOwned()->isOwner(aOwner);
+	}
+    }
+    return res;
+}
+
 void Node::MNode_doDump(int aLevel, int aIdt, ostream& aOs) const
 {
     if (aLevel & Ifu::EDM_Base) {
 	Ifu::offset(aIdt, aOs); aOs << "Name: " << mName << endl;
     }
     if (aLevel & Ifu::EDM_Comps) {
-	for (int i = 0; i < mCpOwner.pcount(); i++) {
-	    const MOwned* comp = mCpOwner.pairAt(i);
+	for (int i = 0; i < owner()->pcount(); i++) {
+	    const MOwned* comp = owner()->pairAt(i)->provided();
 	    const MNode* compn = comp->lIf(compn);
 	    Ifu::offset(aIdt, aOs); aOs << "- "  << compn->name() << endl;
 	    if (aLevel & Ifu::EDM_Recursive) {
@@ -57,7 +63,8 @@ void Node::MNode_doDump(int aLevel, int aIdt, ostream& aOs) const
 
 const MNode* Node::getComp(const string& aId) const
 {
-    const MOwned* ores = mCpOwner.at(aId);
+    auto ownerCp = owner()->pairAt(aId);
+    const MOwned* ores = ownerCp ? ownerCp->provided() : nullptr;
     const MNode* res = ores ? ores->lIf(res) : nullptr;
     return res;
 }
@@ -71,7 +78,7 @@ const MNode* Node::getNode(const GUri& aUri) const
 	if (aUri.isAbsolute()) {
 	    //Owner()->getNode(aUri, this);
 	    if (Owner()) {
-		res = Owner()->getNode(aUri, this); 
+		res = Owner()->ownerGetNode(aUri, this); 
 	    } else {
 		// Root
 		if (aUri.size() > 2) {
@@ -97,13 +104,6 @@ const MNode* Node::getNode(const GUri& aUri) const
     return res;
 }
 
-void Node::deleteOwned()
-{
-    for (auto item : mCpOwner.mPairs) {
-	item.second->deleteOwned();
-    }
-}
-
 void Node::getUri(GUri& aUri, MNode* aBase) const
 {
     if (mEnv && mEnv->provider() && mEnv->provider()->isProvided(this)) {
@@ -113,7 +113,7 @@ void Node::getUri(GUri& aUri, MNode* aBase) const
 	// From native hier
 	const MOwner* owner = Owner();
 	if (owner) {
-	    owner->getUri(aUri, aBase);
+	    owner->ownerGetUri(aUri, aBase);
 	} else {
 	    aUri.appendElem(string());
 	}
@@ -123,12 +123,12 @@ void Node::getUri(GUri& aUri, MNode* aBase) const
 
 MOwner* Node::Owner()
 {
-    return mCpOwned.at();
+    return mOnode.pcount() > 0 ? mOnode.pairAt(0)->provided() : nullptr;
 }
 
 const MOwner* Node::Owner() const
 {
-    return mCpOwned.at();
+    return mOnode.pcount() > 0 ? mOnode.pairAt(0)->provided() : nullptr;
 }
 
 void Node::updateNs(TNs& aNs, const ChromoNode& aCnode)
@@ -267,8 +267,8 @@ bool Node::attachOwned(MNode* aOwned)
 {
     bool res = owner()->connect(aOwned->owned());
     if (res) {
-	onOwnedAttached(aOwned->owned());
-	aOwned->owned()->onAttached();
+	onOwnedAttached(aOwned->owned()->provided());
+	aOwned->owned()->provided()->onOwnerAttached();
     }
     return res;
 }
@@ -290,14 +290,14 @@ void Node::setCtx(MOwner* aContext)
     mContext = aContext;
 }
 
-MNode* Node::getNodeOwd(const GUri& aUri, const MNode* aOwned) const
+MNode* Node::ownerGetNode(const GUri& aUri, const MNode* aOwned) const
 {
     MNode* res = nullptr;
     Node* self = const_cast<Node*>(this);
     if (aUri.isAbsolute()) {
 	// Standard access, just absolute URI
 	if (Owner()) {
-	    res = Owner()->getNode(aUri, aOwned); 
+	    res = Owner()->ownerGetNode(aUri, aOwned); 
 	} else {
 	    // Root
 	    if (aUri.size() > 2) {
@@ -309,7 +309,7 @@ MNode* Node::getNodeOwd(const GUri& aUri, const MNode* aOwned) const
 	}
 	if (res) {
 	    // Blocking the result if it is not owned by requestor
-	    if (!res->owned()->isOwner(aOwned->owner())) {
+	    if (!res->owned()->provided()->isOwner(aOwned->owner()->provided())) {
 		res = nullptr;
 	    }
 	}
@@ -386,8 +386,8 @@ void Node::mutRemove(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 {
     string snode, sname;
     sname = aMut.Attr(ENa_Id);
-    MOwned* owned = owner()->at(sname);
-    owner()->detach(owner()->at(sname));
+    MOwned* owned = owner()->pairAt(sname)->provided();
+    owner()->detach(owner()->pairAt(sname));
     owned->deleteOwned();
     //node->SetRemoved(aRunTime);
     Log(TLog(EInfo, this) + "Removed node [" + sname + "]");
@@ -437,7 +437,7 @@ void Node::mutImport(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 void Node::notifyNodeMutated(const ChromoNode& aMut, const MutCtx& aCtx)
 {
     if (Owner() && aCtx.mNode && aCtx.mNode != this) {
-	Owner()->onOwnedMutated(owned(), aMut, aCtx);
+	Owner()->onOwnedMutated(owned()->provided(), aMut, aCtx);
     }
 }
 
@@ -488,7 +488,7 @@ int Node::contCount() const
     int res = 0;
     int cnt = owner()->pcount();
     for (int i = 0; i < cnt; i++) {
-	const MOwned* owned = owner()->pairAt(i);
+	const MOwned* owned = owner()->pairAt(i)->provided();
 	const MContent* cont = owned->lIf(cont);
 	if (cont) res++;
     }
@@ -501,7 +501,7 @@ MContent* Node::getCont(int aIdx)
     int cnt = owner()->pcount();
     int ci = -1;
     for (int i = 0; i < cnt && ci != aIdx; i++) {
-	MOwned* owned = owner()->pairAt(i);
+	MOwned* owned = owner()->pairAt(i)->provided();
 	res = owned->lIf(res);
 	if (res) ci++;
     }
@@ -514,7 +514,7 @@ const MContent* Node::getCont(int aIdx) const
     int cnt = owner()->pcount();
     int ci = -1;
     for (int i = 0; i < cnt && ci != aIdx; i++) {
-	const MOwned* owned = owner()->pairAt(i);
+	const MOwned* owned = owner()->pairAt(i)->provided();
 	res = owned->lIf(res);
 	if (res) ci++;
     }
@@ -595,7 +595,7 @@ void Node::getModules(vector<MNode*>& aModules)
     }
 }
 
-MIface* Node::doMOwnerGetLif(const char *aType)
+MIface* Node::MOwner_getLif(const char *aType)
 {
     MIface* res = nullptr;
     // TODO Vulnerabilty, consider to configure the access
@@ -608,7 +608,7 @@ bool Node::isOwned(const MNode* aNode) const
 {
     bool res = false;
     for (int i = 0; i < owner()->pcount() && !res; i++) {
-	const MOwned* comp = mCpOwner.pairAt(i);
+	const MOwned* comp = owner()->pairAt(i)->provided();
 	const MNode* compn = comp->lIf(compn);
 	res = aNode == compn;
     }

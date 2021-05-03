@@ -16,64 +16,19 @@ template<class T> MIface* checkLifs(const char* aType, MIface* aSelf) { return (
 
 /** @brief Native hierarchy node agent
  *  Supports native hier tree and content (DCE)
- * TODO YB Consider one NCP for owner-owned tree. Ref NTnip for example.
  * */
-class Node : public MNode, public MContentOwner, public MObservable
+class Node : public MNode, public MContentOwner, public MObservable, public MOwner, public MOwned
 {
     public:
+	class NOwningNode : public NTnip<MOwned, MOwner> {
+	    public:
+		NOwningNode(MOwned* aProvPx, MOwner* aReqPx): NTnip<MOwned, MOwner>(aProvPx, aReqPx) {}
+		virtual bool getId(string& aId) const override { aId = provided()->ownedId(); return true;}
+		virtual typename TCnode::TPair* cnodeBinded() override { return nullptr;} // To disable navigating to top
+	};
+    public:
+	using TOwtNode = NOwningNode;                    /*!< Ownership tree node */ 
 	using TObsCp = NCpOmnp<MObservable, MObserver>;  /*!< Observable connpoint */
-
-	class NCpOwned;
-
-	/** @brief Owner connection point, one-to-many
-	 * TODO implement via tree node, ref MParent/MChild impl in Elem
-	 * */
-	class NCpOwner : public NCpOmi2<MOwner, MOwned> {
-	    friend class Node;
-	    public:
-	    NCpOwner(Node* aHost): NCpOmi2<MOwner, MOwned>(), mHost(aHost) {}
-	    // From MOwner
-	    virtual string MOwner_Uid() const {return mHost->getUid<MOwner>();}
-	    virtual MIface* MOwner_getLif(const char *aType) override { return mHost->doMOwnerGetLif(aType);}
-	    // Local
-	    virtual MOwned* bindedOwned() override { return mHost->owned();}
-	    virtual const MOwned* bindedOwned() const  { return mHost->owned();}
-	    // TODO Consider form specific Owned iface instead of getting whole MNode
-	    MNode* munitAt(const string& aId) {
-		MNode* res = nullptr;
-		MOwned* owd = at(aId);
-		res = owd->lIf(res);
-		return res;
-	    }
-	    virtual void getUri(GUri& aUri, MNode* aBase = nullptr) const override {
-		mHost->getUri(aUri, aBase);
-	    }
-	    virtual MNode* getNode(const GUri& aUri, const MNode* aOwned) const override { return mHost->getNodeOwd(aUri, aOwned);}
-	    virtual void onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx) override {
-		return mHost->onOwnedMutated(aOwned, aMut, aCtx);}
-	    virtual void onOwnedAttached(MOwned* aOwned) override { mHost->onOwnedAttached(aOwned);}
-	    virtual void getModules(vector<MNode*>& aModules) override { mHost->getModules(aModules);}
-	    private:
-	    Node* mHost;
-	};
-	/** @brief Owned connection point, one-to-one
-	 * */
-	class NCpOwned : public NCpOi2<MOwned, MOwner> {
-	    public:
-		NCpOwned(Node* aHost): NCpOi2<MOwned, MOwner>(), mHost(aHost) {}
-		// From MOwned
-		virtual string MOwned_Uid() const {return mHost->getUid<MOwned>();}
-		virtual MIface* MOwned_getLif(const char *aType) override { return mHost->MOwned_getLif(aType);}
-		virtual string ownedId() const override { return mHost->name();}
-		virtual bool isOwner(const MOwner* aOwner) const override;
-		virtual void deleteOwned() override { delete mHost;}
-		virtual void onAttached() override { mHost->onOwnerAttached();}
-		// From MNcp
-		virtual bool getId(string& aId) const override { aId = mHost->name(); return true;}
-	    private:
-		Node* mHost;
-	};
-
     public:
 	static const char* Type() { return "Node";}
 	Node(const string &aName, MEnv* aEnv);
@@ -96,10 +51,10 @@ class Node : public MNode, public MContentOwner, public MObservable
 	virtual MNode* createHeir(const string& aName) override;
 	virtual bool attachHeir(MNode* aHeir) override { return false;}
 	virtual bool attachOwned(MNode* aOwned) override;
-	virtual TOwnerCp* owner() override { return &mCpOwner;}
-	virtual const TOwnerCp* owner() const override { return &mCpOwner;}
-	virtual TOwnedCp* owned() override { return &mCpOwned;}
-	virtual const TOwnedCp* owned() const override { return &mCpOwned;}
+	virtual TOwnerCp* owner() override { return mOnode.binded();}
+	virtual const TOwnerCp* owner() const override { return const_cast<const TOwnerCp*>(const_cast<Node*>(this)->mOnode.binded());}
+	virtual TOwnedCp* owned() override { return &mOnode;}
+	virtual const TOwnedCp* owned() const override { return &mOnode;}
 	virtual const MContentOwner* cntOw() const override;
 	virtual MContentOwner* cntOw() override;
 	// From MContentOwner
@@ -118,9 +73,25 @@ class Node : public MNode, public MContentOwner, public MObservable
 	virtual MIface* MObservable_getLif(const char *aType) override;
 	virtual bool addObserver(MObserver::TCp* aObs) override;
 	virtual bool rmObserver(MObserver::TCp* aObs) override;
+	// From MOwner
+	virtual string MOwner_Uid() const {return getUid<MOwner>();}
+	virtual MIface* MOwner_getLif(const char *aType) override;
+	virtual MOwned* bindedOwned() override { return owned()->provided();}
+	virtual const MOwned* bindedOwned() const  { return owned()->provided();}
+	virtual void ownerGetUri(GUri& aUri, MNode* aBase = nullptr) const override { getUri(aUri, aBase);}
+	virtual MNode* ownerGetNode(const GUri& aUri, const MNode* aOwned) const override;
+	virtual void onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx) override;
+	virtual void onOwnedAttached(MOwned* aOwned) override;
+	virtual void getModules(vector<MNode*>& aModules) override;
+	// From MOwned
+	virtual string MOwned_Uid() const {return getUid<MOwned>();}
+	virtual MIface* MOwned_getLif(const char *aType) override;
+	virtual string ownedId() const override { return name();}
+	virtual bool isOwner(const MOwner* aOwner) const override;
+	virtual void deleteOwned() override { delete this;}
+	virtual void onOwnerAttached() override {}
     protected:
 	template<class T> MIface* checkLif(const char* aType) { return (strcmp(aType, T::Type()) == 0) ? dynamic_cast<T*>(this) : nullptr;}
-	void deleteOwned();
 	MOwner* Owner();
 	const MOwner* Owner() const;
 	template<class T> string getUid() const {return getUriS() + Ifu::KUidSep + T::Type();}
@@ -129,12 +100,7 @@ class Node : public MNode, public MContentOwner, public MObservable
 	inline void Log(const TLog& aRec) const { Logger()->Write(aRec);};
 	inline MProvider* Provider() const {return mEnv ? mEnv->provider(): nullptr; }
 	void updateNs(TNs& aNs, const ChromoNode& aCnode);
-	/** @brief Gets node for given owned */
-	virtual MNode* getNodeOwd(const GUri& aUri, const MNode* aOwned) const;
 	bool isOwned(const MNode* aComp) const;
-	virtual MIface* doMOwnerGetLif(const char *aType);
-	virtual MIface* MOwned_getLif(const char *aType);
-	void getModules(vector<MNode*>& aModules);
 	// Mutations
 	virtual MNode* mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx);
 	virtual void mutSegment(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx);
@@ -143,18 +109,12 @@ class Node : public MNode, public MContentOwner, public MObservable
 	virtual void mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx);
 	virtual void mutImport(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx);
 	void notifyNodeMutated(const ChromoNode& aMut, const MutCtx& aCtx);
-	// MOwner events handlers
-	virtual void onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx);
-	virtual void onOwnedAttached(MOwned* aOwned);
-	virtual void onOwnerAttached() {}
     protected:
 	MEnv* mEnv = nullptr;
 	string mName;
 	MOwner* mContext = nullptr;
 	TObsCp mOcp;
-    public:
-	NCpOwner mCpOwner = NCpOwner(this);
-	NCpOwned mCpOwned = NCpOwned(this);
+	TOwtNode mOnode;                  /*!< Ownership node */
 };
 
 #endif //  __FAP3_NODE_H

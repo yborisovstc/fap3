@@ -42,9 +42,9 @@ void Ut_nn::test_owning_1()
     Unit* owner = new Unit("Owner", nullptr);
     Unit* owned1 = new Unit("Owned1", nullptr);
     Unit* owned2 = new Unit("Owned2", nullptr);
-    owner->mCpOwner.connect(&owned1->mCpOwned);
-    owner->mCpOwner.disconnect(&owned1->mCpOwned);
-    owner->mCpOwner.connect(&owned1->mCpOwned);
-    owner->mCpOwner.connect(&owned2->mCpOwned);
+    owner->owner()->connect(owned1->owned());
+    owner->owner()->disconnect(owned1->owned());
+    owner->owner()->connect(owned1->owned());
+    owner->owner()->connect(owned2->owned());
     delete owner;
 }

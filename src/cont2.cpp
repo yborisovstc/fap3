@@ -138,8 +138,8 @@ MCont2* ContNode2::at(int aIdx) const
 
 MCont2* ContNode2::at(const string& aName) const
 {
-    NTnip::TNode::TPair* pair =  mOwnerCp.at(aName);
-    return pair ? pair->provided() : nullptr;
+    const NTnip::TCnode::TPair* pair =  mCnode.pairAt(aName);
+    return pair ? const_cast<NTnip::TCnode::TPair*>(pair)->provided() : nullptr;
 }
 
 MCont2* ContNode2::getContent(const CUri& aUri) const
@@ -165,16 +165,16 @@ bool ContNode2::addCont(int aIdx, const CUri& aUri, bool aLeaf)
     string name = aUri.at(aIdx);
     if (aIdx < aUri.size() - 1) {
 	auto newcont = new ContNode2(name);
-	res = mOwnerCp.connect(newcont);
+	res = mCnode.connect(newcont);
 	if (res)
 	    res = newcont->addCont(++aIdx, aUri, aLeaf);
     } else {
 	if (aLeaf) {
 	    auto newcont = new ContLeaf2(name);
-	    res = mOwnerCp.connect(newcont);
+	    res = mCnode.connect(newcont);
 	} else {
 	    auto newcont = new ContNode2(name);
-	    res = mOwnerCp.connect(newcont);
+	    res = mCnode.connect(newcont);
 	}
     }
     return res;
@@ -183,7 +183,7 @@ bool ContNode2::addCont(int aIdx, const CUri& aUri, bool aLeaf)
 void ContNode2::MCont2_doDump(int aLevel, int aIdt, ostream& aOs) const
 {
     cout << string(aIdt, ' ') << mId << " > " << endl;
-    mOwnerCp.dump(++aIdt);
+    mCnode.dump(++aIdt);
 }
 
 

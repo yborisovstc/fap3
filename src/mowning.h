@@ -2,6 +2,7 @@
 #define __FAP3_MOWNING_H
 
 #include "miface.h"
+#include "nconn.h"
 
 class MOwned;
 class MutCtx;
@@ -11,6 +12,8 @@ class MutCtx;
 class MOwner : public MIface
 {
     public:
+	using TCp =  MNcpp<MOwner, MOwned>;
+    public:
 	static const char* Type() { return "MOwner";};
 	// From MIface
 	virtual string Uid() const override { return MOwner_Uid();}
@@ -18,8 +21,9 @@ class MOwner : public MIface
 	virtual MIface* getLif(const char *aType) { return MOwner_getLif(aType);}
 	virtual MIface* MOwner_getLif(const char *aType) = 0;
 	// Local
-	virtual void getUri(GUri& aUri, MNode* aBase = nullptr) const = 0;
-	virtual MNode* getNode(const GUri& aUri, const MNode* aOwned) const = 0;
+	virtual void ownerGetUri(GUri& aUri, MNode* aBase = nullptr) const = 0;
+	virtual MNode* ownerGetNode(const GUri& aUri, const MNode* aOwned) const = 0;
+	// TODO not used, remove
 	virtual MOwned* bindedOwned() = 0;
 	virtual const MOwned* bindedOwned() const = 0;
 	virtual void onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx) = 0;
@@ -31,9 +35,10 @@ class MOwner : public MIface
 
 /** @brief Native net owned interface
  * */
-// TODO Do we reaaly need MOwned or better to directly use MUnit? 
 class MOwned : public MIface
 {
+    public:
+	using TCp =  MNcpp<MOwned, MOwner>;
     public:
 	static const char* Type() { return "MOwned";};
 	// From MIface
@@ -45,7 +50,7 @@ class MOwned : public MIface
 	virtual string ownedId() const = 0;
 	virtual void deleteOwned() = 0;
 	virtual bool isOwner(const MOwner* aOwner) const = 0;
-	virtual void onAttached() = 0;
+	virtual void onOwnerAttached() = 0;
 };
 
 

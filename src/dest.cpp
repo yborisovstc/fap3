@@ -61,11 +61,11 @@ MIface* TrBase::MVert_getLif(const char *aType)
     return res;
 }
 
-MIface* TrBase::doMOwnerGetLif(const char *aType)
+MIface* TrBase::MOwner_getLif(const char *aType)
 {
     MIface* res = NULL;
     if (res = checkLif<MUnit>(aType));  // IFR from inputs
-    else res = CpStateOutp::doMOwnerGetLif(aType);
+    else res = CpStateOutp::MOwner_getLif(aType);
     return res;
 }
 

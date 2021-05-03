@@ -45,7 +45,7 @@ class ContNode2 : public NTnip<MCont2, MContOwner2>, public MCont2, public MCont
 	// From MContNode
 	virtual string MContNode2_Uid() const override { return string();}
 	virtual bool addCont(const CUri& aUri, bool aLeaf = false) override;
-	virtual int size() const override { return mOwnerCp.count();}
+	virtual int size() const override { return mCnode.pcount();}
 	virtual MCont2* at(int aIdx) const override;
 	virtual MCont2* at(const string& aName) const override;
 	virtual MCont2* getContent(const CUri& aUri) const override;
@@ -62,10 +62,10 @@ class ContNode2 : public NTnip<MCont2, MContOwner2>, public MCont2, public MCont
 
 /** @brief Content leaf
  * */
-class ContLeaf2 : public NCpOip<MCont2, MContOwner2>, public MCont2
+class ContLeaf2 : public NCpOnp<MCont2, MContOwner2>, public MCont2
 {
     public:
-	ContLeaf2(const string& aId): NCpOip<MCont2, MContOwner2>(this), mId(aId) {}
+	ContLeaf2(const string& aId): NCpOnp<MCont2, MContOwner2>(this), mId(aId) {}
 	virtual ~ContLeaf2();
 	// From MCont2
 	virtual string MCont2_Uid() const override { return string();}

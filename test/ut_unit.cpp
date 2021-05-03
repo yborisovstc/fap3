@@ -45,9 +45,9 @@ void Ut_unit::test_nav_1()
     Unit* comp1 = new Unit("Comp1", nullptr);
     Unit* comp2 = new Unit("Comp2", nullptr);
     Unit* comp2_1 = new Unit("Comp2_1", nullptr);
-    owner->mCpOwner.connect(&comp1->mCpOwned);
-    owner->mCpOwner.connect(&comp2->mCpOwned);
-    comp2->mCpOwner.connect(&comp2_1->mCpOwned);
+    owner->owner()->connect(comp1->owned());
+    owner->owner()->connect(comp2->owned());
+    comp2->owner()->connect(comp2_1->owned());
 
     GUri uri1("Comp2.Comp2_1");
     MNode* res1 = owner->getNode(uri1);

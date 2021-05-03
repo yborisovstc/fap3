@@ -46,7 +46,7 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 	// From Node.MIface
 	virtual MIface* MNode_getLif(const char *aType) override;
 	// From Node
-	virtual MIface* doMOwnerGetLif(const char *aType) override;
+	virtual MIface* MOwner_getLif(const char *aType) override;
 	// From Node.MContentOwner
 	virtual void onContentChanged(const MContent* aCont) override;
 	// From Unit.MIfProvOwner
@@ -113,7 +113,7 @@ class Des: public Syst, public MDesSyncable, public MDesObserver
 	// From Node.MIface
 	virtual MIface* MNode_getLif(const char *aType) override;
 	// From Node
-	virtual MIface* doMOwnerGetLif(const char *aType) override;
+	virtual MIface* MOwner_getLif(const char *aType) override;
 	virtual void onOwnedAttached(MOwned* aOwned) override;
 	virtual MIface* MOwned_getLif(const char *aType);
 	// From Node.MContentOwner
@@ -169,8 +169,7 @@ class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver
 	virtual string MObserver_Uid() const  override {return getUid<MObserver>();}
 	virtual MIface* MObserver_getLif(const char *aType) override;
 	virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override;
-    protected:
-	// From Node
+	// From Node.MOwned
 	virtual void onOwnerAttached() override;
     protected:
 	list<MDesSyncable*> mActive;     /*!< Active compoments */

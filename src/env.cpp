@@ -265,7 +265,7 @@ void Env::constructSystem()
 		// Set launcher
 		mLauncher = mRoot->lIf(mLauncher);
 		if (!mLauncher) for (int i = 0; i < mRoot->owner()->pcount(); i++) {
-		    MOwned* comp = mRoot->owner()->pairAt(i);
+		    MOwned* comp = mRoot->owner()->pairAt(i)->provided();
 		    MLauncher* desl = comp ? comp->lIf(desl) : nullptr;
 		    if (desl) {
 			mLauncher = desl; break;

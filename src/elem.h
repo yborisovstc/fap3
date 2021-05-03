@@ -45,7 +45,7 @@ class Elem: public Unit, public MElem, public MParent, public MChild
 	virtual MIface* MChild_getLif(const char *aType) override;
 	virtual void MChild_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	virtual void onParentDeleting(MParent* aParent) override;
-	virtual TCp* cP() override;
+	virtual MChild::TCp* cP() override;
     protected:
 	MNode* getMowner(MNode* aNode);
 	void notifyParentMutated(const TMut& aMut);
