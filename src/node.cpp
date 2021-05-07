@@ -615,4 +615,12 @@ bool Node::isOwned(const MNode* aNode) const
     return res;
 }
 
-
+void Node::onContentChanged(const MContent* aCont)
+{
+    // Notify observers
+    auto* obs = mOcp.firstPair();
+    while (obs) {
+	obs->provided()->onObsContentChanged(this, aCont);
+	obs = mOcp.nextPair(obs);
+    }
+}

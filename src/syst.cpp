@@ -499,14 +499,3 @@ MIface* Syst::MAhost_getLif(const char *aType)
     return res;
 }
 
-void Syst::onContentChanged(const MContent* aCont)
-{
-    Elem::onContentChanged(aCont);
-    // Notify agents
-    auto agtCp = mAgtCp.firstPair();
-    while (agtCp) {
-	agtCp->provided()->onHostContentChanged(aCont);
-	agtCp = mAgtCp.nextPair(agtCp);
-    }
-}
-

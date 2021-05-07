@@ -35,6 +35,8 @@ class IfrNode : public NTnnp<MIfProv, MIfReq>, public MIfProv, protected MIfReq
 	virtual MIfProv* next(MIfProv::TCp* aProvCp) const override;
 	virtual bool isRequestor(MIfProvOwner* aOwner) const override;
 	virtual const MIfProvOwner* rqOwner() const override { return mOwner;}
+	virtual MIfReq* prev() override;
+	virtual MIfReq* tail() override;
 	// From MNCpp
 	virtual TSelf* firstLeafB() override;
 	virtual TPair* nextLeaf(TPair* aLeaf) override;

@@ -67,7 +67,7 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	virtual const MContent* getCont(const GUri& aUri) const override;
 	virtual bool getContent(const GUri& aCuri, string& aRes) const override;
 	virtual bool setContent(const GUri& aCuri, const string& aData) override;
-	virtual void onContentChanged(const MContent* aCont) override {}
+	virtual void onContentChanged(const MContent* aCont) override;
 	// From MObservable
 	virtual string MObservable_Uid() const override { return getUid<MObservable>();}
 	virtual MIface* MObservable_getLif(const char *aType) override;
@@ -113,7 +113,7 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	MEnv* mEnv = nullptr;
 	string mName;
 	MOwner* mContext = nullptr;
-	TObsCp mOcp;
+	TObsCp mOcp;                      /*!< Observable CP */
 	TOwtNode mOnode;                  /*!< Ownership node */
 };
 

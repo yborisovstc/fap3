@@ -133,6 +133,13 @@ void Unit::addIfpLeaf(MIface* aIfc, MIfReq::TIfReqCp* aReq)
     }
 }
 
+void Unit::addIfpLeafs(MIfProv::TIfaces* aIfcs, MIfReq::TIfReqCp* aReq)
+{
+    for (auto ifc : *aIfcs) {
+	addIfpLeaf(ifc, aReq);
+    }
+}
+
 bool Unit::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 {
     bool res = false;
@@ -159,4 +166,12 @@ void Unit::onOwnedAttached(MOwned* aOwned)
     // Invalidate IRM
     invalidateIrm();
 }
+
+bool Unit::isRequestor(MIfReq::TIfReqCp* aReq, MNode* aOwner) const
+{
+    MUnit* ou = aOwner ? aOwner->lIf(ou) : nullptr;
+    MIfProvOwner* oo = ou ? ou->lIf(oo) : nullptr;
+    return aReq->provided()->isRequestor(oo);
+}
+
 

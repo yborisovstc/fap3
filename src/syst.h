@@ -107,8 +107,6 @@ class Syst : public Elem, public MAhost, public MActr
 	// From Node
 	virtual void mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx) override;
 	virtual MIface* MOwner_getLif(const char *aType) override;
-	// From Node.MContentOwner
-	virtual void onContentChanged(const MContent* aCont) override;
 	// From MActr
 	virtual string MActr_Uid() const override {return getUid<MActr>();}
 	virtual bool attachAgent(MAgent::TCp* aAgt) override;

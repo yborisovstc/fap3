@@ -43,7 +43,7 @@ static const int KStatecDlog_ObsIfr = 7;  // Observers ifaces routing
 const string State::KCont_Value = "";
 
 
-State::State(const string& aName, MEnv* aEnv): Vertu(aName, aEnv), mPdata(NULL), mCdata(NULL), mNotified(false)
+State::State(const string& aName, MEnv* aEnv): Vertu(aName, aEnv), mPdata(NULL), mCdata(NULL), mUpdNotified(false), mActNotified(false)
 {
     if (aName.empty()) mName = Type();
     mPdata = new BdVar(this);
@@ -72,13 +72,15 @@ void State::setActivated()
     //MDesObserver* obs = Owner()->lIf(obs);
     MUnit* ownu = Owner()->lIf(ownu);
     MDesObserver* obs = ownu->getSif(obs);
-    if (obs) {
+    if (obs && !mActNotified) {
 	obs->onActivated(this);
+	mActNotified = true;
     }
 }
 
 void State::update()
 {
+    mActNotified = false;
     MUpdatable* upd = mPdata;
     if (upd) {
 	try {
@@ -114,7 +116,7 @@ void State::NotifyInpsUpdated()
 
 void State::confirm()
 {
-    mNotified = false;
+    mUpdNotified = false;
     MUpdatable* upd = mCdata;
     if (upd != NULL) {
 	string old_value;
@@ -135,9 +137,9 @@ void State::setUpdated()
     //MDesObserver* obs = Owner() ? Owner()->lIf(obs) : nullptr;
     MUnit* ownu = Owner()->lIf(ownu);
     MDesObserver* obs = ownu->getSif(obs);
-    if (obs && !mNotified) {
+    if (obs && !mUpdNotified) {
 	obs->onUpdated(this);
-	mNotified = true;
+	mUpdNotified = true;
     }
 }
 
@@ -340,7 +342,7 @@ string State::GetDvarUid(const MDVar* aComp) const
 
 /// DES
 
-Des::Des(const string &aName, MEnv* aEnv): Syst(aName, aEnv), mNotified(false)
+Des::Des(const string &aName, MEnv* aEnv): Syst(aName, aEnv), mUpdNotified(false), mActNotified(false)
 {
     if (aName.empty()) mName = Type();
 }
@@ -356,6 +358,7 @@ MIface* Des::MNode_getLif(const char *aType)
 
 void Des::update()
 {
+    mActNotified = false;
     while (!mActive.empty()) {
 	auto comp = mActive.front();
 	try {
@@ -369,7 +372,7 @@ void Des::update()
 
 void Des::confirm()
 {
-    mNotified = false;
+    mUpdNotified = false;
     while (!mUpdated.empty()) {
 	auto comp = mUpdated.front();
 	comp->confirm();
@@ -379,20 +382,25 @@ void Des::confirm()
 
 void Des::onActivated(MDesSyncable* aComp)
 {
-    if (mActive.empty()) { // Notify owner
+    if (!mActNotified) { // Notify owner
 	MDesObserver* obs = Owner()->lIf(obs);
-	if (obs) obs->onActivated(this);
+	if (obs) {
+	    obs->onActivated(this);
+	    mActNotified = true;
+	}
     }
-    mActive.push_back(aComp);
+    if (aComp) {
+	mActive.push_back(aComp);
+    }
 }
 
 void Des::onUpdated(MDesSyncable* aComp)
 {
-    if (!mNotified) { // Notify owner
+    if (!mUpdNotified) { // Notify owner
 	MDesObserver* obs = Owner() ? Owner()->lIf(obs) : nullptr;
 	if (obs) {
 	    obs->onUpdated(this);
-	    mNotified = true;
+	    mUpdNotified = true;
 	}
     }
     mUpdated.push_back(aComp);
@@ -424,19 +432,31 @@ MIface* Des::MOwner_getLif(const char *aType)
 
 void Des::MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const
 {
-    cout << "Active:" << endl;
+    Ifu::offset(aIdt, aOs); aOs << "Active:" << endl;
     for (auto item : mActive) {
-	cout << item->Uid() << endl;
+	Ifu::offset(aIdt, aOs); aOs << item->Uid() << endl;
     }
-    cout << "Updated:" << endl;
+    Ifu::offset(aIdt, aOs); aOs << "Updated:" << endl;
     for (auto item : mUpdated) {
-	cout << item->Uid() << endl;
+	Ifu::offset(aIdt, aOs); aOs << item->Uid() << endl;
     }
 }
 
+void Des::MDesObserver_doDump(int aLevel, int aIdt, ostream& aOs) const
+{
+    MDesSyncable_doDump(aLevel, aIdt, aOs);
+    const MDesObserver* obs = Owner()->lIf(obs);
+    if (obs && (aLevel & Ifu::EDM_Recursive)) {
+	aIdt += 4;
+	Ifu::offset(aIdt, aOs); aOs << ">> " << obs->Uid() << endl;
+	obs->MDesObserver_doDump(aLevel, aIdt, aOs);
+    }
+}
+
+
 ///// ADES
 
-ADes::ADes(const string &aName, MEnv* aEnv): Unit(aName, aEnv), mOrCp(this), mAgtCp(this), mNotified(false)
+ADes::ADes(const string &aName, MEnv* aEnv): Unit(aName, aEnv), mOrCp(this), mAgtCp(this), mUpdNotified(false), mActNotified(false)
 {
     if (aName.empty()) mName = Type();
 }
@@ -462,6 +482,7 @@ MIface* ADes::MAgent_getLif(const char *aType)
 
 void ADes::update()
 {
+    mActNotified = false;
     while (!mActive.empty()) {
 	auto comp = mActive.front();
 	try {
@@ -475,7 +496,7 @@ void ADes::update()
 
 void ADes::confirm()
 {
-    mNotified = false;
+    mUpdNotified = false;
     while (!mUpdated.empty()) {
 	auto comp = mUpdated.front();
 	comp->confirm();
@@ -483,35 +504,42 @@ void ADes::confirm()
     }
 }
 
+MDesObserver* ADes::getDesObs()
+{
+    // Get access to owners owner via MAhost iface
+    MNode* ahn = ahostNode();
+    MOwner* ahno = ahn->owned()->pairAt(0) ? ahn->owned()->pairAt(0)->provided() : nullptr;
+    MUnit* ahnou = ahno ? ahno->lIf(ahnou) : nullptr;
+    MDesObserver* obs = ahnou ? ahnou->getSif(obs) : nullptr;
+    return obs;
+}
+
 void ADes::onActivated(MDesSyncable* aComp)
 {
-    if (mActive.empty()) { // Notify owner
-	// Get access to owners owner via MAhost iface
-	MAhost* ahost = mAgtCp.firstPair()->provided();
-	MNode* ahn = ahost->lIf(ahn);
-	MOwner* ahno = ahn->owned()->pairAt(0)->provided();
-	MUnit* ahnou = ahno->lIf(ahnou);
-	MDesObserver* obs = ahnou->getSif(obs);
-	if (obs) obs->onActivated(this);
+    if (!mActNotified) { // Notify owner
+	MDesObserver* obs = getDesObs();
+	if (obs) {
+	    obs->onActivated(this);
+	    mActNotified = true;
+	}
     }
-    mActive.push_back(aComp);
+    if (aComp) {
+	mActive.push_back(aComp);
+    }
 }
 
 void ADes::onUpdated(MDesSyncable* aComp)
 {
-    if (!mNotified) { // Notify owner
-	// Get access to owners owner via MAhost iface
-	MAhost* ahost = mAgtCp.firstPair()->provided();
-	MNode* ahn = ahost->lIf(ahn);
-	MOwner* ahno = ahn->owned()->pairAt(0)->provided();
-	MUnit* ahnou = ahno->lIf(ahnou);
-	MDesObserver* obs = ahnou->getSif(obs);
+    if (!mUpdNotified) { // Notify owner
+	MDesObserver* obs = getDesObs();
 	if (obs) {
 	    obs->onUpdated(this);
-	    mNotified = true;
+	    mUpdNotified = true;
 	}
     }
-    mUpdated.push_back(aComp);
+    if (aComp) {
+	mUpdated.push_back(aComp);
+    }
 }
 
 MIface* ADes::MOwned_getLif(const char *aType)
@@ -565,6 +593,20 @@ void ADes::MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const
     }
 }
 
+MNode* ADes::ahostNode()
+{
+    MAhost* ahost = mAgtCp.firstPair()->provided();
+    MNode* hostn = ahost ? ahost->lIf(hostn) : nullptr;
+    return hostn;
+}
+
+MNode* ADes::ahostGetNode(const GUri& aUri)
+{
+    MAhost* ahost = mAgtCp.firstPair()->provided();
+    MNode* hostn = ahost ? ahost->lIf(hostn) : nullptr;
+    MNode* res = hostn ? hostn->getNode(aUri, this) : nullptr;
+    return res;
+}
 
 //// DesLauncher
 

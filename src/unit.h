@@ -36,9 +36,11 @@ class Unit : public Node, public MUnit, public MIfProvOwner
 	virtual IfrNode* createIfProv(const string& aName, MIfReq::TIfReqCp* aReq) const;
 	void invalidateIrm();
 	void addIfpLeaf(MIface* aIfc, MIfReq::TIfReqCp* aReq);
+	void addIfpLeafs(MIfProv::TIfaces* aIfcs, MIfReq::TIfReqCp* aReq);
 	// From Node.MOwner
 	virtual MIface* MOwner_getLif(const char *aType) override;
 	virtual void onOwnedAttached(MOwned* aOwned) override;
+	bool isRequestor(MIfReq::TIfReqCp* aReq, MNode* aOwner) const;
     protected:
 	map<string, IfrNode*> mLocalIrn; /*!< Local IFR node */
 	list<IfrNode*> mIrns;  /*! IFR nodes */

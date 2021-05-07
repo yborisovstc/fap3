@@ -137,4 +137,5 @@ class MVectorGet : public MIface
 	string Mid() const override { return MVectorGet_Mid();}
 };
 
+
 #endif

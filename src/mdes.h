@@ -19,6 +19,8 @@ class MDesObserver: public MIface
 	// From MIface
 	virtual string Uid() const override { return MDesObserver_Uid();}
 	virtual string MDesObserver_Uid() const = 0;
+	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { return MDesObserver_doDump(aLevel, aIdt, std::cout);}
+	virtual void MDesObserver_doDump(int aLevel, int aIdt, ostream& aOs) const = 0;
 	// Local
 	/** @brief Notification that component was activated */
 	virtual void onActivated(MDesSyncable* aComp) = 0;

@@ -57,9 +57,6 @@ class MAgent: public MIface
 	virtual string MAgent_Uid() const = 0;
 	virtual MIface* getLif(const char *aType) override { return MAgent_getLif(aType);}
 	virtual MIface* MAgent_getLif(const char *aType) = 0;
-	// Local
-	/** @brief Handles host content changed */
-	virtual void onHostContentChanged(const MContent* aCont) = 0;
 };
 
 

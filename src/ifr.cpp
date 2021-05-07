@@ -60,6 +60,25 @@ MIfProv* IfrNode::next(MIfProv::TCp* aProvCp) const
     return nullptr;
 }
 
+MIfReq* IfrNode::prev()
+{
+    MIfReq* res = nullptr;
+    auto prevCp = firstPair();
+    res = prevCp ? prevCp->provided() : nullptr;
+    return res;
+}
+
+MIfReq* IfrNode::tail()
+{
+    MIfReq* res = nullptr;
+    MIfReq* pr = prev();
+    while (pr) {
+	res = pr;
+	pr = pr->prev();
+    }
+    return res;
+}
+
 void IfrNode::MIfProv_doDump(int aLevel, int aIdt, ostream& aOs) const
 {
     Ifu::offset(aIdt, aOs);

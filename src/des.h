@@ -99,7 +99,8 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 	BdVar* mCdata;   //<! Confirming phase data
 	static const string KCont_Value;
 	Cnt mValue = Cnt(*this, KCont_Value);
-	bool mNotified;  //<! Sign of that State notified observers
+	bool mUpdNotified;  //<! Sign of that State notified observers on Update
+	bool mActNotified;  //<! Sign of that State notified observers on Activation
 };
 
 
@@ -125,12 +126,14 @@ class Des: public Syst, public MDesSyncable, public MDesObserver
 	virtual void confirm() override;
 	// From MDesObserver
 	virtual string MDesObserver_Uid() const override {return getUid<MDesObserver>();}
+	virtual void MDesObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	virtual void onActivated(MDesSyncable* aComp) override;
 	virtual void onUpdated(MDesSyncable* aComp) override;
     protected:
 	list<MDesSyncable*> mActive;     /*!< Active compoments */
 	list<MDesSyncable*> mUpdated;     /*!< Updated compoments */
-	bool mNotified;  //<! Sign of that State notified observers
+	bool mUpdNotified;  //<! Sign of that State notified observers on Update
+	bool mActNotified;  //<! Sign of that State notified observers on Activation
 };
 
 /** @brief DES agent
@@ -161,22 +164,28 @@ class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver
 	virtual string MDesObserver_Uid() const override {return getUid<MDesObserver>();}
 	virtual void onActivated(MDesSyncable* aComp) override;
 	virtual void onUpdated(MDesSyncable* aComp) override;
+	virtual void MDesObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
 	// From MAgent
 	virtual string MAgent_Uid() const override {return getUid<MAgent>();}
 	virtual MIface* MAgent_getLif(const char *aType) override;
-	virtual void onHostContentChanged(const MContent* aCont) override {}
 	// From MObserver
 	virtual string MObserver_Uid() const  override {return getUid<MObserver>();}
 	virtual MIface* MObserver_getLif(const char *aType) override;
 	virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override;
+	virtual void onObsContentChanged(MObservable* aObl, const MContent* aCont) override {}
 	// From Node.MOwned
 	virtual void onOwnerAttached() override;
+    protected:
+	MNode* ahostGetNode(const GUri& aUri);
+	MNode* ahostNode();
+	MDesObserver* getDesObs();
     protected:
 	list<MDesSyncable*> mActive;     /*!< Active compoments */
 	list<MDesSyncable*> mUpdated;    /*!< Updated compoments */
 	TObserverCp mOrCp;               /*!< Observer connpoint */ 
 	TAgtCp mAgtCp;                   /*!< Agent connpoint */ 
-	bool mNotified;                  //<! Sign of that State notified observers
+	bool mUpdNotified;               //<! Sign of that State notified observers on Update
+	bool mActNotified;               //<! Sign of that State notified observers on Activation
 };
 
 
@@ -205,6 +214,40 @@ class DesLauncher: public Des, public MLauncher
 	int mCounter = 0;
 	bool mStop;
 };
+
+
+// Helpers
+template <typename T> bool GetSData(MNode* aDvget, T& aData)
+{
+    bool res = false;
+    MUnit* vgetu = aDvget->lIf(vgetu);
+    MDVarGet* vget = vgetu ? vgetu->getSif(vget) : nullptr;
+    if (vget) {
+	MDtGet<Sdata<T>>* gsd = vget->lIf(gsd);
+	if (gsd) {
+	    Sdata<T> st;
+	    gsd->DtGet(st);
+	    aData = st.mData;
+	    res = true;
+	}
+    }
+    return res;
+}
+
+template <typename T> bool GetGData(MNode* aDvget, T& aData)
+{
+    bool res = false;
+    MUnit* vgetu = aDvget->lIf(vgetu);
+    MDVarGet* vget = vgetu->getSif(vget);
+    if (vget) {
+	MDtGet<T>* gsd = vget->lIf(gsd);
+	if (gsd) {
+	    gsd->DtGet(aData);
+	    res = true;
+	}
+    }
+    return res;
+}
 
 
 

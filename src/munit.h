@@ -42,6 +42,12 @@ class MUnit: public MIface
 	    MIface* ifc = (prov && prov->ifaces()) ? (prov->ifaces()->empty() ? nullptr : prov->ifaces()->at(0)) : nullptr;
 	    return aInst = dynamic_cast<T*>(ifc);
 	}
+	/** @brief Gets ifaces resolved
+	 * */
+	template<class T> MIfProv::TIfaces* getIfs() {
+	    auto prov = defaultIfProv(T::Type());
+	    return prov ? prov->ifaces() : nullptr;
+	}
 };
 
 

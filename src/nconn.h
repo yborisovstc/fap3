@@ -852,8 +852,8 @@ class NCpOnp : public MNcpp<TPif, TRif>
 	    return mPair ? mPair->nextLeaf(this) : nullptr;
 	}
 	virtual int pcount() const override {return mPair ? 1 : 0;}
-	virtual const TPair* pairAt(int aInd) const override { assert (aInd < pcount()); return mPair;}
-	virtual TPair* pairAt(int aInd) override { assert (aInd < pcount()); return mPair;}
+	virtual const TPair* pairAt(int aInd) const override { return (aInd < pcount()) ? mPair : nullptr; }
+	virtual TPair* pairAt(int aInd) override { return (aInd < pcount()) ? mPair : nullptr; }
 	virtual TPair* pairAt(const string aId) override { return nullptr;}
 	virtual const TPair* pairAt(const string aId) const { return nullptr;}
 	// Local

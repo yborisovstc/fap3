@@ -53,7 +53,6 @@ class TstAgt: public Unit, public MAgent
 	    else res = checkLif<MUnit>(aType);
 	    return res;
 	}
-	virtual void onHostContentChanged(const MContent* aCont) override {}
 	// From Unit.MIfProvOwner
 	virtual bool resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override {
 	    bool res = false;
