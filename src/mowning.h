@@ -30,6 +30,9 @@ class MOwner : public MIface
 	virtual void onOwnedAttached(MOwned* aOwned) = 0;
 	/** @brief Gets the array of modules, the nearest the first */
 	virtual void getModules(vector<MNode*>& aModules) = 0;
+	/** @brief Gets node using parent access rule */
+	// TODO This is vulnerability: we shouldn't get node but specific iface, MParent probably
+	virtual MNode* getParent(const GUri& aUri) = 0;
 };
 
 

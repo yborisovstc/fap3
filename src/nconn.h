@@ -446,8 +446,19 @@ class NCpOmip : public MNcpp<TPif, TRif>
 	    }
 	}
 	virtual TPair* binded() override { return nullptr;}
-	virtual TPair* firstPair() { return  nullptr;}
-	virtual TPair* nextPair(TPair* aPair) { return nullptr;}
+	virtual TPair* firstPair() { return mPairs.size() > 0 ? mPairs.begin()->second : nullptr;}
+	virtual TPair* nextPair(TPair* aPair) {
+	    TPair* res = nullptr;
+	    string pid;
+	    bool ires = aPair->getId(pid);
+	    if (ires) {
+		auto it = mPairs.find(pid); it++;
+		res = (it != mPairs.end()) ? it->second : nullptr; 
+	    }
+	    return res;
+	}
+
+
 	virtual TPair* firstLeaf() override { return nullptr;}
 	virtual TSelf* firstLeafB() override { return nullptr;}
 	virtual TPair* nextLeaf(TPair* aLeaf) override { return nullptr;}
@@ -538,7 +549,9 @@ class NCpOip : public MNcpp<TPif, TRif>
 	using TPair = typename MNcpp<TPif, TRif>::TPair;
     public:
 	NCpOip(TPif* aPx): mPair(nullptr), mPx(aPx) {}
-	virtual ~NCpOip() { delete mPx;}
+	virtual ~NCpOip() {
+	    if (mPair) disconnect(mPair);
+	}
 	virtual TPif* provided() override { return mPx;}
 	virtual const TPif* provided() const override { return mPx;}
 	virtual bool attach(TPair* aPair) override;
@@ -834,6 +847,7 @@ class NCpOnp : public MNcpp<TPif, TRif>
 	using TPairs = set<TPair*>;
     public:
 	NCpOnp(TPif* aPx): mPair(nullptr), mPx(aPx) {}
+	virtual ~NCpOnp() {}
 	virtual TPif* provided() override { return mPx;}
 	virtual const TPif* provided() const override { return mPx;}
 	virtual bool connect(TPair* aPair) override ;
@@ -858,6 +872,7 @@ class NCpOnp : public MNcpp<TPif, TRif>
 	virtual const TPair* pairAt(const string aId) const { return nullptr;}
 	// Local
 	void resetPx() {mPx = nullptr;}
+	bool disconnect() { return  mPair ? disconnect(mPair) : false; }
     protected:
 	TPair* mPair;
 	TPif* mPx;

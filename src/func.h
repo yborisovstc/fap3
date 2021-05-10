@@ -57,6 +57,28 @@ template <class T> class FAddDt: public FAddBase, public MDtGet<T> {
 };
 
 
+// Maximum, variable type
+
+class FMaxBase: public Func {
+    public:
+	enum { EInp = Func::EInp1 };
+	FMaxBase(Host& aHost): Func(aHost) {};
+};
+
+/** @brief Addintion, generic data
+ * */
+template <class T> class FMaxDt: public FMaxBase, public MDtGet<T> {
+    public:
+	static Func* Create(Host* aHost, const string& aString);
+	FMaxDt(Host& aHost): FMaxBase(aHost) {};
+	virtual MIface* getLif(const char *aName) override;
+	virtual string IfaceGetId() const { return MDtGet<T>::Type();};
+	virtual void DtGet(T& aData);
+	virtual void GetResult(string& aResult) const;
+	T mRes;
+};
+
+
 
 
 #endif

@@ -19,6 +19,7 @@ class Ifu
 	    EDM_Recursive = 0x01,
 	    EDM_Base = 0x02,
 	    EDM_Comps = 0x04,
+	    EDM_Opt1 = 0x10,
 	};
     public:
 	Ifu();

@@ -73,6 +73,19 @@ class TrAddVar: public TrVar
 	virtual string GetInpUri(int aId) const override;
 };
 
+/** @brief Agent function "Max of Var data"
+ * */
+class TrMaxVar: public TrVar
+{
+    public:
+	static const char* Type() { return "TrMaxVar";};
+	TrMaxVar(const string& aName = string(), MEnv* aEnv = NULL);
+	// From ATrVar
+	virtual void Init(const string& aIfaceName) override;
+	virtual string GetInpUri(int aId) const override;
+};
+
+
 
 
 

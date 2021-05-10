@@ -408,7 +408,8 @@ void Des::onUpdated(MDesSyncable* aComp)
 
 void Des::onOwnedAttached(MOwned* aOwned)
 {
-    MDesSyncable* os = aOwned->lIf(os);
+    MUnit* osu = aOwned->lIf(osu);
+    MDesSyncable* os = osu ? osu->getSif(os) : nullptr;
     if (os) {
 	mActive.push_back(os);
     }
@@ -432,13 +433,22 @@ MIface* Des::MOwner_getLif(const char *aType)
 
 void Des::MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const
 {
-    Ifu::offset(aIdt, aOs); aOs << "Active:" << endl;
-    for (auto item : mActive) {
-	Ifu::offset(aIdt, aOs); aOs << item->Uid() << endl;
-    }
-    Ifu::offset(aIdt, aOs); aOs << "Updated:" << endl;
-    for (auto item : mUpdated) {
-	Ifu::offset(aIdt, aOs); aOs << item->Uid() << endl;
+    if (aLevel & Ifu::EDM_Opt1) {
+	Ifu::offset(aIdt, aOs); aOs << "Active:" << endl;
+	for (auto item : mActive) {
+	    Ifu::offset(aIdt, aOs); aOs << item->Uid() << endl;
+	    if (aLevel & Ifu::EDM_Recursive) {
+		item->MDesSyncable_doDump(aLevel, aIdt + 4, aOs);
+	    }
+	}
+    } else {
+	Ifu::offset(aIdt, aOs); aOs << "Updated:" << endl;
+	for (auto item : mUpdated) {
+	    Ifu::offset(aIdt, aOs); aOs << item->Uid() << endl;
+	    if (aLevel & Ifu::EDM_Recursive) {
+		item->MDesSyncable_doDump(aLevel, aIdt + 4, aOs);
+	    }
+	}
     }
 }
 
@@ -557,7 +567,8 @@ MIface* ADes::MObserver_getLif(const char *aType)
 
 void ADes::onObsOwnedAttached(MObservable* aObl, MOwned* aOwned)
 {
-    MDesSyncable* os = aOwned->lIf(os);
+    MUnit* osu = aOwned->lIf(osu);
+    MDesSyncable* os = osu ? osu->getSif(os) : nullptr;
     if (os) {
 	onActivated(os);
     }
@@ -579,17 +590,37 @@ void ADes::onOwnerAttached()
     if (!res) {
 	Logger()->Write(EErr, this, "Cannot attach to host");
     }
+    // Activate all existing syncable components
+    MNode* host = ahostNode();
+    auto owdCp = host->owner()->firstPair();
+    while (owdCp) {
+	MUnit* osu = owdCp->provided()->lIf(osu);
+	MDesSyncable* os = osu ? osu->getSif(os) : nullptr;
+	if (os && os != this) {
+	    onActivated(os);
+	}
+	owdCp = host->owner()->nextPair(owdCp);
+    }
 }
 
 void ADes::MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const
 {
-    cout << "Active:" << endl;
-    for (auto item : mActive) {
-	cout << item->Uid() << endl;
-    }
-    cout << "Updated:" << endl;
-    for (auto item : mUpdated) {
-	cout << item->Uid() << endl;
+    if (aLevel & Ifu::EDM_Opt1) {
+	Ifu::offset(aIdt, aOs); aOs << "Active:" << endl;
+	for (auto item : mActive) {
+	    Ifu::offset(aIdt, aOs); aOs << item->Uid() << endl;
+	    if (aLevel & Ifu::EDM_Recursive) {
+		item->MDesSyncable_doDump(aLevel, aIdt + 4, aOs);
+	    }
+	}
+    } else {
+	Ifu::offset(aIdt, aOs); aOs << "Updated:" << endl;
+	for (auto item : mUpdated) {
+	    Ifu::offset(aIdt, aOs); aOs << item->Uid() << endl;
+	    if (aLevel & Ifu::EDM_Recursive) {
+		item->MDesSyncable_doDump(aLevel, aIdt + 4, aOs);
+	    }
+	}
     }
 }
 
@@ -647,8 +678,8 @@ bool DesLauncher::Stop()
 
 void DesLauncher::OnIdle()
 {
-    //this_thread::sleep_for(std::chrono::milliseconds(1));
-    mStop = true;
+    this_thread::sleep_for(std::chrono::milliseconds(10));
+    //mStop = true;
 }
 
 MIface* DesLauncher::MOwned_getLif(const char *aType)

@@ -69,6 +69,13 @@ MIface* TrBase::MOwner_getLif(const char *aType)
     return res;
 }
 
+void TrBase::AddInput(const string& aName)
+{
+    MNode* cp = Provider()->createNode(CpStateInp::Type(), aName, mEnv);
+    assert(cp);
+    bool res = attachOwned(cp);
+    assert(res);
+}
 
 
 
@@ -161,8 +168,6 @@ MIface* TrVar::MNode_getLif(const char *aType)
 
 ///// TrAddVar
 
-
-
 TrAddVar::TrAddVar(const string& aName, MEnv* aEnv): TrVar(aName, aEnv)
 {
     if (aName.empty()) mName = Type();
@@ -189,6 +194,30 @@ string TrAddVar::GetInpUri(int aId) const
 {
     if (aId == FAddBase::EInp) return "Inp";
     else if (aId == FAddBase::EInpN) return "InpN";
+    else return string();
+}
+
+
+///// TrMaxVar
+
+TrMaxVar::TrMaxVar(const string& aName, MEnv* aEnv): TrVar(aName, aEnv)
+{
+    if (aName.empty()) mName = Type();
+    AddInput("Inp");
+}
+
+void TrMaxVar::Init(const string& aIfaceName)
+{
+    if (mFunc) {
+	delete mFunc;
+	mFunc = NULL;
+    }
+    if ((mFunc = FMaxDt<Sdata<int>>::Create(this, aIfaceName)) != NULL);
+}
+
+string TrMaxVar::GetInpUri(int aId) const 
+{
+    if (aId == FMaxBase::EInp) return "Inp";
     else return string();
 }
 

@@ -83,6 +83,7 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	virtual void onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx) override;
 	virtual void onOwnedAttached(MOwned* aOwned) override;
 	virtual void getModules(vector<MNode*>& aModules) override;
+	virtual MNode* getParent(const GUri& aUri) override;
 	// From MOwned
 	virtual string MOwned_Uid() const {return getUid<MOwned>();}
 	virtual MIface* MOwned_getLif(const char *aType) override;

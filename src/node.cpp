@@ -9,11 +9,14 @@ Node::Node(const string &aName, MEnv* aEnv): mName(aName.empty() ? Type() : aNam
 
 Node::~Node()
 {
+    // Removing the owneds
     auto owdCp = owner()->firstPair();
     while (owdCp) {
 	owdCp->provided()->deleteOwned();
 	owdCp = owner()->firstPair();
     }
+    // Disconnect from the owner
+    mOnode.disconnect();
 }
 
 MIface* Node::MNode_getLif(const char *aType)
@@ -343,8 +346,9 @@ MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
 	GUri prnturi(sparent);
 	// Resolving parent ref basing on target, ref ds_umt_rtnsu_rbs
 	TNs pns = ns; // Parent namaspace
-	getModules(pns);
-	parent = getNode(prnturi, pns);
+	//getModules(pns);
+	//parent = getNode(prnturi, pns);
+	parent = getParent(prnturi);
 	if (!parent) {
 	    // Probably external node not imported yet - ask env for resolving uri
 	    /*!!
@@ -540,6 +544,9 @@ bool Node::setContent(const GUri& aCuri, const string& aData)
     if (cnode) {
 	res = cnode->setData(aData);
     }
+    if (!res) {
+	Log(TLog(EErr, this) + "Setting [" + aCuri.toString() + "] to [" + aData + "]: content doesn't exist");
+    }
     return res;
 
 }
@@ -593,6 +600,21 @@ void Node::getModules(vector<MNode*>& aModules)
     if (owner) {
 	owner->getModules(aModules);
     }
+}
+
+MNode* Node::getParent(const GUri& aUri)
+{
+    MNode* res = getNode(aUri);
+    if (!res) {
+	MOwner* owner = mContext ? mContext : Owner();
+	if (owner) {
+	    res =owner->getParent(aUri);
+	} else{
+	    MNode* mdl = getNode(mEnv->modulesUri());
+	    res = mdl ? mdl->getNode(aUri) : nullptr;
+	}
+    }
+    return res;
 }
 
 MIface* Node::MOwner_getLif(const char *aType)
