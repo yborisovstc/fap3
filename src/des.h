@@ -223,7 +223,7 @@ template <typename T> bool GetSData(MNode* aDvget, T& aData)
     MUnit* vgetu = aDvget->lIf(vgetu);
     MDVarGet* vget = vgetu ? vgetu->getSif(vget) : nullptr;
     if (vget) {
-	MDtGet<Sdata<T>>* gsd = vget->lIf(gsd);
+	MDtGet<Sdata<T>>* gsd = vget->GetDObj(gsd);
 	if (gsd) {
 	    Sdata<T> st;
 	    gsd->DtGet(st);
@@ -240,7 +240,7 @@ template <typename T> bool GetGData(MNode* aDvget, T& aData)
     MUnit* vgetu = aDvget->lIf(vgetu);
     MDVarGet* vget = vgetu->getSif(vget);
     if (vget) {
-	MDtGet<T>* gsd = vget->lIf(gsd);
+	MDtGet<T>* gsd = vget->GetDObj(gsd);
 	if (gsd) {
 	    gsd->DtGet(aData);
 	    res = true;

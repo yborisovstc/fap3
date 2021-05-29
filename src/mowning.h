@@ -23,7 +23,13 @@ class MOwner : public MIface
 	// Local
 	virtual void ownerGetUri(GUri& aUri, MNode* aBase = nullptr) const = 0;
 	virtual MNode* ownerGetNode(const GUri& aUri, const MNode* aOwned) const = 0;
-	// TODO not used, remove
+	/** @brief Finds owned binded to given owner
+	 * This method allows to get the owner as MNode for given Node in case of called from upper node
+	 * The matter is that MOwner doesn't expose MNode  to support native hier security
+	 * But there is still the way to get this MNode if uppoer node requests it 
+	 * */
+	//virtual MOwned* findOwnedBindedTo(const MOwner* aOwner) = 0;
+	// TODO dont use, security gap - give access to owner node, remove
 	virtual MOwned* bindedOwned() = 0;
 	virtual const MOwned* bindedOwned() const = 0;
 	virtual void onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx) = 0;

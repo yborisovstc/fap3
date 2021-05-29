@@ -441,11 +441,13 @@ string Chromo2Mdl::GetAttr(const THandle& aHandle, TNodeAttr aAttr) const
     } else if (aAttr == ENa_MutAttr) {
 	res = "id";
     } else if (aAttr == ENa_MutNode) {
-	assert(rel == KMS_Add || rel == KMS_Cont || rel == KMS_Conn || rel == KMS_Disconn || rel.empty());
+	assert(rel == KMS_Add || rel == KMS_Remove || rel == KMS_Cont || rel == KMS_Conn || rel == KMS_Disconn || rel.empty());
 	if (rel == KMS_Add || rel.empty()) {
 	    res = GetContextByAttr(*node, aAttr);
 	} else if (rel == KMS_Cont) {
 	    res = node->mMut.mP;
+	} else if (rel == KMS_Remove) {
+	    res = node->mMut.mQ;
 	} else if (rel == KMS_Conn || rel == KMS_Disconn) {
 	    res = node->mMut.mP;
 	} else {
@@ -604,6 +606,8 @@ void Chromo2Mdl::SetAttr(const THandle& aHandle, TNodeAttr aType, const string& 
 	    node->AddContext(KT_Node, aVal);
 	} else if (rel == KMS_Conn || rel == KMS_Disconn) {
 	    node->mMut.mP = aVal;
+	} else if (rel == KMS_Remove) {
+	    node->mMut.mQ = aVal;
 	} else {
 	    node->mMut.mP = aVal;
 	}

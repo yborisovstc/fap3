@@ -678,7 +678,7 @@ bool DesLauncher::Stop()
 
 void DesLauncher::OnIdle()
 {
-    this_thread::sleep_for(std::chrono::milliseconds(10));
+    this_thread::sleep_for(std::chrono::milliseconds(100));
     //mStop = true;
 }
 

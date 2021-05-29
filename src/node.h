@@ -102,6 +102,7 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	inline MProvider* Provider() const {return mEnv ? mEnv->provider(): nullptr; }
 	void updateNs(TNs& aNs, const ChromoNode& aCnode);
 	bool isOwned(const MNode* aComp) const;
+	bool addComp(const string& aType, const string& aName);
 	// Mutations
 	virtual MNode* mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx);
 	virtual void mutSegment(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx);

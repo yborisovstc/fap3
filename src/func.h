@@ -15,6 +15,14 @@ class Func
     public:
 	class Host {
 	    public: 
+	    MDVarGet* GetInp(int aInpId, bool aOpt = false) {
+		MDVarGet* res = nullptr;
+		auto inps = GetInps(aInpId, MDVarGet::Type(), aOpt);
+		if (inps && !inps->empty()) {
+		    res = dynamic_cast<MDVarGet*>(inps->at(0));
+		}
+		return res;
+	    }
 	    virtual MIfProv::TIfaces* GetInps(int aId, const string& aIfName, bool aOpt) = 0;
 	    virtual void OnFuncContentChanged() = 0;
 	    virtual string GetInpUri(int aId) const = 0;
@@ -78,6 +86,66 @@ template <class T> class FMaxDt: public FMaxBase, public MDtGet<T> {
 	T mRes;
 };
 
+
+
+/** @brief Comparition, generic data base
+ * */
+class FCmpBase: public Func, public MDtGet<Sdata<bool> >
+{
+    public:
+	enum TFType {ELt, ELe, EEq, ENeq, EGe, EGt};
+    public:
+	FCmpBase(Host& aHost, TFType aFType): Func(aHost), mFType(aFType) {};
+	virtual ~FCmpBase();
+	// From Func
+	virtual string IfaceGetId() const override;
+	virtual void GetResult(string& aResult) const override;
+	virtual MIface* getLif(const char *aName) override;
+	// From MDtGet
+	virtual void DtGet(Sdata<bool>& aData) override;
+    protected:
+	TFType mFType;
+	Sdata<bool> mRes;
+};
+
+template <class T> class FCmp: public FCmpBase
+{
+    public:
+	static Func* Create(Host* aHost, const string& aInp1Iid, const string& aInp2Iid, TFType aFType);
+	FCmp(Host& aHost, TFType aFType): FCmpBase(aHost, aFType) {};
+	virtual void DtGet(Sdata<bool>& aData);
+};
+
+
+/** @brief Switcher, generic data base
+ * */
+class FSwithcBase: public Func 
+{
+    public:
+	enum { EInp_Sel = Func::EInp1, EInp_1 };
+	FSwithcBase(Host& aHost): Func(aHost) {};
+};
+
+/** @brief Boolean switcher, selector should be of MDBoolGet or MDtGet<Sdata<bool> >
+ * */
+class FSwitchBool: public FSwithcBase, public MDVarGet
+{
+    public:
+	static Func* Create(Func::Host* aHost, const string& aOutIid, const string& aInp1Id);
+	FSwitchBool(Func::Host& aHost): FSwithcBase(aHost) {};
+	// From Func
+	virtual string IfaceGetId() const override { return MDVarGet::Type();};
+	virtual string GetInpExpType(int aId) const override;
+	virtual MIface* getLif(const char *aName) override;
+	// From MDVarGet
+	virtual string MDVarGet_Uid() const override { return string();}
+	virtual string VarGetIfid() const override;
+	virtual MIface* DoGetDObj(const char *aName) override;
+	// Local
+	MDVarGet* GetCase() const;
+    private:
+	bool GetCtrl() const;
+};
 
 
 

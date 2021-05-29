@@ -86,6 +86,37 @@ class TrMaxVar: public TrVar
 };
 
 
+/** @brief Transition "Compare"
+ * */
+class TrCmpVar: public TrVar
+{
+    public:
+	static const char* Type() { return "TrCmpVar";};
+	TrCmpVar(const string& aName = string(), MEnv* aEnv = NULL);
+	FCmpBase::TFType GetFType();
+	// From ATrVar
+	virtual void Init(const string& aIfaceName) override;
+	virtual string GetInpUri(int aId) const override;
+	// From Func::Host
+	virtual int GetInpCpsCount() const override {return 2;}
+};
+
+
+/** @brief Agent function "Switcher"
+ * */
+class TrSwitchBool: public TrVar
+{
+    public:
+	static const char* Type() { return "TrSwitchBool";};
+	TrSwitchBool(const string& aName = string(), MEnv* aEnv = NULL);
+	// From ATrcVar
+	virtual void Init(const string& aIfaceName) override;
+	virtual string GetInpUri(int aId) const override;
+	// From MDVarGet
+	virtual MIface* DoGetDObj(const char *aName) override;
+};
+
+
 
 
 

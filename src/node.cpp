@@ -12,11 +12,12 @@ Node::~Node()
     // Removing the owneds
     auto owdCp = owner()->firstPair();
     while (owdCp) {
+	owner()->detach(owdCp);
 	owdCp->provided()->deleteOwned();
 	owdCp = owner()->firstPair();
     }
     // Disconnect from the owner
-    mOnode.disconnect();
+    //mOnode.disconnect(); // Its owner responsibility to detach the owned
 }
 
 MIface* Node::MNode_getLif(const char *aType)
@@ -645,4 +646,14 @@ void Node::onContentChanged(const MContent* aCont)
 	obs->provided()->onObsContentChanged(this, aCont);
 	obs = mOcp.nextPair(obs);
     }
+}
+
+//!! not tested
+bool Node::addComp(const string& aType, const string& aName)
+{
+    MNode* node = Provider()->createNode(aType, aName, mEnv);
+    assert(node);
+    bool res = attachOwned(node);
+    assert(res);
+    return res;
 }

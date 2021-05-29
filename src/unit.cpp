@@ -13,6 +13,7 @@ Unit::Unit(const string &aName, MEnv* aEnv): Node(aName, aEnv)
 Unit::~Unit()
 {
     for (auto item : mIrns) {
+	item->disconnectAll();
 	delete item;
     }
 }

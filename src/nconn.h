@@ -113,6 +113,7 @@ class MNcpp
 	virtual const TPif* provided() const = 0;
 	virtual bool connect(TPair* aPair) = 0;
 	virtual bool disconnect(TPair* aPair) = 0;
+	virtual bool disconnectAll() = 0;
 	virtual bool attach(TPair* aPair) = 0;
 	virtual bool detach(TPair* aPair) = 0;
 	virtual bool isConnected(TPair* aPair) const = 0;
@@ -139,6 +140,12 @@ class MNcpp
 	virtual TPair* nextLeaf(TPair* aLeaf) = 0;
 	/** @brief Gets next leaf from the leaf */
 	virtual TSelf* nextLeaf() = 0;
+	/** @brief Find owned item
+	 * @param aItem  current item, if nullptr then the first item is requested
+	 * @returns item predecessor if the item is found
+	 * */
+	virtual TSelf* findItem(TPair* aItem) = 0;
+	virtual TPair* findItem(TSelf* aItem) = 0;
 };
 
 
@@ -167,17 +174,6 @@ class MNcp: public TPif
 };
 
 
-#if 0
-/** @brief Binded Cp for tree node, ref ds_nn_tree_bc
- * */
-template <class TPif, class TRif>
-class MNcpb: public MNcpp<TPif, TRif>
-{
-};
-#endif
-
-
-
 /** @brief Cp stub for Tree node 
  * */
 template <class TPif, class TRif>
@@ -191,61 +187,6 @@ class MNcppTn
 	virtual bool getId(string& aId) const override { return tn_getId(aId);}
 	virtual bool tn_getId(string& aId) const = 0;
 };
-
-
-#if 0
-/** @brief Tree node, ref ds_nn_tree_si
- * */
-template <class TProv, class TReq>
-class MNtn: public MNcpp<TProv, TReq> /* Down */, public MNcppTn<TReq, TProv> /* Up */
-{
-    public:
-	// Common
-	virtual ~MNtn() {}
-    public:
-	// Down
-	using TPair = typename MNcpp<TProv, TReq>::TPair;
-	virtual TProv* provided() = 0;
-	virtual const TProv* provided() const = 0;
-	virtual bool connect(TPair* aPair) = 0;
-	virtual bool disconnect(TPair* aPair) = 0;
-	virtual bool attach(TPair* aPair) = 0;
-	virtual bool detach(TPair* aPair) = 0;
-	virtual bool isConnected(TPair* aPair) const = 0;
-	virtual bool getId(string& aId) const = 0;
-    public:
-	// Up
-	using TDPair = typename MNcpp<TReq, TProv>::TPair;
-	virtual TProv* tn_provided() = 0;
-	virtual const TProv* tn_provided() const = 0;
-	virtual bool connect(TDPair* aPair) = 0;
-	virtual bool disconnect(TDPair* aPair) = 0;
-	virtual bool attach(TDPair* aPair) = 0;
-	virtual bool detach(TDPair* aPair) = 0;
-	virtual bool isConnected(TDPair* aPair) const = 0;
-	virtual bool tn_getId(string& aId) const = 0;
-};
-#endif
-
-#if 0
-/** @brief Native connection point interface, generalized
- * Binds MIfaces instead of particular interfaces, so
- * requires extra ops of iface resolution, that causes overhead
- * */
-class MNc
-{
-    public:
-	using TPair = MNc;
-	virtual MIface* provided() = 0;
-	virtual bool connect(TPair* aPair) = 0;
-	virtual bool disconnect(TPair* aPair) = 0;
-	virtual bool attach(TPair* aPair) = 0;
-	virtual bool detach(TPair* aPair) = 0;
-	virtual bool isConnected(TPair* aPair) const = 0;
-	virtual bool getId(string& aId) const = 0;
-};
-#endif
-
 
 
 /** @brief Native connection point, one-to-many, seleting pair by Id
@@ -430,7 +371,7 @@ class NCpOmip : public MNcpp<TPif, TRif>
 	using TPairsElem = pair<string, TPair*>;
     public:
 	NCpOmip(TPif* aPx): mPx(aPx) {}
-	virtual ~NCpOmip();
+	virtual ~NCpOmip() {}
 	// From MNcpp
 	virtual TPif* provided() override { return mPx;}
 	virtual const TPif* provided() const override { return mPx;}
@@ -438,6 +379,16 @@ class NCpOmip : public MNcpp<TPif, TRif>
 	virtual bool detach(TPair* aPair) override;
 	virtual bool connect(TPair* aPair) override;
 	virtual bool disconnect(TPair* aPair) override;
+	virtual bool disconnectAll() override {
+	    bool res = true;
+	    TPair* pair = firstPair();
+	    while (pair) {
+		res = disconnect(pair);
+		assert(res);
+		pair = firstPair();
+	    }
+	    return res;
+	}
 	virtual bool isConnected(TPair* aPair) const override;
 	virtual bool getId(string& aId) const override { return false;}
 	virtual void dump(int aIdt) const override {
@@ -457,8 +408,6 @@ class NCpOmip : public MNcpp<TPif, TRif>
 	    }
 	    return res;
 	}
-
-
 	virtual TPair* firstLeaf() override { return nullptr;}
 	virtual TSelf* firstLeafB() override { return nullptr;}
 	virtual TPair* nextLeaf(TPair* aLeaf) override { return nullptr;}
@@ -468,23 +417,12 @@ class NCpOmip : public MNcpp<TPif, TRif>
 	virtual TPair* pairAt(int aInd) override { for (auto it = mPairs.begin(); it != mPairs.end(); it++) if (aInd-- == 0) return it->second; return nullptr; }
 	virtual TPair* pairAt(const string aId) { return mPairs.count(aId) > 0 ? mPairs.at(aId) : nullptr;}
 	virtual const TPair* pairAt(const string aId) const { return const_cast<const TPair*>(const_cast<TThis*>(this)->pairAt(aId));}
+	virtual TSelf* findItem(TPair* aItem) override;
+	virtual TPair* findItem(TSelf* aItem) override;
     protected:
 	TPairs mPairs;
 	TPif* mPx;
 };
-
-template <class TPif, class TRif>
-NCpOmip<TPif, TRif>::~NCpOmip()
-{
-    /* TODO To design the destruction properly. This solution doesn't work for embedded nodes
-    while (!mPairs.empty()) {
-	auto it = mPairs.begin();
-	TPair* pair = it->second;
-	disconnect(pair);
-	delete pair;
-    }
-    */
-}
 
 template <class TPif, class TRif>
 bool NCpOmip<TPif, TRif>::attach(TPair* aPair)
@@ -534,6 +472,39 @@ bool NCpOmip<TPif, TRif>::isConnected(TPair* aPair) const
     return mPairs.count(pid) == 1 && mPairs.at(pid) == aPair;
 }
 
+template <class TPif, class TRif>
+typename NCpOmip<TPif, TRif>::TSelf* NCpOmip<TPif, TRif>::findItem(TPair* aItem)
+{
+    TSelf* res = nullptr;
+    auto pair = firstPair();
+    while (pair && !res) {
+	if (pair == aItem) {
+	    res = this; 
+	} else {
+	    res = pair->binded()->findItem(aItem);
+	}
+	pair = nextPair(pair);
+    }
+    return res;
+}
+
+template <class TPif, class TRif>
+typename NCpOmip<TPif, TRif>::TPair* NCpOmip<TPif, TRif>::findItem(TSelf* aItem)
+{
+    TPair* res = nullptr;
+    auto pair = firstPair();
+    while (pair && !res) {
+	if (pair->binded() == aItem) {
+	    res = pair; 
+	} else {
+	    res = pair->binded()->findItem(aItem);
+	}
+	pair = nextPair(pair);
+    }
+    return res;
+}
+
+
 
 
 /** @brief Native connection point, one-to-one, supports Id, proxied
@@ -549,15 +520,18 @@ class NCpOip : public MNcpp<TPif, TRif>
 	using TPair = typename MNcpp<TPif, TRif>::TPair;
     public:
 	NCpOip(TPif* aPx): mPair(nullptr), mPx(aPx) {}
-	virtual ~NCpOip() {
-	    if (mPair) disconnect(mPair);
-	}
+	virtual ~NCpOip() {}
 	virtual TPif* provided() override { return mPx;}
 	virtual const TPif* provided() const override { return mPx;}
 	virtual bool attach(TPair* aPair) override;
 	virtual bool detach(TPair* aPair) override;
 	virtual bool connect(TPair* aPair) override;
 	virtual bool disconnect(TPair* aPair) override;
+	virtual bool disconnectAll() override {
+	    bool res = true;
+	    if (mPair) res = disconnect(mPair);
+	    return res;
+	}
 	virtual bool isConnected(TPair* aPair) const override;
 	virtual bool getId(string& aId) const override { return false;}
 	virtual void dump(int aIdt) const { mPx->dump(aIdt); }
@@ -741,10 +715,21 @@ class NCpOmnp : public MNcpp<TPif, TRif>
 	using TPairs = set<TPair*>;
     public:
 	NCpOmnp(TPif* aPx): mPx(aPx) {}
+	virtual ~NCpOmnp() {}
 	virtual TPif* provided() override { return mPx;}
 	virtual const TPif* provided() const override { return mPx;}
 	virtual bool connect(TPair* aPair) override ;
 	virtual bool disconnect(TPair* aPair) override;
+	virtual bool disconnectAll() override {
+	    bool res = true;
+	    TPair* pair = firstPair();
+	    while (pair) {
+		res = res && disconnect(pair);
+		assert(res);
+		pair = firstPair();
+	    }
+	    return res;
+	}
 	virtual bool attach(TPair* aPair) override;
 	virtual bool detach(TPair* aPair) override;
 	virtual bool isConnected(TPair* aPair) const override;
@@ -782,6 +767,8 @@ class NCpOmnp : public MNcpp<TPif, TRif>
 	virtual TPair* pairAt(int aInd) override { for (auto it = mPairs.begin(); it != mPairs.end(); it++) if (aInd-- == 0) return *it; return nullptr; }
 	virtual TPair* pairAt(const string aId) { return nullptr;}
 	virtual const TPair* pairAt(const string aId) const { return nullptr;}
+	virtual TSelf* findItem(TPair* aItem) override { return nullptr;}
+	virtual TPair* findItem(TSelf* aItem) override { return nullptr;}
     protected:
 	TPairs mPairs;
 	TPif* mPx;
@@ -851,6 +838,11 @@ class NCpOnp : public MNcpp<TPif, TRif>
 	virtual TPif* provided() override { return mPx;}
 	virtual const TPif* provided() const override { return mPx;}
 	virtual bool connect(TPair* aPair) override ;
+	virtual bool disconnectAll() override {
+	    bool res = true;
+	    if (mPair) res = disconnect(mPair);
+	    return res;
+	}
 	virtual bool disconnect(TPair* aPair) override;
 	virtual bool attach(TPair* aPair) override;
 	virtual bool detach(TPair* aPair) override;
@@ -870,6 +862,17 @@ class NCpOnp : public MNcpp<TPif, TRif>
 	virtual TPair* pairAt(int aInd) override { return (aInd < pcount()) ? mPair : nullptr; }
 	virtual TPair* pairAt(const string aId) override { return nullptr;}
 	virtual const TPair* pairAt(const string aId) const { return nullptr;}
+	virtual TSelf* findItem(TPair* aItem) override {
+	    TSelf* res = nullptr;
+	    if (binded() == aItem) {
+		res = this;
+	    }
+	    return res;
+	}
+	virtual TPair* findItem(TSelf* aItem) override {
+	    TPair* res = nullptr;
+	    return res;
+	}
 	// Local
 	void resetPx() {mPx = nullptr;}
 	bool disconnect() { return  mPair ? disconnect(mPair) : false; }
@@ -1023,6 +1026,11 @@ class NTnip : public NCpOnp<TProv, TReq>
 	NTnip(TProv* aProvPx, TReq* aReqPx): NCpOnp<TProv, TReq>(aProvPx), mCnode(aReqPx) {}
 	// From MNcpp
 	virtual typename TScp::TPair* binded() override { return &mCnode;}
+	virtual bool disconnectAll() override {
+	    bool res = TScp::disconnectAll();
+	    res = res && mCnode.disconnectAll();
+	    return res;
+	}
 	// Local
 	virtual typename TCnode::TPair* cnodeBinded() { return this;}
     protected:
@@ -1054,17 +1062,11 @@ class NTnnp : public NCpOnp<TProv, TReq>
 	NTnnp(TProv* aProvPx, TReq* aReqPx): NCpOnp<TProv, TReq>(aProvPx), mCnode(aReqPx, this) {}
 	// From MNcpp
 	virtual typename TScp::TPair* binded() override { return &mCnode;}
-	// Local
-	/** @brief Gets first item in tree traversal */
-	TPair* firstTreeItem() {
-	    auto fp = mCnode.firstPair();
-	    auto res = fp;
-	    while (fp) {
-		auto bnd = fp->binded();
-		fp = fp->firstPair();
-	    }
+	virtual bool disconnectAll() override {
+	    bool res = TScp::disconnectAll();
+	    res = res && mCnode.disconnectAll();
+	    return res;
 	}
-	TPair* nextTreeItem(TPair* aPair);
     protected:
 	Cnode mCnode;
 };
