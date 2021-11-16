@@ -106,6 +106,7 @@ class Syst : public Elem, public MAhost, public MActr
 	virtual ~Syst();
 	// From Node
 	virtual void mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx) override;
+	virtual void mutDisconnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx) override;
 	virtual MIface* MOwner_getLif(const char *aType) override;
 	// From MActr
 	virtual string MActr_Uid() const override {return getUid<MActr>();}

@@ -44,6 +44,7 @@ class MEnv : public MIface
 	/** @brief Gets import manager */
 	virtual MImportMgr* ImpsMgr() = 0;
 	/** @brief Gets root node */
+	// TODO Security gap, remove
 	virtual MNode* Root() const = 0;
 	/** @brief Adds provider */
 	virtual bool addProvider(MProvider* aProv) = 0;

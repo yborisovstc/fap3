@@ -22,7 +22,7 @@ MIface* Unit::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
     if (res = checkLif<MUnit>(aType));
-    else res = checkLif<MNode>(aType);
+    else res = Node::MNode_getLif(aType);
     return res;
 }
 

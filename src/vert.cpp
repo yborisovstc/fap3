@@ -32,6 +32,20 @@ MIface* Vertu::MVert_getLif(const char *aType)
     return res;
 }
 
+void Vertu::MVert_doDump(int aLevel, int aIdt, ostream& aOs) const
+{
+    if (aLevel & Ifu::EDM_Base) {
+	Ifu::offset(aIdt, aOs); aOs << "UID: " << MVert_Uid() << endl;
+    }
+    if (aLevel & Ifu::EDM_Comps) {
+	for (int i = 0; i < pairsCount(); i++) {
+	    const MVert* pair = getPair(i);
+	    Ifu::offset(aIdt, aOs); aOs << "- "  << pair->Uid() << endl;
+	}
+    }
+}
+
+
 bool Vertu::connect(MCIface* aPair)
 {
     assert(aPair && !isConnected(aPair));
@@ -137,6 +151,19 @@ MIface* Vert::MVert_getLif(const char *aType)
     else if (res = checkLif<MUnit>(aType));
     else res = MNode_getLif(aType);
     return res;
+}
+
+void Vert::MVert_doDump(int aLevel, int aIdt, ostream& aOs) const
+{
+    if (aLevel & Ifu::EDM_Base) {
+	Ifu::offset(aIdt, aOs); aOs << "UID: " << MVert_Uid() << endl;
+    }
+    if (aLevel & Ifu::EDM_Comps) {
+	for (int i = 0; i < pairsCount(); i++) {
+	    const MVert* pair = getPair(i);
+	    Ifu::offset(aIdt, aOs); aOs << "- "  << pair->Uid() << endl;
+	}
+    }
 }
 
 bool Vert::connect(MCIface* aPair)

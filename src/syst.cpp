@@ -446,6 +446,31 @@ void Syst::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
     }
 }
 
+void Syst::mutDisconnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
+{
+    string sp = aMut.Attr(ENa_P);
+    string sq = aMut.Attr(ENa_Q);
+    MNode* pn = getNode(sp, aCtx.mNs);
+    MNode* qn = getNode(sq, aCtx.mNs);
+    if (pn && qn) {
+	MVert* pv = pn->lIf(pv);
+	MVert* qv = qn->lIf(pv);
+	if (pv && qv) {
+	    bool res = MVert::disconnect(pv, qv);
+	    if (!res) {
+		Log(TLog(EErr, this) + "Failed disconnecting [" + sp + "] from [" + sq + "]");
+	    }
+	} else {
+	    Log(TLog(EErr, this) + "Disconnecting [" + sp + "] from [" + sq + "] -  [" + (pv ? sq : sp) + "] isn't connectable");
+	}
+    } else {
+	Log(TLog(EErr, this) + "Disconnecting [" + sp + "] from [" + sq + "] - cannot find [" + (pn ? sq : sp) + "]");
+    }
+    if (!aUpdOnly) {
+	notifyNodeMutated(aMut, aCtx);
+    }
+}
+
 bool Syst::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 {
     bool res = true;

@@ -22,6 +22,8 @@ class MVert: public MCIface
 	virtual string Uid() const override { return MVert_Uid();}
 	virtual MIface *getLif(const char *aType) { return MVert_getLif(aType);}
 	virtual MIface *MVert_getLif(const char *aType) = 0;
+	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { return MVert_doDump(aLevel, aIdt, std::cout);}
+	virtual void MVert_doDump(int aLevel, int aIdt, ostream& aOs) const = 0;
 	/** @brief Indicates if connnectable is compatible */
 	virtual bool isCompatible(MVert* aPair, bool aExt) = 0;
 	/** @brief Gets extended part in case if checked is extender */

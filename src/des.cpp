@@ -403,7 +403,9 @@ void Des::onUpdated(MDesSyncable* aComp)
 	    mUpdNotified = true;
 	}
     }
-    mUpdated.push_back(aComp);
+    if (aComp) {
+	mUpdated.push_back(aComp);
+    }
 }
 
 void Des::onOwnedAttached(MOwned* aOwned)

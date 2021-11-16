@@ -255,12 +255,16 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
 		mutRemove(rno, aUpdOnly, mctx);
 	    } else if (rnotype == ENt_Conn) {
 		mutConnect(rno, aUpdOnly, mctx);
+	    } else if (rnotype == ENt_Disconn) {
+		mutDisconnect(rno, aUpdOnly, mctx);
 	    } else if (rnotype == ENt_Note) {
 		// Comment, just accept
 		/*
 		   iChromo->Root().AddChild(rno);
 		   NotifyNodeMutated(rno, mctx);
 		   */
+	    } else {
+		Logger()->Write(EErr, this, "Unknown mutation [%d]", rnotype);
 	    }
 	    Logger()->SetContextMutId();
 	}
@@ -419,6 +423,16 @@ void Node::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
     string sp = aMut.Attr(ENa_P);
     string sq = aMut.Attr(ENa_Q);
     Log(TLog(EErr, this) + "Connecting [" + sp + "] to [" + sq + "] - not supported");
+    if (!aUpdOnly) {
+	notifyNodeMutated(aMut, aCtx);
+    }
+}
+
+void Node::mutDisconnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
+{
+    string sp = aMut.Attr(ENa_P);
+    string sq = aMut.Attr(ENa_Q);
+    Log(TLog(EErr, this) + "Disconnecting [" + sp + "] from [" + sq + "] - not supported");
     if (!aUpdOnly) {
 	notifyNodeMutated(aMut, aCtx);
     }

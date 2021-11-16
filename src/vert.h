@@ -31,6 +31,7 @@ class Vertu : public Unit, public MVert
 	// From MVert
 	virtual string MVert_Uid() const { return getUid<MVert>();}
 	virtual MIface *MVert_getLif(const char *aType) override;
+	virtual void MVert_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	virtual bool isCompatible(MVert* aPair, bool aExt) override {return true;}
 	virtual MVert* getExtd() override {return nullptr;}
 	virtual TDir getDir() const override { return ERegular;}
@@ -68,6 +69,7 @@ class Vert : public Elem, public MVert
 	// From MVert
 	virtual string MVert_Uid() const { return getUid<MVert>();}
 	virtual MIface *MVert_getLif(const char *aType) override;
+	virtual void MVert_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	virtual bool isCompatible(MVert* aPair, bool aExt) override {return true;}
 	virtual MVert* getExtd() override {return nullptr;}
 	virtual TDir getDir() const override { return ERegular;}
