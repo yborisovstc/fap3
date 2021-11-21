@@ -181,6 +181,8 @@ void Ut_node::test_cre_1()
     string c12cd;
     bool cres = n1co->getContent("c12", c12cd);
     CPPUNIT_ASSERT_MESSAGE("Wrong n1 c12 content", c12cd == "Default");
+    MNode* n1_1_2_1 = root->getNode("n1.n1_1.n1_1_2.n1_1_2_1");
+    CPPUNIT_ASSERT_MESSAGE("Missing n1_1_2_1", n1_1_2_1);
 }
  
 /** @brief Test of access to upper layers

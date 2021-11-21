@@ -38,6 +38,7 @@ void Vertu::MVert_doDump(int aLevel, int aIdt, ostream& aOs) const
 	Ifu::offset(aIdt, aOs); aOs << "UID: " << MVert_Uid() << endl;
     }
     if (aLevel & Ifu::EDM_Comps) {
+	Ifu::offset(aIdt, aOs); aOs << "Pairs: " << endl;
 	for (int i = 0; i < pairsCount(); i++) {
 	    const MVert* pair = getPair(i);
 	    Ifu::offset(aIdt, aOs); aOs << "- "  << pair->Uid() << endl;

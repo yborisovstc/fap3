@@ -555,11 +555,12 @@
 		    distinguish native units in URI: native units are identified by single name.</simpara>
 	    </sect3>
 	</sect2>
-	<sect2><title>Access for upper layer. Parents, modules.</title>
+	<sect2 id="ds_sn_aul"><title>[DS_SN_AUL] Access for upper layer. Parents, modules etc.</title>
 	    <sect3><title>Intro</title>
 		<simpara>Even the generic rule of access restriction is to not allow access to upper layer of native hier, sometimes such access is
 		    required. The example is creating "library" of systems and then use them to create heir in lower layer. Another example is 
-		    the modules.</simpara>
+		    the modules. Also the example is <xref linkend="gls_adp"/> where adapter has to has the access to "adapted" (or monitired) agent that
+			is not in the scope of adapters node.</simpara>
 	    </sect3>
 	    <sect3><title>Approach#1: special nodes</title>
 		<sect4><title>Intro</title>
@@ -576,6 +577,36 @@
 		    <simpara>For getting the parent specific version of getNode() is used. This version gets implicit namespaces. We can utilize
 			implicit namespace line "all owners" plus _Imports plus all owners _Modules etc. "All owners" namespace should be for name only whereas
 			special names can resolve uri also.</simpara>
+		</sect4>
+	    </sect3>
+	    <sect3 id="ds_sn_aul_lnk"><title>Using links</title>
+		<sect4 id="ds_sn_aul_lnk_itr"><title>Intro</title>
+		    <simpara>Let's consider the problem with <xref linkend="gls_adp"/>
+			: adapter agent needs the access to managed agent, the access can be defined with having content "Managed agent URI" but this works only
+			if the managed agent takes place within adapter tree.
+		    </simpara>
+		    <simpara>
+			The idea is to introduce "Link" agent that implements "MLink" interface and has content "Managed agent URI". The MLink interface
+			gets pointer to given interface (MNode for instance) of Managed agent. Link agent also has connection point provided MLink interface.
+			Upper node connects Link agent connection point to the corresponding connection point of adapter.
+		    </simpara>
+		    <simpara>
+			Hmm, we again faicing same problem - to specify this "subject of link" we need to use content "Subject of link URI", so with navigation 
+			    restrictions the "Subject of link" shall be in the tree of link that makes almost same inconvenience. Ref
+			<xref linkend="ds_sn_aul_lnk_conn"/>
+			    for discussing this issue.
+		    </simpara>
+		</sect4>
+		<sect4 id="ds_sn_aul_lnk_conn"><title>Using Link specific "Connect" mutation</title>
+		    <simpara>
+			This problem restricted access with content "Subject of link URI" can be solved by introducing Link specific "Connection" mutation.
+			Or we can introduce another mutation - "Association". In that case the system thit mutation is applied to checks if Link and node
+			with proper interface (MNode for instance) are "connecting" and invokes proper "connect" API of Link.
+		    </simpara>
+		    <simpara>
+			This solution requires some redesign of fap3. Currently MVert iface is "connectable" (is inherited to base iface MCIface) but it assumes
+			the connection is of "two-ways" - it also connects to MCIface. But in our case the connection is "asymmetric" - just one side is connectable.
+		    </simpara>
 		</sect4>
 	    </sect3>
 	</sect2>

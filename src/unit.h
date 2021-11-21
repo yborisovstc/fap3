@@ -25,6 +25,7 @@ class Unit : public Node, public MUnit, public MIfProvOwner
 	// From MUnit
 	virtual string MUnit_Uid() const override {  return getUid<MUnit>();}
 	virtual MIface* MUnit_getLif(const char *aType) override;
+	virtual void MUnit_doDump(int aLevel, int aIdt, std::ostream& aOs) const override;
 	virtual MIfProv* defaultIfProv(const string& aName) override;
 	virtual bool resolveIface(const string& aName, MIfReq::TIfReqCp* aReq) override;
 	// From MIfProvOwner

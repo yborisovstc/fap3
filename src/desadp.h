@@ -80,18 +80,23 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 	/** @brief Managed agent observer
 	 * */
 	template <class T>
-	class AdpMagObs : public MObserver {
-	    public:
-		AdpMagObs(T* aHost): mHost(aHost) {}
-		// From MObserver
-		virtual string MObserver_Uid() const {return MObserver::Type();}
-		virtual MIface* MObserver_getLif(const char *aName) override { return nullptr;}
-		virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override {
-		    mHost->onMagOwnedAttached(aObl, aOwned);
-		}
-	    private:
-		T* mHost;
-	};
+	    class AdpMagObs : public MObserver {
+		public:
+		    AdpMagObs(T* aHost): mHost(aHost), mOcp(this) {}
+		    // From MObserver
+		    virtual string MObserver_Uid() const {return MObserver::Type();}
+		    virtual MIface* MObserver_getLif(const char *aName) override { return nullptr;}
+		    virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override {
+			mHost->onMagOwnedAttached(aObl, aOwned);
+		    }
+		    virtual void onObsContentChanged(MObservable* aObl, const MContent* aCont) override {
+			mHost->onMagContentChanged(aObl, aCont);
+		    }
+		public:
+		    TObserverCp mOcp;               /*!< Observer connpoint */
+		private:
+		    T* mHost;
+	    };
 
     public:
 	static const char* Type() { return "AAdp";};
@@ -110,18 +115,28 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 	virtual string VarGetIfid() const override {return string();}
 	// From MDesSyncable
 	virtual string MDesSyncable_Uid() const override {return getUid<MDesSyncable>();}
+	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
 	virtual void update() override;
 	virtual void confirm() override;
 	// From MDesObserver
+	virtual string MDesObserver_Uid() const override {return getUid<MDesObserver>();}
+	virtual void MDesObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
 	virtual void onActivated(MDesSyncable* aComp) override;
 	virtual void onUpdated(MDesSyncable* aComp) override;
 	// From MDesInpObserver
 	virtual string MDesInpObserver_Uid() const {return getUid<MDesInpObserver>();}
+	virtual void MDesInpObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
 	virtual void onInpUpdated() override;
 	// From MObserver
 	virtual string MObserver_Uid() const {return getUid<MObserver>();}
 	virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override {}
 	virtual void onObsContentChanged(MObservable* aObl, const MContent* aCont) override;
+	// From MDVarGet
+	virtual string MDVarGet_Uid() const {return getUid<MDVarGet>();}
+	// From MObserver
+	virtual MIface* MObserver_getLif(const char *aType) override;
+	// From Node.MOwned
+	virtual void onOwnerAttached() override;
     protected:
 	virtual void OnMagCompDeleting(const MUnit* aComp, bool aSoft = true, bool aModif = false);
 	virtual void OnMagCompAdding(const MUnit* aComp, bool aModif = false);
@@ -131,28 +146,33 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 	virtual void OnMagCompMutated(const MUnit* aNode);
 	virtual void OnMagError(const MUnit* aComp);
 	virtual void onMagOwnedAttached(MObservable* aObl, MOwned* aOwned) {}
+	virtual void onMagContentChanged(MObservable* aObl, const MContent* aCont) {}
 	// Local
 	virtual void OnMagUpdated() {}
-	void NotifyInpsUpdated(MNode* aCp);
+	void NotifyInpUpdated(MNode* aCp);
 	bool UpdateMag(const string& aMagUri);
 	void UpdateMag();
     protected:
 	/** @brief Notifies all states inputs of update **/
-	void NotifyInpsUpdated();
+	virtual void NotifyInpsUpdated() {}
 	// Local
 	void OnInpMagUri();
 	MNode* ahostGetNode(const GUri& aUri);
 	MAhost* aHost();
 	void setUpdated();
 	void setActivated();
+	MDesObserver* getDesObs();
+	MNode* ahostNode();
     protected:
 	bool mInpMagUriUpdated = true;
 	MNode* mMag; /*!< Managed agent */
 	string mMagUri; /*!< Managed agent URI */
 	AdpIap mIapMagUri = AdpIap(*this, [this]() {OnInpMagUri();}); /*!< MAG URI input access point */
-	TObserverCp mObrCp;               /*!< Observer connpoint */ 
-	TAgtCp mAgtCp;                   /*!< Agent connpoint */ 
-	bool mNotified;                  //<! Sign of that State notified observers
+	TObserverCp mObrCp;               /*!< AHost Observer connpoint */
+	AdpMagObs<AAdp> mMagObs = AdpMagObs<AAdp>(this); /*!< Managed agent observer */
+	TAgtCp mAgtCp;                   /*!< Agent connpoint */
+	bool mUpdNotified;  //<! Sign of that State notified observers on Update
+	bool mActNotified;  //<! Sign of that State notified observers on Activation
 };
 
 // Access point, using Sdata
@@ -181,7 +201,7 @@ template <typename T> MIface* AAdp::AdpPapB<T>::DoGetDObj(const char *aName)
 
 
 
-/** @brief MUnit iface ADP agent
+/** @brief MNode iface ADP agent
  * */
 class AMnodeAdp : public AAdp
 {
@@ -194,9 +214,11 @@ class AMnodeAdp : public AAdp
 	//YB!!virtual void UpdateIfi(const string& aName, const TICacheRCtx& aCtx = TICacheRCtx()) override;
 	// From MDesSyncable
 	virtual void confirm() override;
+	// From Unit.MIfProvOwner
+	virtual bool resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
     protected:
 	void GetCompsCount(Sdata<int>& aData);
-	void GetCompNames(TCmpNames& aData) { aData = mCompNames;}
+	void GetCompNames(TCmpNames& aData);
 	void GetOwner(Sdata<string>& aData);
 	// From AAdp
 	virtual void OnMagCompDeleting(const MUnit* aComp, bool aSoft = true, bool aModif = false) override;
@@ -214,6 +236,8 @@ class AMnodeAdp : public AAdp
 	AdpPapB<TCmpNames> mApCmpNames = AdpPapB<TCmpNames>([this](TCmpNames& aData) {GetCompNames(aData);}); /*!< Comp names access point */
 	// TODO Do we need owner?
 	AdpPap<string> mPapOwner = AdpPap<string>(*this, [this](Sdata<string>& aData) {GetOwner(aData);}); /*!< Comps count access point */
+	// From AAdp
+	virtual void NotifyInpsUpdated() override;
     protected:
 	TCmpNames mCompNames;
 	bool mCompNamesUpdated = true;

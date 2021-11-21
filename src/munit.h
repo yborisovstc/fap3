@@ -25,6 +25,8 @@ class MUnit: public MIface
 	virtual string MUnit_Uid() const = 0;
 	virtual MIface* getLif(const char *aType) { return MUnit_getLif(aType);}
 	virtual MIface* MUnit_getLif(const char *aType) = 0;
+	virtual void doDump(int aLevel, int aIdt, std::ostream& aOs) const { MUnit_doDump(aLevel, aIdt, aOs);}
+	virtual void MUnit_doDump(int aLevel, int aIdt, std::ostream& aOs) const = 0;
 	// Local
 	/** @brief Returns unit iface default IFR provider
 	 * This is to simplify requesting iface in case if the client don't have its own requestor

@@ -11,6 +11,7 @@ ut_fap3_lib_SOURCES = \
 		       ut_ifr.cpp \
 		       ut_chromo2.cpp \
 		       ut_des.cpp \
+		       ut_adp.cpp \
 		       ut_nn.cpp
 
 ut_fap3_lib_LDFLAGS=-L../src/.libs/ -lfap3  -lcppunit -lrt

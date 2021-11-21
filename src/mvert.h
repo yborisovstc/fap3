@@ -10,6 +10,7 @@ using namespace std;
 
 /** @brief Interface of connectable
  * Represents generic connection of system level
+ * TODO seems MCIface inheritance isn't useful here, consider simplify design
  * */
 class MVert: public MCIface
 {

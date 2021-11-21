@@ -8,9 +8,9 @@
 // DES adapter base
 
 const string KCont_AgentUri = "AgentUri";
-const string K_CpUriInpMagUri = "./InpMagUri";
+const string K_CpUriInpMagUri = "InpMagUri";
 
-AAdp::AAdp(const string& aName, MEnv* aEnv): Unit(aName, aEnv), mMag(NULL), mObrCp(this), mAgtCp(this), mNotified(false)
+AAdp::AAdp(const string& aName, MEnv* aEnv): Unit(aName, aEnv), mMag(NULL), mObrCp(this), mAgtCp(this), mUpdNotified(false), mActNotified(false)
 {
     if (aName.empty()) mName = Type();
 }
@@ -58,24 +58,11 @@ void AAdp::onObsContentChanged(MObservable* aObl, const MContent* aCont)
     }
 }
 
-void AAdp::NotifyInpsUpdated()
-{
-    // It is AMnodeAdp responsibility to provide the ifaces
-    /*
-    TIfRange range = GetIfi(MDesInpObserver::Type());
-    for (TIfIter it = range.first; it != range.second; it++) {
-	MDesInpObserver* mobs = dynamic_cast<MDesInpObserver*>(*it);
-	if (mobs) {
-	    mobs->OnInpUpdated();
-	}
-    }
-    */
-}
-
 MIface* AAdp::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
     if (res = checkLif<MDesSyncable>(aType));
+    else if (res = checkLif<MAgent>(aType));
     else if (res = checkLif<MDesObserver>(aType));
     else if (res = checkLif<MDesInpObserver>(aType));
     else res = Unit::MNode_getLif(aType);
@@ -125,6 +112,7 @@ void AAdp::setActivated()
 
 void AAdp::update()
 {
+    mActNotified = false;
     if (mInpMagUriUpdated) {
 	UpdateMag();
 	mInpMagUriUpdated = false;
@@ -134,51 +122,82 @@ void AAdp::update()
 
 void AAdp::confirm()
 {
+    mUpdNotified = false;
 }
 
+// TODO Dup of ADes method, consider to inherit from ADes
+MNode* AAdp::ahostNode()
+{
+    MAhost* ahost = mAgtCp.firstPair()->provided();
+    MNode* hostn = ahost ? ahost->lIf(hostn) : nullptr;
+    return hostn;
+}
+
+MDesObserver* AAdp::getDesObs()
+{
+    // Get access to owners owner via MAhost iface
+    MNode* ahn = ahostNode();
+    MOwner* ahno = ahn->owned()->pairAt(0) ? ahn->owned()->pairAt(0)->provided() : nullptr;
+    MUnit* ahnou = ahno ? ahno->lIf(ahnou) : nullptr;
+    MDesObserver* obs = ahnou ? ahnou->getSif(obs) : nullptr;
+    return obs;
+}
+
+#if 0
 void AAdp::setUpdated()
 {
     // Propagate updated to owner
     MUnit* ownu = Owner()->lIf(ownu);
     MDesObserver* obs = ownu->getSif(obs);
-    if (obs && !mNotified) {
+    if (obs && !mUpdNotified) {
 	obs->onUpdated(this);
-	mNotified = true;
+	mUpdNotified = true;
+    }
+}
+#endif
+
+void AAdp::setUpdated()
+{
+    if (!mUpdNotified) { // Notify owner
+	MDesObserver* obs = getDesObs();
+	if (obs) {
+	    obs->onUpdated(this);
+	    mUpdNotified = true;
+	}
     }
 }
 
+
 void AAdp::onActivated(MDesSyncable* aComp)
 {
-    // Propagate activation to owner
-    MUnit* ownu = Owner()->lIf(ownu);
-    MDesObserver* obs = ownu->getSif(obs);
-    if (obs) {
-	obs->onActivated(this);
+    if (!mActNotified) { // Notify owner
+	// Propagate activation to owner
+	MDesObserver* obs = getDesObs();
+	if (obs) {
+	    obs->onActivated(this);
+	    mActNotified = true;
+	}
     }
 }
 
 void AAdp::onUpdated(MDesSyncable* aComp)
 {
-    if (!mNotified) { // Notify owner
+    if (!mUpdNotified) { // Notify owner
 	MDesObserver* obs = Owner() ? Owner()->lIf(obs) : nullptr;
 	if (obs) {
 	    obs->onUpdated(this);
-	    mNotified = true;
+	    mUpdNotified = true;
 	}
     }
 }
 
-void AAdp::NotifyInpsUpdated(MNode* aCp)
+void AAdp::NotifyInpUpdated(MNode* aCp)
 {
-    /*
-    TIfRange range = aCp->GetIfi(MDesInpObserver::Type());
-    for (TIfIter it = range.first; it != range.second; it++) {
-	MDesInpObserver* mobs = (MDesInpObserver*) (*it);
-	if (mobs != NULL) {
-	    mobs->OnInpUpdated();
-	}
+    MUnit* cpu = aCp->lIf(cpu);
+    MDesInpObserver* obs = cpu->getSif(obs);
+    if (obs) {
+	obs->onInpUpdated();
     }
-    */
 }
 
 void AAdp::onInpUpdated()
@@ -205,11 +224,15 @@ bool AAdp::UpdateMag(const string& aMagUri)
 	mMagUri = aMagUri;
 	MNode* mag = ahostGetNode(mMagUri);
 	if (mag) {
+	    if (mMag) {
+		MObservable* prevmagob = mMag->lIf(prevmagob);
+		prevmagob->rmObserver(&mMagObs.mOcp);
+	    }
 	    mMag = mag;
 	    res = true;
 	    OnMagUpdated();
 	    MObservable* magob = mMag->lIf(magob);
-	    magob->addObserver(&mObrCp);
+	    magob->addObserver(&mMagObs.mOcp);
 	    NotifyInpsUpdated();
 	    Logger()->Write(EInfo, this, "Managed agent attached [%s]", mMagUri.c_str());
 	} else {
@@ -241,6 +264,30 @@ MAhost* AAdp::aHost()
     return ahost;
 }
 
+MIface* AAdp::MObserver_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    return res;
+}
+
+void AAdp::onOwnerAttached()
+{
+    bool res = false;
+    MObservable* obl = Owner()->lIf(obl);
+    if (obl) {
+	res = obl->addObserver(&mObrCp);
+    }
+    if (!res) {
+	Logger()->Write(EErr, this, "Cannot attach to observer");
+    }
+    // Registering in agent host
+    MActr* ac = Owner()->lIf(ac);
+    res = ac->attachAgent(&mAgtCp);
+    if (!res) {
+	Logger()->Write(EErr, this, "Cannot attach to host");
+    }
+}
+
 
 
 
@@ -259,9 +306,9 @@ void AAdp::AdpIap::onInpUpdated()
 
 // MNode DES adapter
 
-const string K_CpUriCompNames = "./CompNames";
-const string K_CpUriCompCount = "./CompsCount";
-const string K_CpUriOwner = "./Owner";
+const string K_CpUriCompNames = "CompNames";
+const string K_CpUriCompCount = "CompsCount";
+const string K_CpUriOwner = "Owner";
 
 AMnodeAdp::AMnodeAdp(const string& aName, MEnv* aEnv): AAdp(aName, aEnv)
 {
@@ -270,38 +317,43 @@ AMnodeAdp::AMnodeAdp(const string& aName, MEnv* aEnv): AAdp(aName, aEnv)
     mCompNames.mValid = true;
 }
 
-/*YB!!
-void AMnodeAdp::UpdateIfi(const string& aName, const TICacheRCtx& aCtx)
-{
-    TIfRange rr;
-    TICacheRCtx ctx(aCtx); ctx.push_back(this);
 
+bool AMnodeAdp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+{
+    bool res = true;
     if (aName == MDVarGet::Type()) {
-	MUnit* cmpCount = Host()->GetNode(K_CpUriCompCount);
-	if (ctx.IsInContext(cmpCount)) {
+	MNode* cmpCount = ahostGetNode(K_CpUriCompCount);
+	if (isRequestor(aReq, cmpCount)) {
 	    MIface* iface = dynamic_cast<MDVarGet*>(&mApCmpCount);
-	    InsertIfCache(aName, aCtx, cmpCount, iface);
+	    addIfpLeaf(iface, aReq);
 	} else {
-	    MUnit* cmpNames = Host()->GetNode(K_CpUriCompNames);
-	    if (ctx.IsInContext(cmpNames)) {
+	    MNode* cmpNames = ahostGetNode(K_CpUriCompNames);
+	    if (isRequestor(aReq, cmpNames)) {
 		MIface* iface = dynamic_cast<MDVarGet*>(&mApCmpNames);
-		InsertIfCache(aName, aCtx, cmpNames, iface);
+		addIfpLeaf(iface, aReq);
 	    } else {
-		MUnit* out = Host()->GetNode(K_CpUriOwner);
-		if (ctx.IsInContext(out)) {
+		MNode* out = ahostGetNode(K_CpUriOwner);
+		if (isRequestor(aReq, out)) {
 		    MIface* iface = dynamic_cast<MDVarGet*>(&mPapOwner);
-		    InsertIfCache(aName, aCtx, out, iface);
+		    addIfpLeaf(iface, aReq);
 		}
 	    }
 	}
-    } else  {
-	AAdp::UpdateIfi(aName, aCtx);
+    } else {
+	AAdp::resolveIfc(aName, aReq);
     }
+    return res;
 }
-*/
+
 void AMnodeAdp::GetCompsCount(Sdata<int>& aData)
 {
     aData.mData = mCompNames.mData.size();
+    aData.mValid = true;
+}
+
+void AMnodeAdp::GetCompNames(TCmpNames& aData)
+{
+    aData = mCompNames;
     aData.mValid = true;
 }
 
@@ -317,33 +369,34 @@ void AMnodeAdp::GetOwner(Sdata<string>& aData)
 }
 
 
-void AMnodeAdp::confirm()
-{
+void AMnodeAdp::confirm() {
     if (mMag) {
 	if (mCompNamesUpdated) {
 	    // Comps names
 	    mCompNames.mData.clear();
-	    /*
-	    for (int i = 0; i < mMag->CompsCount(); i++) {
-		mCompNames.mData.push_back(mMag->GetComp(i)->Name());
+	    auto owdCp = mMag->owner()->firstPair();
+	    while (owdCp) {
+		MNode* osn = owdCp->provided()->lIf(osn);
+		mCompNames.mData.push_back(osn->name());
+		owdCp = mMag->owner()->nextPair(owdCp);
 	    }
-	    */
 	    mCompNames.mValid = true;
 	    mCompNamesUpdated = false;
 	    MNode* cp = ahostGetNode(K_CpUriCompNames);
-	    NotifyInpsUpdated(cp);
+	    NotifyInpUpdated(cp);
 	    // Comps count
 	    cp = ahostGetNode(K_CpUriCompCount);
-	    NotifyInpsUpdated(cp);
+	    NotifyInpUpdated(cp);
 	}
 	if (mOwnerUpdated) {
 	    MNode* cp = ahostGetNode(K_CpUriOwner);
-	    NotifyInpsUpdated(cp);
+	    NotifyInpUpdated(cp);
 	    mOwnerUpdated = false;
 	}
     } else {
 	Logger()->Write(EErr, this, "Managed agent is not attached");
     }
+    AAdp::confirm();
 }
 
 void AMnodeAdp::OnMagCompDeleting(const MUnit* aComp, bool aSoft, bool aModif)
@@ -385,6 +438,16 @@ void AMnodeAdp::OnMagUpdated()
     mCompNamesUpdated = true;
     mOwnerUpdated = true;
     setUpdated();
+}
+
+void AMnodeAdp::NotifyInpsUpdated()
+{
+    MNode* cp = ahostGetNode(K_CpUriCompNames);
+    NotifyInpUpdated(cp);
+    cp = ahostGetNode(K_CpUriCompCount);
+    NotifyInpUpdated(cp);
+    cp = ahostGetNode(K_CpUriOwner);
+    NotifyInpUpdated(cp);
 }
 
 

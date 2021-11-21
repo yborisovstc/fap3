@@ -151,8 +151,8 @@ Env::Env(const string& aSpecFile, const string& aLogFileName): mRoot(NULL), mSpe
     mLogger = new Logrec(aLogFileName.empty() ? KLogFileName : aLogFileName);
     mProvider = new Factory(string(), this);
     mImpMgr = new ImportsMgr(*this);
+    mProvider->LoadPlugins();
     /*
-    iProvider->LoadPlugins();
     srand(time(NULL));
     iChMgr = new ChromoMgr(*this);
     string chromo_fext = iSpecFile.substr(iSpecFile.find_last_of(".") + 1);

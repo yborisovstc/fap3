@@ -9,7 +9,7 @@
 
 
 // Plugins default dir
-string KPluginDir = "/usr/lib/fap2/plugins/";
+string KPluginDir = "/usr/lib/fap3/plugins/";
 
 Factory::Factory(const string& aName, MEnv* aEnv): iName(aName), iEnv(aEnv)
 {

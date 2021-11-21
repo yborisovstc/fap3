@@ -54,6 +54,19 @@ MIface* Unit::MIfProvOwner_getLif(const char *aType)
     return res;
 }
 
+
+void Unit::MUnit_doDump(int aLevel, int aIdt, std::ostream& aOs) const
+{
+    if (aLevel & Ifu::EDM_Base) {
+	Ifu::offset(aIdt, aOs); aOs << "UID: " << MUnit_Uid() << endl;
+	Ifu::offset(aIdt, aOs); aOs << "Root IRNs: " << endl;
+	for (auto itr : mLocalIrn) {
+	    Ifu::offset(aIdt, aOs); aOs << "Iface: " << itr.first << endl;
+	    itr.second->MIfProv_doDump(aLevel, aIdt + 1, aOs);
+	}
+    }
+}
+
 bool Unit::resolveIface(const string& aName, MIfReq::TIfReqCp* aReq)
 {
     bool res = false;

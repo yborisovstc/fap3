@@ -25,6 +25,7 @@ MIface* Node::MNode_getLif(const char *aType)
     MIface* res = nullptr;
     if (res = checkLif<MNode>(aType));
     else if (res = checkLif<MContentOwner>(aType));
+    else if (res = checkLif<MObservable>(aType));
     return res;
 }
 
@@ -210,7 +211,7 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
 	    //	assert(false);
 	}
     }
-    if (exs_targ && !aLocal) {
+    if (!aTreatAsChromo && exs_targ && !aLocal) {
 	starg = rno.Attr(ENa_Targ);
 	targ = targ->getNode(starg, root_ns);
 	if (!targ) {
@@ -218,7 +219,7 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
 	    res = false;
 	}
     }
-    if (res && exs_mnode) {
+    if (res && !aTreatAsChromo && exs_mnode) {
 	// Transform DHC mutation to OSM mutation
 	// Transform ENa_Targ: enlarge to ENa_MutNode
 	smnode = rno.Attr(ENa_MutNode);
