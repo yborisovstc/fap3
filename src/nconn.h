@@ -429,8 +429,8 @@ bool NCpOmip<TPif, TRif>::attach(TPair* aPair)
 {
     string pid;
     assert(aPair && aPair->getId(pid) && !isConnected(aPair));
-    mPairs.insert(TPairsElem(pid, aPair));
-    return true;
+    auto res = mPairs.insert(TPairsElem(pid, aPair));
+    return res.second;
 }
 
 template <class TPif, class TRif>

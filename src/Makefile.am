@@ -69,6 +69,8 @@ libfap3_la_SOURCES = \
 		       chromo2.cpp \
 		       desadp.h \
 		       desadp.cpp \
+		       mnt.h \
+		       mnt.cpp \
 		       unit.h \
 		       unit.cpp
 

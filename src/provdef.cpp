@@ -22,6 +22,7 @@
 #include "dest.h"
 #include "desio.h"
 #include "desadp.h"
+#include "mnt.h"
 
 // TODO [YB] To import from build variable
 const string KModulesPath = "/usr/share/grayb/modules/";
@@ -35,7 +36,7 @@ const ProvDef::TFReg ProvDef::mReg ( {
 	Item<Node>(), Item<Unit>(), Item<Elem>(), Item<Content>(), Item<Vertu>(), Item<Vert>(), Item<Syst>(), Item<ConnPointu>(),
 	Item<Extd>(), Item<State>(), Item<Des>(), Item<TrAddVar>(),  Item<CpStateInp>(),  Item<CpStateOutp>(), 
 	Item<DesLauncher>(), Item<Sout>(), Item<ADes>(), Item<Socket>(), Item<TrMaxVar>(), Item<TrSwitchBool>(), Item<TrCmpVar>(),
-	Item<AMnodeAdp>(),
+	Item<AMnodeAdp>(), Item<AMntp>(),
 	});
 
 

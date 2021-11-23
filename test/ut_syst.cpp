@@ -96,10 +96,10 @@ class Ut_syst : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST_SUITE(Ut_syst);
     //    CPPUNIT_TEST(test_vert_1);
     //    CPPUNIT_TEST(test_cp_1);
-    //    CPPUNIT_TEST(test_syst_1);
+    CPPUNIT_TEST(test_syst_1);
     //CPPUNIT_TEST(test_cp_2);
     //CPPUNIT_TEST(test_syst_cp_3);
-    CPPUNIT_TEST(test_syst_sock_1);
+    //CPPUNIT_TEST(test_syst_sock_1);
     //CPPUNIT_TEST(test_syst_cpe_1);
     CPPUNIT_TEST_SUITE_END();
     public:
@@ -214,6 +214,14 @@ void Ut_syst::test_syst_1()
     root->dump(Ifu::EDM_Base | Ifu::EDM_Comps | Ifu::EDM_Recursive,0);
     // Save root chromoe
     eroot->Chromos().Save(specn + "_saved." + ext);
+
+    // Verify S1 chromo parent name
+    MNode* s1n = root->getNode("S1");
+    MElem* s1e = s1n ? s1n->lIf(s1e) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get s1e", s1e);
+    const string s1pname = s1e->Chromos().Root().Attr(ENa_Parent);
+    CPPUNIT_ASSERT_MESSAGE("Wrong S1 parents name", s1pname == "Syst");
+
     // Check connection
     MNode* v1n = root->getNode("S1.V1");
     CPPUNIT_ASSERT_MESSAGE("Fail to get v1n", v1n);
@@ -414,6 +422,7 @@ void Ut_syst::test_syst_sock_1()
     root->dump(Ifu::EDM_Base | Ifu::EDM_Comps | Ifu::EDM_Recursive,0);
     // Save root chromoe
     eroot->Chromos().Save(specn + "_saved." + ext);
+
     // Verify if the sockets are connected
     MNode* s1n = root->getNode("S1.Sock1");
     MVert* s1v = s1n->lIf(s1v);

@@ -273,7 +273,7 @@ bool Socket::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 		}
 	    }
 	} else {
-	    // Request from not outside
+	    // Request from outside
 	    // Assuming the request is from pair
 	    MNode* apair = nullptr; // Assosiated pair in requestors
 	    MNode* pcomp = nullptr;
@@ -303,6 +303,8 @@ bool Socket::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 		    }
 		}
 		req = req->binded()->firstPair();
+		reqo = req ? req->provided()->rqOwner() : nullptr;
+		reqn = const_cast<MNode*>(reqo ? reqo->lIf(reqn) : nullptr);
 	    }
 	    if (pcomp) {
 		MUnit* pcompu = pcomp->lIf(pcompu);
@@ -383,7 +385,7 @@ MNode* Socket::GetPin(int aInd)
 MNode* Socket::GetPin(MIfReq::TIfReqCp* aReq)
 {
     MNode* res = nullptr;
-    MIfReq::TIfReqCp* req = aReq;
+    MIfReq::TIfReqCp* req = aReq->binded()->firstPair();
     const MIfProvOwner* reqo = aReq ? req->provided()->rqOwner() : nullptr;
     const MNode* reqn = reqo ? reqo->lIf(reqn) : nullptr; // Current requestor as node
     if (isOwned(reqn)) {

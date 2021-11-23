@@ -278,6 +278,8 @@ bool Node::attachOwned(MNode* aOwned)
     if (res) {
 	onOwnedAttached(aOwned->owned()->provided());
 	aOwned->owned()->provided()->onOwnerAttached();
+    } else {
+	Log(TLog(EErr, this) + "Attaching owner: already exists [" + aOwned->name() + "]");
     }
     return res;
 }
