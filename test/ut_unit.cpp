@@ -41,10 +41,10 @@ void Ut_unit::test_nav_1()
 {
     cout << endl << "=== Test of MUnit base operations ===" << endl;
 
-    Unit* owner = new Unit("Owner", nullptr);
-    Unit* comp1 = new Unit("Comp1", nullptr);
-    Unit* comp2 = new Unit("Comp2", nullptr);
-    Unit* comp2_1 = new Unit("Comp2_1", nullptr);
+    Unit* owner = new Unit(Unit::Type(), "Owner", nullptr);
+    Unit* comp1 = new Unit(Unit::Type(), "Comp1", nullptr);
+    Unit* comp2 = new Unit(Unit::Type(), "Comp2", nullptr);
+    Unit* comp2_1 = new Unit(Unit::Type(), "Comp2_1", nullptr);
     owner->owner()->connect(comp1->owned());
     owner->owner()->connect(comp2->owned());
     comp2->owner()->connect(comp2_1->owned());

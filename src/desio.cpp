@@ -3,9 +3,8 @@
 #include "data.h"
 
 
-Sout::Sout(const string& aName, MEnv* aEnv): State(aName, aEnv)
+Sout::Sout(const string &aType, const string& aName, MEnv* aEnv): State(aType, aName, aEnv)
 {
-    if (aName.empty()) mName = Type();
     //setContent(KCont_Value, "SS");
 }
 

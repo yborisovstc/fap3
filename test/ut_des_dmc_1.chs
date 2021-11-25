@@ -12,5 +12,6 @@ MyRoot : Elem {
                 Inp ~  : State { = "SI 1"; };
             };
         }
+        Ds2 : Ds1;
     }
 }

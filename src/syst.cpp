@@ -8,9 +8,8 @@ string ConnPointu::KReqName = "Required";
 string ConnPointu::KProvName = "Provided";
 
 
-ConnPointu::ConnPointu(const string &aName, MEnv* aEnv): Vertu(aName, aEnv)
+ConnPointu::ConnPointu(const string &aType, const string &aName, MEnv* aEnv): Vertu(aType, aName, aEnv)
 {
-    if (aName.empty()) mName = Type();
 }
 
 MIface* ConnPointu::MNode_getLif(const char *aType)
@@ -162,9 +161,8 @@ const string KContDir_Val_Out = "Out";
 
 
 
-Extd::Extd(const string& aName, MEnv* aEnv): Vertu(aName, aEnv)
+Extd::Extd(const string &aType, const string& aName, MEnv* aEnv): Vertu(aType, aName, aEnv)
 {
-    if (aName.empty()) mName = Type();
     setContent(KContDir, KContDir_Val_Regular);
 }
 
@@ -229,7 +227,7 @@ MVert::TDir Extd::getDir() const
 
 //// Socket
 
-Socket::Socket(const string& aName, MEnv* aEnv): Vert(aName, aEnv)
+Socket::Socket(const string &aType, const string& aName, MEnv* aEnv): Vert(aType, aName, aEnv)
 {
     if (aName.empty()) mName = Type();
     setContent(KContDir, KContDir_Val_Regular);
@@ -399,9 +397,8 @@ MNode* Socket::GetPin(MIfReq::TIfReqCp* aReq)
 // System
 
 
-Syst::Syst(const string &aName, MEnv* aEnv): Elem(aName, aEnv), mAgtCp(this)
+Syst::Syst(const string &aType, const string &aName, MEnv* aEnv): Elem(aType, aName, aEnv), mAgtCp(this)
 {
-    if (aName.empty()) mName = Type();
 }
 
 Syst::~Syst()

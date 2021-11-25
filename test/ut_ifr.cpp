@@ -40,10 +40,10 @@ void Ut_ifr::tearDown()
 void Ut_ifr::test_base_1()
 {
     cout << endl << "=== Test of base functionality ===" << endl;
-    MNode* cpu1 = new ConnPointu("Cp1", nullptr);
-    MNode* cpu2 = new ConnPointu("Cp2", nullptr);
-    MNode* cpu3 = new ConnPointu("Cp3", nullptr);
-    MNode* cpu4 = new ConnPointu("Cp3", nullptr);
+    MNode* cpu1 = new ConnPointu(ConnPointu::Type(), "Cp1", nullptr);
+    MNode* cpu2 = new ConnPointu(ConnPointu::Type(), "Cp2", nullptr);
+    MNode* cpu3 = new ConnPointu(ConnPointu::Type(), "Cp3", nullptr);
+    MNode* cpu4 = new ConnPointu(ConnPointu::Type(), "Cp3", nullptr);
     MVert* cpv1 = cpu1->lIf(cpv1);
     MVert* cpv2 = cpu2->lIf(cpv2);
     MVert* cpv3 = cpu3->lIf(cpv3);

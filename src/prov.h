@@ -69,7 +69,7 @@ class ProvBase: public Provider
 /** Generator of native agent factory registry item */
 template<typename T> pair<string, ProvBase::TFact*> ProvBase::Item() {
     return pair<string, ProvBase::TFact*>
-	(T::Type(), [](const string &name, MEnv* env)->MNode* { return new T(name, env);});
+	(T::Type(), [](const string &name, MEnv* env)->MNode* { return new T(T::Type(), name, env);});
 }
 
 

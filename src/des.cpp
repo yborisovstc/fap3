@@ -10,9 +10,8 @@ const string KCont_Required = "Required";
 
 /* Connection point - input of combined chain state AStatec */
 
-CpStateInp::CpStateInp(const string& aName, MEnv* aEnv): ConnPointu(aName, aEnv)
+CpStateInp::CpStateInp(const string &aType, const string& aName, MEnv* aEnv): ConnPointu(aType, aName, aEnv)
 {
-    if (aName.empty()) mName = Type();
     bool res = setContent("Provided", "MDesInpObserver");
     res = setContent("Required", "MDVarGet");
     assert(res);
@@ -21,9 +20,8 @@ CpStateInp::CpStateInp(const string& aName, MEnv* aEnv): ConnPointu(aName, aEnv)
 
 /* Connection point - output of combined chain state AStatec */
 
-CpStateOutp::CpStateOutp(const string& aName, MEnv* aEnv): ConnPointu(aName, aEnv)
+CpStateOutp::CpStateOutp(const string &aType, const string& aName, MEnv* aEnv): ConnPointu(aType, aName, aEnv)
 {
-    if (aName.empty()) mName = Type();
     bool res = setContent("Provided", "MDVarGet");
     res = setContent("Required", "MDesInpObserver");
     assert(res);
@@ -43,9 +41,8 @@ static const int KStatecDlog_ObsIfr = 7;  // Observers ifaces routing
 const string State::KCont_Value = "";
 
 
-State::State(const string& aName, MEnv* aEnv): Vertu(aName, aEnv), mPdata(NULL), mCdata(NULL), mUpdNotified(false), mActNotified(false)
+State::State(const string &aType, const string& aName, MEnv* aEnv): Vertu(aType, aName, aEnv), mPdata(NULL), mCdata(NULL), mUpdNotified(false), mActNotified(false)
 {
-    if (aName.empty()) mName = Type();
     mPdata = new BdVar(this);
     mCdata = new BdVar(this);
     MNode* cp = Provider()->createNode(CpStateInp::Type(), "Inp", mEnv);
@@ -342,9 +339,8 @@ string State::GetDvarUid(const MDVar* aComp) const
 
 /// DES
 
-Des::Des(const string &aName, MEnv* aEnv): Syst(aName, aEnv), mUpdNotified(false), mActNotified(false)
+Des::Des(const string &aType, const string &aName, MEnv* aEnv): Syst(aType, aName, aEnv), mUpdNotified(false), mActNotified(false)
 {
-    if (aName.empty()) mName = Type();
 }
 
 MIface* Des::MNode_getLif(const char *aType)
@@ -468,9 +464,8 @@ void Des::MDesObserver_doDump(int aLevel, int aIdt, ostream& aOs) const
 
 ///// ADES
 
-ADes::ADes(const string &aName, MEnv* aEnv): Unit(aName, aEnv), mOrCp(this), mAgtCp(this), mUpdNotified(false), mActNotified(false)
+ADes::ADes(const string &aType, const string &aName, MEnv* aEnv): Unit(aType, aName, aEnv), mOrCp(this), mAgtCp(this), mUpdNotified(false), mActNotified(false)
 {
-    if (aName.empty()) mName = Type();
 }
 
 MIface* ADes::MNode_getLif(const char *aType)
@@ -647,9 +642,8 @@ MNode* ADes::ahostGetNode(const GUri& aUri)
 const string KCont_TopDesUri = "Path";
 
 
-DesLauncher::DesLauncher(const string& aName, MEnv* aEnv): Des(aName, aEnv), mStop(false)
+DesLauncher::DesLauncher(const string &aType, const string& aName, MEnv* aEnv): Des(aType, aName, aEnv), mStop(false)
 {
-    if (aName.empty()) mName = Type();
 }
 
 bool DesLauncher::Run(int aCount)

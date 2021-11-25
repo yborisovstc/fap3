@@ -159,6 +159,11 @@ void Ut_des::test_des_dmc_1()
     root->getUri(ruri);
     string ruris = ruri.toString();
     root->dump(Ifu::EDM_Base | Ifu::EDM_Comps | Ifu::EDM_Recursive,0);
+    // Verify DS1 chromo
+    MNode* ds1n = root->getNode("Launcher.Ds1");
+    MElem* ds1e = ds1n ? ds1n->lIf(ds1e) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get Ds1", ds1e);
+
     // Save root chromoe
     eroot->Chromos().Save(specn + "_saved." + ext);
     // Run 

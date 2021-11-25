@@ -31,7 +31,7 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	using TObsCp = NCpOmnp<MObservable, MObserver>;  /*!< Observable connpoint */
     public:
 	static const char* Type() { return "Node";}
-	Node(const string &aName, MEnv* aEnv);
+	Node(const string &aType, const string &aName, MEnv* aEnv);
 	virtual ~Node();
 	// From MNode.MIface
 	virtual string MNode_Uid() const override { return getUid<MNode>();}

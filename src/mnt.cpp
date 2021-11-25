@@ -6,9 +6,8 @@
 const string KCntEnvVar = "EnvVar";
 
 
-AMntp::AMntp(const string &aName, MEnv* aEnv): Node(aName, aEnv), mMdlEnv(nullptr)
+AMntp::AMntp(const string &aType, const string &aName, MEnv* aEnv): Node(aType, aName, aEnv), mMdlEnv(nullptr)
 {
-    if (aName.empty()) mName = Type();
 } 
 
 

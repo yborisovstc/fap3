@@ -5,9 +5,8 @@
 #include "ifr.h"
 
 
-Unit::Unit(const string &aName, MEnv* aEnv): Node(aName, aEnv)
+Unit::Unit(const string &aType, const string &aName, MEnv* aEnv): Node(aType, aName, aEnv)
 {
-    if (aName.empty()) mName = Type();
 }
 
 Unit::~Unit()

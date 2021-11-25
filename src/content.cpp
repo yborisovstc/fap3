@@ -3,9 +3,8 @@
 #include "content.h"
 
 
-Content::Content(const string &aName, MEnv* aEnv): Node(aName, aEnv)
+Content::Content(const string &aType, const string &aName, MEnv* aEnv): Node(aType, aName, aEnv)
 {
-    if (aName.empty()) mName = Type();
 }
 
 Content::~Content()

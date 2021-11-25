@@ -15,7 +15,7 @@ class Elem: public Unit, public MElem, public MParent, public MChild
 	using TInhTreeNode = NTnnp<MChild, MParent>; 
     public:
 	static const char* Type() { return "Elem";}
-	Elem(const string &aName, MEnv* aEnv);
+	Elem(const string &aType, const string &aName, MEnv* aEnv);
 	virtual ~Elem();
 	// From MNode.MIface
 	virtual MIface* MNode_getLif(const char *aType) override;

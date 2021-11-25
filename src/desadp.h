@@ -100,7 +100,7 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 
     public:
 	static const char* Type() { return "AAdp";};
-	AAdp(const string& aName = string(), MEnv* aEnv = NULL);
+	AAdp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual ~AAdp();
 	// From Base
 	virtual MIface* MNode_getLif(const char *aName) override;
@@ -209,7 +209,7 @@ class AMnodeAdp : public AAdp
 	using TCmpNames = Vector<string>;
     public:
 	static const char* Type() { return "AMnodeAdp";};
-	AMnodeAdp(const string& aName = string(), MEnv* aEnv = NULL);
+	AMnodeAdp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MUnit
 	//YB!!virtual void UpdateIfi(const string& aName, const TICacheRCtx& aCtx = TICacheRCtx()) override;
 	// From MDesSyncable

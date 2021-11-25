@@ -5,12 +5,12 @@
 
 
 
-Elem::Elem(const string &aName, MEnv* aEnv): Unit(aName, aEnv), mInode(this, this)
+Elem::Elem(const string &aType, const string &aName, MEnv* aEnv): Unit(aType, aName, aEnv), mInode(this, this)
 {
-    if (aName.empty()) mName = Type();
+    if (aName.empty()) mName = aType;
     mChromo = mEnv->provider()->createChromo();
     mChromo->Init(ENt_Node);
-    setCrAttr(Type(), aName);
+    setCrAttr(aType, aName);
 }
 
 Elem::~Elem()

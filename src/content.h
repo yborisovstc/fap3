@@ -12,7 +12,7 @@ class Content : public Node, public MContent
 {
     public:
 	static const char* Type() { return "Content";}
-	Content(const string &aName, MEnv* aEnv);
+	Content(const string &aType, const string &aName, MEnv* aEnv);
 	virtual ~Content();
 	// From Node.MNode.MIface
 	virtual MIface* MNode_getLif(const char *aType) override;

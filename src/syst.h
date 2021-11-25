@@ -16,7 +16,7 @@ class ConnPointu: public Vertu, public MConnPoint, public Cnt::Host
 {
     public:
 	static const char* Type() { return "ConnPointu";}
-	ConnPointu(const string &aName, MEnv* aEnv);
+	ConnPointu(const string &aType, const string &aName, MEnv* aEnv);
 	virtual ~ConnPointu() {}
 	// From MNode
 	virtual MIface* MNode_getLif(const char *aType) override;
@@ -58,7 +58,7 @@ class Extd: public Vertu
 {
     public:
 	static const char* Type() { return "Extd";};
-	Extd(const string& aName = string(), MEnv* aEnv = NULL);
+	Extd(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MVert
 	virtual bool isCompatible(MVert* aPair, bool aExt) override;
 	virtual MVert* getExtd() override;
@@ -74,7 +74,7 @@ class Socket: public Vert, public MSocket
 {
     public:
 	static const char* Type() { return "Socket";};
-	Socket(const string& aName = string(), MEnv* aEnv = NULL);
+	Socket(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MNode
 	virtual MIface* MNode_getLif(const char *aType) override;
 	// From MVert
@@ -102,7 +102,7 @@ class Syst : public Elem, public MAhost, public MActr
 	using TAgtCp = NCpOmnp<MAhost, MAgent>;
     public:
 	static const char* Type() { return "Syst";}
-	Syst(const string &aName, MEnv* aEnv);
+	Syst(const string &aType, const string &aName, MEnv* aEnv);
 	virtual ~Syst();
 	// From Node
 	virtual void mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx) override;

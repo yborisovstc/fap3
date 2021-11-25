@@ -3,7 +3,7 @@
 #include "chromo.h"
 
 
-Node::Node(const string &aName, MEnv* aEnv): mName(aName.empty() ? Type() : aName), mEnv(aEnv), mOcp(this), mOnode(this, this)
+Node::Node(const string &aType, const string &aName, MEnv* aEnv): mName(aName.empty() ? aType : aName), mEnv(aEnv), mOcp(this), mOnode(this, this)
 {
 } 
 

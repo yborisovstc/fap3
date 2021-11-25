@@ -38,7 +38,7 @@ class TstAgt: public Unit, public MAgent
 	};
     public:
 	static const char* Type() { return "TstAgt";};
-	TstAgt(const string& aName = string(), MEnv* aEnv = NULL): Unit(aName, aEnv) { if (aName.empty()) mName = Type();}
+	TstAgt(const string &aType, const string& aName = string(), MEnv* aEnv = NULL): Unit(aType, aName, aEnv) { }
 	virtual ~TstAgt() {}
 	virtual string MAgent_Uid() const { return getUid<MAgent>();}
 	MIface* MNode_getLif(const char *aType) override {
@@ -137,8 +137,8 @@ void Ut_syst::tearDown()
 void Ut_syst::test_vert_1()
 {
     cout << endl << "=== Test of vertex base functionality ===" << endl;
-    MUnit* vu1 = new Vertu("V1", nullptr);
-    MUnit* vu2 = new Vertu("V2", nullptr);
+    MUnit* vu1 = new Vertu(Vertu::Type(), "V1", nullptr);
+    MUnit* vu2 = new Vertu(Vertu::Type(), "V2", nullptr);
     MVert* v1 = vu1->lIf(v1);
     MVert* v2 = vu2->lIf(v2);
     bool res = MVert::connect(v1, v2);
@@ -160,8 +160,8 @@ void Ut_syst::test_vert_1()
 void Ut_syst::test_cp_1()
 {
     cout << endl << "=== Test of connpoint base functionality ===" << endl;
-    MNode* cpu1 = new ConnPointu("Cp1", nullptr);
-    MNode* cpu2 = new ConnPointu("Cp2", nullptr);
+    MNode* cpu1 = new ConnPointu(ConnPointu::Type(), "Cp1", nullptr);
+    MNode* cpu2 = new ConnPointu(ConnPointu::Type(), "Cp2", nullptr);
     MVert* cpv1 = cpu1->lIf(cpv1);
     MVert* cpv2 = cpu2->lIf(cpv2);
     cpu1->cntOw()->setContent("Provided", "Iface1");

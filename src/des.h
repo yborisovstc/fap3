@@ -18,7 +18,7 @@ class CpStateInp: public ConnPointu
 {
     public:
 	static const char* Type() { return "CpStateInp";};
-	CpStateInp(const string& aName = string(), MEnv* aEnv = NULL);
+	CpStateInp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 };
 
 /** @brief Connection point - output of combined chain state AStatec
@@ -28,7 +28,7 @@ class CpStateOutp: public ConnPointu
 {
     public:
 	static const char* Type() { return "CpStateOutp";};
-	CpStateOutp(const string& aName = string(), MEnv* aEnv = NULL);
+	CpStateOutp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 };
 
 
@@ -42,7 +42,7 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 {
     public:
 	static const char* Type() { return "State";};
-	State(const string& aName = string(), MEnv* aEnv = NULL);
+	State(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From Node.MIface
 	virtual MIface* MNode_getLif(const char *aType) override;
 	// From Node
@@ -110,7 +110,7 @@ class Des: public Syst, public MDesSyncable, public MDesObserver
 {
     public:
 	static const char* Type() { return "Des";};
-	Des(const string& aName = string(), MEnv* aEnv = NULL);
+	Des(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From Node.MIface
 	virtual MIface* MNode_getLif(const char *aType) override;
 	// From Node
@@ -148,7 +148,7 @@ class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver
 	using TObserverCp = NCpOnp<MObserver, MObservable>;
     public:
 	static const char* Type() { return "ADes";};
-	ADes(const string& aName = string(), MEnv* aEnv = NULL);
+	ADes(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From Node.MIface
 	virtual MIface* MNode_getLif(const char *aType) override;
 	// From Node
@@ -199,7 +199,7 @@ class DesLauncher: public Des, public MLauncher
 {
     public:
 	static const char* Type() { return "DesLauncher";};
-	DesLauncher(const string& aName = string(), MEnv* aEnv = NULL);
+	DesLauncher(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From Node.MIface
 	virtual MIface* MNode_getLif(const char *aType) override;
 	// From MOwned

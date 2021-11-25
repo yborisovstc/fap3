@@ -3,9 +3,8 @@
 #include "syst.h"
 
 
-TrBase::TrBase(const string& aName, MEnv* aEnv): CpStateOutp(aName, aEnv)
+TrBase::TrBase(const string &aType, const string& aName, MEnv* aEnv): CpStateOutp(aType, aName, aEnv)
 {
-    if (aName.empty()) mName = Type();
 }
 
 #if 0
@@ -82,9 +81,8 @@ void TrBase::AddInput(const string& aName)
 
 ///// TrVar
 
-TrVar::TrVar(const string &aName, MEnv* aEnv): TrBase(aName, aEnv), mFunc(nullptr)
+TrVar::TrVar(const string &aType, const string &aName, MEnv* aEnv): TrBase(aType, aName, aEnv), mFunc(nullptr)
 {
-    if (aName.empty()) mName = Type();
 }
 
 string TrVar::VarGetIfid() const
@@ -168,9 +166,8 @@ MIface* TrVar::MNode_getLif(const char *aType)
 
 ///// TrAddVar
 
-TrAddVar::TrAddVar(const string& aName, MEnv* aEnv): TrVar(aName, aEnv)
+TrAddVar::TrAddVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
 {
-    if (aName.empty()) mName = Type();
     MNode* cp = Provider()->createNode(CpStateInp::Type(), "Inp", mEnv);
     assert(cp);
     bool res = attachOwned(cp);
@@ -200,9 +197,8 @@ string TrAddVar::GetInpUri(int aId) const
 
 ///// TrMaxVar
 
-TrMaxVar::TrMaxVar(const string& aName, MEnv* aEnv): TrVar(aName, aEnv)
+TrMaxVar::TrMaxVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
 {
-    if (aName.empty()) mName = Type();
     AddInput("Inp");
 }
 
@@ -224,9 +220,8 @@ string TrMaxVar::GetInpUri(int aId) const
 
 ////    TrCmpVar
 
-TrCmpVar::TrCmpVar(const string& aName, MEnv* aEnv): TrVar(aName, aEnv)
+TrCmpVar::TrCmpVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
 {
-    if (aName.empty()) mName = Type();
     AddInput("Inp");
     AddInput("Inp2");
 }
@@ -276,9 +271,8 @@ FCmpBase::TFType TrCmpVar::GetFType()
 ////  TrSwitchBool
 
 
-TrSwitchBool::TrSwitchBool(const string& aName, MEnv* aEnv): TrVar(aName, aEnv)
+TrSwitchBool::TrSwitchBool(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
 {
-    if (aName.empty()) mName = Type();
     AddInput("Sel");
     AddInput("Inp1");
     AddInput("Inp2");

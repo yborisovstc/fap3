@@ -54,10 +54,10 @@ void Ut_node::test_nav_1()
 {
     cout << endl << "=== Test of MNode base operations ===" << endl;
 
-    Node* owner = new Node("Owner", nullptr);
-    Node* comp1 = new Node("Comp1", nullptr);
-    Node* comp2 = new Node("Comp2", nullptr);
-    Node* comp2_1 = new Node("Comp2_1", nullptr);
+    Node* owner = new Node(Node::Type(), "Owner", nullptr);
+    Node* comp1 = new Node(Node::Type(), "Comp1", nullptr);
+    Node* comp2 = new Node(Node::Type(), "Comp2", nullptr);
+    Node* comp2_1 = new Node(Node::Type(), "Comp2_1", nullptr);
     owner->owner()->connect(comp1->owned());
     owner->owner()->connect(comp2->owned());
     comp2->owner()->connect(comp2_1->owned());
@@ -94,11 +94,11 @@ void Ut_node::test_cont_1()
 {
     cout << endl << "=== Test of MNode base operations ===" << endl;
 
-    MNode* owner = new Node("Owner", nullptr);
-    MNode* comp1 = new Node("Comp1", nullptr);
-    MNode* cont1 = new Content("Cont1", nullptr);
-    MNode* cont2 = new Content("Cont2", nullptr);
-    MNode* cont2_1 = new Content("Cont2_1", nullptr);
+    MNode* owner = new Node(Node::Type(), "Owner", nullptr);
+    MNode* comp1 = new Node(Node::Type(), "Comp1", nullptr);
+    MNode* cont1 = new Content(Content::Type(), "Cont1", nullptr);
+    MNode* cont2 = new Content(Content::Type(), "Cont2", nullptr);
+    MNode* cont2_1 = new Content(Content::Type(), "Cont2_1", nullptr);
     MContent* cont1c = cont1->lIf(cont1c);
     CPPUNIT_ASSERT_MESSAGE("Failed getting cont1c", cont1c);
     cont1c->doDump(0, 0, cout);
@@ -110,8 +110,8 @@ void Ut_node::test_cont_1()
     cont1c->dump(0);
     cres = cont1c->getData(cdata);
     CPPUNIT_ASSERT_MESSAGE("Wrong data", cres && cdata == cwdata);
-    MNode* comp2 = new Node("Comp2", nullptr);
-    MNode* comp2_1 = new Node("Comp2_1", nullptr);
+    MNode* comp2 = new Node(Node::Type(), "Comp2", nullptr);
+    MNode* comp2_1 = new Node(Node::Type(), "Comp2_1", nullptr);
     owner->owner()->connect(comp1->owned());
     owner->owner()->connect(cont1->owned());
     owner->owner()->connect(cont2->owned());

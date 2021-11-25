@@ -17,7 +17,7 @@ class Unit : public Node, public MUnit, public MIfProvOwner
 {
     public:
 	static const char* Type() { return "Unit";}
-	Unit(const string &aName, MEnv* aEnv);
+	Unit(const string &aType, const string &aName, MEnv* aEnv);
 	virtual ~Unit();
 	// From MNode
 	virtual MIface* MNode_getLif(const char *aType) override;

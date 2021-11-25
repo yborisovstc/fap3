@@ -10,9 +10,8 @@
 const string KCont_AgentUri = "AgentUri";
 const string K_CpUriInpMagUri = "InpMagUri";
 
-AAdp::AAdp(const string& aName, MEnv* aEnv): Unit(aName, aEnv), mMag(NULL), mObrCp(this), mAgtCp(this), mUpdNotified(false), mActNotified(false)
+AAdp::AAdp(const string &aType, const string& aName, MEnv* aEnv): Unit(aType, aName, aEnv), mMag(NULL), mObrCp(this), mAgtCp(this), mUpdNotified(false), mActNotified(false)
 {
-    if (aName.empty()) mName = Type();
 }
 
 AAdp::~AAdp()
@@ -310,10 +309,8 @@ const string K_CpUriCompNames = "CompNames";
 const string K_CpUriCompCount = "CompsCount";
 const string K_CpUriOwner = "Owner";
 
-AMnodeAdp::AMnodeAdp(const string& aName, MEnv* aEnv): AAdp(aName, aEnv)
+AMnodeAdp::AMnodeAdp(const string &aType, const string& aName, MEnv* aEnv): AAdp(aType, aName, aEnv)
 {
-    // TODO This iName init seems far from elegant. To find solution, ref ds_i_icnau 
-    if (aName.empty()) mName = Type();
     mCompNames.mValid = true;
 }
 

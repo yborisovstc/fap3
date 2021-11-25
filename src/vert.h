@@ -18,7 +18,7 @@ class Vertu : public Unit, public MVert
 	using TPairs = set<MVert*>; 
     public:
 	static const char* Type() { return "Vertu";}
-	Vertu(const string &aName, MEnv* aEnv);
+	Vertu(const string &aType, const string &aName, MEnv* aEnv);
 	virtual ~Vertu();
 	// From MNode
 	virtual MIface* MNode_getLif(const char *aType) override;
@@ -56,7 +56,7 @@ class Vert : public Elem, public MVert
 	using TPairs = set<MVert*>; 
     public:
 	static const char* Type() { return "Vert";}
-	Vert(const string &aName, MEnv* aEnv);
+	Vert(const string &aType, const string &aName, MEnv* aEnv);
 	virtual ~Vert();
 	// From MNode
 	virtual MIface* MNode_getLif(const char *aType) override;

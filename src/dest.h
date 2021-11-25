@@ -16,7 +16,7 @@ class TrBase: public CpStateOutp
 {
     public:
 	static const char* Type() { return "TrBase";}
-	TrBase(const string& aName = string(), MEnv* aEnv = NULL);
+	TrBase(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From Node
 	virtual MIface* MOwner_getLif(const char *aType) override;
 	// From MVert
@@ -36,7 +36,7 @@ class TrVar: public TrBase, public MDVarGet, public Func::Host
 {
     public:
 	static const char* Type() { return "TrVar";};
-	TrVar(const string& aName = string(), MEnv* aEnv = NULL);
+	TrVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MNode
 	virtual MIface* MNode_getLif(const char *aType) override;
 	// From MDVarGet
@@ -67,7 +67,7 @@ class TrAddVar: public TrVar
 {
     public:
 	static const char* Type() { return "TrAddVar";};
-	TrAddVar(const string& aName = string(), MEnv* aEnv = NULL);
+	TrAddVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From ATrVar
 	virtual void Init(const string& aIfaceName) override;
 	virtual string GetInpUri(int aId) const override;
@@ -79,7 +79,7 @@ class TrMaxVar: public TrVar
 {
     public:
 	static const char* Type() { return "TrMaxVar";};
-	TrMaxVar(const string& aName = string(), MEnv* aEnv = NULL);
+	TrMaxVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From ATrVar
 	virtual void Init(const string& aIfaceName) override;
 	virtual string GetInpUri(int aId) const override;
@@ -92,7 +92,7 @@ class TrCmpVar: public TrVar
 {
     public:
 	static const char* Type() { return "TrCmpVar";};
-	TrCmpVar(const string& aName = string(), MEnv* aEnv = NULL);
+	TrCmpVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	FCmpBase::TFType GetFType();
 	// From ATrVar
 	virtual void Init(const string& aIfaceName) override;
@@ -108,7 +108,7 @@ class TrSwitchBool: public TrVar
 {
     public:
 	static const char* Type() { return "TrSwitchBool";};
-	TrSwitchBool(const string& aName = string(), MEnv* aEnv = NULL);
+	TrSwitchBool(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From ATrcVar
 	virtual void Init(const string& aIfaceName) override;
 	virtual string GetInpUri(int aId) const override;

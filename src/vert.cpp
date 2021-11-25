@@ -6,9 +6,8 @@
 
 //// Vertu
 
-Vertu::Vertu(const string &aName, MEnv* aEnv): Unit(aName, aEnv)
+Vertu::Vertu(const string &aType, const string &aName, MEnv* aEnv): Unit(aType, aName, aEnv)
 {
-    if (aName.empty()) mName = Type();
 }
 
 Vertu::~Vertu()
@@ -128,9 +127,8 @@ void Vertu::onDisconnected()
 
 //// Vert
 
-Vert::Vert(const string &aName, MEnv* aEnv): Elem(aName, aEnv)
+Vert::Vert(const string &aType, const string &aName, MEnv* aEnv): Elem(aType, aName, aEnv)
 {
-    if (aName.empty()) mName = Type();
 }
 
 Vert::~Vert()
