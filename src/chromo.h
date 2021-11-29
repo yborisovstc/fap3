@@ -167,6 +167,7 @@ class ChromoNode
 	void Deactivate() { SetAttr(ENa_Inactive, ""); };
 	void Activate();
 	void SetAttr(TNodeAttr aType, const string& aVal) { iMdl.SetAttr(iHandle, aType, aVal.c_str()); };
+	bool IsChildOf(const ChromoNode& aParent) const { return iMdl.IsChildOf(iHandle, aParent.iHandle); }
 	ChromoNode::Iterator Parent();
 	ChromoNode::Iterator Root();
 	ChromoNode::Const_Iterator Parent() const;

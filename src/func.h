@@ -3,6 +3,7 @@
 #define __FAP3_FUNC_H
 
 #include "mdata.h"
+#include "rdatauri.h"
 #include "mifr.h"
 #include "log.h"
 
@@ -33,6 +34,7 @@ class Func
 	Func(Host& aHost): mHost(aHost) {};
 	virtual ~Func() {}
 	virtual MIface* getLif(const char *aName) { return nullptr;}
+	template<class T> MIface* checkLif(const char* aType) { return (strcmp(aType, T::Type()) == 0) ? dynamic_cast<T*>(this) : nullptr;}
 	virtual string IfaceGetId() const = 0;
 	virtual void GetResult(string& aResult) const { aResult = "<?>";};
 	virtual string GetInpExpType(int aId) const { return "<?>";};
@@ -63,6 +65,43 @@ template <class T> class FAddDt: public FAddBase, public MDtGet<T> {
 	virtual string GetInpExpType(int aId) const;
 	T mRes;
 };
+
+
+/** @brief Boolean AND, generic data
+ * */
+class FBAndDt: public Func, public MDtGet<Sdata<bool>> {
+    public:
+	enum { EInp = EInp1 };
+	static Func* Create(Host* aHost, const string& aString);
+	FBAndDt(Host& aHost): Func(aHost) {};
+	virtual MIface* getLif(const char *aName) override;
+	virtual string IfaceGetId() const { return MDtGet<Sdata<bool>>::Type();};
+	virtual void DtGet(Sdata<bool>& aData);
+	virtual void GetResult(string& aResult) const;
+	virtual string GetInpExpType(int aId) const;
+	Sdata<bool> mRes;
+};
+
+
+/** @brief Converting to GUri
+ * @tparam T type of vector element
+ * */
+class FUri: public Func, public MDtGet<DGuri> {
+    public:
+	using TData = DGuri;
+	using TInpData = Sdata<string>;
+	enum { EInp = EInp1 };
+    public:
+	static Func* Create(Host* aHost, const string& aOutIid, const string& aInp1Id);
+	FUri(Host& aHost): Func(aHost) {}
+	virtual MIface* getLif(const char *aName) override;
+	virtual string IfaceGetId() const { return MDtGet<TData>::Type();}
+	virtual void DtGet(TData& aData);
+	virtual void GetResult(string& aResult) const {mRes.ToString(aResult);}
+	virtual string GetInpExpType(int aId) const;
+	TData mRes;
+};
+
 
 
 // Maximum, variable type

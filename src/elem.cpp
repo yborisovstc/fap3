@@ -85,10 +85,16 @@ void Elem::setCrAttr(const string& aEType, const string& aName)
 
 void Elem::mutate(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx, bool aTreatAsChromo, bool aLocal)
 {
-    if (!aChange && !aTreatAsChromo) {
+    bool isChild = aMut.IsChildOf(mChromo->Root());
+    if (!aChange && !aTreatAsChromo && !isChild) {
 	ChromoNode mut = mChromo->Root().AddChild(aMut, true, true);
+	if (aLocal) {
+	    mut.RmAttr(ENa_Targ);
+	}
+	Unit::mutate(mut, aChange, aCtx, aTreatAsChromo, aLocal);
+    } else {
+	Unit::mutate(aMut, aChange, aCtx, aTreatAsChromo, aLocal);
     }
-    Unit::mutate(aMut, aChange, aCtx, aTreatAsChromo, aLocal);
 }
 
 /*
@@ -117,7 +123,7 @@ void Elem::onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const Mu
 {
     //auto it = mChromo->Root().Find(aCtx.mParent);
     //if (it == const_cast<const ChromoNode&>(mChromo->Root()).End()) {
-    if (aCtx.mNode && aCtx.mNode != this) {
+    if (/* aCtx.mNode && */ aCtx.mNode != this) {
 	ChromoNode anode = mChromo->Root().AddChild(aMut, true, true);
 	const MNode* onode = aOwned->lIf(onode);
 	GUri nuri;

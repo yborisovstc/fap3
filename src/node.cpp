@@ -458,7 +458,7 @@ void Node::mutImport(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 
 void Node::notifyNodeMutated(const ChromoNode& aMut, const MutCtx& aCtx)
 {
-    if (Owner() && aCtx.mNode && aCtx.mNode != this) {
+    if (Owner() /* && aCtx.mNode */ && aCtx.mNode != this) {
 	Owner()->onOwnedMutated(owned()->provided(), aMut, aCtx);
     }
 }
@@ -466,7 +466,7 @@ void Node::notifyNodeMutated(const ChromoNode& aMut, const MutCtx& aCtx)
 void Node::onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx)
 {
     // Node is not inheritable, so nothing to do.
-    if (Owner() && aCtx.mNode && aCtx.mNode != this) {
+    if (Owner() /* && aCtx.mNode */ && aCtx.mNode != this) {
 	// Propagate to owner
 	Owner()->onOwnedMutated(aOwned, aMut, aCtx);
     }
@@ -626,7 +626,11 @@ MNode* Node::getParent(const GUri& aUri)
     if (!res) {
 	MOwner* owner = mContext ? mContext : Owner();
 	if (owner) {
-	    res =owner->getParent(aUri);
+	    //res =owner->getParent(aUri);
+	    res = mContext ?  mContext->getParent(aUri) : nullptr;
+	    if (!res) {
+		res = Owner() ?  Owner()->getParent(aUri) : nullptr;
+	    }
 	} else{
 	    MNode* mdl = getNode(mEnv->modulesUri());
 	    res = mdl ? mdl->getNode(aUri) : nullptr;

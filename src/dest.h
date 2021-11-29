@@ -8,6 +8,7 @@
 #include "vert.h"
 #include "func.h"
 #include "des.h"
+#include "rmutdata.h"
 
 
 /** @brief Transition function base 
@@ -115,6 +116,84 @@ class TrSwitchBool: public TrVar
 	// From MDVarGet
 	virtual MIface* DoGetDObj(const char *aName) override;
 };
+
+/** @brief Agent function "Boolena AND of Var data"
+ * */
+class TrAndVar: public TrVar
+{
+    public:
+	static const char* Type() { return "TrAndVar";};
+	TrAndVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From ATrVar
+	virtual void Init(const string& aIfaceName) override;
+	virtual string GetInpUri(int aId) const override;
+};
+
+
+/** @brief Transition agent "Convert to URI"
+ * */
+class TrUri: public TrVar
+{
+    public:
+	static const char* Type() { return "TrUri";};
+	TrUri(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From ATrVar
+	virtual void Init(const string& aIfaceName) override;
+	virtual string GetInpUri(int aId) const override;
+};
+
+
+/** @brief Agent functions "Mut composer" base
+ * */
+class TrMut: public TrBase, public MDVarGet, public MDtGet<DMut>
+{
+    public:
+	static const char* Type() { return "TrMut";};
+	TrMut(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
+	template<typename T> bool GetInp(int aId, T& aRes);
+	virtual string GetInpUri(int aId) const = 0;
+	// From MNode
+	virtual MIface* MNode_getLif(const char *aType) override;
+	// From MDVarGet
+	virtual string MDVarGet_Uid() const override { return getUid<MDVarGet>();}
+	virtual MIface* DoGetDObj(const char *aName) override;
+	virtual string VarGetIfid() const override;
+    protected:
+	DMut mRes;  /*<! Cached result */
+};
+
+
+/** @brief Agent function "Mut Node composer"
+ * */
+class TrMutNode: public TrMut
+{
+    public:
+	enum { EInpName, EInpParent };
+    public:
+	static const char* Type() { return "TrMutNode";};
+	TrMutNode(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From ATrcMut
+	virtual string GetInpUri(int aId) const override;
+	// From MDtGet
+	virtual void DtGet(DMut& aData) override;
+};
+
+/** @brief Agent function "Mut connect composer"
+ * */
+class TrMutConn: public TrMut
+{
+    public:
+	enum { EInpCp1, EInpCp2 };
+    public:
+	static const char* Type() { return "TrMutConn";};
+	TrMutConn(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From ATrcMut
+	virtual string GetInpUri(int aId) const override;
+	// From MDtGet
+	virtual void DtGet(DMut& aData) override;
+};
+
+
 
 
 

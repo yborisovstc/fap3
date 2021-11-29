@@ -135,7 +135,7 @@ void ImportsMgr::ImportToNode(MNode* aNode, const ChromoNode& aMut)
 	    aNode->mutate(mut->Root(), true, MutCtx(aNode), true);
 	    delete mut;
 	} else {
-	    mHost.Logger()->Write(EErr, NULL, "Importing [%s]: module already exists", aMut.Name().c_str());
+	    // mHost.Logger()->Write(EErr, NULL, "Importing [%s]: module already exists", aMut.Name().c_str());
 	}
     }
 }

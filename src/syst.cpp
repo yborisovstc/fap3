@@ -189,8 +189,7 @@ bool Extd::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	    }
 	} else {
 	    // Redirect to internal CP
-	    MUnit* intcpu = intcp->lIf(intcpu);  
-	    res = intcpu->resolveIface(aName, aReq);
+	    res = intcpu ? intcpu->resolveIface(aName, aReq) : res;
 	}
     }
     return res;
@@ -210,7 +209,7 @@ MVert* Extd::getExtd()
 {
     MVert* res = nullptr;
     MNode* extn = getNode(KUriInt);
-    res = extn->lIf(res);
+    res = extn ? extn->lIf(res) : nullptr;
     return res;
 }
 

@@ -29,8 +29,11 @@ class GUri
 	void appendElem(const TElem& aElem);
 	void prependElem(const TElem& aElem);
 	bool operator==(const GUri& aSrc) const;
+	bool operator!=(const GUri& aSrc) const { return !operator ==(aSrc);}
 	bool operator<(const GUri& aSrc) const;
 	bool operator<=(const GUri& aSrc) const { return *this < aSrc || *this == aSrc;}
+	bool operator>(const GUri& aSrc) const { return aSrc < *this;}
+	bool operator>=(const GUri& aSrc) const { return aSrc <= *this;}
 	operator string() const { return toString();}
 	string toString() const;
 	bool isAbsolute() const;

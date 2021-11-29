@@ -275,6 +275,14 @@ void C2MdlNode::AddQnode(const C2MdlNode& aNode)
     mQnode = new C2MdlNode(aNode);
 }
 
+bool C2MdlNode::IsChildOf(const C2MdlNode* aParent) const
+{
+    const C2MdlNode* parent = mOwner;
+    while (parent && parent != aParent) {
+	parent = parent->mOwner;
+    }
+    return (parent == aParent);
+}
 
 // **** Chromo2Mdl *****
 
@@ -542,6 +550,14 @@ THandle Chromo2Mdl::AddNext(const THandle& aPrev, TNodeType aNode)
 THandle Chromo2Mdl::AddPrev(const THandle& aNext, const THandle& aHandle, bool aCopy)
 {
     assert(false);
+}
+
+
+bool Chromo2Mdl::IsChildOf(const THandle& aNode, const THandle& aParent)
+{
+    C2MdlNode* parent = aParent.Data(parent);
+    C2MdlNode* node = aNode.Data(parent);
+    return node->IsChildOf(parent);
 }
 
 void Chromo2Mdl::RmChild(const THandle& aParent, const THandle& aChild, bool aDeattachOnly)
@@ -1679,6 +1695,14 @@ void Chromo2Mdl::rdp_sep(istream& aIs)
     }
 }
 
+bool Chromo2Mdl::operator==(const Chromo2Mdl& b)
+{
+    // TODO to implement
+    bool res = !mErr.IsSet() && !b.mErr.IsSet();
+    return res;
+}
+
+
 
 
 
@@ -2043,4 +2067,8 @@ void Chromo2::TransfTlNode(ChromoNode& aDst, const ChromoNode& aSrc, bool aTarg)
     }
 }
 
+bool Chromo2::operator==(const Chromo2& b)
+{
+    return mMdl == b.mMdl;
+}
 

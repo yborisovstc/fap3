@@ -213,7 +213,7 @@
     <sect1 id="ds_itr"><title>Intro</title>
 	<sect2 id="ds_itr_sp"><title>The scope of the project</title>
 	    <simpara>This project is focusing on re-desing of DES framework fap2, aka grayb, ref <ulink url="../../../grayb/doc/design/index.html"/> for
-		the desing. The main areas of improvement are:</simpara>
+		the desing. Ref also <xref linkend="ds_ibc"/> for tracked list of the items to be addressed in FAP3. The main areas of improvement are:</simpara>
 	    <itemizedlist>
 		<listitem>
 		    Unify of native level relations (connections), like owner-component, observer-observable, etc. Create common desing for the
@@ -243,7 +243,7 @@
 		    <simpara>Ref <ulink url="../../../grayb/doc/design/index.html#ds_chr2_mc"/> for FAP2 desing item. Ref <xref linkend="ds_cli"/> for the material.</simpara>
 		    <simpara></simpara>
 		</listitem>
-		<listitem>Redesign import to avoid chromo analysis for selecting imported node.</listitem>
+		<listitem>Redesign import to avoid chromo analysis for selecting imported node. Ref <xref linkend="ds_imp"/> for details.</listitem>
 		<listitem>
 		    Redesign DES adapter referencing to managed agent.
 		    <simpara>Ref <ulink url="../../../grayb/doc/design/index.html#ds_dmm_irta"/> for details.</simpara>
@@ -960,6 +960,7 @@
 			can be improved by enabling segments propagation to the output chromo.
 			Ref <xref linkend="ds_cli_sno_s1"/> and <xref linkend="ds_cli_sno_s2"/> that introduce the possible approaches to this.
 		</simpara>
+		<simpara>Ref <xref linkend="ds_iss_001"/> for related issue.</simpara>
 	    </sect3>
 	    <sect3 id="ds_eosm_s1"><title>Solution#1 Checking of parent mutation from the mut context.</title>
 		<sect4><title>Intro</title>
@@ -1286,6 +1287,55 @@
 		<simpara>With this approach the system (host) can decide if it accepts connection request from agent or not. This mechanism can
 		    be even extended - the system can ask some agents to accept connecting new agent. So we can simply customize the policies with 
 		    special agents.</simpara>
+	    </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_imp"><title>Redesign import</title>
+	<sect2><title>Intro</title>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_ibc"><title>Desing items to be considered</title>
+	<sect2><title>Intro</title>
+	    <simpara>Ref <xref linkend="ds_itr_sp"/> for the initial list of the problems need to be addressed in FAP3.</simpara>
+	</sect2>
+	<sect2 id="ds_ibc_roncc"><title>Root as the only node containing chromo</title>
+	    <sect3><title>Intro</title>
+		<simpara>
+		    Currently the model can contain many nodes that have theyrs own chromos - any Elem based nodes. This simplifies creating these nodes
+		    heirs. But on another hand this causes chromo duplication. Actually any node chromo can be "calculated" from root chromo. This approach
+		    was tried in some earlier version of FAP.
+		    This approach potentially can improve the model performance. We need to consider such design.
+		</simpara>
+	    </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_iss"><title>Issues</title>
+	<sect2 id="ds_iss_001"><title>[DS_ISS_001] Wrong chromo forming in case of namespace segment.</title>
+	    <sect3><title>Intro</title>
+		<simpara>
+		    Ref ut_elem.cpp:test_elem_inh_1() chromo ut_elem_inh_1.chs. The problem is that mutation 
+		    <programlisting>About = "N1_1 new";</programlisting>
+			will be included into E1 chormo twice: first entry is in the scope of namespace segment
+		    <programlisting>
+			N1_1 @ {
+			About = "N1_1 new";
+			}
+		    </programlisting>
+			and the second - in E1 chromo directly
+		</simpara>
+		<simpara>
+		    Ref <xref linkend="ds_eosm"/> for the details of <xref linkend="gls_eosm"/> current solution. The reported problem is
+			caused by this solution bad design.
+		</simpara>
+	    </sect3>
+	    <sect3><title>Analysis</title>
+		<simpara>
+		    The root-cause is that the algorithm of E1 chromo forming is wrong: mutation and "About = ..." will be included even 
+		    the namespace segment is alredy included.
+		</simpara>
 	    </sect3>
 	</sect2>
     </sect1>

@@ -4,7 +4,6 @@
 
 ///// FAddDt
 
-
 template<class T> Func* FAddDt<T>::Create(Host* aHost, const string& aString)
 {
     Func* res = NULL;
@@ -94,6 +93,144 @@ template <class T> string FAddDt<T>::GetInpExpType(int aId) const
     }
     return res;
 }
+
+
+/// Boolean AND
+
+Func* FBAndDt::Create(Host* aHost, const string& aString)
+{
+    return new FBAndDt(*aHost);
+}
+
+MIface* FBAndDt::getLif(const char *aName)
+{
+    MIface* res = NULL;
+    if (res = checkLif<MDtGet<Sdata<bool>>>(aName));
+    return res;
+}
+
+void FBAndDt::DtGet(Sdata<bool>& aData)
+{
+    bool res = true;
+
+    MIfProv::TIfaces* inps = mHost.GetInps(EInp, MDVarGet::Type(), false);
+    bool first = true;
+    if (inps) for (auto dgeti : *inps) {
+	MDVarGet* dget = dynamic_cast<MDVarGet*>(dgeti);
+	MDtGet<Sdata<bool>>* dfget = dget->GetDObj(dfget);
+	if (dfget != NULL) {
+	    Sdata<bool> arg = aData;
+	    dfget->DtGet(arg);
+	    if (arg.mValid) {
+		if (first) {
+		    aData = arg;
+		    first = false;
+		} else {
+		    aData.mData = aData.mData && arg.mData;
+		}
+	    } else {
+		mHost.log(EErr, "Incorrect argument [" + mHost.GetInpUri(EInp) + "]");
+		res = false; break;
+	    }
+	} else {
+	    mHost.log(EErr, "Incompatible argument [" + mHost.GetInpUri(EInp) + "]");
+	    dfget = dget->GetDObj(dfget);
+	    res = false; break;
+	}
+    }
+    aData.mValid = res;
+    if (mRes != aData) {
+	mRes = aData;
+	mHost.OnFuncContentChanged();
+	/*
+	if (mHost.IsLogLevel(KDbgLog_Value)) {
+	    mHost.log(EErr, "Result: " + res ? (aData.mData ? "true" : "false") : "err");
+	}
+	*/
+    }
+}
+
+string FBAndDt::GetInpExpType(int aId) const
+{
+    string res;
+    if (aId == EInp) {
+	res = MDtGet<Sdata<bool>>::Type();
+    }
+    return res;
+}
+
+
+void FBAndDt::GetResult(string& aResult) const
+{
+    mRes.ToString(aResult);
+}
+
+
+
+/// Converting to GUri
+
+Func* FUri::Create(Host* aHost, const string& aOutIid, const string& aInpIid)
+{
+    Func* res = NULL;
+    if (!aOutIid.empty()) {
+	if (aOutIid == MDtGet<TData>::Type() && aInpIid == MDtGet<TInpData>::Type()) {
+	    res = new FUri(*aHost);
+	}
+    } else {
+	// Weak negotiation - wrong case here
+	//mHost.log(EErr, "Creating instance, wrong outp [" + aOutIid + "] or inp [" + aInpIid + "] types");
+    }
+    return res;
+}
+
+
+
+
+MIface* FUri::getLif(const char *aName)
+{
+    MIface* res = NULL;
+    if (res = checkLif<MDtGet<DGuri>>(aName));
+    return res;
+}
+
+void FUri::DtGet(TData& aData)
+{
+    bool res = true;
+    MDVarGet* dget = mHost.GetInp(EInp);
+    MDtGet<TInpData>* dfget = dget ? dget->lIf(dfget) : nullptr;
+    if (dfget) {
+	TInpData arg;
+	dfget->DtGet(arg);
+	if (arg.mValid) {
+	    aData.mData = GUri(arg.mData);
+	    aData.mValid = true;
+	} else {
+	    mHost.log(EErr, "Incorrect input data");
+	    TInpData arg;
+	    dfget->DtGet(arg);
+	    res = false;
+	}
+    } else {
+	mHost.log(EErr, "Cannot get input [" + mHost.GetInpUri(EInp) + "]");
+	res = false;
+    }
+    aData.mValid = res;
+    if (mRes != aData) {
+	mRes = aData;
+	mHost.OnFuncContentChanged();
+    }
+}
+
+string FUri::GetInpExpType(int aId) const
+{
+    string res;
+    if (aId == EInp) {
+	res = MDtGet<TInpData>::Type();
+    }
+    return res;
+}
+
+
 
 
 

@@ -336,6 +336,185 @@ MIface* TrSwitchBool::DoGetDObj(const char *aName)
 }
 
 
+///// TrAndVar
+
+TrAndVar::TrAndVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+{
+    MNode* cp = Provider()->createNode(CpStateInp::Type(), "Inp", mEnv);
+    assert(cp);
+    bool res = attachOwned(cp);
+    assert(res);
+}
+
+void TrAndVar::Init(const string& aIfaceName)
+{
+    if (mFunc) {
+	delete mFunc;
+	mFunc = NULL;
+    }
+    if ((mFunc = FBAndDt::Create(this, aIfaceName)) != NULL);
+}
+
+string TrAndVar::GetInpUri(int aId) const 
+{
+    if (aId == FBAndDt::EInp) return "Inp";
+    else return string();
+}
+
+
+
+///// TrUri
+
+TrUri::TrUri(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+{
+    MNode* cp = Provider()->createNode(CpStateInp::Type(), "Inp", mEnv);
+    assert(cp);
+    bool res = attachOwned(cp);
+    assert(res);
+}
+
+void TrUri::Init(const string& aIfaceName)
+{
+    if (mFunc) {
+	delete mFunc;
+	mFunc = NULL;
+    }
+    MDVarGet* inp = GetInp(Func::EInp1);
+    if (inp) {
+	string t_inp = inp->VarGetIfid();
+	if ((mFunc = FUri::Create(this, aIfaceName, t_inp)));
+	else {
+	    Logger()->Write(EErr, this, "Failed init function");
+	}
+    }
+}
+
+string TrUri::GetInpUri(int aId) const 
+{
+    if (aId == FUri::EInp) return "Inp";
+    else return string();
+}
+
+
+// Agent functions "Mut composer" base
+
+
+TrMut::TrMut(const string& aType, const string& aName, MEnv* aEnv): TrBase(aType, aName, aEnv)
+{
+}
+
+MIface* TrMut::MNode_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MDVarGet>(aType));
+    else res = TrBase::MNode_getLif(aType);
+    return res;
+}
+
+MIface* TrMut::DoGetDObj(const char *aName)
+{
+    MIface* res = NULL;
+    if (strcmp(aName, MDtGet<DMut>::Type()) == 0) {
+	res = dynamic_cast<MDtGet<DMut>*>(this);
+    }
+    return res;
+}
+
+string TrMut::VarGetIfid() const
+{
+    return MDtGet<DMut>::Type();
+}
+
+template<typename T> bool TrMut::GetInp(int aId, T& aRes)
+{
+    bool res = false;
+    MNode* inp = getNode(GetInpUri(aId));
+    if (inp) {
+	res =  GetSData(inp, aRes);
+    } else {
+	Logger()->Write(EErr, this, "Cannot get input [%s]", GetInpUri(aId).c_str());
+    }
+    return res;
+}
+
+
+
+
+// Agent function "Mut Node composer"
+
+TrMutNode::TrMutNode(const string& aType, const string& aName, MEnv* aEnv): TrMut(aType, aName, aEnv)
+{
+    AddInput(GetInpUri(EInpParent));
+    AddInput(GetInpUri(EInpName));
+}
+
+string TrMutNode::GetInpUri(int aId) const
+{
+    if (aId == EInpParent) return "Parent";
+    else if (aId == EInpName) return "Name";
+    else return string();
+}
+
+void TrMutNode::DtGet(DMut& aData)
+{
+    bool res = false;
+    string name;
+    res = GetInp(EInpName, name);
+    if (res) {
+	string parent;
+	res = GetInp(EInpParent, parent);
+	if (res) {
+	    aData.mData = TMut(ENt_Node, ENa_Parent, parent, ENa_Id, name);
+	    aData.mValid = true;
+	} else {
+	    aData.mValid = false;
+	}
+    } else {
+	aData.mValid = false;
+    }
+    mRes = aData;
+}
+
+
+// Agent function "Mut Connect composer"
+
+TrMutConn::TrMutConn(const string& aType, const string& aName, MEnv* aEnv): TrMut(aType, aName, aEnv)
+{
+    AddInput(GetInpUri(EInpCp1));
+    AddInput(GetInpUri(EInpCp2));
+}
+
+string TrMutConn::GetInpUri(int aId) const
+{
+    if (aId == EInpCp1) return "Cp1";
+    else if (aId == EInpCp2) return "Cp2";
+    else return string();
+}
+
+void TrMutConn::DtGet(DMut& aData)
+{
+    bool res = false;
+    string cp1;
+    res = GetInp(EInpCp1, cp1);
+    if (res) {
+	string cp2;
+	res = GetInp(EInpCp2, cp2);
+	if (res) {
+	    aData.mData = TMut(ENt_Conn, ENa_P, cp1, ENa_Q, cp2);
+	    aData.mValid = true;
+	} else {
+	    aData.mValid = false;
+	}
+    } else {
+	aData.mValid = false;
+    }
+    mRes = aData;
+}
+
+
+
+
+
 
 
 

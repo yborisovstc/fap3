@@ -52,6 +52,10 @@ libfap3_la_SOURCES = \
 		       syst.cpp \
 		       rdata.h \
 		       rdata.cpp \
+		       rdatauri.h \
+		       rdatauri.cpp \
+		       rmutdata.h \
+		       rmutdata.cpp \
 		       data.h \
 		       data.cpp \
 		       func.h \

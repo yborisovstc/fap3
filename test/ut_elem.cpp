@@ -66,9 +66,30 @@ void Ut_elem::test_elem_inh_1()
     root->dump(Ifu::EDM_Base | Ifu::EDM_Comps | Ifu::EDM_Recursive,0);
     // Save root chromo
     eroot->Chromos().Save(specn + "_saved." + ext);
+    // Checking E1 chromo forming, ref issue DS_ISS_001
+    MNode* e1 = root->getNode("E1");
+    MElem* e1e = e1 ? e1->lIf(e1e) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get E1", e1e);
+    string cnt_e1_about;
+    bool res = e1->cntOw()->getContent("About", cnt_e1_about);
+    //!!CPPUNIT_ASSERT_MESSAGE("Fail to get E1 about", res && cnt_e1_about == "E1");
+    // Checking that local mutation goes to owners chromo
+    MChromo* chr = mEnv->provider()->createChromo();
+    chr->SetFromSpec("E1_1_1 : Elem;");
+    MNode* e1_n1_1 = e1->getNode("N1_1");
+    e1_n1_1->mutate(chr->Root(), false, MutCtx(), false);
+    delete chr;
+    chr = mEnv->provider()->createChromo();
+    chr->SetFromSpec("E4 : E1;");
+    root->mutate(chr->Root(), false, MutCtx(), false);
+    delete chr;
+    MNode* e4_e1_1_1 = root->getNode("E4.N1_1.E1_1_1");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get N1_1.E1_1_1", e4_e1_1_1);
+
+
     // Save heir E2 chromo
     MNode* e2 = root->getNode("E2");
-    MElem* e2e = e2 ? e2->lIf(eroot) : nullptr;
+    MElem* e2e = e2 ? e2->lIf(e2e) : nullptr;
     CPPUNIT_ASSERT_MESSAGE("Fail to get e2e", e2e);
     e2e->Chromos().Save(specn + "_e2_saved." + ext);
     // Verifying E2 parent name in E2 chromo

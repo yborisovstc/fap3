@@ -101,6 +101,7 @@ class MChromoMdl
 	virtual THandle AddNext(const THandle& aPrev, const THandle& aHandle, bool aCopy = true) = 0;
 	virtual THandle AddNext(const THandle& aPrev, TNodeType aNode) = 0;
 	virtual THandle AddPrev(const THandle& aNext, const THandle& aHandle, bool aCopy = true) = 0;
+	virtual bool IsChildOf(const THandle& aNode, const THandle& aParent) = 0;
 	virtual void RmChild(const THandle& aParent, const THandle& aChild, bool aDeattachOnly = false) = 0;
 	virtual void Rm(const THandle& aHandle) = 0;
 	virtual void SetAttr(const THandle& aNode, TNodeAttr aType, const string& aVal) = 0;

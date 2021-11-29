@@ -73,6 +73,8 @@ class C2MdlNode
 	bool ExistsContextByAttr(TNodeAttr aAttr);
 	/** @brief Adds Qnode (DMC dependency) */
 	void AddQnode(const C2MdlNode& aNode);
+	/** @brief Checks if the node is a parent */ 
+	bool IsChildOf(const C2MdlNode* aParent) const;
     public:
 	C2MdlNode* mOwner = NULL;
 	TC2MdlCtx mContext;       /*!< Context */
@@ -126,6 +128,7 @@ class Chromo2Mdl: public MChromoMdl
 	virtual THandle AddNext(const THandle& aPrev, const THandle& aHandle, bool aCopy = true);
 	virtual THandle AddNext(const THandle& aPrev, TNodeType aNode);
 	virtual THandle AddPrev(const THandle& aNext, const THandle& aHandle, bool aCopy = true);
+	virtual bool IsChildOf(const THandle& aNode, const THandle& aParent);
 	// TODO Deattach doesn't work here!
 	virtual void RmChild(const THandle& aParent, const THandle& aChild, bool aDeattachOnly = false);
 	virtual void Rm(const THandle& aHandle);
@@ -152,6 +155,7 @@ class Chromo2Mdl: public MChromoMdl
 	virtual THandle Init(TNodeType aRootType);
 	void Reset();
 	const CError& Error() const { return mErr;};
+	bool operator==(const Chromo2Mdl& b);
     protected:
 	/** Recursive descent parser: parse name
 	 * */
@@ -244,6 +248,7 @@ class Chromo2: public MChromo
 	virtual void ReduceToSelection(const ChromoNode& aSelNode);
 	virtual bool IsError() const;
 	virtual const CError& Error() const;
+	bool operator==(const Chromo2& b);
     protected:
 	void ConvertNode(ChromoNode& aDst, const ChromoNode& aSrc);
 	void TransfTlNode(ChromoNode& aDst, const ChromoNode& aSrc, bool aTarg);
