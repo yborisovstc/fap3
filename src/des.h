@@ -173,6 +173,7 @@ class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver
 	virtual MIface* MObserver_getLif(const char *aType) override;
 	virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override;
 	virtual void onObsContentChanged(MObservable* aObl, const MContent* aCont) override {}
+	virtual void onObsChanged(MObservable* aObl) override {}
 	// From Node.MOwned
 	virtual void onOwnerAttached() override;
     protected:

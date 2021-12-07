@@ -103,6 +103,8 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	void updateNs(TNs& aNs, const ChromoNode& aCnode);
 	bool isOwned(const MNode* aComp) const;
 	bool addComp(const string& aType, const string& aName);
+	void notifyChanged();
+	inline bool isLogLevel(int aLevel) const { return mLogLevel >= aLevel;}
 	// Mutations
 	virtual MNode* mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx);
 	virtual void mutSegment(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx);
@@ -118,6 +120,7 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	MOwner* mContext = nullptr;
 	TObsCp mOcp;                      /*!< Observable CP */
 	TOwtNode mOnode;                  /*!< Ownership node */
+	int mLogLevel = 0;                /*!< Logging level */
 };
 
 #endif //  __FAP3_NODE_H

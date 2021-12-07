@@ -12,6 +12,7 @@ libfap3_la_SOURCES = \
 		       mprov.h \
 		       mowning.h \
 		       minh.h \
+		       mlink.h \
 		       nconn.h \
 		       necont.h \
 		       menv.h \
@@ -48,6 +49,8 @@ libfap3_la_SOURCES = \
 		       elem.cpp \
 		       vert.h \
 		       vert.cpp \
+		       link.h \
+		       link.cpp \
 		       syst.h \
 		       syst.cpp \
 		       rdata.h \

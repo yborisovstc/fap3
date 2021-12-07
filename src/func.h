@@ -187,5 +187,22 @@ class FSwitchBool: public FSwithcBase, public MDVarGet
 };
 
 
+/** @brief Boolean negatiopn
+ * */
+class FBnegDt: public Func, public MDtGet<Sdata<bool>> {
+    public:
+	enum { EInp = EInp1 };
+	static Func* Create(Host* aHost, const string& aString);
+	FBnegDt(Host& aHost): Func(aHost) {}
+	virtual MIface* getLif(const char *aName) override;
+	virtual string IfaceGetId() const override { return MDtGet<Sdata<bool>>::Type();}
+	virtual void DtGet(Sdata<bool>& aData) override;
+	virtual void GetResult(string& aResult) const override;
+	Sdata<bool> mRes;
+};
+
+
+
+
 
 #endif

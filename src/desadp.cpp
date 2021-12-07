@@ -1,6 +1,8 @@
 
 #include "des.h"
 #include "desadp.h"
+#include "rmutdata.h"
+#include "mlink.h"
 
 
 // Agents DES adaptation - ADP
@@ -9,8 +11,11 @@
 
 const string KCont_AgentUri = "AgentUri";
 const string K_CpUriInpMagUri = "InpMagUri";
+const string K_MagOwnerLinkUri = "MagOwnerLink";
 
-AAdp::AAdp(const string &aType, const string& aName, MEnv* aEnv): Unit(aType, aName, aEnv), mMag(NULL), mObrCp(this), mAgtCp(this), mUpdNotified(false), mActNotified(false)
+AAdp::AAdp(const string &aType, const string& aName, MEnv* aEnv): Unit(aType, aName, aEnv),
+   mMagOwner(nullptr), mMag(NULL), mObrCp(this), mAgtCp(this), mUpdNotified(false), mActNotified(false),
+    mMagUriValid(false)
 {
 }
 
@@ -42,6 +47,21 @@ bool AAdp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
     return res;
 }
 
+void AAdp::onObsOwnedAttached(MObservable* aObl, MOwned* aOwned)
+{
+    MObservable* hostobl = ahostNode() ? ahostNode()->lIf(hostobl) : nullptr;
+    if (aObl == hostobl) {
+	MNode* ownedn = aOwned->lIf(ownedn);
+	if (ownedn->name() == K_MagOwnerLinkUri) {
+	    // Start monitoring MagLink
+	    MObservable* magolinkobl = ownedn->lIf(magolinkobl);
+	    if (magolinkobl) {
+		magolinkobl->addObserver(&mObrCp);
+	    }
+	}
+    }
+}
+
 void AAdp::onObsContentChanged(MObservable* aObl, const MContent* aCont)
 {
     string data;
@@ -57,6 +77,17 @@ void AAdp::onObsContentChanged(MObservable* aObl, const MContent* aCont)
     }
 }
 
+void AAdp::onObsChanged(MObservable* aObl)
+{
+    MNode* magolinkn = ahostGetNode(K_MagOwnerLinkUri);
+    MObservable* magolinkobl = magolinkn ? magolinkn->lIf(magolinkobl) : nullptr;
+    if (aObl == magolinkobl) {
+	MLink* magolinkl = magolinkn->lIf(magolinkl);
+	MNode* magon = magolinkl->pair();
+	bool res = UpdateMagOwner(magon);
+    }
+}
+
 MIface* AAdp::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
@@ -66,37 +97,6 @@ MIface* AAdp::MNode_getLif(const char *aType)
     else if (res = checkLif<MDesInpObserver>(aType));
     else res = Unit::MNode_getLif(aType);
     return res;
-}
-
-void AAdp::OnMagCompDeleting(const MUnit* aComp, bool aSoft, bool aModif)
-{
-}
-
-void AAdp::OnMagCompAdding(const MUnit* aComp, bool aModif)
-{
-}
-
-bool AAdp::OnMagCompChanged(const MUnit* aComp, const string& aContName, bool aModif)
-{
-    return true;
-}
-
-bool AAdp::OnMagChanged(const MUnit* aComp)
-{
-    return true;
-}
-
-bool AAdp::OnMagCompRenamed(const MUnit* aComp, const string& aOldName)
-{
-    return true;
-}
-
-void AAdp::OnMagCompMutated(const MUnit* aNode)
-{
-}
-
-void AAdp::OnMagError(const MUnit* aComp)
-{
 }
 
 void AAdp::setActivated()
@@ -204,6 +204,13 @@ void AAdp::onInpUpdated()
     setActivated();
 }
 
+bool AAdp::UpdateMagOwner(MNode* aMagOwner)
+{
+    // TODO to implement all use-cases
+    mMagOwner = aMagOwner;
+    return true;
+}
+
 void AAdp::UpdateMag()
 {
     MNode* inp = ahostGetNode(K_CpUriInpMagUri);
@@ -219,25 +226,33 @@ void AAdp::UpdateMag()
 bool AAdp::UpdateMag(const string& aMagUri)
 {
     bool res = false;
-    if (aMagUri != mMagUri) {
+    if (!mMagUriValid || aMagUri != mMagUri) {
 	mMagUri = aMagUri;
-	MNode* mag = ahostGetNode(mMagUri);
+	mMagUriValid = true;
+	MNode* mag = mMagOwner ? mMagOwner->getNode(mMagUri) : ahostGetNode(mMagUri);
 	if (mag) {
-	    if (mMag) {
-		MObservable* prevmagob = mMag->lIf(prevmagob);
-		prevmagob->rmObserver(&mMagObs.mOcp);
-	    }
-	    mMag = mag;
-	    res = true;
-	    OnMagUpdated();
-	    MObservable* magob = mMag->lIf(magob);
-	    magob->addObserver(&mMagObs.mOcp);
-	    NotifyInpsUpdated();
-	    Logger()->Write(EInfo, this, "Managed agent attached [%s]", mMagUri.c_str());
+	    UpdateMag(mag);
 	} else {
 	    Logger()->Write(EErr, this, "Cannot find managed agent [%s]", mMagUri.c_str());
 	}
     }
+    return res;
+}
+
+bool AAdp::UpdateMag(MNode* aMag)
+{
+    bool res = false;
+    if (mMag) {
+	MObservable* prevmagob = mMag->lIf(prevmagob);
+	prevmagob->rmObserver(&mMagObs.mOcp);
+    }
+    mMag = aMag;
+    res = true;
+    OnMagUpdated();
+    MObservable* magob = mMag->lIf(magob);
+    magob->addObserver(&mMagObs.mOcp);
+    NotifyInpsUpdated();
+    Logger()->Write(EInfo, this, "Managed agent attached [%s]", mMagUri.c_str());
     return res;
 }
 
@@ -284,6 +299,14 @@ void AAdp::onOwnerAttached()
     res = ac->attachAgent(&mAgtCp);
     if (!res) {
 	Logger()->Write(EErr, this, "Cannot attach to host");
+    }
+    // Start monitoring MAG owner link
+    MNode* magoln = ahostGetNode(K_MagOwnerLinkUri);
+    MObservable* magolinkobl = magoln ? magoln->lIf(magolinkobl) : nullptr;
+    if (magolinkobl) { 
+	magolinkobl->addObserver(&mObrCp);
+    } else {
+	Log(TLog(EErr, this) + "Cannot find MAG owner link");
     }
 }
 
@@ -396,38 +419,9 @@ void AMnodeAdp::confirm() {
     AAdp::confirm();
 }
 
-void AMnodeAdp::OnMagCompDeleting(const MUnit* aComp, bool aSoft, bool aModif)
+void AMnodeAdp::onMagOwnedAttached(MObservable* aObl, MOwned* aOwned)
 {
     mCompNamesUpdated = true;
-}
-
-void AMnodeAdp::OnMagCompAdding(const MUnit* aComp, bool aModif)
-{
-    mCompNamesUpdated = true;
-}
-
-bool AMnodeAdp::OnMagCompChanged(const MUnit* aComp, const string& aContName, bool aModif)
-{
-    return true;
-}
-
-bool AMnodeAdp::OnMagChanged(const MUnit* aComp)
-{
-    return true;
-}
-
-bool AMnodeAdp::OnMagCompRenamed(const MUnit* aComp, const string& aOldName)
-{
-    mCompNamesUpdated = true;
-    return true;
-}
-
-void AMnodeAdp::OnMagCompMutated(const MUnit* aNode)
-{
-}
-
-void AMnodeAdp::OnMagError(const MUnit* aComp)
-{
 }
 
 void AMnodeAdp::OnMagUpdated()
@@ -446,6 +440,111 @@ void AMnodeAdp::NotifyInpsUpdated()
     cp = ahostGetNode(K_CpUriOwner);
     NotifyInpUpdated(cp);
 }
+
+
+// MElem DES adapter
+
+const string K_MutApplOutpUri = "MutationApplied";
+const string K_InpMUtpUri = "InpMut";
+
+AMelemAdp::AMelemAdp(const string& aType, const string& aName, MEnv* aEnv): AAdp(aType, aName, aEnv)
+{
+    mMagChromo = mEnv->provider()->createChromo();
+}
+
+bool AMelemAdp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+{
+    bool res = true;
+    if (aName == MDesInpObserver::Type()) {
+	MNode* inpMut = ahostGetNode(K_InpMUtpUri);
+	if (isRequestor(aReq, inpMut)) {
+	    MIface* iface = dynamic_cast<MDesInpObserver*>(&mIapInpMut);
+	    addIfpLeaf(iface, aReq);
+	}
+    } else {
+	AAdp::resolveIfc(aName, aReq);
+    }
+    return res;
+}
+
+
+
+void AMelemAdp::ApplyMut()
+{
+    if (mMag) {
+	bool eres = false;
+	MNode* inp = ahostGetNode(K_InpMUtpUri);
+	MUnit* inpu = inp ? inp->lIf(inpu) : nullptr;
+	MDVarGet* vget = inpu ? inpu->getSif(vget) : nullptr;
+	if (vget) {
+	    MDtGet<DMut>* gsd = vget->GetDObj(gsd);
+	    if (gsd) {
+		DMut dmut;
+		gsd->DtGet(dmut);
+		TMut& mut = dmut.mData;
+		MElem* mag = mMag->lIf(mag);
+		if (mag) {
+		    if (mut.IsValid() && mut.Type() != ENt_None && mut.Type() != ENt_Unknown) {
+			TNs ns; MutCtx mutctx(NULL, ns);
+			MChromo* chr = mEnv->provider()->createChromo();
+			chr->Init(ENt_Node);
+			chr->Root().AddChild(mut);
+			mMag->mutate(chr->Root(), false, mutctx, true);
+			delete chr;
+			string muts = mut.ToString();
+			Logger()->Write(EInfo, this, "Managed agent is mutated [%s]", muts.c_str());
+		    } else if (!mut.IsValid() || mut.Type() == ENt_Unknown) {
+			Logger()->Write(EErr, this, "Invalid mutation [%s]", mut.operator string().c_str());
+		    }
+		} else {
+		    Logger()->Write(EErr, this, "Managed agent is not MElem");
+		}
+	    } else {
+		MDtGet<DChr2>* gsd = vget->GetDObj(gsd);
+		if (gsd) {
+		    DChr2 data;
+		    gsd->DtGet(data);
+		    Chromo2& chromo = data.mData;
+		    MElem* mag = mMag->lIf(mag);
+		    if (mag) {
+			if (data.IsValid()) {
+			    TNs ns; MutCtx mutctx(NULL, ns);
+			    mMag->mutate(chromo.Root(), false, mutctx);
+			    string datas = chromo.Root();
+			    Logger()->Write(EInfo, this, "Managed agent is mutated [%s]", datas.c_str());
+			} else {
+			    string datas = chromo.Root();
+			    Logger()->Write(EErr, this, "Invalid mutations [%s]", datas.c_str());
+			}
+		    } else {
+			Logger()->Write(EErr, this, "Managed agent is not MElem");
+		    }
+
+		} else  {
+		    Logger()->Write(EErr, this, "Cannot get data from Inp");
+		}
+	    }
+	} else {
+	    Logger()->Write(EErr, this, "Cannot get input");
+	}
+    }
+}
+
+void AMelemAdp::OnInpMut()
+{
+    mInpMutChanged = true;
+    setActivated();
+}
+
+void AMelemAdp::update()
+{
+    if (mInpMutChanged) {
+	ApplyMut();
+	mInpMutChanged = false;
+    }
+    AAdp::update();
+}
+
 
 
 

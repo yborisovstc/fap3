@@ -3,6 +3,8 @@
 #include "chromo.h"
 
 
+static const string K_Cont_Debug_LogLevel = "Debug.LogLevel";
+
 Node::Node(const string &aType, const string &aName, MEnv* aEnv): mName(aName.empty() ? aType : aName), mEnv(aEnv), mOcp(this), mOnode(this, this)
 {
 } 
@@ -290,7 +292,7 @@ MNode* Node::createHeir(const string& aName)
     if (Provider()->isProvided(this)) {
 	uheir = Provider()->createNode(name(), aName, mEnv);
     } else {
-	Log(TLog(EInfo, this) + "The parent [" + aName + "] is not of provided");
+	Log(TLog(EInfo, this) + "The parent of [" + aName + "] is not of provided");
     }
     return uheir;
 }
@@ -659,8 +661,25 @@ bool Node::isOwned(const MNode* aNode) const
     return res;
 }
 
+void Node::notifyChanged()
+{
+    // Notify observers
+    auto* obs = mOcp.firstPair();
+    while (obs) {
+	obs->provided()->onObsChanged(this);
+	obs = mOcp.nextPair(obs);
+    }
+}
+
 void Node::onContentChanged(const MContent* aCont)
 {
+    // Cache logging level
+    string level;
+    bool res = getContent(K_Cont_Debug_LogLevel, level);
+    if (res) {
+	mLogLevel = stoi(level);
+    }
+
     // Notify observers
     auto* obs = mOcp.firstPair();
     while (obs) {

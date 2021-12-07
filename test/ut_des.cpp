@@ -16,6 +16,7 @@ class Ut_des : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(test_des_ades_1);
     CPPUNIT_TEST(test_des_dmc_1);
     CPPUNIT_TEST(test_des_ifr_inval_1);
+    CPPUNIT_TEST(test_des_tr_1);
     CPPUNIT_TEST_SUITE_END();
     public:
     virtual void setUp();
@@ -25,6 +26,7 @@ class Ut_des : public CPPUNIT_NS::TestFixture
     void test_des_ades_1();
     void test_des_dmc_1();
     void test_des_ifr_inval_1();
+    void test_des_tr_1();
     private:
     Env* mEnv;
 };
@@ -135,6 +137,41 @@ void Ut_des::test_des_ades_1()
     
     delete mEnv;
 }
+
+/** @brief Test of DES transitions
+ * */
+void Ut_des::test_des_tr_1()
+{
+    cout << endl << "=== Test of DES transisions ===" << endl;
+
+    const string specn("ut_des_tr_1");
+    string ext = "chs";
+    string spec = specn + string(".") + ext;
+    string log = specn + "_" + ext + ".log";
+    mEnv = new Env(spec, log);
+    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv);
+    mEnv->constructSystem();
+    MNode* root = mEnv->Root();
+    MElem* eroot = root ? root->lIf(eroot) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get root", eroot);
+
+    // Run 
+    bool res = mEnv->RunSystem(4);
+    CPPUNIT_ASSERT_MESSAGE("Failed running system", eroot);
+    // Verify the state
+    MNode* stn = root->getNode("Launcher.Ds1.St1");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get stn", stn);
+    MDVarGet* vg = stn->lIf(vg);
+    CPPUNIT_ASSERT_MESSAGE("Fail to get stn vg", vg);
+    MDtGet<Sdata<int>>* dgi = vg->GetDObj(dgi);
+    CPPUNIT_ASSERT_MESSAGE("Fail to get stn dgi", dgi);
+    Sdata<int> val;
+    dgi->DtGet(val);
+    CPPUNIT_ASSERT_MESSAGE("Wrong final state valud", val.mData == 4);
+    
+    delete mEnv;
+}
+
 
 
 /** @brief Test of creating of simple DES, DMC chromo

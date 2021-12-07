@@ -2,6 +2,9 @@
 #include <cstring>
 #include "func.h"
 
+static int KDbgLog_Value = 9;
+
+
 ///// FAddDt
 
 template<class T> Func* FAddDt<T>::Create(Host* aHost, const string& aString)
@@ -142,11 +145,9 @@ void FBAndDt::DtGet(Sdata<bool>& aData)
     if (mRes != aData) {
 	mRes = aData;
 	mHost.OnFuncContentChanged();
-	/*
 	if (mHost.IsLogLevel(KDbgLog_Value)) {
-	    mHost.log(EErr, "Result: " + res ? (aData.mData ? "true" : "false") : "err");
+	    mHost.log(EErr, string("Result: ") + (res ? (aData.mData ? "true" : "false") : "err"));
 	}
-	*/
     }
 }
 
@@ -359,9 +360,9 @@ template <class T> void FCmp<T>::DtGet(Sdata<bool>& aData)
     aData.mValid = res;
     if (mRes != aData) {
 	mRes = aData;
-	//if (mHost.IsLogLevel(KDbgLog_Value)) {
-	//    mHost.LogWrite(EDbg, "Result: %s", res ? (aData.mData ? "true" : "false") : "err");
-	//}
+	if (mHost.IsLogLevel(KDbgLog_Value)) {
+	    mHost.log(EDbg, string("Result: ") +  (res ? (aData.mData ? "true" : "false") : "err"));
+	}
 	mHost.OnFuncContentChanged();
     }
 }
@@ -446,6 +447,49 @@ string FSwitchBool::GetInpExpType(int aId) const
     return res;
 }
 
+/// Boolean negation
+
+Func* FBnegDt::Create(Host* aHost, const string& aString)
+{
+    return new FBnegDt(*aHost);
+}
+
+MIface* FBnegDt::getLif(const char *aName)
+{
+    MIface* res = NULL;
+    if (res = checkLif<MDtGet<Sdata<bool>>>(aName));
+    return res;
+}
+
+void FBnegDt::DtGet(Sdata<bool>& aData)
+{
+    bool res = true;
+    MDVarGet* dget = mHost.GetInp(EInp1);
+    if (dget != NULL) {
+	MDtGet<Sdata<bool> >* dfget = dget->GetDObj(dfget);
+	if (dfget != NULL) {
+	    Sdata<bool> arg;
+	    dfget->DtGet(arg);
+	    aData = !arg;
+	}
+    } else {
+	dget = mHost.GetInp(EInp1);
+	res = false;
+    }
+    aData.mValid = res;
+    if (mRes != aData) {
+	mRes = aData;
+	mHost.OnFuncContentChanged();
+    }
+}
+
+void FBnegDt::GetResult(string& aResult) const
+{
+    mRes.ToString(aResult);
+}
+
+
+
 
 
 
@@ -460,6 +504,7 @@ void Init()
     FCmp<Sdata<int> >::Create(host, "", "", FCmpBase::ELt);
     FCmp<Sdata<string> >::Create(host, "", "", FCmpBase::ELt);
     FCmp<Enum>::Create(host, "", "", FCmpBase::ELt);
+    FCmp<DGuri>::Create(host, "", "", FCmpBase::ELt);
 }
 
 

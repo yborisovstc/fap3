@@ -23,6 +23,7 @@
 #include "desio.h"
 #include "desadp.h"
 #include "mnt.h"
+#include "link.h"
 
 // TODO [YB] To import from build variable
 const string KModulesPath = "/usr/share/grayb/modules/";
@@ -33,11 +34,12 @@ const string KChromRarg_Chs = "chs";
 
 /** Native agents factory registry */
 const ProvDef::TFReg ProvDef::mReg ( {
-	Item<Node>(), Item<Unit>(), Item<Elem>(), Item<Content>(), Item<Vertu>(), Item<Vert>(), Item<Syst>(), Item<ConnPointu>(),
+	Item<Node>(), Item<Unit>(), Item<Elem>(), Item<Content>(), Item<Vertu>(), Item<Vert>(), Item<Link>(),
+	Item<Syst>(), Item<ConnPointu>(),
 	Item<Extd>(), Item<State>(), Item<Des>(), Item<TrAddVar>(),  Item<CpStateInp>(),  Item<CpStateOutp>(), 
 	Item<DesLauncher>(), Item<Sout>(), Item<ADes>(), Item<Socket>(), Item<TrMaxVar>(), Item<TrSwitchBool>(), Item<TrCmpVar>(),
-	Item<TrAndVar>(), Item<TrUri>(), Item<TrMutNode>(), Item<TrMutConn>(),
-	Item<AMnodeAdp>(), Item<AMntp>(),
+	Item<TrAndVar>(), Item<TrNegVar>(), Item<TrUri>(), Item<TrMutNode>(), Item<TrMutConn>(),
+	Item<AMnodeAdp>(), Item<AMelemAdp>(), Item<AMntp>(),
 	});
 
 

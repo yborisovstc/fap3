@@ -19,7 +19,7 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 {
     public:
 	using TAgtCp = NCpOnp<MAgent, MAhost>;  /*!< Agent conn point */
-	using TObserverCp = NCpOnp<MObserver, MObservable>;
+	using TObserverCp = NCpOmnp<MObserver, MObservable>;
     public:
 	/** @brief Input access point
 	 * */
@@ -79,6 +79,7 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 
 	/** @brief Managed agent observer
 	 * */
+	// TODO TObserverCp is changed to multi-point CP, so no need to dedicated observer, to redesign 
 	template <class T>
 	    class AdpMagObs : public MObserver {
 		public:
@@ -91,6 +92,9 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 		    }
 		    virtual void onObsContentChanged(MObservable* aObl, const MContent* aCont) override {
 			mHost->onMagContentChanged(aObl, aCont);
+		    }
+		    virtual void onObsChanged(MObservable* aObl) override {
+			mHost->onMagChanged(aObl);
 		    }
 		public:
 		    TObserverCp mOcp;               /*!< Observer connpoint */
@@ -129,8 +133,9 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 	virtual void onInpUpdated() override;
 	// From MObserver
 	virtual string MObserver_Uid() const {return getUid<MObserver>();}
-	virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override {}
+	virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override;
 	virtual void onObsContentChanged(MObservable* aObl, const MContent* aCont) override;
+	virtual void onObsChanged(MObservable* aObl) override;
 	// From MDVarGet
 	virtual string MDVarGet_Uid() const {return getUid<MDVarGet>();}
 	// From MObserver
@@ -138,18 +143,14 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 	// From Node.MOwned
 	virtual void onOwnerAttached() override;
     protected:
-	virtual void OnMagCompDeleting(const MUnit* aComp, bool aSoft = true, bool aModif = false);
-	virtual void OnMagCompAdding(const MUnit* aComp, bool aModif = false);
-	virtual bool OnMagCompChanged(const MUnit* aComp, const string& aContName = string(), bool aModif = false);
-	virtual bool OnMagChanged(const MUnit* aComp);
-	virtual bool OnMagCompRenamed(const MUnit* aComp, const string& aOldName);
-	virtual void OnMagCompMutated(const MUnit* aNode);
-	virtual void OnMagError(const MUnit* aComp);
 	virtual void onMagOwnedAttached(MObservable* aObl, MOwned* aOwned) {}
 	virtual void onMagContentChanged(MObservable* aObl, const MContent* aCont) {}
+	virtual void onMagChanged(MObservable* aObl) {}
 	// Local
 	virtual void OnMagUpdated() {}
 	void NotifyInpUpdated(MNode* aCp);
+	bool UpdateMagOwner(MNode* aMagOwner);
+	bool UpdateMag(MNode* aMag);
 	bool UpdateMag(const string& aMagUri);
 	void UpdateMag();
     protected:
@@ -165,8 +166,10 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 	MNode* ahostNode();
     protected:
 	bool mInpMagUriUpdated = true;
+	MNode* mMagOwner; /*!< Owner of managed agents, ref DS_SN_AUL_LNK_SMA */
 	MNode* mMag; /*!< Managed agent */
 	string mMagUri; /*!< Managed agent URI */
+	bool mMagUriValid; /*!< Validity sign of mMagUri */
 	AdpIap mIapMagUri = AdpIap(*this, [this]() {OnInpMagUri();}); /*!< MAG URI input access point */
 	TObserverCp mObrCp;               /*!< AHost Observer connpoint */
 	AdpMagObs<AAdp> mMagObs = AdpMagObs<AAdp>(this); /*!< Managed agent observer */
@@ -210,8 +213,6 @@ class AMnodeAdp : public AAdp
     public:
 	static const char* Type() { return "AMnodeAdp";};
 	AMnodeAdp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
-	// From MUnit
-	//YB!!virtual void UpdateIfi(const string& aName, const TICacheRCtx& aCtx = TICacheRCtx()) override;
 	// From MDesSyncable
 	virtual void confirm() override;
 	// From Unit.MIfProvOwner
@@ -220,14 +221,6 @@ class AMnodeAdp : public AAdp
 	void GetCompsCount(Sdata<int>& aData);
 	void GetCompNames(TCmpNames& aData);
 	void GetOwner(Sdata<string>& aData);
-	// From AAdp
-	virtual void OnMagCompDeleting(const MUnit* aComp, bool aSoft = true, bool aModif = false) override;
-	virtual void OnMagCompAdding(const MUnit* aComp, bool aModif = false) override;
-	virtual bool OnMagCompChanged(const MUnit* aComp, const string& aContName = string(), bool aModif = false) override;
-	virtual bool OnMagChanged(const MUnit* aComp) override;
-	virtual bool OnMagCompRenamed(const MUnit* aComp, const string& aOldName) override;
-	virtual void OnMagCompMutated(const MUnit* aNode) override;
-	virtual void OnMagError(const MUnit* aComp) override;
 	// From AAdp
 	virtual void OnMagUpdated() override;
     protected:
@@ -238,11 +231,34 @@ class AMnodeAdp : public AAdp
 	AdpPap<string> mPapOwner = AdpPap<string>(*this, [this](Sdata<string>& aData) {GetOwner(aData);}); /*!< Comps count access point */
 	// From AAdp
 	virtual void NotifyInpsUpdated() override;
+	virtual void onMagOwnedAttached(MObservable* aObl, MOwned* aOwned) override;
     protected:
 	TCmpNames mCompNames;
 	bool mCompNamesUpdated = true;
 	bool mOwnerUpdated = true;
 };
+
+/** @brief MElem iface ADP agent
+ * */
+class AMelemAdp : public AAdp
+{
+    public:
+	static const char* Type() { return "AMelemAdp";};
+	AMelemAdp(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From Unit.MIfProvOwner
+	virtual bool resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+    protected:
+	void ApplyMut();
+	void OnInpMut();
+	// From MDesSyncable
+	virtual void update() override;
+    protected:
+	AdpIap mIapInpMut = AdpIap(*this, [this]() {OnInpMut();}); /*!< Mut Add Widget input access point */
+    protected:
+	MChromo* mMagChromo; /*<! Managed agent chromo */
+	bool mInpMutChanged = true;
+};
+
 
 
 

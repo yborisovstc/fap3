@@ -47,7 +47,7 @@ class TrVar: public TrBase, public MDVarGet, public Func::Host
 	// From Func::Host
 	virtual void OnFuncContentChanged() override;
 	virtual int GetInpCpsCount() const {return 0;}
-	virtual bool IsLogLevel(int aLevel) const override { return true; }
+	virtual bool IsLogLevel(int aLevel) const override { return isLogLevel(aLevel); }
 	virtual void log(TLogRecCtg aCtg, const string& aMsg);
 	virtual MIfProv::TIfaces* GetInps(int aId, const string& aIfName, bool aOpt) override;
     protected:
@@ -129,6 +129,19 @@ class TrAndVar: public TrVar
 	virtual string GetInpUri(int aId) const override;
 };
 
+/** @brief Agent function "Boolena negation of Var data"
+ * */
+class TrNegVar: public TrVar
+{
+    public:
+	static const char* Type() { return "TrNegVar";};
+	TrNegVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From ATrVar
+	virtual void Init(const string& aIfaceName) override;
+	virtual string GetInpUri(int aId) const override;
+};
+
+
 
 /** @brief Transition agent "Convert to URI"
  * */
@@ -140,6 +153,8 @@ class TrUri: public TrVar
 	// From ATrVar
 	virtual void Init(const string& aIfaceName) override;
 	virtual string GetInpUri(int aId) const override;
+	// From TrVar.MDVarGet
+	virtual string VarGetIfid() const override;
 };
 
 

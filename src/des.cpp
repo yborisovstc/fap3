@@ -7,6 +7,7 @@
 const string KCont_Provided = "Provided";
 const string KCont_Required = "Required";
 
+static const int K_LogLevel_Input = 3;
 
 /* Connection point - input of combined chain state AStatec */
 
@@ -155,7 +156,7 @@ MDVarGet* State::HGetInp(const void* aRmt)
 	MIfProv* ifp = difp ? difp->first() : nullptr;
 	if (ifp) {
 	    res = dynamic_cast<MDVarGet*>(ifp->iface());
-	} else {
+	} else if (isLogLevel(K_LogLevel_Input)) {
 	    Log(TLog(EErr, this) + "Cannot get input");
 	}
     } else {
@@ -650,7 +651,7 @@ bool DesLauncher::Run(int aCount)
 {
     bool res = true;
     int cnt = 0;
-    while (!mStop && (aCount == 0 || cnt++ < aCount)) {
+    while (!mStop && (aCount == 0 || cnt < aCount)) {
 	if (!mActive.empty()) {
 	    Log(TLog(EInfo, this) + ">>> Update [" + to_string(cnt) + "]");
 	    update();
@@ -658,6 +659,7 @@ bool DesLauncher::Run(int aCount)
 		Log(TLog(EInfo, this) + ">>> Confirm [" + to_string(cnt) + "]");
 		confirm();
 	    }
+	    cnt++;
 	} else {
 	    OnIdle();
 	}

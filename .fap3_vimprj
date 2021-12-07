@@ -9,26 +9,52 @@ fap3=~/projects/fap/fap3 CD=. filter="autogen.sh Makefile.am configure.ac AUTHOR
  NEWS
  Makefile.in
  libfap3.pc.in
-src=src CD=. filter="*.h *.cpp *.dtd Makefile.am" {
+  src=src CD=. filter="*.h *.cpp *.dtd Makefile.am" {
   chromo.h
   chromo2.h
   cont.h
   cont2.h
+  content.h
   curi.h
+  data.h
+  des.h
+  desadp.h
+  desio.h
+  dest.h
+  elem.h
+  env.h
+  factr.h
+  func.h
   guri.h
   ifr.h
   ifu.h
+  log.h
   mchromo.h
   mcontent.h
   mcontent2.h
+  mdata.h
+  mdes.h
+  mecont.h
+  melem.h
   menv.h
   miface.h
   mifr.h
+  minh.h
+  mlauncher.h
+  mlog.h
+  mnode.h
+  mobserv.h
   mowning.h
+  mplugin.h
+  mprov.h
   msyst.h
   munit.h
   mvert.h
   nconn.h
+  node.h
+  prov.h
+  provdef.h
+  rdata.h
   syst.h
   unit.h
   vert.h
@@ -36,77 +62,153 @@ src=src CD=. filter="*.h *.cpp *.dtd Makefile.am" {
   chromo2.cpp
   cont.cpp
   cont2.cpp
+  content.cpp
   curi.cpp
+  data.cpp
+  des.cpp
+  desadp.cpp
+  desio.cpp
+  dest.cpp
+  elem.cpp
+  env.cpp
+  factr.cpp
+  func.cpp
   guri.cpp
   ifr.cpp
   ifu.cpp
+  log.cpp
+  node.cpp
+  prov.cpp
+  provdef.cpp
+  rdata.cpp
   syst.cpp
   unit.cpp
   vert.cpp
   Makefile.am
-} 
-etc=etc CD=. filter="*" {
- objspec.dtd
-  objspec_s1.dtd
-  objspec_s2.dtd
-}
-modules=modules CD=. filter="*" {
-  capsula.chs
-  capsula.xml
-  data.chs
-  data.xml
+  } 
+ etc=etc CD=. filter="*" {
+ }
+ modules=modules CD=. filter="*" {
+  adp.chs
   des.chs
-  des.xml
-  func.chs
-  func.xml
-  syst.chs
-  syst.xml
-  vis.xml
-}
-debian=debian CD=. filter="*" {
- README.Debian
-  changelog
-  compat
-  control
-  copyright
-  dirs
-  docs
-  fapws-dev.install
-  fapws-dev.substvars
-  fapws.install
-  fapws.postinst.debhelper
-  fapws.postrm.debhelper
-  fapws.substvars
-  files
-  rules
-  fapws-dev.debhelper.log
-  fapws.debhelper.log
-}
-doc=doc CD=. filter="*" {
- requirements=requirements CD=. filter="*" {
-  fap_req.xml
+ }
+ debian=debian CD=. filter="*" {
+ }
+ doc=doc CD=. filter="*" {
+  requirements=requirements CD=. filter="*" {
+  }
+  design=design CD=. filter="*" {
+   Makefile
+   fap3_design.xml
    index.html
+  }
  }
- design=design CD=. filter="*" {
-  fap_design.xml
- }
-}
-test=test CD=. filter="*.cpp *.h *.xml *.am *.txt" {
+ test=test CD=. filter="*.cpp *.h *.xml *.am *.txt" {
   ut_chromo2.cpp
-  ut_cont.cpp
+  ut_des.cpp
+  ut_elem.cpp
   ut_fap3_main.cpp
   ut_ifr.cpp
   ut_nn.cpp
+  ut_node.cpp
   ut_syst.cpp
   ut_unit.cpp
   Makefile.am
-  libs=.libs CD=. filter="*" {
-  }
-}
-clm=clm CD=. filter="*.cpp *.h *.xml *.am *.txt" {
+   libs=.libs CD=. filter="*" {
+   ut-fap3-lib
+   }
+ }
+ clm=clm CD=. filter="*.cpp *.h *.xml *.am *.txt" {
   main.cpp
   monitor.cpp
   monitor.h
   Makefile.am
+  readme.txt
+ }
 }
+fap3-vis=~/projects/fap/fap3-vis CD=. filter="autogen.sh Makefile.am configure.ac AUTHORS COPYING ChangeLog README NEWS *.in {
+ autogen.sh
+ Makefile.am
+ configure.ac
+ AUTHORS
+ COPYING
+ ChangeLog
+ README
+ NEWS
+ Makefile.in
+ fap3vis.pc.in
+  src=src CD=. filter="*.h *.cpp *.dtd Makefile.am" {
+  agentvr.h
+  alignment.h
+  button.h
+  container.h
+  hlayout.h
+  label.h
+  magentvr.h
+  mcontainer.h
+  mscel.h
+  mscene.h
+  mvisenv.h
+  mvrcontroller.h
+  mwidget.h
+  mwindow.h
+  scene.h
+  visenv.h
+  visprov.h
+  vlayout.h
+  widget.h
+  agentvr.cpp
+  alignment.cpp
+  button.cpp
+  container.cpp
+  hlayout.cpp
+  label.cpp
+  scene.cpp
+  visenv.cpp
+  visprov.cpp
+  vlayout.cpp
+  widget.cpp
+  Makefile.am
+  } 
+ modules=modules CD=. filter="*" {
+  viscomps.chs
+  widgets.chs
+ }
+ doc=doc CD=. filter="*" {
+  requirements=requirements CD=. filter="*" {
+  }
+  design=design CD=. filter="*" {
+   Makefile
+    fap3_design.xml
+    index.html
+  }
+ }
+ test=test CD=. filter="*.cpp *.h *.chs *.am *.txt" {
+  ut_avr.cpp
+  ut_container.cpp
+  ut_main.cpp
+  ut_wdg.cpp
+  ut_hlayout_1.chs
+  ut_hlayout_2.chs
+  ut_hlayout_rmwidget_1.chs
+  ut_vlayout_1.chs
+  ut_vlayout_1_init.chs
+  ut_vlayout_2.chs
+  ut_vlayout_3.chs
+  ut_wdg_base.chs
+  ut_wdg_button.chs
+  ut_wdg_label.chs
+  Makefile.am
+  trace.txt
+   libs=.libs CD=. filter="*" {
+    ut-fap3-lib
+   }
+ }
+ clm=clm CD=. filter="*.cpp *.h *.xml *.am *.txt" {
+  main.cpp
+   monitor.cpp
+   monitor.h
+   Makefile.am
+   readme.txt
+ }
 }

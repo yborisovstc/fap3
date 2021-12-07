@@ -1,5 +1,5 @@
 MyRoot : Elem {
-    # "Test 1: compatible sockets";
+    # "Test 2: incompatible sockets";
     S1 : Syst {
         Sock1 : Socket {
             Pin1 : ConnPointu {
@@ -12,6 +12,7 @@ MyRoot : Elem {
                Provided = "Iface2";
                Required = "MTIf1";
             }
+            Pin2 : Vert;
         }
         Sock1 ~ Sock2;
         S1 : Syst {

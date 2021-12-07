@@ -23,6 +23,7 @@ class MObserver: public MIface
 	// Local
 	virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) = 0;
 	virtual void onObsContentChanged(MObservable* aObl, const MContent* aCont) = 0;
+	virtual void onObsChanged(MObservable* aObl) = 0;
 };
 
 /** @brief Observable interface

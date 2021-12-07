@@ -4,6 +4,7 @@
 
 #include "env.h"
 #include "prov.h"
+#include "mlink.h"
 
 #include <cppunit/extensions/HelperMacros.h>
 
@@ -21,6 +22,19 @@ class MTIf1: public MIface{
 };
 
 
+/** @brief Test interface 2 */
+class MTIf2: public MIface{
+    public:
+	static const char* Type() { return "MTIf2";}
+	// From MIface
+	virtual string Uid() const override { return MTIf2_Uid();}
+	virtual string MTIf2_Uid() const = 0;
+	virtual MIface* getLif(const char *aType) override { return MTIf2_getLif(aType);}
+	virtual MIface* MTIf2_getLif(const char *aType) = 0;
+};
+
+
+
 /**
  * Test agent providing the ifaces
  */
@@ -36,6 +50,17 @@ class TstAgt: public Unit, public MAgent
 	    private:
 		TstAgt& mHost;
 	};
+
+	class TestIface2: public MTIf2 {
+	    public:
+		TestIface2(TstAgt& aHost): mHost(aHost) {}
+		virtual ~TestIface2() {}
+		virtual string MTIf2_Uid() const override { return mHost.getUid<MTIf2>();}
+		virtual MIface* MTIf2_getLif(const char *aType) override {return this;}
+	    private:
+		TstAgt& mHost;
+	};
+
     public:
 	static const char* Type() { return "TstAgt";};
 	TstAgt(const string &aType, const string& aName = string(), MEnv* aEnv = NULL): Unit(aType, aName, aEnv) { }
@@ -60,11 +85,16 @@ class TstAgt: public Unit, public MAgent
 		IfrLeaf* lf = new IfrLeaf(this, &mIface1);
 		aReq->connect(lf);
 		res = true;
+	    } else if (aName == MTIf2::Type()) {
+		IfrLeaf* lf = new IfrLeaf(this, &mIface2);
+		aReq->connect(lf);
+		res = true;
 	    }
 	    return res;
 	}
     private:
 	TestIface1 mIface1 = TestIface1(*this);
+	TestIface2 mIface2 = TestIface2(*this);
 };
 
 /**
@@ -97,9 +127,12 @@ class Ut_syst : public CPPUNIT_NS::TestFixture
     //    CPPUNIT_TEST(test_vert_1);
     //    CPPUNIT_TEST(test_cp_1);
     CPPUNIT_TEST(test_syst_1);
+    CPPUNIT_TEST(test_syst_link);
     //CPPUNIT_TEST(test_cp_2);
     //CPPUNIT_TEST(test_syst_cp_3);
-    //CPPUNIT_TEST(test_syst_sock_1);
+    CPPUNIT_TEST(test_syst_sock_1);
+    CPPUNIT_TEST(test_syst_sock_2);
+    CPPUNIT_TEST(test_syst_sock_3);
     //CPPUNIT_TEST(test_syst_cpe_1);
     CPPUNIT_TEST_SUITE_END();
     public:
@@ -109,9 +142,12 @@ class Ut_syst : public CPPUNIT_NS::TestFixture
     void test_vert_1();
     void test_cp_1();
     void test_syst_1();
+    void test_syst_link();
     void test_cp_2();
     void test_syst_cp_3();
     void test_syst_sock_1();
+    void test_syst_sock_2();
+    void test_syst_sock_3();
     void test_syst_cpe_1();
     private:
     Env* mEnv;
@@ -188,6 +224,47 @@ void Ut_syst::test_cp_1()
     delete cpu1;
     delete cpu2;
 }
+
+/** @brief Test of connecting link
+ * */
+void Ut_syst::test_syst_link()
+{
+    cout << endl << "=== Test of connecting link ===" << endl;
+
+    const string specn("ut_syst_link");
+    string ext = "chs";
+    string spec = specn + string(".") + "chs";
+    string log = specn + "_" + ext + ".log";
+    mEnv = new Env(spec, log);
+    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv);
+    mEnv->constructSystem();
+    MNode* root = mEnv->Root();
+    MElem* eroot = root ? root->lIf(eroot) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get root", eroot);
+
+    // Verify linked node
+    MNode* l1n = root->getNode("S1.L1");
+    MLink* l1l = l1n ? l1n->lIf(l1l) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get L1", l1l);
+    MNode* l1_pairn = l1l->pair();
+    CPPUNIT_ASSERT_MESSAGE("Fail to get L1 pair", l1_pairn);
+
+    // Unlink
+    MNode* s1n = root->getNode("S1");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get S1", s1n);
+    MChromo* chr = mEnv->provider()->createChromo();
+    chr->Init(ENt_Node);
+    chr->Root().AddChild(TMut(ENt_Disconn, ENa_P, "L1", ENa_Q, "N1"));
+    s1n->mutate(chr->Root(), false, MutCtx(), true);
+    delete chr;
+    l1_pairn = l1l->pair();
+    CPPUNIT_ASSERT_MESSAGE("Fail to disconnect L1 pair", !l1_pairn);
+ 
+
+
+    delete mEnv;
+}
+
 
 
 /** @brief Test of creating simple system containing connected vert
@@ -395,11 +472,11 @@ void Ut_syst::test_syst_cpe_1()
 
 
 
-/** @brief Test of socket
+/** @brief Test 1 of socket: compatible sockets
  * */
 void Ut_syst::test_syst_sock_1()
 {
-    cout << endl << "=== Test of socket ===" << endl;
+    cout << endl << "=== Test of socket: compatible sockets ===" << endl;
 
     const string specn("ut_syst_sock_1");
     string ext = "chs";
@@ -437,6 +514,86 @@ void Ut_syst::test_syst_sock_1()
     MUnit* s1p1u = s1p1n->lIf(s1p1u);
     MTIf1* ifc1 = s1p1u->getSif(ifc1);
     CPPUNIT_ASSERT_MESSAGE("Fail to get ifc1", ifc1);
+
+    delete mEnv;
+}
+
+/** @brief Test 2 of socket: incompatible sockets
+ * */
+void Ut_syst::test_syst_sock_2()
+{
+    cout << endl << "=== Test of socket: incompatible sockets ===" << endl;
+
+    const string specn("ut_syst_sock_2");
+    string ext = "chs";
+    string spec = specn + string(".") + ext;
+    string log = specn + "_" + ext + ".log";
+    mEnv = new Env(spec, log);
+    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv);
+    mProv = new TstProv("TestProv", mEnv);
+    bool res = mEnv->addProvider(mProv);
+    CPPUNIT_ASSERT_MESSAGE("Fail to add provider", res);
+    mEnv->constructSystem();
+    MNode* root = mEnv->Root();
+    MElem* eroot = root ? root->lIf(eroot) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get root", eroot);
+
+    // Verify if the sockets are not connected
+    MNode* s1n = root->getNode("S1.Sock1");
+    MVert* s1v = s1n->lIf(s1v);
+    CPPUNIT_ASSERT_MESSAGE("Fail to get s1v", s1v);
+    MNode* s2n = root->getNode("S1.Sock2");
+    MVert* s2v = s2n->lIf(s2v);
+    CPPUNIT_ASSERT_MESSAGE("Fail to get s2v", s2v);
+    bool conn = s2v->isPair(s1v);
+    CPPUNIT_ASSERT_MESSAGE("Fail: Sock1 and Sock2 are connected", !conn);
+
+    delete mEnv;
+}
+
+
+
+/** @brief Test 3 of socket: connecting thru internal socket
+ * */
+void Ut_syst::test_syst_sock_3()
+{
+    cout << endl << endl << "=== Test 3: connecting thru internal sockets ===" << endl;
+
+    const string specn("ut_syst_sock_3");
+    string ext = "chs";
+    string spec = specn + string(".") + "chs";
+    string log = specn + "_" + ext + ".log";
+    mEnv = new Env(spec, log);
+    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv);
+    mProv = new TstProv("TestProv", mEnv);
+    bool res = mEnv->addProvider(mProv);
+    CPPUNIT_ASSERT_MESSAGE("Fail to add provider", res);
+    mEnv->constructSystem();
+    MNode* root = mEnv->Root();
+    MElem* eroot = root ? root->lIf(eroot) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get root", eroot);
+
+    // Verify if the sockets are connected
+    MNode* s1n = root->getNode("S1.Sock1");
+    MVert* s1v = s1n->lIf(s1v);
+    CPPUNIT_ASSERT_MESSAGE("Fail to get s1v", s1v);
+    MNode* s2n = root->getNode("S1.Sock2");
+    MVert* s2v = s2n->lIf(s2v);
+    CPPUNIT_ASSERT_MESSAGE("Fail to get s2v", s2v);
+    bool conn = s2v->isPair(s1v);
+    CPPUNIT_ASSERT_MESSAGE("Fail: sockets are not connected", conn);
+
+    // Verify IFR for MTIf1
+    MNode* s1p1n = root->getNode("S1.Sock1.PinS1.Pin1");
+    MUnit* s1p1u = s1p1n ? s1p1n->lIf(s1p1u) : nullptr;
+    MTIf1* ifc1 = s1p1u ? s1p1u->getSif(ifc1) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get ifc1", ifc1);
+
+    // Verify IFR for MTIf2
+    MNode* s12cpn = root->getNode("S1.S1_2.Cp");
+    MUnit* s12cpu = s12cpn ? s12cpn->lIf(s12cpu) : nullptr;
+    MTIf2* ifc2 = s12cpu ? s12cpu->getSif(ifc2) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get ifc2", ifc2);
 
     delete mEnv;
 }

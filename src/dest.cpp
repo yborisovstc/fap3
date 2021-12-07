@@ -238,7 +238,7 @@ void TrCmpVar::Init(const string& aIfaceName)
 	if (mFunc = FCmp<Sdata<int> >::Create(this, t1, t2, ftype));
 	else if (mFunc = FCmp<Enum>::Create(this, t1, t2, ftype));
 	else if (mFunc = FCmp<Sdata<string> >::Create(this, t1, t2, ftype));
-	//else if (mFunc = FCmp<DGuri>::Create(this, t1, t2, ftype));
+	else if (mFunc = FCmp<DGuri>::Create(this, t1, t2, ftype));
 	else {
 	    Log(TLog(EErr, this) + "Failed init, inputs [" + t1 + "], [" + t2 + "]");
 	}
@@ -362,6 +362,30 @@ string TrAndVar::GetInpUri(int aId) const
 }
 
 
+///// TrNegVar
+
+TrNegVar::TrNegVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+{
+    AddInput(GetInpUri(FBnegDt::EInp));
+}
+
+void TrNegVar::Init(const string& aIfaceName)
+{
+    if (mFunc) {
+	delete mFunc;
+	mFunc = NULL;
+    }
+    if ((mFunc = FBnegDt::Create(this, aIfaceName)) != NULL);
+}
+
+string TrNegVar::GetInpUri(int aId) const 
+{
+    if (aId == FBnegDt::EInp) return "Inp";
+    else return string();
+}
+
+
+
 
 ///// TrUri
 
@@ -394,6 +418,12 @@ string TrUri::GetInpUri(int aId) const
     if (aId == FUri::EInp) return "Inp";
     else return string();
 }
+
+string TrUri::VarGetIfid() const
+{
+    return MDtGet<DGuri>::Type();
+}
+
 
 
 // Agent functions "Mut composer" base

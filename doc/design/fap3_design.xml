@@ -608,6 +608,16 @@
 			the connection is of "two-ways" - it also connects to MCIface. But in our case the connection is "asymmetric" - just one side is connectable.
 		    </simpara>
 		</sect4>
+		<sect4 id="ds_sn_aul_lnk_sma"><title>[DS_SN_AUL_LNK_SMA] Inconvenience when using links for specify managed agent for <xref linkend="gls_adp"/></title>
+		    <simpara>
+			Using link doesn't allow the adapter to simply swithching to another managed agent. Currently we can use simple switching utilizing adapter
+			input InpMagUri - transitions can change managed agent URI quite simply.
+		    </simpara>
+		    <simpara>
+			Actually this problem can be solved if we have the link to managed agents owner but not managed agent itself. In that case the content MagUri and
+			input InpMagUri shall specify the managed agent URI from owning node specified by the link.
+		    </simpara>
+		</sect4>
 	    </sect3>
 	</sect2>
     </sect1>
@@ -1335,6 +1345,22 @@
 		<simpara>
 		    The root-cause is that the algorithm of E1 chromo forming is wrong: mutation and "About = ..." will be included even 
 		    the namespace segment is alredy included.
+		</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_iss_002"><title>[DS_ISS_002] Cannot define monitored agent for <xref linkend="gls_adp"/></title>
+	    <sect3><title>Intro</title>
+		<simpara>
+		    It is very common case that the adapter is not owner of monitored agent. Potentially we can put monitored
+		    agent to adaper owneds but it is not convenient - there can be many adapters associated to single monitored object.
+		</simpara>
+		<simpara>
+		    This "not owning" causes the problem that we cannot simply define monitored object via URI - adapter will not
+			be able to get not owned node.
+		</simpara>
+		<simpara>
+		    Ref <xref linkend="ds_sn_aul"/> for details of generic problem and approaches of how to workaround the
+			access restrictions.
 		</simpara>
 	    </sect3>
 	</sect2>

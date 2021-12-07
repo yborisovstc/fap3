@@ -1,4 +1,5 @@
 #include "syst.h"
+#include "mlink.h"
 
 
 const string KContProvided = "Provided";
@@ -16,6 +17,7 @@ MIface* ConnPointu::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
     if (res = checkLif<MConnPoint>(aType));
+    else if (res = checkLif<MIfProvOwner>(aType));
     else res = Vertu::MNode_getLif(aType);
     return res;
 }
@@ -183,7 +185,7 @@ bool Extd::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 		MVert* pair = getPair(i);
 		MUnit* pairu = pair ? pair->lIf(pairu) : nullptr;  
 		MIfProvOwner* pairo = pairu ? pairu->lIf(pairo) : nullptr;
-		if (pairo && aReq->provided()->isRequestor(pairo)) {
+		if (pairo && !aReq->provided()->isRequestor(pairo)) {
 		    res = pairu->resolveIface(aName, aReq);
 		}
 	    }
@@ -249,65 +251,124 @@ bool Socket::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	res = true;
     } else {
 	MIfReq::TIfReqCp* req = aReq->binded()->firstPair();
-	const MIfProvOwner* reqo = req ? req->provided()->rqOwner() : nullptr;
-	MNode* reqn = const_cast<MNode*>(reqo ? reqo->lIf(reqn) : nullptr); // Current requestor as node
-	if (isOwned(reqn)) {
-	    // Request from internal CP.
-	    if (!mPairs.empty()) {
-		// There are pairs. Redirect to piars. 
-		for (auto it = mPairs.begin(); it != mPairs.end(); it++) {
-		    MVert* pair = *it;
+	if (req) {
+	    // There is the context
+	    const MIfProvOwner* reqo = req ? req->provided()->rqOwner() : nullptr;
+	    MNode* reqn = const_cast<MNode*>(reqo ? reqo->lIf(reqn) : nullptr); // Current requestor as node
+	    if (isOwned(reqn)) {
+		// Request from internal CP.
+		if (!mPairs.empty()) {
+		    // There are pairs. Redirect to piars. 
+		    for (auto it = mPairs.begin(); it != mPairs.end(); it++) {
+			MVert* pair = *it;
+			MUnit* pairu = pair->lIf(pairu);
+			if (pairu) {
+			    res |= pairu->resolveIface(aName, aReq);
+			}
+		    }
+		} else {
+		    // No pairs. Redirect to owner.
+		    MUnit* owu = Owner()->lIf(owu);
+		    if (owu) {
+			res |= owu->resolveIface(aName, aReq);
+		    }
+		}
+	    } else {
+		// Request from outside
+		// First check the pairs, ref FAP2 DSI_SRST
+		for (MVert* pair : mPairs) {
+		    MUnit* pairu = pair->lIf(pairu);
+		    MIfProvOwner* pairo = pairu ? pairu->lIf(pairo) : nullptr;
+		    if (pairo) {
+			bool isReq = aReq->provided()->isRequestor(pairo);
+			bool isFirstReq = req ? (pairo == req->provided()->rqOwner()) : false;
+			if (!isReq || isReq && !isFirstReq) {
+			    res = pairu->resolveIface(aName, aReq);
+			}
+		    }
+		}
+		if (!res) {
+		    // Continue downwards if iface not provided by pairs, ref DSI_SRST_S1_EDC
+		    MNode* apair = nullptr; // Assosiated pair in requestors
+		    MNode* pcomp = nullptr;
+		    bool isextd = false;
+		    while(reqn && !pcomp) {
+			MVert* cp = reqn->lIf(cp); // Current requestor as connpoint
+			// Update extention option if met extention in context.
+			if (cp) {
+			    apair = nullptr;
+			    if (cp->isCompatible(this, isextd)) {
+				isextd ^= true;
+				MVert* extd = cp->getExtd();
+				if (extd != this) {
+				    MNode* extdn = extd ? extd->lIf(extdn) : nullptr;
+				    //apair = extdn ? extdn : reqn;
+				    apair = reqn;
+				    if (extdn) {
+					apair = extdn;
+					// Go to next context item to correspond to apair. Quick fix, to redesign
+					req = req->binded()->firstPair();
+					reqo = req ? req->provided()->rqOwner() : nullptr;
+					reqn = const_cast<MNode*>(reqo ? reqo->lIf(reqn) : nullptr);
+					assert(apair == reqn);
+				    }
+				}
+			    }
+			}
+			if (apair) {
+			    // Find associated pairs pin within the context
+			    MSocket* apairs = apair->lIf(apairs);
+			    if (apairs != NULL) {
+				MNode* pereq = apairs->GetPin(req);
+				if (pereq) {
+				    pcomp = getNode(pereq->name());
+				}
+			    }
+			}
+			req = req->binded()->firstPair();
+			reqo = req ? req->provided()->rqOwner() : nullptr;
+			reqn = const_cast<MNode*>(reqo ? reqo->lIf(reqn) : nullptr);
+		    }
+		    if (pcomp) {
+			MUnit* pcompu = pcomp->lIf(pcompu);
+			if (pcompu) {
+			    res |= pcompu->resolveIface(aName, aReq);
+			}
+		    }
+		}
+		if (!res) {
+		    // Redirect to upper layer socket
+		    MUnit* owu = Owner()->lIf(owu);
+		    MIfProvOwner* owo = owu ? owu->lIf(owo) : nullptr;
+		    if (owo) {
+			bool isReq = aReq->provided()->isRequestor(owo);
+			if (!isReq) {
+			    res |= owu->resolveIface(aName, aReq);
+			}
+		    }
+		}
+	    }
+	} else {
+	    // There is no the context - the request is "anonymous"
+	    // Redirect to pins first.
+	    auto compcp = owner()->firstPair();
+	    while (compcp) {
+		MOwned* compo = compcp ? compcp->provided() : nullptr;
+		MUnit* compu = compo->lIf(compu);
+		if (compu) {
+		    res |= compu->resolveIface(aName, aReq);
+		}
+		compcp = owner()->nextPair(compcp);
+	    }
+	    if (!res) {
+		// Then redirect to pair
+		for (MVert* pair : mPairs) {
 		    MUnit* pairu = pair->lIf(pairu);
 		    if (pairu) {
 			res |= pairu->resolveIface(aName, aReq);
 		    }
 		}
-	    } else {
-		// No pairs. Redirect to owner.
-		MUnit* owu = Owner()->lIf(owu);
-		if (owu) {
-		    res |= owu->resolveIface(aName, aReq);
-		}
-	    }
-	} else {
-	    // Request from outside
-	    // Assuming the request is from pair
-	    MNode* apair = nullptr; // Assosiated pair in requestors
-	    MNode* pcomp = nullptr;
-	    bool isextd = false;
-	    while(reqn && !pcomp) {
-		MVert* cp = reqn->lIf(cp); // Current requestor as connpoint
-		// Update extention option if met extention in context
-		if (cp) {
-		    apair = nullptr;
-		    if (cp->isCompatible(this, isextd)) {
-			isextd ^= true;
-			MVert* extd = cp->getExtd();
-			if (extd != this) {
-			    MNode* extdn = extd ? extd->lIf(extdn) : nullptr;
-			    apair = extdn ? extdn : reqn;
-			}
-		    }
-		}
-		if (apair) {
-		    // Find associated pairs pin within the context
-		    MSocket* apairs = apair->lIf(apairs);
-		    if (apairs != NULL) {
-			MNode* pereq = apairs->GetPin(req);
-			if (pereq) {
-			    pcomp = getNode(pereq->name());
-			}
-		    }
-		}
-		req = req->binded()->firstPair();
-		reqo = req ? req->provided()->rqOwner() : nullptr;
-		reqn = const_cast<MNode*>(reqo ? reqo->lIf(reqn) : nullptr);
-	    }
-	    if (pcomp) {
-		MUnit* pcompu = pcomp->lIf(pcompu);
-		if (pcompu) {
-		    res |= pcompu->resolveIface(aName, aReq);
-		}
+
 	    }
 	}
     }
@@ -330,7 +391,8 @@ bool Socket::isCompatible(MVert* aPair, bool aExt)
 	MNode* cpn = cp->lIf(cpn);
 	for (int ci = 0; ci < owner()->pcount() && res; ci++) {
 	    auto comp = owner()->pairAt(ci)->provided();
-	    MVert* compv = comp->lIf(compv);
+	    MNode* compn = comp->lIf(compn);
+	    MVert* compv = compn ? compn->lIf(compv) : nullptr;
 	    if (compv) {
 		MNode* compn = comp->lIf(compn);
 		MNode* pcomp = cpn->getNode(compn->name());
@@ -383,7 +445,7 @@ MNode* Socket::GetPin(MIfReq::TIfReqCp* aReq)
 {
     MNode* res = nullptr;
     MIfReq::TIfReqCp* req = aReq->binded()->firstPair();
-    const MIfProvOwner* reqo = aReq ? req->provided()->rqOwner() : nullptr;
+    const MIfProvOwner* reqo = req ? req->provided()->rqOwner() : nullptr;
     const MNode* reqn = reqo ? reqo->lIf(reqn) : nullptr; // Current requestor as node
     if (isOwned(reqn)) {
 	res = const_cast<MNode*>(reqn);
@@ -421,6 +483,7 @@ MIface* Syst::MOwner_getLif(const char *aType)
 
 void Syst::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 {
+    bool res = false;
     string sp = aMut.Attr(ENa_P);
     string sq = aMut.Attr(ENa_Q);
     MNode* pn = getNode(sp, aCtx.mNs);
@@ -429,12 +492,22 @@ void Syst::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 	MVert* pv = pn->lIf(pv);
 	MVert* qv = qn->lIf(pv);
 	if (pv && qv) {
-	    bool res = MVert::connect(pv, qv);
+	    // Vertex to Vertex
+	    res = MVert::connect(pv, qv);
 	    if (!res) {
 		Log(TLog(EErr, this) + "Failed connecting [" + sp + "] to [" + sq + "]");
 	    }
 	} else {
-	    Log(TLog(EErr, this) + "Connecting [" + sp + "] to [" + sq + "] -  [" + (pv ? sq : sp) + "] isn't connectable");
+	    MLink* pl = pn->lIf(pl);
+	    if (pl) {
+		// Link, one-way
+		res = pl->connect(qn);	
+		if (!res) {
+		    Log(TLog(EErr, this) + "Failed link [" + sq + "] to [" + sp + "]");
+		}
+	    } else {
+		Log(TLog(EErr, this) + "Connecting [" + sp + "] to [" + sq + "] -  [" + (pv ? sq : sp) + "] isn't connectable");
+	    }
 	}
     } else {
 	Log(TLog(EErr, this) + "Connecting [" + sp + "] to [" + sq + "] - cannot find [" + (pn ? sq : sp) + "]");
@@ -446,6 +519,7 @@ void Syst::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 
 void Syst::mutDisconnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 {
+    bool res = false;
     string sp = aMut.Attr(ENa_P);
     string sq = aMut.Attr(ENa_Q);
     MNode* pn = getNode(sp, aCtx.mNs);
@@ -454,12 +528,22 @@ void Syst::mutDisconnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aC
 	MVert* pv = pn->lIf(pv);
 	MVert* qv = qn->lIf(pv);
 	if (pv && qv) {
-	    bool res = MVert::disconnect(pv, qv);
+	    // Vertex to Vertex
+	    res = MVert::disconnect(pv, qv);
 	    if (!res) {
 		Log(TLog(EErr, this) + "Failed disconnecting [" + sp + "] from [" + sq + "]");
 	    }
 	} else {
-	    Log(TLog(EErr, this) + "Disconnecting [" + sp + "] from [" + sq + "] -  [" + (pv ? sq : sp) + "] isn't connectable");
+	    MLink* pl = pn->lIf(pl);
+	    if (pl) {
+		// Link, one-way
+		res = pl->disconnect(qn);	
+		if (!res) {
+		    Log(TLog(EErr, this) + "Failed disconnecting [" + sq + "] to [" + sp + "]");
+		}
+	    } else {
+		Log(TLog(EErr, this) + "Disconnecting [" + sp + "] from [" + sq + "] -  [" + (pv ? sq : sp) + "] isn't connectable");
+	    }
 	}
     } else {
 	Log(TLog(EErr, this) + "Disconnecting [" + sp + "] from [" + sq + "] - cannot find [" + (pn ? sq : sp) + "]");

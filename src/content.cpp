@@ -44,7 +44,7 @@ bool Content::getData(string& aCont) const
 bool Content::setData(const string& aCont)
 {
     bool res = true;
-    if (mData != aCont) {
+    if (!mValid || mData != aCont) {
 	mData = aCont;
 	mValid = true;
 	notifyContentChanged(this);

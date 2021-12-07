@@ -1,17 +1,22 @@
 AdpComps : Elem {
     # "DES adapter module";
     About : Content { = "Agents DES adaptor module"; }
-    NodeAdp : Syst
+    AdpBase : Syst {
+        # "Content AgentUri accepted";
+        InpMagUri : CpStateInp;
+        # "Link to the node owning managed agents";
+        MagOwnerLink : Link;
+    }
+    NodeAdp : AdpBase
     {
         # "Add content AgentUri to set managed agent URI";
         About : Content { = "MNode DES adaptor"; }
         AdpAgent : AMnodeAdp;
-        InpMagUri : CpStateInp;
         CompsCount : CpStateOutp;
         CompNames : CpStateOutp;
         Owner : CpStateOutp;
     }
-    ElemAdp : Syst
+    ElemAdp : AdpBase
     {
         About : Content { = "MElem DES adaptor"; }
         AdpAgent : AMelemAdp;

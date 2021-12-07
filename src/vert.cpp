@@ -27,7 +27,7 @@ MIface* Vertu::MVert_getLif(const char *aType)
     MIface* res = nullptr;
     if (res = checkLif<MVert>(aType));
     else if (res = checkLif<MUnit>(aType));
-    else res = MNode_getLif(aType);
+    else res = MNode_getLif(aType); // TODO it's wrong, remove
     return res;
 }
 
