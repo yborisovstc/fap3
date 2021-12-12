@@ -75,7 +75,7 @@ bool Unit::resolveIface(const string& aName, MIfReq::TIfReqCp* aReq)
 	if (item->isConnected(aReq)) { prov = item; break;}
     }
     if (prov) {
-	prov->resolve(aName);
+	res = prov->resolve(aName);
     } else {
 	IfrNode* node = createIfProv(aName, aReq);
 	mIrns.push_back(node);

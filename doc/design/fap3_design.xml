@@ -618,6 +618,26 @@
 			input InpMagUri shall specify the managed agent URI from owning node specified by the link.
 		    </simpara>
 		</sect4>
+		<sect4 id="ds_sn_aul_lnk_cohl"><title>Link another inconvenience: "connection" over hier levels</title>
+		    <simpara>
+			It's very often case where the link needs to be linked from one hier branch to another. The example is "modnav" application.
+			In "modnav" Model detail representation view (that is located in Launcher.Window.Scene..ModelDrp) shall contain the link to the model but the model 
+			is located in Launcher.Controller.ModelMnt. So we need to mutate Launcher to "connect" the link and the "connection" is established
+			directly between different branch nodes crossing hier levels. This is bad system design.
+		    </simpara>
+		</sect4>
+	    </sect3>
+	    <sect3 id="ds_sn_aul_avcp"><title>Using Accessor agent giving access to manager agent via conn point.</title>
+		<sect4><title>Intro</title>
+		    <simpara>Using Link approach often leads to bad system desing, ref <xref linkend="ds_sn_aul_lnk_cohl"/>. Alternative solution can be using the 
+			standard connections via connpoint. In that case the connection can be structured to keep subsystem isolation.</simpara>
+		    <simpara>Indeed, the standard connection point mechanism can provide access to any interface including MNode for instance. What we need is 
+			to introduce "managing" agent that includes the connpoint provideing the required iface (MNode for instance) and redirecting IFR request
+			to managed agent. The desing can be simplified event more - we can just embed the connpoint into the managed agent, connpoint will
+			redirect IFR request to the agent directly.</simpara>
+		</sect4>
+		<sect4><title>Criticism:</title>
+		</sect4>
 	    </sect3>
 	</sect2>
     </sect1>

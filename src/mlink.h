@@ -17,7 +17,7 @@ class MNode;
 class MLink: public MIface
 {
     public:
-	static const char* Type() { return "MLInk";}
+	static const char* Type() { return "MLink";}
 	// From MIface
 	virtual string Uid() const override { return MLink_Uid();}
 	virtual string MLink_Uid() const = 0;

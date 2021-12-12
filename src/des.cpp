@@ -275,7 +275,7 @@ void State::onContentChanged(const MContent* aCont)
 
 bool State::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 {
-    bool res = true;
+    bool res = false;
     if (aName == provName()) {
 	MIface* ifr = mCdata->MDVar_getLif(aName.c_str());
 	if (ifr && !aReq->binded()->provided()->findIface(ifr)) {
@@ -283,7 +283,7 @@ bool State::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	    res = true;
 	}
     } else {
-	Vertu::resolveIfc(aName, aReq);
+	res = Vertu::resolveIfc(aName, aReq);
     }
     return res;
 }

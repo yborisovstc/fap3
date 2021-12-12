@@ -102,6 +102,7 @@ include_HEADERS = \
 		  mchromo.h \
 		  mobserv.h \
 		  nconn.h \
+		  mlink.h \
 		  rdata.h \
 		  node.h \
 		  unit.h \

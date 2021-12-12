@@ -128,10 +128,11 @@ bool ConnPointu::isCompatible(MVert* aPair, bool aExt)
 
 bool ConnPointu::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 {
-    bool res = true;
+    bool res = false;
     MIface* ifr = MNode_getLif(aName.c_str()); // Local
     if (ifr) {
 	addIfpLeaf(ifr, aReq);
+	res = true;
     }
     if (!ifr) { // TODO this disables both local and remote ifaces. To fix
 	if (aName == provName()) {
@@ -143,7 +144,7 @@ bool ConnPointu::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	    // Requested required iface - redirect to pairs
 	    for (MVert* pair : mPairs) {
 		MUnit* pairu = pair->lIf(pairu);
-		res = pairu->resolveIface(aName, aReq);
+		res |= pairu->resolveIface(aName, aReq);
 	    }
 	}
     }
@@ -496,6 +497,7 @@ void Syst::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 	    res = MVert::connect(pv, qv);
 	    if (!res) {
 		Log(TLog(EErr, this) + "Failed connecting [" + sp + "] to [" + sq + "]");
+		res = MVert::connect(pv, qv);
 	    }
 	} else {
 	    MLink* pl = pn->lIf(pl);
@@ -555,10 +557,11 @@ void Syst::mutDisconnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aC
 
 bool Syst::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 {
-    bool res = true;
+    bool res = false;
     MIface* ifr = MNode_getLif(aName.c_str());
     if (ifr) {
 	addIfpLeaf(ifr, aReq);
+	res = true;
     }
     if (aName == MAgent::Type()) {
 	for (int i = 0; i < owner()->pcount(); i++) {
@@ -567,6 +570,7 @@ bool Syst::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	    MAgent* compa = compn ? compn->lIf(compa) : nullptr;
 	    if (compa) {
 		addIfpLeaf(compa, aReq);
+		res = true;
 	    }
 	}
     } else {
@@ -576,7 +580,7 @@ bool Syst::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	while (maprov) {
 	    MUnit* agtu = maprov ? maprov->iface()->lIf(agtu) : nullptr;
 	    if (agtu) {
-		res = agtu->resolveIface(aName, aReq);
+		res |= agtu->resolveIface(aName, aReq);
 	    }
 	    maprov = maprov->next();
 	}
@@ -606,3 +610,23 @@ MIface* Syst::MAhost_getLif(const char *aType)
     return res;
 }
 
+
+
+// Connection point - access to MNode, input
+
+CpMnodeInp::CpMnodeInp(const string &aType, const string& aName, MEnv* aEnv): ConnPointu(aType, aName, aEnv)
+{
+    bool res = setContent("Provided", "");
+    res &= setContent("Required", "MLink");
+    assert(res);
+}
+
+
+// Connection point - access to MNode, outpur
+
+CpMnodeOutp::CpMnodeOutp(const string &aType, const string& aName, MEnv* aEnv): ConnPointu(aType, aName, aEnv)
+{
+    bool res = setContent("Provided", "MLink");
+    res &= setContent("Required", "");
+    assert(res);
+}

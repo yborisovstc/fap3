@@ -125,6 +125,28 @@ class Syst : public Elem, public MAhost, public MActr
 };
 
 
+/** @brief Connection point - access to MNode
+ * Just ConnPointu with pre-configured prepared/required
+ * */
+class CpMnodeInp: public ConnPointu
+{
+    public:
+	static const char* Type() { return "CpMnodeInp";};
+	CpMnodeInp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+};
+
+/** @brief Connection point - access to MNode
+ * Just ConnPointu with pre-configured prepared/required
+ * */
+class CpMnodeOutp: public ConnPointu
+{
+    public:
+	static const char* Type() { return "CpMnodeOutp";};
+	CpMnodeOutp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+};
+
+
+
 
 
 #endif
