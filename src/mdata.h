@@ -48,7 +48,6 @@ class MDVarGet: public MIface
 	virtual string MDVarGet_Uid() const = 0;
 	// Local
 	template <class T> T* GetDObj(T* aInst) { return aInst = static_cast<T*>(DoGetDObj(aInst->Type()));};
-	void* GetDObj(const char *aType) { return DoGetDObj(aType); };
 	virtual MIface* DoGetDObj(const char *aName) = 0;
 	/** @brief Gets an iface id. Is used for type negotiation from root to leafs */
 	virtual string VarGetIfid() const = 0;

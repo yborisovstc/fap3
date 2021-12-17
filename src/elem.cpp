@@ -14,6 +14,8 @@ Elem::Elem(const string &aType, const string &aName, MEnv* aEnv): Unit(aType, aN
 
 Elem::~Elem()
 {
+    assert(parent());
+    parent()->onChildDeleting(this);
 }
 
 MIface* Elem::MElem_getLif(const char *aType)
@@ -192,6 +194,7 @@ void Elem::MParent_doDump(int aLevel, int aIdt, ostream& aOs) const
 
 void Elem::onChildDeleting(MChild* aChild)
 {
+    detachChild(aChild);
 }
 
 bool Elem::onChildRenaming(MChild* aChild, const string& aNewName)
@@ -242,6 +245,11 @@ MParent* Elem::parent()
 bool Elem::attachChild(MChild* aChild)
 {
     return mInode.binded()->connect(aChild->cP());
+}
+
+bool Elem::detachChild(MChild* aChild)
+{
+    return mInode.binded()->disconnect(aChild->cP());
 }
 
 MChild* Elem::asChild()

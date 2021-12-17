@@ -17,6 +17,7 @@ template<> const char* Sdata<int>::TypeSig() { return  "SI";};
 template<> const char* Sdata<float>::TypeSig() { return  "SF";};
 template<> const char* Sdata<bool>::TypeSig() { return  "SB";};
 template<> const char* Sdata<string>::TypeSig() { return  "SS";};
+template<> const char* Sdata<Vector<string>>::TypeSig() { return  "SVS";};
 
 template<> void Sdata<int>::InpFromString(istringstream& aStream, int& aRes) { aStream >> std::boolalpha >> aRes; }
 template<> void Sdata<float>::InpFromString(istringstream& aStream, float& aRes) { aStream >> std::boolalpha >> aRes; }

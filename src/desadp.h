@@ -48,7 +48,7 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 	    public:
 		AdpPap(MNode& aHost, THandler<T> aHandler): mHost(aHost), mHandler(aHandler){}
 		// From MDVarGet
-		virtual string MDVarGet_Uid() const {return MDVarGet::Type();}
+		virtual string MDVarGet_Uid() const override {return MDVarGet::Type();}
 		virtual MIface* DoGetDObj(const char *aName) override;
 		virtual string VarGetIfid() const override {return MDtGet<Sdata<T>>::Type();}
 		// From MDtGet
@@ -89,6 +89,9 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 		    virtual MIface* MObserver_getLif(const char *aName) override { return nullptr;}
 		    virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override {
 			mHost->onMagOwnedAttached(aObl, aOwned);
+		    }
+		    virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override {
+			mHost->onMagOwnedDetached(aObl, aOwned);
 		    }
 		    virtual void onObsContentChanged(MObservable* aObl, const MContent* aCont) override {
 			mHost->onMagContentChanged(aObl, aCont);
@@ -134,6 +137,7 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 	// From MObserver
 	virtual string MObserver_Uid() const {return getUid<MObserver>();}
 	virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override;
+	virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override;
 	virtual void onObsContentChanged(MObservable* aObl, const MContent* aCont) override;
 	virtual void onObsChanged(MObservable* aObl) override;
 	// From MDVarGet
@@ -144,6 +148,7 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 	virtual void onOwnerAttached() override;
     protected:
 	virtual void onMagOwnedAttached(MObservable* aObl, MOwned* aOwned) {}
+	virtual void onMagOwnedDetached(MObservable* aObl, MOwned* aOwned) {}
 	virtual void onMagContentChanged(MObservable* aObl, const MContent* aCont) {}
 	virtual void onMagChanged(MObservable* aObl) {}
 	// Local
@@ -190,6 +195,7 @@ template <typename T> MIface* AAdp::AdpPap<T>::DoGetDObj(const char *aName)
     return res;
 }
 
+
 // Access point, using generic data
 
 template <typename T> MIface* AAdp::AdpPapB<T>::DoGetDObj(const char *aName)
@@ -227,7 +233,6 @@ class AMnodeAdp : public AAdp
 	// Comps count param adapter. Even if the count can be get via comp names vector we support separate param for convenience
 	AdpPap<int> mApCmpCount = AdpPap<int>(*this, [this](Sdata<int>& aData) {GetCompsCount(aData);}); /*!< Comps count access point */
 	AdpPapB<TCmpNames> mApCmpNames = AdpPapB<TCmpNames>([this](TCmpNames& aData) {GetCompNames(aData);}); /*!< Comp names access point */
-	// TODO Do we need owner?
 	AdpPap<string> mPapOwner = AdpPap<string>(*this, [this](Sdata<string>& aData) {GetOwner(aData);}); /*!< Comps count access point */
 	// From AAdp
 	virtual void NotifyInpsUpdated() override;

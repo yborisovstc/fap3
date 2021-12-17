@@ -55,6 +55,9 @@ class Elem: public Unit, public MElem, public MParent, public MChild
 	virtual MNode* mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx) override;
 	virtual void onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx) override;
 	MParent* parent();
+	// Local
+	// TODO Should it be the method of MParent as attachChild is?
+	bool detachChild(MChild* aChild);
     protected:
 	MChromo* mChromo;     /*!< Chromo */
 	TInhTreeNode mInode;  /*!< Inheritance tree node */

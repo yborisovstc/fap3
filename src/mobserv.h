@@ -22,6 +22,7 @@ class MObserver: public MIface
 	virtual MIface* MObserver_getLif(const char *aType) = 0;
 	// Local
 	virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) = 0;
+	virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) = 0;
 	virtual void onObsContentChanged(MObservable* aObl, const MContent* aCont) = 0;
 	virtual void onObsChanged(MObservable* aObl) = 0;
 };

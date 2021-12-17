@@ -52,6 +52,14 @@ void GUri::tail(const GUri& aHead, GUri& aTail) const
     }
 }
 
+GUri GUri::head(int aIdx) const
+{
+    GUri res;
+    for (int i = 0; i < aIdx; i++) {
+	res.mElems.push_back(at(i));
+    }
+    return res;
+}
 
 void GUri::append(const GUri& aUri)
 {

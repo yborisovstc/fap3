@@ -310,6 +310,15 @@ void Ut_syst::test_syst_1()
     CPPUNIT_ASSERT_MESSAGE("Fail to get v2v", v2v);
     bool res = v1v->isPair(v2v);
     CPPUNIT_ASSERT_MESSAGE("Fail to get pair of v1v", res);
+
+    // Disconnect V1 V2
+    MChromo* chr = mEnv->provider()->createChromo(); chr->Init(ENt_Node);
+    chr->Root().AddChild(TMut(ENt_Disconn, ENa_P, "V1", ENa_Q, "V2"));
+    s1n->mutate(chr->Root(), false, MutCtx(), true);
+    delete chr;
+
+
+    delete mEnv;
 }
 
 /** @brief Test of connecting connpoints

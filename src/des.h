@@ -85,6 +85,8 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 	virtual const MContent* getCont(int aIdx) const override;
 	virtual bool getContent(const GUri& aCuri, string& aRes) const override;
 	virtual bool setContent(const GUri& aCuri, const string& aData) override;
+    public:
+	static const string KCont_Value;
     protected:
 	/** @brief Notifies dependencies of input updated */
 	void NotifyInpsUpdated();
@@ -97,7 +99,6 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
     protected:
 	BdVar* mPdata;   //<! Preparing (updating) phase data
 	BdVar* mCdata;   //<! Confirming phase data
-	static const string KCont_Value;
 	Cnt mValue = Cnt(*this, KCont_Value);
 	bool mUpdNotified;  //<! Sign of that State notified observers on Update
 	bool mActNotified;  //<! Sign of that State notified observers on Activation
@@ -172,6 +173,7 @@ class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver
 	virtual string MObserver_Uid() const  override {return getUid<MObserver>();}
 	virtual MIface* MObserver_getLif(const char *aType) override;
 	virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override;
+	virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override {} // TODO implement
 	virtual void onObsContentChanged(MObservable* aObl, const MContent* aCont) override {}
 	virtual void onObsChanged(MObservable* aObl) override {}
 	// From Node.MOwned

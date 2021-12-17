@@ -12,6 +12,7 @@ Vertu::Vertu(const string &aType, const string &aName, MEnv* aEnv): Unit(aType, 
 
 Vertu::~Vertu()
 {
+    disconnect();
 }
 
 MIface* Vertu::MNode_getLif(const char *aType)
@@ -74,6 +75,13 @@ bool Vertu::disconnect(MCIface* aPair)
     return res;
 }
 
+void Vertu::disconnect()
+{
+    while (pairsCount()) {
+	MVert::disconnect(this, getPair(0));
+    }
+}
+
 bool Vertu::isConnected(MCIface* aPair) const
 {
     MVert* vp = dynamic_cast<MVert*>(aPair);
@@ -133,6 +141,7 @@ Vert::Vert(const string &aType, const string &aName, MEnv* aEnv): Elem(aType, aN
 
 Vert::~Vert()
 {
+    disconnect();
 }
 
 MIface* Vert::MNode_getLif(const char *aType)
@@ -192,6 +201,14 @@ bool Vert::disconnect(MCIface* aPair)
     }
     return res;
 }
+
+void Vert::disconnect()
+{
+    while (pairsCount()) {
+	MVert::disconnect(this, getPair(0));
+    }
+}
+
 
 bool Vert::isConnected(MCIface* aPair) const
 {

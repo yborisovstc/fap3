@@ -451,6 +451,7 @@
 		    iface is removed then the tree corresponds branch needs to be removed too. How can we implement this updatae of IRM tree?</simpara>
 		<simpara>In FAP3 the invalidation apporach was applied: the whole branch is marked as invalid on any provider update, this causes 
 		    the cache update on the iface next request.</simpara>
+		<simpara>Ref <xref linkend="ds_iss_003"/> for the problem with IFR update on sockets connect/disconnect.</simpara>
 	    </sect3>
 	    <sect3 id="ds_irm_ut_inv"><title>Solution: branch invalidation via setting invalid indication</title>
 		<sect4><title>Intro</title>
@@ -1384,6 +1385,36 @@
 		</simpara>
 	    </sect3>
 	</sect2>
+	<sect2 id="ds_iss_003"><title>[DS_ISS_003] 20211212 git:930bb4ea585ece. Incorrect IFR for sockets</title>
+	    <sect3><title>Intro</title>
+		<simpara> UT Ut_ifr::test_inval_sock_1() fails. This means that IFR works incorrectly in case of sockets connecting/disconnecting.
+		</simpara>
+	    </sect3>
+	    <sect3><title>Analysis</title>
+		<simpara>The current implementation of IFR tree update (ref <xref liknend="ds_irm_ut"/>) supports only vert connect/disconnect. The 
+		    Vert::connect() just invalidates the vertexes IFR. But for sockets it doesn't work - the pins are not invalidated.</simpara>
+	    </sect3>
+	    <sect3><title>Fix proposal</title>
+		<simpara>We need to redesing IFR:</simpara>
+		<itemizedlist>
+		    <listitem>
+			IFR node validity sign shall indicate that node has to be updated
+			<para>Currently the validity is set based on resolution result - node is considered as valid if the iface is resolved.
+			    If not, then node is marked as invalid and is removed then.</para>
+			<pare>We don't need to mark node as invalid in case of iface is not resolved. The whole branch has to be marked as valid even
+			    it is iface is not resolved. This branch cannot "provide" iface but shows us the path of resolution attempt.</pare>
+		    </listitem>
+		    <listitem>
+			Invalidated unit has to invalidate its own nodes and theirs owners (requestors, i.e clients). Owned nodes are to be removed.
+			<para>The logic here is: the local node says to the requestors: "Im invalid, you are using me so you needs to be updated,
+			    this means you are also invalid.</para>
+			<pare>The owned nodes don't need to be invalidated - these branches are created by the current nodes, so they needs to be
+			    removed and re-created according to new environment.</pare>
+		    </listitem>
+		</itemizedlist>
+	    </sect3>
+	</sect2>
+
     </sect1>
 
 

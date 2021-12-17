@@ -63,6 +63,12 @@ void AAdp::onObsOwnedAttached(MObservable* aObl, MOwned* aOwned)
     }
 }
 
+void AAdp::onObsOwnedDetached(MObservable* aObl, MOwned* aOwned)
+{
+    MObservable* hostobl = ahostNode() ? ahostNode()->lIf(hostobl) : nullptr;
+}
+
+
 void AAdp::onObsContentChanged(MObservable* aObl, const MContent* aCont)
 {
     string data;
@@ -384,7 +390,12 @@ void AMnodeAdp::GetCompNames(TCmpNames& aData)
 void AMnodeAdp::GetOwner(Sdata<string>& aData)
 {
     if (mMag) {
-	//aData.mData = mMag->GetMan()->GetUri(NULL, true);
+	MNode* base = mMagOwner ? mMagOwner : ahostNode();
+	// TODO Isn't is better to have MNode method to get comps owner?
+	GUri magUri;
+	mMag->getUri(magUri, base);
+	GUri ownUri = magUri.head(magUri.elems().size() - 1);
+	aData.mData = ownUri;
 	aData.mValid = true;
     } else {
 	aData.mData = GUri::nil;

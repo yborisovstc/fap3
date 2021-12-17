@@ -41,6 +41,7 @@ class Vertu : public Unit, public MVert
 	virtual bool isLinked(const MVert* aPair, bool aDirect = false) const override;
     protected:
 	// Local
+	void disconnect();
 	virtual void onConnected();
 	virtual void onDisconnected();
     protected:
@@ -79,6 +80,7 @@ class Vert : public Elem, public MVert
 	virtual bool isLinked(const MVert* aPair, bool aDirect = false) const override;
     protected:
 	// Local
+	void disconnect();
 	virtual void onConnected();
 	virtual void onDisconnected();
     protected:

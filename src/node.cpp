@@ -401,12 +401,16 @@ void Node::mutRemove(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
     string snode, sname;
     sname = aMut.Attr(ENa_Id);
     MOwned* owned = owner()->pairAt(sname)->provided();
-    owner()->detach(owner()->pairAt(sname));
-    owned->deleteOwned();
-    //node->SetRemoved(aRunTime);
-    Log(TLog(EInfo, this) + "Removed node [" + sname + "]");
-    if (!aUpdOnly) {
-	notifyNodeMutated(aMut, aCtx);
+    bool res = owner()->detach(owner()->pairAt(sname));
+    if (res) {
+	onOwnedDetached(owned);
+	owned->deleteOwned();
+	Log(TLog(EInfo, this) + "Removed node [" + sname + "]");
+	if (!aUpdOnly) {
+	    notifyNodeMutated(aMut, aCtx);
+	}
+    } else {
+	Log(TLog(EErr, this) + "Failed detached owned [" + sname + "]");
     }
 }
 
@@ -483,6 +487,16 @@ void Node::onOwnedAttached(MOwned* aOwned)
 	obs = mOcp.nextPair(obs);
     }
 }
+
+void Node::onOwnedDetached(MOwned* aOwned)
+{
+    auto* obs = mOcp.firstPair();
+    while (obs) {
+	obs->provided()->onObsOwnedDetached(this, aOwned);
+	obs = mOcp.nextPair(obs);
+    }
+}
+
 
 MIface* Node::MContentOwner_getLif(const char *aType) 
 {

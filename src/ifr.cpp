@@ -46,13 +46,10 @@ MIfProv* IfrNode::next() const
  * */
 bool IfrNode::resolve(const string& aName)
 {
-    bool valid = mOwner->resolveIfc(aName, binded());
-    if (mValid != valid) {
-	setValid(valid);
-    }
-    // Cleanup the node - remove all invalid pairs
-    eraseInvalid();
-    return mValid;
+    // TODO Do we really need resolveIfc return bool?
+    bool res = mOwner->resolveIfc(aName, binded());
+    setValid(true);
+    return res;
 }
 
 MIfProv* IfrNode::next(MIfProv::TCp* aProvCp) const
@@ -97,7 +94,14 @@ void IfrNode::setValid(bool aValid)
     assert(mValid != aValid);
     mValid = aValid;
     if (!aValid) {
+	// Disconnect owneds
 	erase();
+	// Invalidate owner
+	auto owr = firstPair();
+	MIfProv* owrp = owr ? owr->binded()->provided() : nullptr;
+	if (owrp) {
+	    owrp->setValid(false);
+	}
     }
 }
 

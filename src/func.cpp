@@ -198,7 +198,7 @@ void FUri::DtGet(TData& aData)
 {
     bool res = true;
     MDVarGet* dget = mHost.GetInp(EInp);
-    MDtGet<TInpData>* dfget = dget ? dget->lIf(dfget) : nullptr;
+    MDtGet<TInpData>* dfget = dget ? dget->GetDObj(dfget) : nullptr;
     if (dfget) {
 	TInpData arg;
 	dfget->DtGet(arg);

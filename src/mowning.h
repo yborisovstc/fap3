@@ -34,6 +34,7 @@ class MOwner : public MIface
 	virtual const MOwned* bindedOwned() const = 0;
 	virtual void onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx) = 0;
 	virtual void onOwnedAttached(MOwned* aOwned) = 0;
+	virtual void onOwnedDetached(MOwned* aOwned) = 0;
 	/** @brief Gets the array of modules, the nearest the first */
 	virtual void getModules(vector<MNode*>& aModules) = 0;
 	/** @brief Gets node using parent access rule */
