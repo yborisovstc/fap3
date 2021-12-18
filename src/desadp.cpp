@@ -3,6 +3,7 @@
 #include "desadp.h"
 #include "rmutdata.h"
 #include "mlink.h"
+#include "mmntp.h"
 
 
 // Agents DES adaptation - ADP
@@ -214,7 +215,9 @@ void AAdp::onInpUpdated()
 bool AAdp::UpdateMagOwner(MNode* aMagOwner)
 {
     // TODO to implement all use-cases
-    mMagOwner = aMagOwner;
+    // Handle mount point specifically
+    MMntp* momp = aMagOwner->lIf(momp);
+    mMagOwner = momp ? momp->root() : aMagOwner;
     return true;
 }
 

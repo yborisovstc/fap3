@@ -14,8 +14,18 @@ Elem::Elem(const string &aType, const string &aName, MEnv* aEnv): Unit(aType, aN
 
 Elem::~Elem()
 {
-    assert(parent());
-    parent()->onChildDeleting(this);
+    //assert(parent());
+    // Notify parent
+    if (parent()) {
+	parent()->onChildDeleting(this);
+    }
+    // Notify childs and disconnect
+    auto cn = mInode.binded()->firstPair();
+    while (cn) {
+	cn->provided()->onParentDeleting(this);
+	cn = mInode.binded()->nextPair(cn);
+    }
+    mInode.binded()->disconnectAll();
 }
 
 MIface* Elem::MElem_getLif(const char *aType)
@@ -239,7 +249,8 @@ MNode* Elem::createHeirPrnt(const string& aName)
 
 MParent* Elem::parent()
 {
-    return mInode.firstPair()->provided();
+    auto fp = mInode.firstPair();
+    return fp ? fp->provided() : nullptr;
 }
 
 bool Elem::attachChild(MChild* aChild)

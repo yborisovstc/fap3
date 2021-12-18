@@ -183,6 +183,12 @@ void Ut_node::test_cre_1()
     CPPUNIT_ASSERT_MESSAGE("Wrong n1 c12 content", c12cd == "Default");
     MNode* n1_1_2_1 = root->getNode("n1.n1_1.n1_1_2.n1_1_2_1");
     CPPUNIT_ASSERT_MESSAGE("Missing n1_1_2_1", n1_1_2_1);
+
+    // Test Uri
+    GUri uri1 = GUri("");
+    MNode* nt = n1->getNode(uri1);
+
+    delete mEnv;
 }
  
 /** @brief Test of access to upper layers

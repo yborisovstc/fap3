@@ -14,11 +14,6 @@ MyRoot : Elem {
                 = "URI Node1";
                 Debug : Content { Update : Content { = "y"; } }
             }
-            Neg : TrNegVar;
-            St1.Inp ~ Neg;
-            Neg.Inp ~ St1;
-
-
         }
     }
 }

@@ -253,24 +253,7 @@ bool State::setContent(const GUri& aCuri, const string& aData)
 
 void State::onContentChanged(const MContent* aCont)
 {
-    if (aCont->contName() == KCont_Value) {
-	string data;
-	bool res = aCont->getData(data);
-	if (res) {
-	    res = mPdata->FromString(data);
-	    res = res && mCdata->FromString(data);
-	    if (mPdata->IsValid() && mCdata->IsValid()) {
-		if (res) {
-		    NotifyInpsUpdated();
-		}
-	    }  else {
-		Log(TLog(EErr, this) + "Error on applying content [" + aCont->contName() + "]");
-		res = mPdata->FromString(data);
-	    }
-	} else {
-	    Log(TLog(EErr, this) + "Cannot get content data [" + aCont->contName() + "]");
-	}
-    }
+    Vertu::onContentChanged(aCont);
 }
 
 bool State::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
@@ -333,6 +316,28 @@ string State::GetDvarUid(const MDVar* aComp) const
 {
     string name =  (aComp == mPdata) ? "Pdata" : "Cdata";
     return getUid(name, MDVar::Type()); 
+}
+
+
+bool State::SContValue::getData(string& aData) const
+{
+    mHost.mCdata->ToString(aData);
+    return true;
+}
+
+bool State::SContValue::setData(const string& aData)
+{
+    bool res = mHost.mPdata->FromString(aData);
+    res = res && mHost.mCdata->FromString(aData);
+    if (mHost.mPdata->IsValid() && mHost.mCdata->IsValid()) {
+	if (res) {
+	    mHost.NotifyInpsUpdated();
+	}
+    }  else {
+	mHost.Log(TLog(EErr, &mHost) + "Error on applying content [" + mName + "]");
+	res = mHost.mPdata->FromString(aData);
+    }
+    return res;
 }
 
 

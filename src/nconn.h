@@ -809,6 +809,7 @@ bool NCpOmnp<TPif, TRif>::disconnect(TPair* aPair)
     if (res) {
 	res = detach(aPair);
     }
+    assert(res);
     return res;
 }
 

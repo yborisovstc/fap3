@@ -41,6 +41,28 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
       public Cnt::Host
 {
     public:
+	/** @brief Pseudo content */
+	class SCont : public MContent {
+	    public:
+	    SCont(State& aHost, const string& aName) : mName(aName), mHost(aHost) {}
+	    // From MContent
+	    virtual string MContent_Uid() const override { return mHost.getCntUid(mName, MContent::Type());}
+	    virtual MIface* MContent_getLif(const char *aType) override { return nullptr;}
+	    virtual void MContent_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+	    virtual string contName() const override { return mName;}
+	    protected:
+	    string mName;
+	    State& mHost;
+	};
+	/** @brief Value content */
+	class SContValue : public SCont {
+	    public:
+	    SContValue(State& aHost, const string& aName): SCont(aHost, aName) {}
+	    // From MContent
+	    virtual bool getData(string& aData) const override;
+	    virtual bool setData(const string& aData) override;
+	};
+    public:
 	static const char* Type() { return "State";};
 	State(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From Node.MIface
@@ -99,7 +121,7 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
     protected:
 	BdVar* mPdata;   //<! Preparing (updating) phase data
 	BdVar* mCdata;   //<! Confirming phase data
-	Cnt mValue = Cnt(*this, KCont_Value);
+	SContValue mValue = SContValue(*this, KCont_Value);
 	bool mUpdNotified;  //<! Sign of that State notified observers on Update
 	bool mActNotified;  //<! Sign of that State notified observers on Activation
 };

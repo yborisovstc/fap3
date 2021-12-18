@@ -494,10 +494,14 @@ void Syst::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 	MVert* qv = qn->lIf(pv);
 	if (pv && qv) {
 	    // Vertex to Vertex
-	    res = MVert::connect(pv, qv);
-	    if (!res) {
-		Log(TLog(EErr, this) + "Failed connecting [" + sp + "] to [" + sq + "]");
+	    if (!pv->isPair(qv) && !qv->isPair(pv)) {
 		res = MVert::connect(pv, qv);
+		if (!res) {
+		    Log(TLog(EErr, this) + "Failed connecting [" + sp + "] to [" + sq + "]");
+		    res = MVert::connect(pv, qv);
+		}
+	    } else {
+		Log(TLog(EErr, this) + "Connecting [" + sp + "] to [" + sq + "] - already connected");
 	    }
 	} else {
 	    MLink* pl = pn->lIf(pl);
