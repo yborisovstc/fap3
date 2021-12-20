@@ -126,29 +126,26 @@ bool ConnPointu::isCompatible(MVert* aPair, bool aExt)
     return res;
 }
 
-bool ConnPointu::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void ConnPointu::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 {
-    bool res = false;
     MIface* ifr = MNode_getLif(aName.c_str()); // Local
     if (ifr) {
 	addIfpLeaf(ifr, aReq);
-	res = true;
     }
     if (!ifr) { // TODO this disables both local and remote ifaces. To fix
 	if (aName == provName()) {
 	    // Requested provided iface - cannot be obtain via pairs - redirect to host
 	    auto owner = Owner();
 	    MUnit* ownu = owner ? const_cast<MOwner*>(owner)->lIf(ownu): nullptr;
-	    res = ownu ? ownu->resolveIface(aName, aReq) : false;
+	    if (ownu) ownu->resolveIface(aName, aReq);
 	} else if (aName == reqName()) {
 	    // Requested required iface - redirect to pairs
 	    for (MVert* pair : mPairs) {
 		MUnit* pairu = pair->lIf(pairu);
-		res |= pairu->resolveIface(aName, aReq);
+		pairu->resolveIface(aName, aReq);
 	    }
 	}
     }
-    return res;
 }
 
 
@@ -169,9 +166,8 @@ Extd::Extd(const string &aType, const string& aName, MEnv* aEnv): Vertu(aType, a
     setContent(KContDir, KContDir_Val_Regular);
 }
 
-bool Extd::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void Extd::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 {
-    bool res = false;
     MIface* ifc = MNode_getLif(aName.c_str());
     if (ifc) { // Local iface
 	addIfpLeaf(ifc, aReq);
@@ -187,15 +183,14 @@ bool Extd::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 		MUnit* pairu = pair ? pair->lIf(pairu) : nullptr;  
 		MIfProvOwner* pairo = pairu ? pairu->lIf(pairo) : nullptr;
 		if (pairo && !aReq->provided()->isRequestor(pairo)) {
-		    res = pairu->resolveIface(aName, aReq);
+		    pairu->resolveIface(aName, aReq);
 		}
 	    }
 	} else {
 	    // Redirect to internal CP
-	    res = intcpu ? intcpu->resolveIface(aName, aReq) : res;
+	    if (intcpu) intcpu->resolveIface(aName, aReq);
 	}
     }
-    return res;
 }
 
 bool Extd::isCompatible(MVert* aPair, bool aExt)
@@ -243,13 +238,11 @@ MIface* Socket::MNode_getLif(const char *aType)
     return res;
 }
 
-bool Socket::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void Socket::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 {
-    bool res = false;
     MIface* ifc = MNode_getLif(aName.c_str());
     if (ifc) { // Local iface
 	addIfpLeaf(ifc, aReq);
-	res = true;
     } else {
 	MIfReq::TIfReqCp* req = aReq->binded()->firstPair();
 	if (req) {
@@ -264,14 +257,14 @@ bool Socket::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 			MVert* pair = *it;
 			MUnit* pairu = pair->lIf(pairu);
 			if (pairu) {
-			    res |= pairu->resolveIface(aName, aReq);
+			    pairu->resolveIface(aName, aReq);
 			}
 		    }
 		} else {
 		    // No pairs. Redirect to owner.
 		    MUnit* owu = Owner()->lIf(owu);
 		    if (owu) {
-			res |= owu->resolveIface(aName, aReq);
+			owu->resolveIface(aName, aReq);
 		    }
 		}
 	    } else {
@@ -284,11 +277,11 @@ bool Socket::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 			bool isReq = aReq->provided()->isRequestor(pairo);
 			bool isFirstReq = req ? (pairo == req->provided()->rqOwner()) : false;
 			if (!isReq || isReq && !isFirstReq) {
-			    res = pairu->resolveIface(aName, aReq);
+			    pairu->resolveIface(aName, aReq);
 			}
 		    }
 		}
-		if (!res) {
+		if (!aReq->provided()->isResolved()) {
 		    // Continue downwards if iface not provided by pairs, ref DSI_SRST_S1_EDC
 		    MNode* apair = nullptr; // Assosiated pair in requestors
 		    MNode* pcomp = nullptr;
@@ -333,18 +326,19 @@ bool Socket::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 		    if (pcomp) {
 			MUnit* pcompu = pcomp->lIf(pcompu);
 			if (pcompu) {
-			    res |= pcompu->resolveIface(aName, aReq);
+			    pcompu->resolveIface(aName, aReq);
 			}
 		    }
 		}
-		if (!res) {
+		// Using priority logic: if resolved then no redirection to owner
+		if (!aReq->provided()->isResolved()) {
 		    // Redirect to upper layer socket
 		    MUnit* owu = Owner()->lIf(owu);
 		    MIfProvOwner* owo = owu ? owu->lIf(owo) : nullptr;
 		    if (owo) {
 			bool isReq = aReq->provided()->isRequestor(owo);
 			if (!isReq) {
-			    res |= owu->resolveIface(aName, aReq);
+			    owu->resolveIface(aName, aReq);
 			}
 		    }
 		}
@@ -357,23 +351,23 @@ bool Socket::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 		MOwned* compo = compcp ? compcp->provided() : nullptr;
 		MUnit* compu = compo->lIf(compu);
 		if (compu) {
-		    res |= compu->resolveIface(aName, aReq);
+		    compu->resolveIface(aName, aReq);
 		}
 		compcp = owner()->nextPair(compcp);
 	    }
-	    if (!res) {
+	    // Using priority logic: if pins resolve then stop
+	    if (!aReq->provided()->isResolved()) {
 		// Then redirect to pair
 		for (MVert* pair : mPairs) {
 		    MUnit* pairu = pair->lIf(pairu);
 		    if (pairu) {
-			res |= pairu->resolveIface(aName, aReq);
+			pairu->resolveIface(aName, aReq);
 		    }
 		}
 
 	    }
 	}
     }
-    return res;
 }
 
 bool Socket::isCompatible(MVert* aPair, bool aExt)
@@ -559,13 +553,11 @@ void Syst::mutDisconnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aC
     }
 }
 
-bool Syst::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void Syst::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 {
-    bool res = false;
     MIface* ifr = MNode_getLif(aName.c_str());
     if (ifr) {
 	addIfpLeaf(ifr, aReq);
-	res = true;
     }
     if (aName == MAgent::Type()) {
 	for (int i = 0; i < owner()->pcount(); i++) {
@@ -574,7 +566,6 @@ bool Syst::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	    MAgent* compa = compn ? compn->lIf(compa) : nullptr;
 	    if (compa) {
 		addIfpLeaf(compa, aReq);
-		res = true;
 	    }
 	}
     } else {
@@ -584,12 +575,11 @@ bool Syst::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	while (maprov) {
 	    MUnit* agtu = maprov ? maprov->iface()->lIf(agtu) : nullptr;
 	    if (agtu) {
-		res |= agtu->resolveIface(aName, aReq);
+		agtu->resolveIface(aName, aReq);
 	    }
 	    maprov = maprov->next();
 	}
     }
-    return res;
 }
 
 bool Syst::attachAgent(MAgent::TCp* aAgt)

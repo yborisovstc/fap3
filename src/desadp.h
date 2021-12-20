@@ -113,7 +113,7 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 	virtual MIface* MNode_getLif(const char *aName) override;
 	// From MUnit
 	// From Unit.MIfProvOwner
-	virtual bool resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
 	// From MAgent
 	virtual string MAgent_Uid() const override {return getUid<MAgent>();}
 	virtual MIface* MAgent_getLif(const char *aName) override;
@@ -222,7 +222,7 @@ class AMnodeAdp : public AAdp
 	// From MDesSyncable
 	virtual void confirm() override;
 	// From Unit.MIfProvOwner
-	virtual bool resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
     protected:
 	void GetCompsCount(Sdata<int>& aData);
 	void GetCompNames(TCmpNames& aData);
@@ -251,7 +251,7 @@ class AMelemAdp : public AAdp
 	static const char* Type() { return "AMelemAdp";};
 	AMelemAdp(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From Unit.MIfProvOwner
-	virtual bool resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
     protected:
 	void ApplyMut();
 	void OnInpMut();

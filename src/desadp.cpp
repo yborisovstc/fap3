@@ -33,20 +33,17 @@ MIface* AAdp::MAgent_getLif(const char *aType)
     return res;
 }
 
-bool AAdp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void AAdp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 {
-    bool res = false;
     if (aName == MDesInpObserver::Type()) {
 	MNode* inp = ahostGetNode(K_CpUriInpMagUri);
 	if (isRequestor(aReq, inp)) {
 	    MIface* iface = dynamic_cast<MDesInpObserver*>(&mIapMagUri);
 	    addIfpLeaf(iface, aReq);
-	    res = true;
 	}
     } else {
-	res = Unit::resolveIfc(aName, aReq);
+	Unit::resolveIfc(aName, aReq);
     }
-    return res;
 }
 
 void AAdp::onObsOwnedAttached(MObservable* aObl, MOwned* aOwned)
@@ -348,34 +345,29 @@ AMnodeAdp::AMnodeAdp(const string &aType, const string& aName, MEnv* aEnv): AAdp
 }
 
 
-bool AMnodeAdp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void AMnodeAdp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 {
-    bool res = false;
     if (aName == MDVarGet::Type()) {
 	MNode* cmpCount = ahostGetNode(K_CpUriCompCount);
 	if (isRequestor(aReq, cmpCount)) {
 	    MIface* iface = dynamic_cast<MDVarGet*>(&mApCmpCount);
 	    addIfpLeaf(iface, aReq);
-	    res = true;
 	} else {
 	    MNode* cmpNames = ahostGetNode(K_CpUriCompNames);
 	    if (isRequestor(aReq, cmpNames)) {
 		MIface* iface = dynamic_cast<MDVarGet*>(&mApCmpNames);
 		addIfpLeaf(iface, aReq);
-		res = true;
 	    } else {
 		MNode* out = ahostGetNode(K_CpUriOwner);
 		if (isRequestor(aReq, out)) {
 		    MIface* iface = dynamic_cast<MDVarGet*>(&mPapOwner);
 		    addIfpLeaf(iface, aReq);
-		    res = true;
 		}
 	    }
 	}
     } else {
-	res = AAdp::resolveIfc(aName, aReq);
+	AAdp::resolveIfc(aName, aReq);
     }
-    return res;
 }
 
 void AMnodeAdp::GetCompsCount(Sdata<int>& aData)
@@ -470,20 +462,17 @@ AMelemAdp::AMelemAdp(const string& aType, const string& aName, MEnv* aEnv): AAdp
     mMagChromo = mEnv->provider()->createChromo();
 }
 
-bool AMelemAdp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void AMelemAdp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 {
-    bool res = false;
     if (aName == MDesInpObserver::Type()) {
 	MNode* inpMut = ahostGetNode(K_InpMUtpUri);
 	if (isRequestor(aReq, inpMut)) {
 	    MIface* iface = dynamic_cast<MDesInpObserver*>(&mIapInpMut);
 	    addIfpLeaf(iface, aReq);
-	    res = true;
 	}
     } else {
-	res = AAdp::resolveIfc(aName, aReq);
+	AAdp::resolveIfc(aName, aReq);
     }
-    return res;
 }
 
 

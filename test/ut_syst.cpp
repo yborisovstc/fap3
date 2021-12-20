@@ -79,18 +79,14 @@ class TstAgt: public Unit, public MAgent
 	    return res;
 	}
 	// From Unit.MIfProvOwner
-	virtual bool resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override {
-	    bool res = false;
+	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override {
 	    if (aName == MTIf1::Type()) {
 		IfrLeaf* lf = new IfrLeaf(this, &mIface1);
 		aReq->connect(lf);
-		res = true;
 	    } else if (aName == MTIf2::Type()) {
 		IfrLeaf* lf = new IfrLeaf(this, &mIface2);
 		aReq->connect(lf);
-		res = true;
 	    }
-	    return res;
 	}
     private:
 	TestIface1 mIface1 = TestIface1(*this);

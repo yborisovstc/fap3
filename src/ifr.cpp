@@ -16,13 +16,12 @@ string IfrNode::name() const
 MIfProv* IfrNode::first() const
 {
     MIfProv* res = nullptr;
-    bool pres = true;
     string nm = name();
     IfrNode* self = const_cast<IfrNode*>(this);
     if (!mValid) {
-	pres = self->resolve(nm);
+	self->resolve(nm);
     }
-    if (pres && mValid) {
+    if (mValid) {
 	auto fl = self->firstLeafB();
 	res =  fl ? fl->provided() : nullptr;
     }
@@ -44,12 +43,10 @@ MIfProv* IfrNode::next() const
  * Another solutionis is to use specific node that does resolution in 
  * behalf of the owner.
  * */
-bool IfrNode::resolve(const string& aName)
+void IfrNode::resolve(const string& aName)
 {
-    // TODO Do we really need resolveIfc return bool?
-    bool res = mOwner->resolveIfc(aName, binded());
+    mOwner->resolveIfc(aName, binded());
     setValid(true);
-    return res;
 }
 
 MIfProv* IfrNode::next(MIfProv::TCp* aProvCp) const
@@ -173,7 +170,7 @@ IfrNode::TSelf* IfrNode::firstLeafB()
     TSelf* res = nullptr;
     if (!mValid) {
 	string nm = name();
-	bool pres = resolve(nm);
+	resolve(nm);
     }
     if (mValid) {
 	res = NTnnp<MIfProv, MIfReq>::firstLeafB();
@@ -186,7 +183,7 @@ IfrNode::TPair* IfrNode::nextLeaf(TPair* aLeaf)
     TPair* res = nullptr;
     if (!mValid) {
 	string nm = name();
-	bool pres = resolve(nm);
+	resolve(nm);
     }
     if (mValid) {
 	NTnnp<MIfProv, MIfReq>::nextLeaf(aLeaf);
@@ -194,6 +191,10 @@ IfrNode::TPair* IfrNode::nextLeaf(TPair* aLeaf)
     return res;
 }
 
+bool IfrNode::isResolved()
+{
+    return NTnnp<MIfProv, MIfReq>::firstLeafB();
+}
 
 
 
@@ -232,12 +233,11 @@ void IfrLeaf::setValid(bool aValid)
 MIfProv::TIfaces* IfrNodeRoot::ifaces()
 {
     TIfaces* res = nullptr;
-    bool pres = false;
     if (!mValid) {
 	string nm = name();
 	auto self = const_cast<IfrNodeRoot*>(this);
-	pres = self->resolve(nm);
-	if (pres) {
+	self->resolve(nm);
+	if (mValid) {
 	    res = &mIcache;
 	}
     } else {

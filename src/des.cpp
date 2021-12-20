@@ -256,19 +256,16 @@ void State::onContentChanged(const MContent* aCont)
     Vertu::onContentChanged(aCont);
 }
 
-bool State::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void State::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 {
-    bool res = false;
     if (aName == provName()) {
 	MIface* ifr = mCdata->MDVar_getLif(aName.c_str());
 	if (ifr && !aReq->binded()->provided()->findIface(ifr)) {
 	    addIfpLeaf(ifr, aReq);
-	    res = true;
 	}
     } else {
-	res = Vertu::resolveIfc(aName, aReq);
+	Vertu::resolveIfc(aName, aReq);
     }
-    return res;
 }
 
 MIface* State::MVert_getLif(const char *aType)

@@ -40,7 +40,7 @@ class ConnPointu: public Vertu, public MConnPoint, public Cnt::Host
 	virtual MContentOwner* cntOwner() override { return this;}
     protected:
 	// From Unit.MIfProvOwner
-	virtual bool resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
 	// From Vertu
 	//virtual void onConnected() override;
 	//virtual void onDisconnected() override;
@@ -64,7 +64,7 @@ class Extd: public Vertu
 	virtual MVert* getExtd() override;
 	virtual TDir getDir() const override;
 	// From Unit.MIfProvOwner
-	virtual bool resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
 };
 
 
@@ -82,7 +82,7 @@ class Socket: public Vert, public MSocket
 	virtual MVert* getExtd() override;
 	virtual TDir getDir() const override;
 	// From Unit.MIfProvOwner
-	virtual bool resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
 	// From MSocket
 	virtual string MSocket_Uid() const override  { return getUid<MSocket>();}
 	virtual int PinsCount() const override;
@@ -117,7 +117,7 @@ class Syst : public Elem, public MAhost, public MActr
 	virtual MIface* MAhost_getLif(const char *aType) override;
     protected:
 	// From Unit.MIfProvOwner
-	virtual bool resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
 	// Local
 	bool isComp(MIfProvOwner* aNode) const;
     protected:

@@ -36,7 +36,7 @@ class MUnit: public MIface
 	 * It is only used by client requestor if the requestor hasn't resolution via this unit, i.e. hasn't 
 	 * connection to this unit iface provider
 	 * */
-	virtual bool resolveIface(const string& aName, MIfReq::TIfReqCp* aReq) = 0;
+	virtual void resolveIface(const string& aName, MIfReq::TIfReqCp* aReq) = 0;
 	/** @brief Gets first iface resolved
 	 * */
 	template<class T> T* getSif(T* aInst) {

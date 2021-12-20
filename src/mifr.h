@@ -24,7 +24,7 @@ class MIfProv: public MIface
 	virtual string name() const = 0;
 	virtual MIfProv* first() const = 0;
 	virtual MIfProv* next() const = 0;
-	virtual bool resolve(const string& aName) = 0;
+	virtual void resolve(const string& aName) = 0;
 	virtual MIface* iface() = 0;
 	virtual TIfaces* ifaces() = 0;
 	virtual const MIfProvOwner* owner() const = 0;
@@ -56,6 +56,7 @@ class MIfReq: public MIface
 	virtual MIfReq* prev() = 0;
 	/** @brief Gets first (initial) requestor in the chain */
 	virtual MIfReq* tail() = 0;
+	virtual bool isResolved() { return false;}
 };
 
 /** @brief Interface provider owner
@@ -73,7 +74,7 @@ class MIfProvOwner: public MIface
 	virtual MIface* MIfProvOwner_getLif(const char *aType) = 0;
 	// Local
 	/** @resolve interface as provider owner */
-	virtual bool resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) = 0;
+	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) = 0;
 	virtual void onIfpDisconnected(MIfProv* aProv) = 0;
 	
 };

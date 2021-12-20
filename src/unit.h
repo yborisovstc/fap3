@@ -27,11 +27,11 @@ class Unit : public Node, public MUnit, public MIfProvOwner
 	virtual MIface* MUnit_getLif(const char *aType) override;
 	virtual void MUnit_doDump(int aLevel, int aIdt, std::ostream& aOs) const override;
 	virtual MIfProv* defaultIfProv(const string& aName) override;
-	virtual bool resolveIface(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIface(const string& aName, MIfReq::TIfReqCp* aReq) override;
 	// From MIfProvOwner
 	virtual string MIfProvOwner_Uid() const override { return getUid<MIfProvOwner>();}
 	virtual MIface* MIfProvOwner_getLif(const char *aType) override;
-	virtual bool resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
 	virtual void onIfpDisconnected(MIfProv* aProv) override;
     protected:
 	virtual IfrNode* createIfProv(const string& aName, MIfReq::TIfReqCp* aReq) const;

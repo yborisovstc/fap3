@@ -66,7 +66,7 @@ void Unit::MUnit_doDump(int aLevel, int aIdt, std::ostream& aOs) const
     }
 }
 
-bool Unit::resolveIface(const string& aName, MIfReq::TIfReqCp* aReq)
+void Unit::resolveIface(const string& aName, MIfReq::TIfReqCp* aReq)
 {
     bool res = false;
     // Check if the requestor was already registered
@@ -75,16 +75,15 @@ bool Unit::resolveIface(const string& aName, MIfReq::TIfReqCp* aReq)
 	if (item->isConnected(aReq)) { prov = item; break;}
     }
     if (prov) {
-	res = prov->resolve(aName);
+	prov->resolve(aName);
     } else {
 	IfrNode* node = createIfProv(aName, aReq);
 	mIrns.push_back(node);
 	res = node->connect(aReq);
 	if (res) {
-	    res = node->resolve(aName);
+	    node->resolve(aName);
 	}
     }
-    return res;
 }
 
 MIfProv* Unit::defaultIfProv(const string& aName)
@@ -153,16 +152,13 @@ void Unit::addIfpLeafs(MIfProv::TIfaces* aIfcs, MIfReq::TIfReqCp* aReq)
     }
 }
 
-bool Unit::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void Unit::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 {
-    bool res = false;
     MIface* ifr = MNode_getLif(aName.c_str());
     if (ifr /* && !findIface(ifr)YB??*/) {
 	IfrLeaf* lf = new IfrLeaf(this, ifr);
 	aReq->connect(lf);
-	res = true;
     }
-    return res;
 }
 
 MIface* Unit::MOwner_getLif(const char *aType)

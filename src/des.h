@@ -72,7 +72,7 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 	// From Node.MContentOwner
 	virtual void onContentChanged(const MContent* aCont) override;
 	// From Unit.MIfProvOwner
-	virtual bool resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
 	// From MVert
 	virtual MIface *MVert_getLif(const char *aType) override;
 	virtual bool isCompatible(MVert* aPair, bool aExt) override;

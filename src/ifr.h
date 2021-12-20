@@ -23,7 +23,7 @@ class IfrNode : public NTnnp<MIfProv, MIfReq>, public MIfProv, protected MIfReq
 	virtual MIfProv* first() const override;
 	virtual MIfProv* next() const override;
 	virtual void MIfProv_doDump(int aLevel, int aIdt, ostream& aOs) const override;
-	virtual bool resolve(const string& aName) override;
+	virtual void resolve(const string& aName) override;
 	virtual bool isValid() const override { return mValid;}
 	virtual void setValid(bool aValid) override;
 	virtual MIface* iface() override { return nullptr;}
@@ -37,6 +37,7 @@ class IfrNode : public NTnnp<MIfProv, MIfReq>, public MIfProv, protected MIfReq
 	virtual const MIfProvOwner* rqOwner() const override { return mOwner;}
 	virtual MIfReq* prev() override;
 	virtual MIfReq* tail() override;
+	virtual bool isResolved() override;
 	// From MNCpp
 	virtual TSelf* firstLeafB() override;
 	virtual TPair* nextLeaf(TPair* aLeaf) override;
@@ -61,7 +62,7 @@ class IfrLeaf : public NCpOnp<MIfProv, MIfReq>, public MIfProv
 	virtual string name() const override;
 	virtual MIfProv* first() const override { return const_cast<IfrLeaf*>(this);}
 	virtual MIfProv* next() const override;
-	virtual bool resolve(const string& aName) override {return false;}
+	virtual void resolve(const string& aName) override {}
 	virtual MIface* iface() override { return mIface;}
 	virtual TIfaces* ifaces() override { return nullptr;}
 	virtual const MIfProvOwner* owner() const override { return mOwner;}
