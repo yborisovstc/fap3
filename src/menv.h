@@ -19,6 +19,7 @@ class MImportMgr
 };
 
 
+class GUri;
 
 /** @brief Execution environment interface
  * */

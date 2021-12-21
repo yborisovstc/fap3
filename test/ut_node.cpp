@@ -178,6 +178,12 @@ void Ut_node::test_cre_1()
     CPPUNIT_ASSERT_MESSAGE("Fail to get n1", n1);
     MContentOwner* n1co = n1->lIf(n1co);
     CPPUNIT_ASSERT_MESSAGE("Fail to get n1co", n1co);
+    // Verify getting node by absolute URI
+    MNode* nn = n1->getNode(".MyRoot.n1.n1_1.n1_1_2.n1_1_2_1");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get node by absolute URI", nn);
+    // Verify not getting not owned node
+    nn = n1->getNode(".MyRoot.n2.n2_1");
+    CPPUNIT_ASSERT_MESSAGE("Fail to deny getting not owned node", !nn);
     string c12cd;
     bool cres = n1co->getContent("c12", c12cd);
     CPPUNIT_ASSERT_MESSAGE("Wrong n1 c12 content", c12cd == "Default");

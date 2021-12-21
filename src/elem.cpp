@@ -46,32 +46,6 @@ MIface* Elem::MNode_getLif(const char *aType)
     return res;
 }
 
-
-// TODO Roughtly implemeted, re-implement
-
-MNode* Elem::getMowner(MNode* aNode)
-{
-    /*
-    assert(aNode);
-    MElem* eowner = NULL;
-    MNode* owner = aNode->GetMan();
-    while (owner != NULL) {
-	eowner = owner->GetObj(eowner);
-	if (eowner != NULL) {
-	    break;
-	}
-	owner = owner->GetMan();
-    }
-    return owner;
-    */
-    return nullptr;
-}
-
-
-void Elem::setParent(const string& aParent)
-{
-}
-
 void Elem::notifyParentMutated(const TMut& aMut)
 {
 }
@@ -107,12 +81,6 @@ void Elem::mutate(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx&
 	Unit::mutate(aMut, aChange, aCtx, aTreatAsChromo, aLocal);
     }
 }
-
-/*
-   void Elem::mutSegment(const ChromoNode& aMut, bool aChange, const MutCtx& aCtx)
-   {
-   }
-*/
 
 MNode* Elem::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 {

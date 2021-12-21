@@ -29,7 +29,6 @@ class Elem: public Unit, public MElem, public MParent, public MChild
 	virtual bool attachHeir(MNode* aHeir) override;
 	// From MElem
 	virtual MChromo& Chromos() override { return *mChromo;}
-	virtual void setParent(const string& aParent) override;
 	virtual MChild* asChild() override;
 	virtual MParent* asParent() override;
 	// From MParent
@@ -47,11 +46,9 @@ class Elem: public Unit, public MElem, public MParent, public MChild
 	virtual void onParentDeleting(MParent* aParent) override;
 	virtual MChild::TCp* cP() override;
     protected:
-	MNode* getMowner(MNode* aNode);
 	void notifyParentMutated(const TMut& aMut);
 	void setCrAttr(const string& aEType, const string& aName);
 	// From Node
-	//virtual void mutSegment(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx) override;
 	virtual MNode* mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx) override;
 	virtual void onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx) override;
 	MParent* parent();

@@ -76,10 +76,8 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	// From MOwner
 	virtual string MOwner_Uid() const {return getUid<MOwner>();}
 	virtual MIface* MOwner_getLif(const char *aType) override;
-	virtual MOwned* bindedOwned() override { return owned()->provided();}
-	virtual const MOwned* bindedOwned() const  { return owned()->provided();}
 	virtual void ownerGetUri(GUri& aUri, MNode* aBase = nullptr) const override { getUri(aUri, aBase);}
-	virtual MNode* ownerGetNode(const GUri& aUri, const MNode* aOwned) const override;
+	virtual MNode* ownerGetNode(const GUri& aUri, const MNode* aReq) const override;
 	virtual void onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx) override;
 	virtual void onOwnedAttached(MOwned* aOwned) override;
 	virtual void onOwnedDetached(MOwned* aOwned) override;
@@ -89,7 +87,6 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	virtual string MOwned_Uid() const {return getUid<MOwned>();}
 	virtual MIface* MOwned_getLif(const char *aType) override;
 	virtual string ownedId() const override { return name();}
-	virtual bool isOwner(const MOwner* aOwner) const override;
 	virtual void deleteOwned() override { delete this;}
 	virtual void onOwnerAttached() override {}
     protected:

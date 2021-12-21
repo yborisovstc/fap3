@@ -26,7 +26,6 @@ class MElem: public MIface
 	virtual void MElem_doDump(int aLevel, int aIdt, ostream& aOs) const = 0;
 	// Local
 	virtual MChromo& Chromos() = 0;
-	virtual void setParent(const string& aParent) = 0;
 	virtual MChild* asChild() = 0;
 	virtual MParent* asParent() = 0;
 };

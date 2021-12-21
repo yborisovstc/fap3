@@ -37,19 +37,6 @@ MIface* Node::MObservable_getLif(const char *aType)
     return res;
 }
 
-bool Node::isOwner(const MOwner* aOwner) const
-{
-    bool res = false;
-    if (owned()->pcount() > 0) {
-	if (aOwner == owned()->pairAt(0)->provided()) {
-	    res = true;
-	} else if (owned()->pairAt(0) && owned()->pairAt(0)->provided()->bindedOwned()) {
-	    res = owned()->pairAt(0)->provided()->bindedOwned()->isOwner(aOwner);
-	}
-    }
-    return res;
-}
-
 void Node::MNode_doDump(int aLevel, int aIdt, ostream& aOs) const
 {
     if (aLevel & Ifu::EDM_Base) {
@@ -67,7 +54,6 @@ void Node::MNode_doDump(int aLevel, int aIdt, ostream& aOs) const
     }
 }
 
-
 const MNode* Node::getComp(const string& aId) const
 {
     auto ownerCp = owner()->pairAt(aId);
@@ -83,9 +69,8 @@ const MNode* Node::getNode(const GUri& aUri) const
 	res = this;
     } else {
 	if (aUri.isAbsolute()) {
-	    //Owner()->getNode(aUri, this);
 	    if (Owner()) {
-		res = Owner()->ownerGetNode(aUri, this); 
+		res = Owner()->ownerGetNode(aUri, this);
 	    } else {
 		// Root
 		if (aUri.size() > 2) {
@@ -303,32 +288,30 @@ void Node::setCtx(MOwner* aContext)
     mContext = aContext;
 }
 
-MNode* Node::ownerGetNode(const GUri& aUri, const MNode* aOwned) const
+MNode* Node::ownerGetNode(const GUri& aUri, const MNode* aReq) const
 {
     MNode* res = nullptr;
     Node* self = const_cast<Node*>(this);
     if (aUri.isAbsolute()) {
-	// Standard access, just absolute URI
-	if (Owner()) {
-	    res = Owner()->ownerGetNode(aUri, aOwned); 
-	} else {
-	    // Root
-	    if (aUri.size() > 2) {
-		res = self->getComp(aUri.at(2));
-		for (int i = 3; i < aUri.size() && res; i++) {
-		    res = res->getComp(aUri.at(i));
-		}
-	    }
-	}
-	if (res) {
-	    // Blocking the result if it is not owned by requestor
-	    if (!res->owned()->provided()->isOwner(aOwned->owner()->provided())) {
-		res = nullptr;
-	    }
-	}
-    }	
+       // Standard access, just absolute URI
+       if (Owner()) {
+           res = Owner()->ownerGetNode(aUri, aReq);
+       } else {
+           // Root
+           if (aUri.size() > 2) {
+               res = self->getComp(aUri.at(2));
+	       bool foundReq = res == aReq;
+               for (int i = 3; i < aUri.size() && res; i++) {
+                   res = res->getComp(aUri.at(i));
+		   foundReq |= (res == aReq);
+               }
+	       res = foundReq ? res : nullptr;
+           }
+       }
+    }
     return res;
 }
+
 
 MNode* Node::getNodeS(const char* aUri)
 {
@@ -337,7 +320,6 @@ MNode* Node::getNodeS(const char* aUri)
 
 MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 {
-    assert(!aMut.AttrExists(ENa_Comp));
     string sparent = aMut.Attr(ENa_Parent);
     string sname = aMut.Name();
     TNs ns = aCtx.mNs;
