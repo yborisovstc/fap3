@@ -178,6 +178,10 @@ void Ut_node::test_cre_1()
     CPPUNIT_ASSERT_MESSAGE("Fail to get n1", n1);
     MContentOwner* n1co = n1->lIf(n1co);
     CPPUNIT_ASSERT_MESSAGE("Fail to get n1co", n1co);
+    // Verify Debug.LogLevel content
+    string dl;
+    bool res = n1co->getContent("Debug.LogLevel", dl);
+    CPPUNIT_ASSERT_MESSAGE("Wrong Debug.LogLevel content", dl == "31");
     // Verify getting node by absolute URI
     MNode* nn = n1->getNode(".MyRoot.n1.n1_1.n1_1_2.n1_1_2_1");
     CPPUNIT_ASSERT_MESSAGE("Fail to get node by absolute URI", nn);

@@ -4,6 +4,7 @@
 
 
 static const string K_Cont_Debug_LogLevel = "Debug.LogLevel";
+static const string K_ContentType = "Content";
 
 Node::Node(const string &aType, const string &aName, MEnv* aEnv): mName(aName.empty() ? aType : aName), mEnv(aEnv), mOcp(this), mOnode(this, this),
     mLogLevel(EInfo)
@@ -553,11 +554,32 @@ bool Node::getContent(const GUri& aCuri, string& aRes) const
     return res;
 }
 
+MContent* Node::createContent(const GUri& aUri)
+{
+    MContent* res = nullptr;
+    MNode* cntn = this;
+    bool pres = true;
+    for (int i = 0; i < aUri.size() && cntn && pres; i++) {
+	string cname = aUri.elems().at(i);
+	MNode* nextcont = cntn->getComp(cname);
+	if (!nextcont) {
+	    nextcont = Provider()->createNode(K_ContentType, cname, mEnv);
+	    pres = cntn->attachOwned(nextcont);
+	}
+	cntn = nextcont;
+    }
+    res = (pres && cntn) ? cntn->lIf(res) : nullptr;
+    return res;
+}
+
 bool Node::setContent(const GUri& aCuri, const string& aData)
 {
     bool res = false;
     MNode* node = getNode(aCuri);
     MContent* cnode = node ? node->lIf(cnode) : nullptr;
+    if (!cnode) {
+	cnode = createContent(aCuri);
+    }
     if (cnode) {
 	res = cnode->setData(aData);
     }
@@ -686,11 +708,11 @@ void Node::onContentChanged(const MContent* aCont)
 }
 
 //!! not tested
-bool Node::addComp(const string& aType, const string& aName)
+MNode* Node::addComp(const string& aType, const string& aName)
 {
     MNode* node = Provider()->createNode(aType, aName, mEnv);
     assert(node);
     bool res = attachOwned(node);
     assert(res);
-    return res;
+    return node;
 }
