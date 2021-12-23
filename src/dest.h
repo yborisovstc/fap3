@@ -47,8 +47,7 @@ class TrVar: public TrBase, public MDVarGet, public Func::Host
 	// From Func::Host
 	virtual void OnFuncContentChanged() override;
 	virtual int GetInpCpsCount() const {return 0;}
-	virtual bool IsLogLevel(int aLevel) const override { return isLogLevel(aLevel); }
-	virtual void log(TLogRecCtg aCtg, const string& aMsg);
+	virtual void log(int aCtg, const string& aMsg);
 	virtual MIfProv::TIfaces* GetInps(int aId, const string& aIfName, bool aOpt) override;
     protected:
 	virtual void Init(const string& aIfaceName);

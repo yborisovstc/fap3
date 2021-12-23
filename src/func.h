@@ -27,8 +27,7 @@ class Func
 	    virtual MIfProv::TIfaces* GetInps(int aId, const string& aIfName, bool aOpt) = 0;
 	    virtual void OnFuncContentChanged() = 0;
 	    virtual string GetInpUri(int aId) const = 0;
-	    virtual bool IsLogLevel(int aLevel) const { return false; }
-	    virtual void log(TLogRecCtg aCtg, const string& aMsg) = 0;
+	    virtual void log(int aCtg, const string& aMsg) = 0;
 	};
     public:
 	Func(Host& aHost): mHost(aHost) {};

@@ -10,30 +10,32 @@ class MLogObserver;
 class ChromoNode;
 
 enum TLogRecCtg {
-    EErr = 0, 
-    EWarn,
-    EInfo,
-    EDbg, 
+    ENoLog = 0,
+    EErr = 1,
+    EWarn = 10,
+    EInfo = 20,
+    EDbg = 30,
     ECtg_Max
 };
-
 
 /** @brief Log record structure
  * */
 class TLog
 {
     public:
-	TLog(TLogRecCtg aCtg, const MNode* aAgt);
+	TLog(int aCtg, const MNode* aAgt);
 	TLog(const string& aString);
 	TLog& operator +(const string& aString);
 	operator string() const;
 	string TimestampS() const;
 	string NodeUriS() const;
 	int MutId() const;
+	int Ctg() const { return mCtg;}
 	string MutIdS() const;
 	string CtgS() const;
 	string Content() const { return mContent;};
     protected:
+	int mCtg;
 	string mTimestampS;
 	string mCtgS;
 	string mNodeUriS;

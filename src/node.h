@@ -96,13 +96,12 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	template<class T> string getUid() const {return getUriS() + Ifu::KUidSep + T::Type();}
 	string getUid(const string& aCompName, const string& aIfName) const {return getUriS() + Ifu::KUidSepIc + aCompName + Ifu::KUidSep + aIfName;}
 	inline MLogRec* Logger() const {return mEnv ? mEnv->Logger(): nullptr; }
-	inline void Log(const TLog& aRec) const { Logger()->Write(aRec);};
+	inline void Log(const TLog& aRec) const { if (aRec.Ctg() <= mLogLevel)  Logger()->Write(aRec);}
 	inline MProvider* Provider() const {return mEnv ? mEnv->provider(): nullptr; }
 	void updateNs(TNs& aNs, const ChromoNode& aCnode);
 	bool isOwned(const MNode* aComp) const;
 	bool addComp(const string& aType, const string& aName);
 	void notifyChanged();
-	inline bool isLogLevel(int aLevel) const { return mLogLevel >= aLevel;}
 	// Mutations
 	virtual MNode* mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx);
 	virtual void mutSegment(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx);
@@ -118,7 +117,7 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	MOwner* mContext = nullptr;
 	TObsCp mOcp;                      /*!< Observable CP */
 	TOwtNode mOnode;                  /*!< Ownership node */
-	int mLogLevel = 0;                /*!< Logging level */
+	int mLogLevel;                /*!< Logging level */
 };
 
 #endif //  __FAP3_NODE_H

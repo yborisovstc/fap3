@@ -7,7 +7,6 @@
 const string KCont_Provided = "Provided";
 const string KCont_Required = "Required";
 
-static const int K_LogLevel_Input = 3;
 
 /* Connection point - input of combined chain state AStatec */
 
@@ -156,8 +155,8 @@ MDVarGet* State::HGetInp(const void* aRmt)
 	MIfProv* ifp = difp ? difp->first() : nullptr;
 	if (ifp) {
 	    res = dynamic_cast<MDVarGet*>(ifp->iface());
-	} else if (isLogLevel(K_LogLevel_Input)) {
-	    Log(TLog(EErr, this) + "Cannot get input");
+	} else {
+	    Log(TLog(EDbg, this) + "Cannot get input");
 	}
     } else {
 	res = mPdata->MDVar::lIf(res);

@@ -146,7 +146,7 @@ void TrVar::Init(const string& aIfaceName)
     }
 }
 
-void TrVar::log(TLogRecCtg aCtg, const string& aMsg)
+void TrVar::log(int aCtg, const string& aMsg)
 {
     Log(TLog(aCtg, this) + aMsg);
 }

@@ -145,9 +145,7 @@ void FBAndDt::DtGet(Sdata<bool>& aData)
     if (mRes != aData) {
 	mRes = aData;
 	mHost.OnFuncContentChanged();
-	if (mHost.IsLogLevel(KDbgLog_Value)) {
-	    mHost.log(EErr, string("Result: ") + (res ? (aData.mData ? "true" : "false") : "err"));
-	}
+	mHost.log(EDbg + 1, string("Result: ") + (res ? (aData.mData ? "true" : "false") : "err"));
     }
 }
 
@@ -360,9 +358,7 @@ template <class T> void FCmp<T>::DtGet(Sdata<bool>& aData)
     aData.mValid = res;
     if (mRes != aData) {
 	mRes = aData;
-	if (mHost.IsLogLevel(KDbgLog_Value)) {
-	    mHost.log(EDbg, string("Result: ") +  (res ? (aData.mData ? "true" : "false") : "err"));
-	}
+	mHost.log(EDbg + 1, string("Result: ") +  (res ? (aData.mData ? "true" : "false") : "err"));
 	mHost.OnFuncContentChanged();
     }
 }

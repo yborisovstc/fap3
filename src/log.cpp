@@ -12,9 +12,18 @@
 
 const int Logrec::KLogRecBufSize = 1400;
 
-const char* CtgText[ECtg_Max] = {"ERR", "WRN", "INF", "DBG"};
 const char* KColSep = "; ";
 const char KFieldSep = ';';
+
+static const string CtgText(int aCtg)
+{
+    string txt;
+    if (aCtg >= EErr && aCtg < EWarn) txt = "ERR";
+    else if (aCtg >= EWarn && aCtg < EInfo) txt = "WRN";
+    else if (aCtg >= EInfo && aCtg < EDbg) txt = "INF";
+    else if (aCtg >= EDbg) txt = "DBG";
+    return txt;
+}
 
 string TLogGetField(const string& aPack, size_t& aBeg, bool aESep = true)
 {
@@ -25,7 +34,7 @@ string TLogGetField(const string& aPack, size_t& aBeg, bool aESep = true)
     return res;
 }
 
-TLog::TLog(TLogRecCtg aCtg, const MNode* aAgt)
+TLog::TLog(int aCtg, const MNode* aAgt): mCtg(aCtg)
 {
     stringstream ss;
     struct timeval tp;
@@ -33,7 +42,7 @@ TLog::TLog(TLogRecCtg aCtg, const MNode* aAgt)
     long int ms = tp.tv_sec * 1000000 + tp.tv_usec;
     ss << ms;
     mTimestampS = ss.str();
-    mCtgS = CtgText[aCtg];
+    mCtgS = CtgText(mCtg);
     if (aAgt != NULL) {
 	GUri uri;
 	aAgt->getUri(uri);
@@ -154,7 +163,7 @@ void Logrec::Write(TLogRecCtg aCtg, const MNode* aNode, const char* aFmt,...)
     //long int ms = tp.tv_sec * 1000 + tp.tv_usec / 1000;
     long int ms = tp.tv_sec * 1000000 + tp.tv_usec;
     ss << ms << KColSep;
-    ss << CtgText[aCtg] << KColSep;
+    ss << CtgText(aCtg) << KColSep;
     int mutid = mCtxMutId;
     if (mutid != -1) {
 	ss << mutid << KColSep;
@@ -182,7 +191,7 @@ void Logrec::Write(TLogRecCtg aCtg, MNode* aNode, const ChromoNode& aMut, const 
 {
     char buf1[KLogRecBufSize] = "";
     stringstream ss;
-    ss << CtgText[aCtg] << KColSep;
+    ss << CtgText(aCtg) << KColSep;
     int lineid = aMut.LineId();
     ss << lineid << KColSep;
     if (aNode != NULL) {
