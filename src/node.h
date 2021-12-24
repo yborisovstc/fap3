@@ -102,7 +102,9 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	bool isOwned(const MNode* aComp) const;
 	MNode* addComp(const string& aType, const string& aName);
 	void notifyChanged();
+	inline bool isLogLevel(int aLevel) const { return mLogLevel >= aLevel;}
 	MContent* createContent(const GUri& aUri);
+	int parseLogLevel(const string& aData);
 	// Mutations
 	virtual MNode* mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx);
 	virtual void mutSegment(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx);

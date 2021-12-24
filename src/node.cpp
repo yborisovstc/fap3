@@ -5,6 +5,11 @@
 
 static const string K_Cont_Debug_LogLevel = "Debug.LogLevel";
 static const string K_ContentType = "Content";
+static const char K_LogLevelSep= '.';
+static const string K_LogLevel_Err= "Err";
+static const string K_LogLevel_Warn= "Warn";
+static const string K_LogLevel_Info= "Info";
+static const string K_LogLevel_Dbg= "Dbg";
 
 Node::Node(const string &aType, const string &aName, MEnv* aEnv): mName(aName.empty() ? aType : aName), mEnv(aEnv), mOcp(this), mOnode(this, this),
     mLogLevel(EInfo)
@@ -690,13 +695,41 @@ void Node::notifyChanged()
     }
 }
 
+int Node::parseLogLevel(const string& aData)
+{
+    int res = -1;
+    int extl = -1;
+    string::size_type pos = aData.find_first_of(K_LogLevelSep);
+    bool isExt = (pos != string::npos);
+    string name = aData.substr(0, pos);
+    string ext = aData.substr(pos + 1);
+    if (name == K_LogLevel_Err) res = EErr;
+    else if (name == K_LogLevel_Warn) res = EWarn;
+    else if (name == K_LogLevel_Info) res = EInfo;
+    else if (name == K_LogLevel_Dbg) res = EDbg;
+    if (res != -1) {
+	if (isExt) {
+	    try {
+		extl = stoi(ext);
+	    } catch (std::exception& e) { }
+	    if (extl != -1) res += extl;
+	    else {
+		Log(TLog(EErr, this) + "Wrong log level extension [" + ext + "]");
+	    }
+	}
+    } else {
+	Log(TLog(EErr, this) + "Unknown log level [" + name + "]");
+    }
+    return res;
+}
+
 void Node::onContentChanged(const MContent* aCont)
 {
     // Cache logging level
     string level;
     bool res = getContent(K_Cont_Debug_LogLevel, level);
     if (res) {
-	mLogLevel = stoi(level);
+	mLogLevel = parseLogLevel(level);
     }
 
     // Notify observers

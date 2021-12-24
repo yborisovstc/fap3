@@ -112,7 +112,6 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
     protected:
 	/** @brief Notifies dependencies of input updated */
 	void NotifyInpsUpdated();
-	bool IsLogeventUpdate();
 	// From MNode
 	virtual MIface* MOwned_getLif(const char *aType) override;
 	// Local

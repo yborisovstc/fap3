@@ -275,6 +275,7 @@
 		    Modify DES cycle to avoid polling the comps but keep the lists of active/updated in owner. Ref <xref linkend="ds_mdc"/> for details.
 		</listitem>
 		<listitem>Implement <xref linkend="gls_ddmc"/>, ref <xref linkend="ds_ddmc"/></listitem>
+		<listitem>Improve means of debugging, ref <xref linkend="ds_dbg"/></listitem>
 	    </itemizedlist>
 	</sect2>
 	<sect2 id="ds_itr_dp"><title>Dependent projects</title>
@@ -1324,6 +1325,35 @@
 
     <sect1 id="ds_imp"><title>Redesign import</title>
 	<sect2><title>Intro</title>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_dbg"><title>Debugging</title>
+	<sect2><title>Intro</title>
+	    <simpara>The following improvements can be considered: </simpara>
+	    <itemizedlist>
+		<listitem>
+		    Unify the usage of debugging level 
+		    <para>
+			Currently the debugging level is almost unusable. Also in parallel the property "Update" is used to
+			specify the particular logging feature to log the state update whereas it is just specific logging level.
+			So we need to get rid of using the Update property.
+		    </para>
+		</listitem>
+		<listitem> Logging level forcing to owned, ref <xref linkend="ds_dbg_llf"/> </listitem>
+		<listitem>Using symbolic values for logging level, lile "Dbg.1"</listitem>
+	    </itemizedlist>
+	</sect2>
+	<sect2 id="ds_dbg_llf"><title>Logging level forcing to owned</title>
+	    <sect3><title>Intro</title>
+		<simpara>The idea is to provide the system developer the ability to quick set the logging level for the whole system or its part.
+		    Currently the logging level is set locally for the particular node only and doesn't affect the other nodes, even the owneds.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_dbg_sfll"><title>Symbolic form of logging level</title>
+	    <sect3><title>Intro</title>
+		<simpara>The idea is to set logging level in symbolic form like "Dbg.2" where "Dbg" is the name of level and "2" is the extension.</simpara>
+	    </sect3>
 	</sect2>
     </sect1>
 

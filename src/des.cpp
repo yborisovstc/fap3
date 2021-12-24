@@ -120,7 +120,7 @@ void State::confirm()
 	mCdata->ToString(old_value);
 	if (upd->update()) {
 	    NotifyInpsUpdated();
-	    if (IsLogeventUpdate()) {
+	    if (isLogLevel(EDbg)) {
 		string new_value;
 		mCdata->ToString(new_value);
 		Logger()->Write(EInfo, this, "Updated [%s <- %s]", new_value.c_str(), old_value.c_str());
@@ -181,13 +181,6 @@ string State::reqName() const
     return MDesInpObserver::Type();
 }
 	
-bool State::IsLogeventUpdate() 
-{
-    string upd;
-    getContent("Debug.Update", upd);
-    return upd == "y";
-}
-
 string State::VarGetSIfid()
 {
     return mPdata == NULL ? string() : mPdata->VarGetSIfid();
