@@ -8,6 +8,10 @@ MyRoot : Elem {
                 Debug : Content { Update : Content { = "y"; } }
             }
             St1.Inp ~ : TrAddVar @ {
+                _@ < Debug.LogLevel = "Dbg";
+                _@ < {
+                    About = "Transition Add";
+                }
                 Inp ~ St1;
                 Inp ~  : State { = "SI 1"; };
             };

@@ -11,6 +11,9 @@ static const string K_LogLevel_Warn= "Warn";
 static const string K_LogLevel_Info= "Info";
 static const string K_LogLevel_Dbg= "Dbg";
 
+// TODO to find proper place for it
+static const string K_SpName_Ns= "_@";
+
 Node::Node(const string &aType, const string &aName, MEnv* aEnv): mName(aName.empty() ? aType : aName), mEnv(aEnv), mOcp(this), mOnode(this, this),
     mLogLevel(EInfo)
 {
@@ -207,7 +210,11 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
     }
     if (!aTreatAsChromo && exs_targ && !aLocal) {
 	starg = rno.Attr(ENa_Targ);
-	targ = targ->getNode(starg, root_ns);
+	if (starg == K_SpName_Ns) {
+	    targ = root_ns.back();
+	} else {
+	    targ = targ->getNode(starg, root_ns);
+	}
 	if (!targ) {
 	    Logger()->Write(EErr, this, "Cannot find target node [%s]", starg.c_str());
 	    res = false;
@@ -333,7 +340,7 @@ MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
     updateNs(ns, aMut);
     bool mutadded = false;
     bool res = false;
-    Log(TLog(EInfo, this) + "Adding element [" + sname + "]");
+    Log(TLog(EInfo, this, aMut) + "Adding element [" + sname + "]");
 
     assert(!sname.empty());
     MNode* uelem = NULL;

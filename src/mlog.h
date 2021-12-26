@@ -24,6 +24,7 @@ class TLog
 {
     public:
 	TLog(int aCtg, const MNode* aAgt);
+	TLog(int aCtg, const MNode* aAgt, const ChromoNode& aMut);
 	TLog(const string& aString);
 	TLog& operator +(const string& aString);
 	operator string() const;

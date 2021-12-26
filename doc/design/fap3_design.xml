@@ -779,6 +779,8 @@
 			# chromo_node_segment_with_context interprets in connection mutation as node specified as context source
 
 			name = letter, { letter | digit | "_"};
+			special_name = special_name_nearest_namespace;
+			special_name_nearest_namespace = "_@";
 
 			uri = [name], { "." , name }
 			string = """ { symbol } """;
@@ -868,11 +870,15 @@
 	<sect2 id="ds_cli_pi"><title>Proposal of <xref linkend="gls_chromo2"/> improvement</title>
 	    <sect3><title>To make chromo end symbol (";") not required if there is EOL.</title>
 	    </sect3>
-	    <sect3><title>To introduce special name for nearest namespace.</title>
+	    <sect3 id="ds_cli_pi_pn"><title>To introduce special pseudo-names</title>
 		<simpara>
 		    "Special name" approach can help us to make chromo more compact. We already use symbol "$" as special name of "whatewer"
 		    in mutation "Comment"
 		</simpara>
+		<simpara>In some cases it seems usefull to have pseudonames for some special nodes. For instance the pseudoname can be using
+		    to explicitly designate namespace: this approach can simplify namespace node direct modifying within the section with namaspace context.</simpara>
+		<simpara>Note that some pseudo-name cannot be used in URI in general. For istance nearedt name space is defined in mutation context but
+		    not native hier one, so it cannot be used in URI.</simpara>
 	    </sect3>
 	    <sect3><title>To introduce "Inactivity" context to solve the problem with comments.</title>
 		<simpara>
@@ -939,7 +945,7 @@
 		    This happens when namespace is specified for segment and some node is created within this segment and mutated then.
 		    It's clear that the namespace will be propagated to all muts within the segment.
 		    Let's look at what will be the root node chromo after <xref linkend="gls_osm"/> transformation.
-		    Mut of newly created node the namespace will be "upper" than the target (target is the newly created node). But specifying "upper" node cannot be
+			Mut of newly created node the namespace will be "upper" than the target (target is the newly created node). But specifying "upper" node cannot be
 			done via regular URI (that is relative to the target) but via absolute URI only (absolute URI is also prohibited in chromo.)
 		</simpara>
 	    </sect3>
@@ -1191,6 +1197,12 @@
 	    <sect3><title>Absolution vs relation.</title>
 		<simpara>Absolute URI has mostleft relation symbol.</simpara>
 	    </sect3>
+	</sect2>
+	<sect2><title>Do we need designation of the current node?</title>
+	    <simpara>Currently the "current node" URI is just the empty URI. This is reasonable for URI is just the "path" to the node,
+		empty path means "no need to go, you are already here".</simpara>
+	</sect2>
+	<sect2><title>Do we need designation of the root node?</title>
 	</sect2>
     </sect1>
 

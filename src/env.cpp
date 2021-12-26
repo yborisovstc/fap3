@@ -278,7 +278,10 @@ void Env::constructSystem()
     }
 }
 
-MLogRec* Env::Logger() { return mLogger;}
+MLogRec* Env::Logger()
+{
+    return mLogger;
+}
 
 MNode* Env::Root() const
 { 

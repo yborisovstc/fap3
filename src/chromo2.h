@@ -161,6 +161,7 @@ class Chromo2Mdl: public MChromoMdl
 	 * */
 	void rdp_model_spec(istream& aIs, streampos aStart, C2MdlNode& aMnode);
 	void rdp_name(istream& aIs, string& aRes);
+	void rdp_spname_ns(istream& aIs, string& aRes);
 	void rdp_string(istream& aIs, string& aRes);
 	void rdp_uri(istream& aIs, string& aRes);
 	void rdp_mut_create_chromo(istream& aIs, C2MdlNode& aMnode);

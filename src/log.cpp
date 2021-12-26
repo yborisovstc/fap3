@@ -12,7 +12,7 @@
 
 const int Logrec::KLogRecBufSize = 1400;
 
-const char* KColSep = "; ";
+const char* KColSep = ";";
 const char KFieldSep = ';';
 
 static const string CtgText(int aCtg)
@@ -37,10 +37,11 @@ string TLogGetField(const string& aPack, size_t& aBeg, bool aESep = true)
 TLog::TLog(int aCtg, const MNode* aAgt): mCtg(aCtg)
 {
     stringstream ss;
-    struct timeval tp;
-    gettimeofday(&tp, NULL);
-    long int ms = tp.tv_sec * 1000000 + tp.tv_usec;
-    ss << ms;
+    struct timespec ts;
+    timespec_get(&ts, TIME_UTC);
+    char buff[100];
+    strftime(buff, sizeof buff, "%D %T", gmtime(&ts.tv_sec));
+    ss << buff << "." << ts.tv_nsec;
     mTimestampS = ss.str();
     mCtgS = CtgText(mCtg);
     if (aAgt != NULL) {
@@ -48,6 +49,13 @@ TLog::TLog(int aCtg, const MNode* aAgt): mCtg(aCtg)
 	aAgt->getUri(uri);
 	mNodeUriS = uri.toString();
     }
+}
+
+TLog::TLog(int aCtg, const MNode* aAgt, const ChromoNode& aMut): TLog(aCtg, aAgt)
+{
+    stringstream ss;
+    ss << aMut.LineId();
+    mMutIdS = ss.str();
 }
 
 TLog::TLog(const string& aString)
@@ -158,11 +166,13 @@ void Logrec::Write(TLogRecCtg aCtg, const MNode* aNode, const char* aFmt,...)
 {
     char buf1[KLogRecBufSize] = "";
     stringstream ss;
-    struct timeval tp;
-    gettimeofday(&tp, NULL);
-    //long int ms = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-    long int ms = tp.tv_sec * 1000000 + tp.tv_usec;
-    ss << ms << KColSep;
+    struct timespec ts;
+    timespec_get(&ts, TIME_UTC);
+    long int ms = ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
+    char buff[100];
+    strftime(buff, sizeof buff, "%D %T", gmtime(&ts.tv_sec));
+
+    ss << buff << "." << ts.tv_nsec << KColSep;
     ss << CtgText(aCtg) << KColSep;
     int mutid = mCtxMutId;
     if (mutid != -1) {
@@ -181,7 +191,7 @@ void Logrec::Write(TLogRecCtg aCtg, const MNode* aNode, const char* aFmt,...)
     vsprintf(buf1, aFmt, list);
     ss << buf1;
     WriteRecord(ss.str().c_str());
-    if (iObs != NULL) {
+    if (iObs) {
 	iObs->OnLogAdded(ms, aCtg, aNode, buf1, mutid);
     }
     va_end(list);
