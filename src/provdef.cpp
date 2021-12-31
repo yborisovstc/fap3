@@ -36,7 +36,8 @@ const string KChromRarg_Chs = "chs";
 const ProvDef::TFReg ProvDef::mReg ( {
 	Item<Node>(), Item<Unit>(), Item<Elem>(), Item<Content>(), Item<Vertu>(), Item<Vert>(), Item<Link>(),
 	Item<Syst>(), Item<ConnPointu>(), Item<CpMnodeOutp>(), Item<CpMnodeInp>(),
-	Item<Extd>(), Item<State>(), Item<Des>(), Item<TrAddVar>(),  Item<CpStateInp>(),  Item<CpStateOutp>(),
+	Item<Extd>(), Item<State>(), Item<Des>(), Item<TrAddVar>(), Item<CpStateInp>(),  Item<CpStateOutp>(),
+	Item<CpStateMnodeInp>(),  Item<CpStateMnodeOutp>(),
 	Item<DesLauncher>(), Item<Sout>(), Item<ADes>(), Item<Socket>(), Item<TrMaxVar>(), Item<TrSwitchBool>(), Item<TrCmpVar>(),
 	Item<TrAndVar>(), Item<TrNegVar>(), Item<TrUri>(), Item<TrMutNode>(), Item<TrMutConn>(),
 	Item<AMnodeAdp>(), Item<AMelemAdp>(), Item<AMntp>(),

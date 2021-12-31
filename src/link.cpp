@@ -9,6 +9,7 @@ Link::Link(const string &aType, const string &aName, MEnv* aEnv): Unit(aType, aN
 
 Link::~Link()
 {
+    mOcp.disconnectAll();
 }
 
 MIface* Link::MLink_getLif(const char *aType)

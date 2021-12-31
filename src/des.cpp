@@ -27,6 +27,26 @@ CpStateOutp::CpStateOutp(const string &aType, const string& aName, MEnv* aEnv): 
     assert(res);
 }
 
+/* Connection point - input of state */
+
+CpStateMnodeInp::CpStateMnodeInp(const string &aType, const string& aName, MEnv* aEnv): ConnPointu(aType, aName, aEnv)
+{
+    bool res = setContent("Provided", "MDesInpObserver");
+    res = setContent("Required", "MLink");
+    assert(res);
+}
+
+/* Connection point - output of combined chain state AStatec */
+
+CpStateMnodeOutp::CpStateMnodeOutp(const string &aType, const string& aName, MEnv* aEnv): ConnPointu(aType, aName, aEnv)
+{
+    bool res = setContent("Provided", "MLink");
+    res = setContent("Required", "MDesInpObserver");
+    assert(res);
+}
+
+
+
 
 
 
@@ -462,6 +482,13 @@ void Des::MDesObserver_doDump(int aLevel, int aIdt, ostream& aOs) const
 ADes::ADes(const string &aType, const string &aName, MEnv* aEnv): Unit(aType, aName, aEnv), mOrCp(this), mAgtCp(this), mUpdNotified(false), mActNotified(false)
 {
 }
+
+ADes::~ADes()
+{
+    mAgtCp.disconnectAll();
+    mOrCp.disconnectAll();
+}
+
 
 MIface* ADes::MNode_getLif(const char *aType)
 {

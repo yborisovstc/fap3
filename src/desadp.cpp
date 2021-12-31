@@ -12,6 +12,7 @@
 
 const string KCont_AgentUri = "AgentUri";
 const string K_CpUriInpMagUri = "InpMagUri";
+const string K_CpUriInpMagBase = "InpMagBase";
 const string K_MagOwnerLinkUri = "MagOwnerLink";
 
 AAdp::AAdp(const string &aType, const string& aName, MEnv* aEnv): Unit(aType, aName, aEnv),
@@ -22,6 +23,8 @@ AAdp::AAdp(const string &aType, const string& aName, MEnv* aEnv): Unit(aType, aN
 
 AAdp::~AAdp()
 {
+    mObrCp.disconnectAll();
+    mAgtCp.disconnectAll();
 }
 
 MIface* AAdp::MAgent_getLif(const char *aType)
@@ -40,6 +43,12 @@ void AAdp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	if (isRequestor(aReq, inp)) {
 	    MIface* iface = dynamic_cast<MDesInpObserver*>(&mIapMagUri);
 	    addIfpLeaf(iface, aReq);
+	} else {
+	    MNode* inp = ahostGetNode(K_CpUriInpMagBase);
+	    if (isRequestor(aReq, inp)) {
+		MIface* iface = dynamic_cast<MDesInpObserver*>(&mIapMagBase);
+		addIfpLeaf(iface, aReq);
+	    }
 	}
     } else {
 	Unit::resolveIfc(aName, aReq);
@@ -84,12 +93,26 @@ void AAdp::onObsContentChanged(MObservable* aObl, const MContent* aCont)
 
 void AAdp::onObsChanged(MObservable* aObl)
 {
+    // Handling Mag owner link change
     MNode* magolinkn = ahostGetNode(K_MagOwnerLinkUri);
     MObservable* magolinkobl = magolinkn ? magolinkn->lIf(magolinkobl) : nullptr;
     if (aObl == magolinkobl) {
 	MLink* magolinkl = magolinkn->lIf(magolinkl);
 	MNode* magon = magolinkl->pair();
 	bool res = UpdateMagOwner(magon);
+    } else {
+	// Handling Mag base input change
+	// TODO this observing mechanism works just in some cases - when the connection
+	// to MAG base is completed with observable input. Other cases (completion with
+	// pair or connections chain) don't work). To consider design update.
+	MNode* magbasen = ahostGetNode(K_CpUriInpMagBase);
+	MObservable* magbaseobl = magbasen ? magbasen->lIf(magbaseobl) : nullptr;
+	if (aObl == magbaseobl) {
+	    // Apply MAG base immediatelly
+	    ApplyMagBase();
+	    mInpMagBaseUpdated = true;
+	    setActivated();
+	}
     }
 }
 
@@ -118,8 +141,18 @@ void AAdp::update()
 {
     mActNotified = false;
     if (mInpMagUriUpdated) {
+	// Both observation and notification thru MDesInpObserver don't work
+	// so try to updata MAG base befor update MAG
+	ApplyMagBase();
 	UpdateMag();
 	mInpMagUriUpdated = false;
+    }
+    // TODO This doesn't work because of agent doesn't receives activation events
+    // neither via MDesInpObserver nor via input observation. To redesign.
+    if (mInpMagBaseUpdated) {
+	ApplyMagBase();
+	UpdateMag();
+	mInpMagBaseUpdated = false;
     }
     setUpdated();
 }
@@ -263,11 +296,41 @@ bool AAdp::UpdateMag(MNode* aMag)
     return res;
 }
 
+bool AAdp::ApplyMagBase()
+{
+    bool res = false;
+    MNode* inp = ahostNode()->getNode(K_CpUriInpMagBase);
+    if (inp) {
+	MUnit* inpu = inp->lIf(inpu);
+	if (inpu) {
+	    // Resolve MLink first to avoid MNode wrong resolution
+	    MLink* mmtl = inpu->getSif(mmtl);
+	    if (mmtl) {
+		MNode* mbase = mmtl->pair();
+		// TODO to check if the base is not defined via link
+		UpdateMagOwner(mbase);
+		res = true;
+	    }
+	}
+    } else {
+	Log(TLog(EErr, this) + "Cannot get input [" + K_CpUriInpMagBase + "]");
+    }
+    return res;
+}
+
+
 void AAdp::OnInpMagUri()
 {
     mInpMagUriUpdated = true;
     setActivated();
 }
+
+void AAdp::OnInpMagBase()
+{
+    mInpMagBaseUpdated = true;
+    setActivated();
+}
+
 
 MNode* AAdp::ahostGetNode(const GUri& aUri)
 {
@@ -315,11 +378,16 @@ void AAdp::onOwnerAttached()
     } else {
 	Log(TLog(EErr, this) + "Cannot find MAG owner link");
     }
+    // Start monitoring MAG base input
+    MNode* magbasen = ahostGetNode(K_CpUriInpMagBase);
+    MObservable* magbaseobl = magbasen ? magbasen->lIf(magbaseobl) : nullptr;
+    if (magbaseobl) {
+	magbaseobl->addObserver(&mObrCp);
+    } else {
+	Log(TLog(EErr, this) + "Cannot find MAG base inp");
+    }
+
 }
-
-
-
-
 
 // Input access point
 

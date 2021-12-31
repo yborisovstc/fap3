@@ -84,6 +84,7 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 	    class AdpMagObs : public MObserver {
 		public:
 		    AdpMagObs(T* aHost): mHost(aHost), mOcp(this) {}
+		    virtual ~AdpMagObs() { mOcp.disconnectAll();}
 		    // From MObserver
 		    virtual string MObserver_Uid() const {return MObserver::Type();}
 		    virtual MIface* MObserver_getLif(const char *aName) override { return nullptr;}
@@ -158,11 +159,13 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 	bool UpdateMag(MNode* aMag);
 	bool UpdateMag(const string& aMagUri);
 	void UpdateMag();
+	bool ApplyMagBase();
     protected:
 	/** @brief Notifies all states inputs of update **/
 	virtual void NotifyInpsUpdated() {}
 	// Local
 	void OnInpMagUri();
+	void OnInpMagBase();
 	MNode* ahostGetNode(const GUri& aUri);
 	MAhost* aHost();
 	void setUpdated();
@@ -171,11 +174,13 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 	MNode* ahostNode();
     protected:
 	bool mInpMagUriUpdated = true;
+	bool mInpMagBaseUpdated = true;
 	MNode* mMagOwner; /*!< Owner of managed agents, ref DS_SN_AUL_LNK_SMA */
 	MNode* mMag; /*!< Managed agent */
 	string mMagUri; /*!< Managed agent URI */
 	bool mMagUriValid; /*!< Validity sign of mMagUri */
 	AdpIap mIapMagUri = AdpIap(*this, [this]() {OnInpMagUri();}); /*!< MAG URI input access point */
+	AdpIap mIapMagBase = AdpIap(*this, [this]() {OnInpMagBase();}); /*!< Input access point: Managed agent base */
 	TObserverCp mObrCp;               /*!< AHost Observer connpoint */
 	AdpMagObs<AAdp> mMagObs = AdpMagObs<AAdp>(this); /*!< Managed agent observer */
 	TAgtCp mAgtCp;                   /*!< Agent connpoint */

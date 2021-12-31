@@ -31,6 +31,27 @@ class CpStateOutp: public ConnPointu
 	CpStateOutp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 };
 
+/** @brief Connection point - input of state required MNode iface
+ * Just ConnPointu with pre-configured prepared/required
+ * */
+class CpStateMnodeInp: public ConnPointu
+{
+    public:
+	static const char* Type() { return "CpStateMnodeInp";};
+	CpStateMnodeInp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+};
+
+/** @brief Connection point - output of state provided MNode iface
+ * Just ConnPointu with pre-configured prepared/required
+ * */
+class CpStateMnodeOutp: public ConnPointu
+{
+    public:
+	static const char* Type() { return "CpStateMnodeOutp";};
+	CpStateMnodeOutp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+};
+
+
 
 /** @brief State, non-inhritable, monolitic, using host unit base organs, combined chain
  *
@@ -171,6 +192,7 @@ class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver
     public:
 	static const char* Type() { return "ADes";};
 	ADes(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	virtual ~ADes();
 	// From Node.MIface
 	virtual MIface* MNode_getLif(const char *aType) override;
 	// From Node

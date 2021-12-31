@@ -24,12 +24,17 @@ Node::~Node()
     // Removing the owneds
     auto owdCp = owner()->firstPair();
     while (owdCp) {
-	owner()->detach(owdCp);
+	owner()->disconnect(owdCp);
 	owdCp->provided()->deleteOwned();
 	owdCp = owner()->firstPair();
     }
     // Disconnect from the owner
     //mOnode.disconnect(); // Its owner responsibility to detach the owned
+
+    // Disconnect native connpoints explicitly
+    // It would be better to disconnect from connpoints destructors
+    // but it doesn't work because of virtual nature of disconnect methods
+    mOcp.disconnectAll();
 }
 
 MIface* Node::MNode_getLif(const char *aType)
@@ -150,7 +155,6 @@ void Node::updateNs(TNs& aNs, const ChromoNode& aCnode)
 
 MNode* Node::getNode(const string& aName, const TNs& aNs)
 {
-    assert(!aName.empty());
     MNode *res = nullptr;
     GUri uri(aName);
     // Resolving name in current context/native first
@@ -340,7 +344,7 @@ MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
     updateNs(ns, aMut);
     bool mutadded = false;
     bool res = false;
-    Log(TLog(EInfo, this, aMut) + "Adding element [" + sname + "]");
+    Log(TLog(EDbg, this, aMut) + "Adding element [" + sname + "]");
 
     assert(!sname.empty());
     MNode* uelem = NULL;
@@ -397,7 +401,7 @@ void Node::mutRemove(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
     string snode, sname;
     sname = aMut.Attr(ENa_Id);
     MOwned* owned = owner()->pairAt(sname)->provided();
-    bool res = owner()->detach(owner()->pairAt(sname));
+    bool res = owner()->disconnect(owner()->pairAt(sname));
     if (res) {
 	onOwnedDetached(owned);
 	owned->deleteOwned();

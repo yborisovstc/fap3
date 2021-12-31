@@ -124,11 +124,13 @@ bool Vertu::isLinked(const MVert* aPair, bool aDirect) const
 void Vertu::onConnected()
 {
     invalidateIrm();
+    notifyChanged();
 }
 
 void Vertu::onDisconnected()
 {
     invalidateIrm();
+    notifyChanged();
 }
 
 

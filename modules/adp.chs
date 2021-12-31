@@ -6,6 +6,8 @@ AdpComps : Elem {
         InpMagUri : CpStateInp;
         # "Link to the node owning managed agents";
         MagOwnerLink : Link;
+        # "CP provided managed agent owning base";
+        InpMagBase : CpStateMnodeInp;
     }
     NodeAdp : AdpBase
     {
