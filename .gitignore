@@ -9,6 +9,7 @@ build*
 Makefile.in
 src/Makefile
 test/Makefile
+clm/Makefile
 aclocal.m4
 missing
 install-sh
@@ -71,6 +72,8 @@ ut-grayb-lib
 *.swm
 *.exrc
 Makefile
+!doc/design/Makefile
+!doc/requirements/Makefile
 .*.chs
 *.out
 clm/fapm

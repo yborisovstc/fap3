@@ -1340,6 +1340,18 @@
 	</sect2>
     </sect1>
 
+    <sect1 id="ds_sapic"><title>State activation on input provided ifaces change</title>
+	<sect2><title>Intro</title>
+	    <simpara>Ref <ulink url="../requirements/index.html#fap3_uc_ica"/> for use-case</simpara>
+	</sect2>
+	<sect2><title>Initial thoughts</title>
+	    <simpara>First idea was that corresponding "source" state has to notify the destination state of input updated. But the use-case is that
+		the state has to be activated even in case of connection removing. So seems the most sutable design solution at the moment is to
+		use <xref linkend="gls_irm"/>.
+	</simpara>
+	</sect2>
+    </sect1>
+
     <sect1 id="ds_dbg"><title>Debugging</title>
 	<sect2><title>Intro</title>
 	    <simpara>The following improvements can be considered: </simpara>
@@ -1443,15 +1455,15 @@
 			IFR node validity sign shall indicate that node has to be updated
 			<para>Currently the validity is set based on resolution result - node is considered as valid if the iface is resolved.
 			    If not, then node is marked as invalid and is removed then.</para>
-			<pare>We don't need to mark node as invalid in case of iface is not resolved. The whole branch has to be marked as valid even
-			    it is iface is not resolved. This branch cannot "provide" iface but shows us the path of resolution attempt.</pare>
+			<para>We don't need to mark node as invalid in case of iface is not resolved. The whole branch has to be marked as valid even
+			    it is iface is not resolved. This branch cannot "provide" iface but shows us the path of resolution attempt.</para>
 		    </listitem>
 		    <listitem>
 			Invalidated unit has to invalidate its own nodes and theirs owners (requestors, i.e clients). Owned nodes are to be removed.
 			<para>The logic here is: the local node says to the requestors: "Im invalid, you are using me so you needs to be updated,
 			    this means you are also invalid.</para>
-			<pare>The owned nodes don't need to be invalidated - these branches are created by the current nodes, so they needs to be
-			    removed and re-created according to new environment.</pare>
+			<para>The owned nodes don't need to be invalidated - these branches are created by the current nodes, so they needs to be
+			    removed and re-created according to new environment.</para>
 		    </listitem>
 		</itemizedlist>
 	    </sect3>

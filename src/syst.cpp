@@ -459,7 +459,6 @@ Syst::Syst(const string &aType, const string &aName, MEnv* aEnv): Elem(aType, aN
 
 Syst::~Syst()
 {
-    mAgtCp.disconnectAll();
 }
 
 /** TODO Vulnerability: access to many ifaces. This is required for embedded agents.

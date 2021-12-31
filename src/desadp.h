@@ -84,7 +84,7 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 	    class AdpMagObs : public MObserver {
 		public:
 		    AdpMagObs(T* aHost): mHost(aHost), mOcp(this) {}
-		    virtual ~AdpMagObs() { mOcp.disconnectAll();}
+		    virtual ~AdpMagObs() { }
 		    // From MObserver
 		    virtual string MObserver_Uid() const {return MObserver::Type();}
 		    virtual MIface* MObserver_getLif(const char *aName) override { return nullptr;}

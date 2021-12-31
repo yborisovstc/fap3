@@ -28,13 +28,6 @@ Node::~Node()
 	owdCp->provided()->deleteOwned();
 	owdCp = owner()->firstPair();
     }
-    // Disconnect from the owner
-    //mOnode.disconnect(); // Its owner responsibility to detach the owned
-
-    // Disconnect native connpoints explicitly
-    // It would be better to disconnect from connpoints destructors
-    // but it doesn't work because of virtual nature of disconnect methods
-    mOcp.disconnectAll();
 }
 
 MIface* Node::MNode_getLif(const char *aType)

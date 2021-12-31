@@ -23,6 +23,10 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	class NOwningNode : public NTnip<MOwned, MOwner> {
 	    public:
 		NOwningNode(MOwned* aProvPx, MOwner* aReqPx): NTnip<MOwned, MOwner>(aProvPx, aReqPx) {}
+		// Note: we need to implement virt destructor here because clean-up method disconnectAll()
+		// is virtual and uses other virt method. It virt destructor is not impl here the lower
+		// level virt destr will be called and the that context virt methods (often stubs) will be called
+		virtual ~NOwningNode() { disconnectAll();}
 		virtual bool getId(string& aId) const override { aId = provided()->ownedId(); return true;}
 		virtual typename TCnode::TPair* cnodeBinded() override { return nullptr;} // To disable navigating to top
 	};

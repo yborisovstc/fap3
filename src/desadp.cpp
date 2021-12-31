@@ -23,8 +23,6 @@ AAdp::AAdp(const string &aType, const string& aName, MEnv* aEnv): Unit(aType, aN
 
 AAdp::~AAdp()
 {
-    mObrCp.disconnectAll();
-    mAgtCp.disconnectAll();
 }
 
 MIface* AAdp::MAgent_getLif(const char *aType)

@@ -371,7 +371,7 @@ class NCpOmip : public MNcpp<TPif, TRif>
 	using TPairsElem = pair<string, TPair*>;
     public:
 	NCpOmip(TPif* aPx): mPx(aPx) {}
-	virtual ~NCpOmip() { }
+	virtual ~NCpOmip() { disconnectAll(); }
 	// From MNcpp
 	virtual TPif* provided() override { return mPx;}
 	virtual const TPif* provided() const override { return mPx;}
@@ -520,7 +520,7 @@ class NCpOip : public MNcpp<TPif, TRif>
 	using TPair = typename MNcpp<TPif, TRif>::TPair;
     public:
 	NCpOip(TPif* aPx): mPair(nullptr), mPx(aPx) {}
-	virtual ~NCpOip() {}
+	virtual ~NCpOip() { disconnectAll();}
 	virtual TPif* provided() override { return mPx;}
 	virtual const TPif* provided() const override { return mPx;}
 	virtual bool attach(TPair* aPair) override;
@@ -715,7 +715,7 @@ class NCpOmnp : public MNcpp<TPif, TRif>
 	using TPairs = set<TPair*>;
     public:
 	NCpOmnp(TPif* aPx): mPx(aPx) {}
-	virtual ~NCpOmnp() { }
+	virtual ~NCpOmnp() { disconnectAll(); }
 	virtual TPif* provided() override { return mPx;}
 	virtual const TPif* provided() const override { return mPx;}
 	virtual bool connect(TPair* aPair) override ;
@@ -835,7 +835,7 @@ class NCpOnp : public MNcpp<TPif, TRif>
 	using TPairs = set<TPair*>;
     public:
 	NCpOnp(TPif* aPx): mPair(nullptr), mPx(aPx) {}
-	virtual ~NCpOnp() { }
+	virtual ~NCpOnp() { disconnectAll(); }
 	virtual TPif* provided() override { return mPx;}
 	virtual const TPif* provided() const override { return mPx;}
 	virtual bool connect(TPair* aPair) override ;

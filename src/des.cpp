@@ -485,8 +485,6 @@ ADes::ADes(const string &aType, const string &aName, MEnv* aEnv): Unit(aType, aN
 
 ADes::~ADes()
 {
-    mAgtCp.disconnectAll();
-    mOrCp.disconnectAll();
 }
 
 
