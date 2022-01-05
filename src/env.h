@@ -57,7 +57,7 @@ class Env: public MEnv
 	virtual MLogRec* Logger() override;
 	virtual MImportMgr* ImpsMgr() override { return mImpMgr;}
 	virtual MNode* Root() const override;
-	virtual bool RunSystem(int aCount = 0) override;
+	virtual bool RunSystem(int aCount = 0, int aIdleCount = 0) override;
 	virtual bool StopSystem() override;
 	bool addProvider(MProvider* aProv) override;
 	void removeProvider(MProvider* aProv) override;

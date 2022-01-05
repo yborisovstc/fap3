@@ -11,10 +11,26 @@
 
 class BdVar;
 
+/** @brief State Connection point
+ * */
+class CpState: public ConnPointu
+{
+    public:
+	static const char* Type() { return "CpState";};
+	CpState(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+    protected:
+	// From Vertu
+	virtual void onDisconnected() override;
+	// From MUnit
+	virtual void onIfpInvalidated(MIfProv* aProv) override;
+	// Local
+	void notifyInpsUpdated();
+};
+
 /** @brief Connection point - input of combined chain state AStatec
  * Just ConnPointMcu with pre-configured prepared/required
  * */
-class CpStateInp: public ConnPointu
+class CpStateInp: public CpState
 {
     public:
 	static const char* Type() { return "CpStateInp";};
@@ -24,7 +40,7 @@ class CpStateInp: public ConnPointu
 /** @brief Connection point - output of combined chain state AStatec
  * Just ConnPointMcu with pre-configured prepared/required
  * */
-class CpStateOutp: public ConnPointu
+class CpStateOutp: public CpState
 {
     public:
 	static const char* Type() { return "CpStateOutp";};
@@ -135,9 +151,15 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 	void NotifyInpsUpdated();
 	// From MNode
 	virtual MIface* MOwned_getLif(const char *aType) override;
+	// From MUnit
+	virtual void onIfpInvalidated(MIfProv* aProv) override;
+	// From Vertu
+	virtual void onConnected() override;
+	virtual void onDisconnected() override;
 	// Local
 	void setUpdated();
 	void setActivated();
+	void refreshInpObsIfr();
     protected:
 	BdVar* mPdata;   //<! Preparing (updating) phase data
 	BdVar* mCdata;   //<! Confirming phase data
@@ -252,7 +274,7 @@ class DesLauncher: public Des, public MLauncher
 	virtual MIface* MOwned_getLif(const char *aType) override;
 	// From MLauncher
 	virtual string MLauncher_Uid() const override {return getUid<MLauncher>();}
-	virtual bool Run(int aCount = 0) override;
+	virtual bool Run(int aCount = 0, int aIdleCount = 0) override;
 	virtual bool Stop() override;
 	// Local
 	virtual void OnIdle();

@@ -56,6 +56,8 @@ class MCIface : public MIface
  * @tparam  TReq   required iface (pair)
  * @note Experimental
  * */
+// TODO The design is a bit weird: it allows one way connection that was not intended
+// ref nconn for better design
 template <typename TProv, typename TReq>
 class MCtIface : public MIface
 {

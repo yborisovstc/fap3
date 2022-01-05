@@ -17,6 +17,8 @@ class Ut_des : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(test_des_dmc_1);
     CPPUNIT_TEST(test_des_ifr_inval_1);
     CPPUNIT_TEST(test_des_tr_1);
+    CPPUNIT_TEST(test_des_asr_1);
+    CPPUNIT_TEST(test_des_asr_2);
     CPPUNIT_TEST_SUITE_END();
     public:
     virtual void setUp();
@@ -27,6 +29,8 @@ class Ut_des : public CPPUNIT_NS::TestFixture
     void test_des_dmc_1();
     void test_des_ifr_inval_1();
     void test_des_tr_1();
+    void test_des_asr_1();
+    void test_des_asr_2();
     private:
     Env* mEnv;
 };
@@ -78,7 +82,7 @@ void Ut_des::test_des_1()
     cout << endl << "= Ds1 chromo dump =" << endl;
     ds1e->Chromos().Root().Dump();
 
-    // Run 
+    // Run
     bool res = mEnv->RunSystem(4);
     CPPUNIT_ASSERT_MESSAGE("Failed running system", eroot);
     // Verify the state
@@ -156,18 +160,18 @@ void Ut_des::test_des_tr_1()
     CPPUNIT_ASSERT_MESSAGE("Fail to get root", eroot);
 
     // Run 
-    bool res = mEnv->RunSystem(4);
+    bool res = mEnv->RunSystem(3);
     CPPUNIT_ASSERT_MESSAGE("Failed running system", eroot);
     // Verify the state
     MNode* stn = root->getNode("Launcher.Ds1.St1");
     CPPUNIT_ASSERT_MESSAGE("Fail to get stn", stn);
     MDVarGet* vg = stn->lIf(vg);
     CPPUNIT_ASSERT_MESSAGE("Fail to get stn vg", vg);
-    MDtGet<Sdata<int>>* dgi = vg->GetDObj(dgi);
-    CPPUNIT_ASSERT_MESSAGE("Fail to get stn dgi", dgi);
-    Sdata<int> val;
-    dgi->DtGet(val);
-    CPPUNIT_ASSERT_MESSAGE("Wrong final state valud", val.mData == 4);
+    MDtGet<Sdata<bool>>* dgb = vg->GetDObj(dgb);
+    CPPUNIT_ASSERT_MESSAGE("Fail to get stn dgb", dgb);
+    Sdata<bool> val;
+    dgb->DtGet(val);
+    CPPUNIT_ASSERT_MESSAGE("Wrong final state valud", val.mData == false);
     
     delete mEnv;
 }
@@ -312,6 +316,92 @@ void Ut_des::test_des_ifr_inval_1()
     delete mEnv;
 }
 
+/** @brief Test of ifr activation on DES reconfiguration
+ * */
+void Ut_des::test_des_asr_1()
+{
+    cout << endl << "=== Test of activation on DES reconf: CP connection ===" << endl;
 
+    const string specn("ut_des_asr_1");
+    string ext = "chs";
+    string spec = specn + string(".") + "chs";
+    string log = specn + "_" + ext + ".log";
+    mEnv = new Env(spec, log);
+    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv);
+    mEnv->constructSystem();
+    MNode* root = mEnv->Root();
+    MElem* eroot = root ? root->lIf(eroot) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get root", eroot);
+    // Run 
+    bool res = mEnv->RunSystem(2, 2);
+    CPPUNIT_ASSERT_MESSAGE("Failed running system", eroot);
+    MNode* ds1 = root->getNode("Launcher.Ds1");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get Ds1", ds1);
+    MNode* stn = root->getNode("Launcher.Ds1.St1");
 
+    // Disconnect Const_1 from Add.InpN and check the system activated again
+    MChromo* chr = mEnv->provider()->createChromo();
+    chr->Init(ENt_Node);
+    chr->Root().AddChild(TMut(ENt_Disconn, ENa_P, "Add.InpN", ENa_Q, "Const_1"));
+    cout << endl << "Disconnecting Add.InpN ~ Const_1" << endl;
+    mEnv->Logger()->Write(EInfo, nullptr, "=== Disconnecting Add.InpN ~ Const_1 ===");
+    ds1->mutate(chr->Root(), false, MutCtx(), true);
+    delete chr;
 
+    res = mEnv->RunSystem(2, 2);
+    // Verify the state
+    MDVarGet* vg = stn->lIf(vg);
+    CPPUNIT_ASSERT_MESSAGE("Fail to get stn vg", vg);
+    MDtGet<Sdata<int>>* dgi = vg->GetDObj(dgi);
+    CPPUNIT_ASSERT_MESSAGE("Fail to get stn dgi", dgi);
+    Sdata<int> val;
+    dgi->DtGet(val);
+    CPPUNIT_ASSERT_MESSAGE("Wrong final state valud", val.mData == 2);
+
+    delete mEnv;
+}
+
+/** @brief Test of ifr activation on DES reconfiguration
+ * */
+void Ut_des::test_des_asr_2()
+{
+    cout << endl << "=== Test of activation on DES reconf: sock connection ===" << endl;
+
+    const string specn("ut_des_asr_2");
+    string ext = "chs";
+    string spec = specn + string(".") + "chs";
+    string log = specn + "_" + ext + ".log";
+    mEnv = new Env(spec, log);
+    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv);
+    mEnv->constructSystem();
+    MNode* root = mEnv->Root();
+    MElem* eroot = root ? root->lIf(eroot) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get root", eroot);
+    // Run
+    bool res = mEnv->RunSystem(2, 2);
+    CPPUNIT_ASSERT_MESSAGE("Failed running system", eroot);
+    MNode* ds1 = root->getNode("Launcher.Ds1");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get Ds1", ds1);
+    MNode* stn = root->getNode("Launcher.Ds1.St1");
+
+    // Disconnect Const_1 from Add.InpN and check the system activated again
+    MChromo* chr = mEnv->provider()->createChromo();
+    chr->Init(ENt_Node);
+    chr->Root().AddChild(TMut(ENt_Disconn, ENa_P, "Sock1", ENa_Q, "Sock2"));
+    cout << endl << "Disconnecting Sock1 ~ Sock2" << endl;
+    mEnv->Logger()->Write(EInfo, nullptr, "=== Disconnecting Sock1 ~ Sock2 ===");
+    ds1->mutate(chr->Root(), false, MutCtx(), true);
+    delete chr;
+
+    res = mEnv->RunSystem(2, 2);
+    // Verify the state
+    MDVarGet* vg = stn->lIf(vg);
+    CPPUNIT_ASSERT_MESSAGE("Fail to get stn vg", vg);
+    MDtGet<Sdata<int>>* dgi = vg->GetDObj(dgi);
+    CPPUNIT_ASSERT_MESSAGE("Fail to get stn dgi", dgi);
+    Sdata<int> val;
+    dgi->DtGet(val);
+    CPPUNIT_ASSERT_MESSAGE("Wrong final state valud", val.mData == 2);
+
+    delete mEnv;
+}

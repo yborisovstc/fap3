@@ -528,10 +528,14 @@ void Syst::mutDisconnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aC
 	MVert* pv = pn->lIf(pv);
 	MVert* qv = qn->lIf(pv);
 	if (pv && qv) {
-	    // Vertex to Vertex
-	    res = MVert::disconnect(pv, qv);
-	    if (!res) {
-		Log(TLog(EErr, this) + "Failed disconnecting [" + sp + "] from [" + sq + "]");
+	    if (pv->isConnected(qv)) {
+		// Vertex to Vertex
+		res = MVert::disconnect(pv, qv);
+		if (!res) {
+		    Log(TLog(EErr, this) + "Failed disconnecting [" + sp + "] from [" + sq + "]");
+		}
+	    } else {
+		Log(TLog(EWarn, this) + "Disconnecting [" + sp + "] and [" + sq + "]: aren't connected");
 	    }
 	} else {
 	    MLink* pl = pn->lIf(pl);

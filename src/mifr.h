@@ -46,6 +46,8 @@ class MIfReq: public MIface
 	// From MIface
 	virtual string Uid() const override { return MIfReq_Uid();}
 	virtual string MIfReq_Uid() const = 0;
+	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { MIfReq_doDump(aLevel, aIdt, aOs);}
+	virtual void MIfReq_doDump(int aLevel, int aIdt, ostream& aOs) const =0;
 	//virtual const MIfProv* owner() const = 0;
 	virtual MIfProv* next(MIfProv::TCp* aProvCp) const = 0;
 	/** @brief Indicates if giver owner is in requestors chain */
@@ -57,6 +59,7 @@ class MIfReq: public MIface
 	/** @brief Gets first (initial) requestor in the chain */
 	virtual MIfReq* tail() = 0;
 	virtual bool isResolved() { return false;}
+	virtual void onProvInvalidated() = 0;
 };
 
 /** @brief Interface provider owner
@@ -76,6 +79,8 @@ class MIfProvOwner: public MIface
 	/** @resolve interface as provider owner */
 	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) = 0;
 	virtual void onIfpDisconnected(MIfProv* aProv) = 0;
+	// TODO not used, remove?
+	virtual void onIfpInvalidated(MIfProv* aProv) = 0;
 	
 };
 

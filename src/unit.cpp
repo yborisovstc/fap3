@@ -11,8 +11,10 @@ Unit::Unit(const string &aType, const string &aName, MEnv* aEnv): Node(aType, aN
 
 Unit::~Unit()
 {
-    for (auto item : mIrns) {
-	item->disconnectAll();
+    while (!mIrns.empty()) {
+	auto item = mIrns.back();
+	mIrns.pop_back();
+	item-> disconnectAll();
 	delete item;
     }
 }
@@ -58,10 +60,22 @@ void Unit::MUnit_doDump(int aLevel, int aIdt, std::ostream& aOs) const
 {
     if (aLevel & Ifu::EDM_Base) {
 	Ifu::offset(aIdt, aOs); aOs << "UID: " << MUnit_Uid() << endl;
-	Ifu::offset(aIdt, aOs); aOs << "Root IRNs: " << endl;
+	/*
+	Ifu::offset(aIdt, aOs); aOs << "== Root IRNs ==: " << endl;
 	for (auto itr : mLocalIrn) {
 	    Ifu::offset(aIdt, aOs); aOs << "Iface: " << itr.first << endl;
 	    itr.second->MIfProv_doDump(aLevel, aIdt + 1, aOs);
+	}
+	*/
+	Ifu::offset(aIdt, aOs); aOs << "== IRNs: ==" << endl;
+	for (auto item : mIrns) {
+	    Ifu::offset(aIdt, aOs); aOs << "Iface: " << item->name() << endl;
+	    item->MIfProv_doDump(aLevel, aIdt + 1, aOs);
+	    auto req = item->firstPair() ? item->firstPair()->provided() : nullptr;
+	    if (req) {
+		Ifu::offset(aIdt, aOs); aOs << "Req chain: " << endl;
+		req->doDump(aLevel, aIdt + 1, aOs);
+	    }
 	}
     }
 }
@@ -75,7 +89,9 @@ void Unit::resolveIface(const string& aName, MIfReq::TIfReqCp* aReq)
 	if (item->isConnected(aReq)) { prov = item; break;}
     }
     if (prov) {
-	prov->resolve(aName);
+	if (!prov->isValid()) {
+	    prov->resolve(aName);
+	}
     } else {
 	IfrNode* node = createIfProv(aName, aReq);
 	mIrns.push_back(node);
@@ -114,14 +130,10 @@ IfrNode* Unit::createIfProv(const string& aName, MIfReq::TIfReqCp* aReq) const
 
 void Unit::invalidateIrm()
 {
-    for (auto node : mIrns) {
+    if (!mIrns.empty())
+	for (auto node : mIrns) {
 	if (node->isValid()) {
 	    node->setValid(false);
-	}
-    }
-    for (auto node : mLocalIrn) {
-	if (node.second->isValid()) {
-	    node.second->setValid(false);
 	}
     }
 }
@@ -130,16 +142,22 @@ void Unit::onIfpDisconnected(MIfProv* aProv)
 {
     for (auto it = mIrns.begin(); it != mIrns.end(); it++) {
 	if ((*it)->provided() == aProv) {
-	    mIrns.erase(it); break;
+	    auto cmp = *it;
+	    mIrns.erase(it);
+	    delete cmp;
+	    break;
 	}
     }
-    delete aProv;
+    //delete aProv;
 }
 
+void Unit::onIfpInvalidated(MIfProv* aProv)
+{
+}
 
 void Unit::addIfpLeaf(MIface* aIfc, MIfReq::TIfReqCp* aReq)
 {
-	if (aIfc) {
+    if (aIfc) {
 	IfrLeaf* lf = new IfrLeaf(this, aIfc);
 	aReq->connect(lf);
     }
@@ -155,9 +173,8 @@ void Unit::addIfpLeafs(MIfProv::TIfaces* aIfcs, MIfReq::TIfReqCp* aReq)
 void Unit::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 {
     MIface* ifr = MNode_getLif(aName.c_str());
-    if (ifr /* && !findIface(ifr)YB??*/) {
-	IfrLeaf* lf = new IfrLeaf(this, ifr);
-	aReq->connect(lf);
+    if (ifr) {
+	addIfpLeaf(ifr, aReq);
     }
 }
 

@@ -7,20 +7,45 @@
 const string KCont_Provided = "Provided";
 const string KCont_Required = "Required";
 
+CpState::CpState(const string &aType, const string& aName, MEnv* aEnv): ConnPointu(aType, aName, aEnv)
+{
+}
+
+void CpState::notifyInpsUpdated()
+{
+    MIfProv* ifp = defaultIfProv(MDesInpObserver::Type());
+    MIfProv* prov = ifp->first();
+    while (prov) {
+	MDesInpObserver* obs = dynamic_cast<MDesInpObserver*>(prov->iface());
+	if (obs) obs->onInpUpdated();
+	prov = prov->next();
+    }
+}
+
+void CpState::onDisconnected()
+{
+    ConnPointu::onDisconnected();
+    notifyInpsUpdated();
+}
+
+void CpState::onIfpInvalidated(MIfProv* aProv)
+{
+    ConnPointu::onIfpInvalidated(aProv);
+    notifyInpsUpdated();
+}
 
 /* Connection point - input of combined chain state AStatec */
 
-CpStateInp::CpStateInp(const string &aType, const string& aName, MEnv* aEnv): ConnPointu(aType, aName, aEnv)
+CpStateInp::CpStateInp(const string &aType, const string& aName, MEnv* aEnv): CpState(aType, aName, aEnv)
 {
     bool res = setContent("Provided", "MDesInpObserver");
     res = setContent("Required", "MDVarGet");
     assert(res);
 }
 
-
 /* Connection point - output of combined chain state AStatec */
 
-CpStateOutp::CpStateOutp(const string &aType, const string& aName, MEnv* aEnv): ConnPointu(aType, aName, aEnv)
+CpStateOutp::CpStateOutp(const string &aType, const string& aName, MEnv* aEnv): CpState(aType, aName, aEnv)
 {
     bool res = setContent("Provided", "MDVarGet");
     res = setContent("Required", "MDesInpObserver");
@@ -85,13 +110,14 @@ MIface* State::MNode_getLif(const char *aType)
 
 void State::setActivated()
 {
-    // Propagate activation to owner
-    //MDesObserver* obs = Owner()->lIf(obs);
-    MUnit* ownu = Owner()->lIf(ownu);
-    MDesObserver* obs = ownu->getSif(obs);
-    if (obs && !mActNotified) {
-	obs->onActivated(this);
-	mActNotified = true;
+    if (!mActNotified) {
+	// Propagate activation to owner
+	MUnit* ownu = Owner()->lIf(ownu);
+	MDesObserver* obs = ownu ? ownu->getSif(obs) : nullptr;
+	if (obs) {
+	    obs->onActivated(this);
+	    mActNotified = true;
+	}
     }
 }
 
@@ -145,6 +171,10 @@ void State::confirm()
 		mCdata->ToString(new_value);
 		Logger()->Write(EInfo, this, "Updated [%s <- %s]", new_value.c_str(), old_value.c_str());
 	    }
+	} else {
+	    // State is not changed. No need to notify connected inps. But we still need to make IFR paths to inps
+	    // actual. Ref ds_asr.
+	    refreshInpObsIfr();
 	}
     }
 }
@@ -349,7 +379,34 @@ bool State::SContValue::setData(const string& aData)
     return res;
 }
 
+void State::onIfpInvalidated(MIfProv* aProv)
+{
+    Vertu::onIfpInvalidated(aProv);
+    setActivated();
+    NotifyInpsUpdated();
+}
 
+void State::refreshInpObsIfr()
+{
+    for (auto pair : mPairs) {
+	MUnit* pe = pair->lIf(pe);
+	// Don't add self to if request context to enable routing back to self
+	MIfProv* ifp = pe->defaultIfProv(MDesInpObserver::Type());
+	MIfProv* prov = ifp->first();
+    }
+}
+
+void State::onConnected()
+{
+    Vertu::onConnected();
+    NotifyInpsUpdated();
+}
+
+void State::onDisconnected()
+{
+    Vertu::onDisconnected();
+    NotifyInpsUpdated();
+}
 
 
 /// DES
@@ -394,7 +451,7 @@ void Des::confirm()
 void Des::onActivated(MDesSyncable* aComp)
 {
     if (!mActNotified) { // Notify owner
-	MDesObserver* obs = Owner()->lIf(obs);
+	MDesObserver* obs = Owner() ? Owner()->lIf(obs) : nullptr;
 	if (obs) {
 	    obs->onActivated(this);
 	    mActNotified = true;
@@ -586,7 +643,8 @@ void ADes::onObsOwnedAttached(MObservable* aObl, MOwned* aOwned)
 {
     MUnit* osu = aOwned->lIf(osu);
     MDesSyncable* os = osu ? osu->getSif(os) : nullptr;
-    if (os) {
+    MDesSyncable* ss = MNode::lIf(ss); // self
+    if (os && os != ss) {
 	onActivated(os);
     }
 }
@@ -643,14 +701,16 @@ void ADes::MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const
 
 MNode* ADes::ahostNode()
 {
-    MAhost* ahost = mAgtCp.firstPair()->provided();
+    auto pair = mAgtCp.firstPair();
+    MAhost* ahost = pair ? pair->provided() : nullptr;
     MNode* hostn = ahost ? ahost->lIf(hostn) : nullptr;
     return hostn;
 }
 
 MNode* ADes::ahostGetNode(const GUri& aUri)
 {
-    MAhost* ahost = mAgtCp.firstPair()->provided();
+    auto pair = mAgtCp.firstPair();
+    MAhost* ahost = pair ? pair->provided() : nullptr;
     MNode* hostn = ahost ? ahost->lIf(hostn) : nullptr;
     MNode* res = hostn ? hostn->getNode(aUri, this) : nullptr;
     return res;
@@ -666,11 +726,12 @@ DesLauncher::DesLauncher(const string &aType, const string& aName, MEnv* aEnv): 
 {
 }
 
-bool DesLauncher::Run(int aCount)
+bool DesLauncher::Run(int aCount, int aIdleCount)
 {
     bool res = true;
     int cnt = 0;
-    while (!mStop && (aCount == 0 || cnt < aCount)) {
+    int idlecnt = 0;
+    while (!mStop && (aCount == 0 || cnt < aCount) && (aIdleCount == 0 || idlecnt < aIdleCount)) {
 	if (!mActive.empty()) {
 	    Log(TLog(EInfo, this) + ">>> Update [" + to_string(cnt) + "]");
 	    update();
@@ -681,6 +742,7 @@ bool DesLauncher::Run(int aCount)
 	    cnt++;
 	} else {
 	    OnIdle();
+	    idlecnt++;
 	}
     }
     return res;

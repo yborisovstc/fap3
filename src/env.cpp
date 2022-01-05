@@ -298,11 +298,11 @@ void Env::removeProvider(MProvider* aProv)
     mProvider->RemoveProvider(aProv);
 }
 
-bool Env::RunSystem(int aCount)
+bool Env::RunSystem(int aCount, int aIdleCount)
 {
     bool res = false;
     if (mLauncher) {
-	res = mLauncher->Run(aCount);
+	res = mLauncher->Run(aCount, aIdleCount);
     } else {
 	Logger()->WriteFormat("Env: Failed running system - launcher isn't found");
     }

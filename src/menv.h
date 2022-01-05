@@ -52,7 +52,7 @@ class MEnv : public MIface
 	/** @brief Removes provider */
 	virtual void removeProvider(MProvider* aProv) = 0;
 	/** @brief Runs DES */
-	virtual bool RunSystem(int aCount = 0) = 0;
+	virtual bool RunSystem(int aCount = 0, int aIdleCount = 0) = 0;
 	/** @brief Stops DES */
 	virtual bool StopSystem() = 0;
 	/** @brier Gets modules relative Uri */

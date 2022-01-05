@@ -3,8 +3,7 @@ MyRoot : Elem {
         Ds1 : Des {
             St1 : State {
                 = "SI 0";
-                Debug : Content { Update : Content; }
-                Debug.Update = "y";
+                Debug.LogLevel = "Dbg";
             }
             Const_1 : State { = "SI 1"; }
             Add : TrAddVar;
@@ -14,8 +13,7 @@ MyRoot : Elem {
             # "Second state";
             St2 : State {
                 = "SI 7";
-                Debug : Content { Update : Content; }
-                Debug.Update = "y";
+                Debug.LogLevel = "Dbg";
             }
             Const_2 : State { = "SI 2"; }
             Add2 : TrAddVar;

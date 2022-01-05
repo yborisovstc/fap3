@@ -33,6 +33,7 @@ class Unit : public Node, public MUnit, public MIfProvOwner
 	virtual MIface* MIfProvOwner_getLif(const char *aType) override;
 	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
 	virtual void onIfpDisconnected(MIfProv* aProv) override;
+	virtual void onIfpInvalidated(MIfProv* aProv) override;
     protected:
 	virtual IfrNode* createIfProv(const string& aName, MIfReq::TIfReqCp* aReq) const;
 	void invalidateIrm();

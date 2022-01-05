@@ -13,7 +13,7 @@ class MLauncher: public MIface
 	virtual string Uid() const override { return MLauncher_Uid();}
 	virtual string MLauncher_Uid() const = 0;
 	// Local
-	virtual bool Run(int aCount = 0) = 0;
+	virtual bool Run(int aCount = 0, int aIdleCount = 0) = 0;
 	virtual bool Stop() = 0;
 };
 
