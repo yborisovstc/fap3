@@ -2,9 +2,10 @@
 #ifndef __FAP3_DBG_H
 #define __FAP3_DBG_H
 
-#include "mnode.h"
-#include "munit.h"
+#include <string>
 
+class MNode;
+class MUnit;
 
 /** @brief Debugging utilities
  * */
@@ -15,14 +16,9 @@ class Dbg
 	//static MDesSyncable* getDsync(MNode* aNode);
 	template <typename T>
 	    static T* getIface(MNode* aNode);
+    public:
+	static std::string mLog;
+	static int mEnableLog;
 };
-
-
-template <typename T>
-T* Dbg::getIface(MNode* aNode)
-{
-    T* res = aNode->lIf(res);
-    return res;
-}
 
 #endif 

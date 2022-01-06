@@ -125,6 +125,7 @@ include_HEADERS = \
 		  env.h \
 		  factr.h \
 		  desadp.h \
+		  dbg.h \
 		  miface.h
 
 

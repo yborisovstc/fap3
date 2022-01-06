@@ -756,7 +756,8 @@ class NCpOmnp : public MNcpp<TPif, TRif>
 	    auto np = nextPair(aLeaf);
 	    if (np) {
 		res = np->binded() ? np->firstLeafB() : np;
-	    } else if (binded()) {
+	    }
+	    if (! res && binded()) {
 		res = binded()->nextLeaf();
 	    }
 	    return res;
