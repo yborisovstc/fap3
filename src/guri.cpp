@@ -4,35 +4,53 @@
 
 const char KSep = '.';
 const char KSelf = '$';
-const char KOwner = '^';
 
 const string GUri::nil = "nil";
+const string GUri::K_Self= "_$";
+
+
+static bool isElemName(string& aSrc)
+{
+    bool res = true;
+    if (aSrc.size() > 0) {
+	for (size_t ind = 0; ind < aSrc.size() && res; ind++) {
+	    char c = aSrc.at(ind);
+	    if (ind == 0) {
+		res = isalpha(c);
+	    } else {
+		res = isalnum(c) || c == '_';
+	    }
+	}
+    } else {
+	res = false;
+    }
+    return res;
+}
 
 void GUri::parse(const string& aSrc)
 {
-    mErr = true;
+    bool res = true;
     mElems.clear();
-    if (aSrc.size() == 1) {
-	if (aSrc.at(0) == KSelf) {
-	    mElems.push_back(string(1, KSelf));
-	} else if (aSrc.at(0) == KOwner) {
-	    mElems.push_back(string(1, KOwner));
-	} else if (isalpha(aSrc.at(0))) {
-	    mElems.push_back(aSrc);
-	} else {
-	    mErr = false;
-	}
-    } else if (aSrc.size() > 0) {
+    if (aSrc.size() > 0) {
 	size_t beg = 0, pos = 0;
-	while (pos != string::npos) {
+	while (pos != string::npos && res) {
 	    pos = aSrc.find_first_of(KSep, beg); 
 	    string elem = aSrc.substr(beg, pos - beg);
-	    mElems.push_back(elem);
+	    if (beg == 0) {
+		res = elem.empty() || isElemName(elem) || elem == K_Self;
+	    } else {
+		res = isElemName(elem);
+	    }
+	    if (res) {
+		mElems.push_back(elem);
+	    }
 	    beg = (pos == string::npos) ? string::npos : pos + 1;
 	}
     } else {
-	mErr = false;
+	// TODO Enable the empty URI meanwhile. Consider URI design
+	//res = false;
     }
+    mErr = !res;
 }
 
 GUri GUri::tail(int aIdx) const

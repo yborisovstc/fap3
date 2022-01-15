@@ -793,8 +793,8 @@
 			*)
 			context = context_target, context_namespace | context_target | context_namespace;
 			context_unit = context_target | context_namespace;
-			context_target = uri, separator, "&lt;";
-			context_target_ext = (uri | mutation_create), separator, "&lt;";
+			context_target = (uri | special_name_nearest_namespace), separator, "&lt;";
+			context_target_ext = (uri | special_name_nearest_namespace | mutation_create), separator, "&lt;";
 			context_node = mutation_node;
 			context_namespace = uri, separator, "@";
 			context_namespace_ext = (uri | mutation_create), separator, "@";

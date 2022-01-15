@@ -5,7 +5,7 @@ MyRoot : Elem {
         c12 : Content { = "Default"; }
         c11 : Content;
         c11 = "Hello";
-        Debug.LogLevel = "31";
+        Debug.LogLevel = "Dbg.1";
     }
     n1 = "Test";
     n1.n1_1 < n1_1_2 : Node { n1_1_2_1 : Node; }

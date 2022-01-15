@@ -288,12 +288,14 @@ bool BdVar::update()
     string old_value; // Dbg
     ToString(old_value); // Dbg
     MDVarGet* vget = mHost->HGetInp(this);
-    if (vget != NULL) {
-	if (mData == NULL) {
-	    Init(string(), vget);
-	    res = true;
+    if (vget) {
+	if (!mData) {
+	    res = Init(string(), vget);
+	    if (res) {
+		NotifyUpdate();
+	    }
 	}
-	if (mData != NULL) {
+	if (mData) {
 	    res |= mData->Set(vget);
 	}
     }

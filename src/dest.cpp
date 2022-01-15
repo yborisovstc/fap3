@@ -87,6 +87,11 @@ TrVar::TrVar(const string &aType, const string &aName, MEnv* aEnv): TrBase(aType
 
 string TrVar::VarGetIfid() const
 {
+    if (!mFunc) {
+	// Function isn't still resolved. Try to resolve basing on func inputs only
+	auto self = const_cast<TrVar*>(this);
+	self->Init(string());
+    }
     return mFunc ? mFunc->IfaceGetId() : string();
 }
 
@@ -159,6 +164,27 @@ MIface* TrVar::MNode_getLif(const char *aType)
     return res;
 }
 
+void TrVar::MDVarGet_doDump(int aLevel, int aIdt, ostream& aOs) const
+{
+    auto self = const_cast<TrVar*>(this);
+    int icnt = GetInpCpsCount();
+    aOs << "Inputs [" << icnt << "]" << endl;
+    for (auto ii = 0; ii < icnt; ii++) {
+	MIfProv::TIfaces* ifaces = self->GetInps(ii, MDVarGet::Type(), false);
+	aOs << "Inp [" << GetInpUri(ii) << "]" << endl;
+	for (auto iface : *ifaces) {
+	    Ifu::offset(aIdt, aOs); aOs << "Iface " << iface->Uid() << endl;
+	    iface->doDump(aLevel, aIdt + 4, aOs);
+	}
+    }
+    if (mFunc) {
+	string result;
+	mFunc->GetResult(result);
+	aOs << "Result: " << result << endl;
+    } else {
+	aOs << "Func: NULL" << endl;
+    }
+}
 
 
 
@@ -423,6 +449,71 @@ string TrUri::VarGetIfid() const
 {
     return MDtGet<DGuri>::Type();
 }
+
+
+// Transition agent "Getting container size"
+
+TrSizeVar::TrSizeVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+{
+    AddInput("Inp");
+}
+
+void TrSizeVar::Init(const string& aIfaceName)
+{
+    if (mFunc) {
+	delete mFunc;
+	mFunc = NULL;
+    }
+    MDVarGet* inp = GetInp(Func::EInp1);
+    if (inp) {
+	string t_inp = inp->VarGetIfid();
+	if ((mFunc = FSizeVect<string>::Create(this, aIfaceName, t_inp)));
+    }
+}
+
+string TrSizeVar::GetInpUri(int aId) const
+{
+    if (aId == Func::EInp1) return "Inp";
+    else return string();
+}
+
+string TrSizeVar::VarGetIfid() const
+{
+    return MDtGet<Sdata<int>>::Type();
+}
+
+
+// Agent function "Get n-coord of Vector"
+
+TrAtVar::TrAtVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+{
+    AddInput("Inp");
+    AddInput("Index");
+}
+
+void TrAtVar::Init(const string& aIfaceName)
+{
+    if (mFunc) {
+	delete mFunc;
+	mFunc = NULL;
+     }
+    MDVarGet* inp_ind = GetInp(Func::EInp2);
+    MDVarGet* inp = GetInp(Func::EInp1);
+    if (inp_ind && inp) {
+	 string t_inp = inp->VarGetIfid();
+	if ((mFunc = FAtVect<string>::Create(this, aIfaceName, t_inp)));
+    }
+}
+
+string TrAtVar::GetInpUri(int aId) const
+{
+    if (aId == Func::EInp2) return "Index";
+    else if (aId == Func::EInp1) return "Inp";
+    else return string();
+}
+
+
+
 
 
 

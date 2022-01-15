@@ -46,6 +46,8 @@ class MDVarGet: public MIface
 	// From MIface
 	virtual string Uid() const override { return MDVarGet_Uid();}
 	virtual string MDVarGet_Uid() const = 0;
+	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { return MDVarGet_doDump(aLevel, aIdt, std::cout);}
+	virtual void MDVarGet_doDump(int aLevel, int aIdt, ostream& aOs) const {}
 	// Local
 	template <class T> T* GetDObj(T* aInst) { return aInst = static_cast<T*>(DoGetDObj(aInst->Type()));};
 	virtual MIface* DoGetDObj(const char *aName) = 0;
@@ -79,6 +81,8 @@ template <class T> class MDtGet: public MIface
 	static const char* Type() { return mType.c_str();};
 	// From MIface
 	virtual string Uid() const override { return mType;}
+	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { return MDtGet_doDump(aLevel, aIdt, std::cout);}
+	virtual void MDtGet_doDump(int aLevel, int aIdt, ostream& aOs) const {}
 	// Local
 	virtual void DtGet(T& aData) = 0;
 };

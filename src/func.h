@@ -62,6 +62,8 @@ template <class T> class FAddDt: public FAddBase, public MDtGet<T> {
 	virtual void DtGet(T& aData);
 	virtual void GetResult(string& aResult) const;
 	virtual string GetInpExpType(int aId) const;
+	// From MDtGet
+	virtual void MDtGet_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	T mRes;
 };
 
@@ -111,7 +113,7 @@ class FMaxBase: public Func {
 	FMaxBase(Host& aHost): Func(aHost) {};
 };
 
-/** @brief Addintion, generic data
+/** @brief Getting maximum, generic data
  * */
 template <class T> class FMaxDt: public FMaxBase, public MDtGet<T> {
     public:
@@ -199,6 +201,57 @@ class FBnegDt: public Func, public MDtGet<Sdata<bool>> {
 	virtual void GetResult(string& aResult) const override;
 	Sdata<bool> mRes;
 };
+
+
+/** @brief Getting size of container: Vector
+ * @tparam T type of vector element
+ * */
+// TODO YB Weak design. Size doesn't depend on container elem type, so better to have this class w/o template.
+// But the current design doesn't allow to do it. HDt returns the exact MDtGet iface of owned data.
+// To consider the design improvement
+template <class T>
+class FSizeVect: public Func, public MDtGet<Sdata<int>> {
+    public:
+	using TOutp = Sdata<int>;
+    public:
+	static Func* Create(Host* aHost, const string& aOutIid, const string& aInp1Id);
+	FSizeVect(Host& aHost): Func(aHost) {};
+	virtual MIface* getLif(const char *aName) override;
+	virtual string IfaceGetId() const override { return MDtGet<TOutp>::Type();}
+	virtual void DtGet(TOutp& aData) override;
+	virtual void GetResult(string& aResult) const override {mRes.ToString(aResult);}
+	virtual string GetInpExpType(int aId) const override;
+    protected:
+	TOutp mRes;
+};
+
+/** @brief Getting component of container: base
+ * */
+class FAtBase: public Func
+{
+    public:
+	FAtBase(Host& aHost): Func(aHost) {};
+};
+
+
+/** @briefGetting component of container: Vector
+ * */
+template <class T>
+class FAtVect: public FAtBase, public MDtGet<Sdata<T>> {
+    public:
+	static Func* Create(Host* aHost, const string& aOutIid, const string& aInp1Id);
+	FAtVect(Host& aHost): FAtBase(aHost) {};
+	virtual MIface* getLif(const char *aName) override;
+	virtual string IfaceGetId() const override { return MDtGet<Sdata<T>>::Type();}
+	virtual void DtGet(Sdata<T>& aData) override;
+	virtual void GetResult(string& aResult) const override {mRes.ToString(aResult);}
+	virtual string GetInpExpType(int aId) const override;
+    protected:
+	Sdata<T> mRes;
+};
+
+
+
 
 
 

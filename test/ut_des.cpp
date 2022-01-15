@@ -172,6 +172,13 @@ void Ut_des::test_des_tr_1()
     Sdata<bool> val;
     dgb->DtGet(val);
     CPPUNIT_ASSERT_MESSAGE("Wrong final state valud", val.mData == false);
+    // Verify getting item of vector
+    MNode* st4 = root->getNode("Launcher.Ds1.St4");
+    MDVarGet* st4vg = st4->lIf(st4vg);
+    MDtGet<Sdata<string>>* st4dgs = st4vg->GetDObj(st4dgs);
+    Sdata<string> st4val;
+    st4dgs->DtGet(st4val);
+    CPPUNIT_ASSERT_MESSAGE("Wrong value of St4", st4val.mData == "Item_3");
     
     delete mEnv;
 }

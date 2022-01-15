@@ -13,6 +13,26 @@ MyRoot : Elem {
             St1 : State {
                 = "URI Node1";
             }
+            # "Size of vector";
+            St2 : State {
+                = "VS Item_1 Item_2 Item_3";
+            }
+            St3 : State {
+                = "SI -1";
+                Debug.LogLevel = "Dbg";
+            }
+            St3.Inp ~ : TrSizeVar @ {
+                Inp ~ St2;
+            };
+            # "Item of vector";
+            St4 : State {
+                = "SS ";
+                Debug.LogLevel = "Dbg";
+            }
+            St4.Inp ~  : TrAtVar @ {
+                Inp ~ St2;
+                Index ~ : State { = "SI 2"; };
+            };
         }
     }
 }

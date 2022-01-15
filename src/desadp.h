@@ -72,7 +72,7 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 		// From MDVarGet
 		virtual string MDVarGet_Uid() const {return MDVarGet::Type();}
 		virtual MIface* DoGetDObj(const char *aName) override;
-		virtual string VarGetIfid() const override {return string();}
+		virtual string VarGetIfid() const override {return MDtGet<T>::Type();}
 		// From MDtGet
 		virtual void DtGet(T& aData) override { mHandler(aData);}
 	};

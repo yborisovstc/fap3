@@ -229,8 +229,9 @@ void AAdp::onUpdated(MDesSyncable* aComp)
 void AAdp::NotifyInpUpdated(MNode* aCp)
 {
     MUnit* cpu = aCp->lIf(cpu);
-    MDesInpObserver* obs = cpu->getSif(obs);
-    if (obs) {
+    auto obsis = cpu->getIfs<MDesInpObserver>();
+    for (auto obsi : *obsis) {
+	MDesInpObserver* obs = dynamic_cast<MDesInpObserver*>(obsi);
 	obs->onInpUpdated();
     }
 }
@@ -407,7 +408,7 @@ const string K_CpUriOwner = "Owner";
 
 AMnodeAdp::AMnodeAdp(const string &aType, const string& aName, MEnv* aEnv): AAdp(aType, aName, aEnv)
 {
-    mCompNames.mValid = true;
+    mCompNames.mValid = false;
 }
 
 
@@ -438,7 +439,7 @@ void AMnodeAdp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 
 void AMnodeAdp::GetCompsCount(Sdata<int>& aData)
 {
-    aData.mData = mCompNames.mData.size();
+    aData.mData = mCompNames.mValid ? mCompNames.mData.size() : -1;
     aData.mValid = true;
 }
 

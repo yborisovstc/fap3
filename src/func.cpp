@@ -16,7 +16,7 @@ template<class T> Func* FAddDt<T>::Create(Host* aHost, const string& aString)
 	MIfProv::TIfaces* inps = aHost->GetInps(EInp, MDVarGet::Type(), false);
 	for (auto dgeti : *inps) {
 	    MDVarGet* dget = dynamic_cast<MDVarGet*>(dgeti);
-	    MDtGet<T>* dfget = dget->lIf(dfget);
+	    MDtGet<T>* dfget = dget->GetDObj(dfget);
 	    if (!dfget) { inpok = false; break; }
 	}
 	if (inpok) {
@@ -98,6 +98,16 @@ template <class T> string FAddDt<T>::GetInpExpType(int aId) const
     return res;
 }
 
+template <class T>
+void FAddDt<T>::MDtGet_doDump(int aLevel, int aIdt, ostream& aOs) const
+{
+    auto self = const_cast<FAddDt<T>*>(this);
+    T data;
+    self->DtGet(data);
+    string str;
+    data.ToString(str);
+    aOs << "Data: " << str << endl;
+}
 
 /// Boolean AND
 
@@ -486,6 +496,144 @@ void FBnegDt::GetResult(string& aResult) const
 }
 
 
+// Getting size of container: vector
+
+template <class T> Func* FSizeVect<T>::Create(Host* aHost, const string& aOutIid, const string& aInpIid)
+{
+    Func* res = NULL;
+    if (!aOutIid.empty()) {
+	if (aOutIid == MDtGet<Sdata<int>>::Type() && aInpIid == MDtGet<Vector<T>>::Type()) {
+	    res = new FSizeVect<T>(*aHost);
+	}
+    } else {
+	// Weak negotiation - just base on input type
+	if (aInpIid == MDtGet<Vector<T>>::Type()) {
+	    res = new FSizeVect<T>(*aHost);
+	}
+    }
+    return res;
+}
+
+template<class T> MIface *FSizeVect<T>::getLif(const char *aName)
+{
+    MIface* res = NULL;
+    if (strcmp(aName, MDtGet<TOutp>::Type()) == 0) res = (MDtGet<TOutp>*) this;
+    return res;
+}
+
+template <class T> void FSizeVect<T>::DtGet(TOutp& aData)
+{
+    bool res = true;
+    MDVarGet* dget = mHost.GetInp(EInp1);
+    MDtGet<Vector<T>>* dfget = dget->GetDObj(dfget);
+    if (dfget) {
+	Vector<T> arg;
+	dfget->DtGet(arg);
+	if (arg.mValid) {
+	    aData.mData = arg.Size();
+	    aData.mValid = true;
+	} else {
+	    mHost.log(EErr, "Incorrect input data");
+	    res = false;
+	}
+    } else {
+	mHost.log(EErr, "Cannot get input [" + mHost.GetInpUri(EInp1) + "]");
+	res = false;
+    }
+    aData.mValid = res;
+    if (mRes != aData) {
+	mRes = aData;
+	mHost.OnFuncContentChanged();
+    }
+}
+
+template <class T> string FSizeVect<T>::GetInpExpType(int aId) const
+{
+    string res;
+    if (aId == EInp1) {
+	res = MDtGet<Vector<T>>::Type();
+    }
+    return res;
+}
+
+
+// Getting component of container: vector
+//
+template <class T>
+Func* FAtVect<T>::Create(Host* aHost, const string& aOutIid, const string& aInpIid)
+{
+    Func* res = NULL;
+    if (!aOutIid.empty()) {
+	if (aOutIid == MDtGet<Sdata<T>>::Type() && aInpIid == MDtGet<Vector<T>>::Type()) {
+	    res = new FAtVect<T>(*aHost);
+	}
+    } else {
+	// Weak negotiation - just base on input type
+	if (aInpIid == MDtGet<Vector<T>>::Type()) {
+	    res = new FAtVect<T>(*aHost);
+	}
+    }
+    return res;
+}
+
+template<class T>
+MIface *FAtVect<T>::getLif(const char *aName)
+{
+    MIface* res = NULL;
+    if (strcmp(aName, MDtGet<Sdata<T>>::Type()) == 0) res = (MDtGet<Sdata<T>>*) this;
+    return res;
+}
+
+template <class T>
+void FAtVect<T>::DtGet(Sdata<T>& aData)
+{
+    bool res = false;
+    MDVarGet* dget = mHost.GetInp(EInp1);
+    MDtGet<Vector<T>>* dfget = dget->GetDObj(dfget);
+    dget = mHost.GetInp(EInp2);
+    MDtGet<Sdata<int>>* diget = dget->GetDObj(diget);
+    if (dfget && diget) {
+	Vector<T> arg;
+	dfget->DtGet(arg);
+	Sdata<int> ind;
+	diget->DtGet(ind);
+	if (arg.mValid && ind.mValid ) {
+	    if (ind.mData < arg.Size()) {
+		aData.mValid = arg.GetElem(ind.mData, aData.mData);
+		res = true;
+	    } else {
+		mHost.log(EErr, "Index is exceeded");
+	    }
+	} else {
+	    mHost.log(EErr, "Incorrect argument");
+	}
+    } else if (!dfget) {
+	mHost.log(EErr, "Cannot get input [" + mHost.GetInpUri(EInp1) + "]");
+    } else if (!diget) {
+	mHost.log(EErr, "Cannot get input [" + mHost.GetInpUri(EInp2) + "]");
+    }
+    aData.mValid = res;
+    if (mRes != aData) {
+	mRes = aData;
+	mHost.OnFuncContentChanged();
+    }
+}
+
+template <class T> string FAtVect<T>::GetInpExpType(int aId) const
+{
+    string res;
+    if (aId == EInp1) {
+	res = MDtGet<Vector<T>>::Type();
+    } else if (aId == EInp2) {
+	res = MDtGet<Sdata<int>>::Type();
+    }
+    return res;
+}
+
+
+
+
+
 
 
 
@@ -502,6 +650,8 @@ void Init()
     FCmp<Sdata<string> >::Create(host, "", "", FCmpBase::ELt);
     FCmp<Enum>::Create(host, "", "", FCmpBase::ELt);
     FCmp<DGuri>::Create(host, "", "", FCmpBase::ELt);
+    FSizeVect<string>::Create(host, string(), string());
+    FAtVect<string>::Create(host, string(), string());
 }
 
 

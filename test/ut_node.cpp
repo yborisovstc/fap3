@@ -181,7 +181,7 @@ void Ut_node::test_cre_1()
     // Verify Debug.LogLevel content
     string dl;
     bool res = n1co->getContent("Debug.LogLevel", dl);
-    CPPUNIT_ASSERT_MESSAGE("Wrong Debug.LogLevel content", dl == "31");
+    CPPUNIT_ASSERT_MESSAGE("Wrong Debug.LogLevel content", dl == "Dbg.1");
     // Verify getting node by absolute URI
     MNode* nn = n1->getNode(".MyRoot.n1.n1_1.n1_1_2.n1_1_2_1");
     CPPUNIT_ASSERT_MESSAGE("Fail to get node by absolute URI", nn);
@@ -197,6 +197,11 @@ void Ut_node::test_cre_1()
     // Test Uri
     GUri uri1 = GUri("");
     MNode* nt = n1->getNode(uri1);
+    CPPUNIT_ASSERT_MESSAGE("getNode fail with empty URI", nt);
+    // Test Uri
+    GUri uri2 = GUri("_$");
+    MNode* nt2 = n1->getNode(uri2);
+    CPPUNIT_ASSERT_MESSAGE("getNode fail with _$ URI", nt2);
 
     delete mEnv;
 }

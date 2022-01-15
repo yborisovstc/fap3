@@ -73,33 +73,37 @@ const MNode* Node::getComp(const string& aId) const
 const MNode* Node::getNode(const GUri& aUri) const
 {
     const MNode* res = nullptr;
-    if (aUri.size() == 0) {
-	res = this;
-    } else {
-	if (aUri.isAbsolute()) {
-	    if (Owner()) {
-		res = Owner()->ownerGetNode(aUri, this);
-	    } else {
-		// Root
-		if (aUri.size() > 2) {
-		    res = getComp(aUri.at(2));
-		    for (int i = 3; i < aUri.size() && res; i++) {
-			res = res->getComp(aUri.at(i));
+    if (aUri.isValid()) {
+	if (aUri.size() == 0 || aUri.size() == 1 && aUri.at(0) == GUri::K_Self) {
+	    res = this;
+	} else {
+	    if (aUri.isAbsolute()) {
+		if (Owner()) {
+		    res = Owner()->ownerGetNode(aUri, this);
+		} else {
+		    // Root
+		    if (aUri.size() > 2) {
+			res = getComp(aUri.at(2));
+			for (int i = 3; i < aUri.size() && res; i++) {
+			    res = res->getComp(aUri.at(i));
+			}
 		    }
 		}
+	    } else {
+		res = getComp(aUri.at(0));
+		for (int i = 1; i < aUri.size() && res; i++) {
+		    res = res->getComp(aUri.at(i));
+		}
 	    }
-	} else {
-	    res = getComp(aUri.at(0));
-	    for (int i = 1; i < aUri.size() && res; i++) {
-		res = res->getComp(aUri.at(i));
+	    if (!res && aUri.size() == 1) {
+		// Try native
+		if (mEnv && mEnv->provider()) {
+		    res = mEnv->provider()->getNode(aUri.at(0));
+		}
 	    }
 	}
-	if (!res && aUri.size() == 1) {
-	    // Try native
-	    if (mEnv && mEnv->provider()) {
-		res = mEnv->provider()->getNode(aUri.at(0));
-	    }
-	}
+    } else {
+	Log(TLog(EErr, this) + "Invalid URI [" + aUri + "]");
     }
     return res;
 }
@@ -412,9 +416,6 @@ void Node::mutContent(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
     string snode = aMut.Attr(ENa_MutNode);
     string sdata = aMut.Attr(ENa_MutVal);
     bool res = setContent(snode, sdata);
-    if (!res) {
-	Log(TLog(EErr, this) + "Failed changing content of [" + snode + "]");
-    }
     if (!aUpdOnly) {
 	notifyNodeMutated(aMut, aCtx);
     }

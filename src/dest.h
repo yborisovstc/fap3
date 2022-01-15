@@ -42,6 +42,7 @@ class TrVar: public TrBase, public MDVarGet, public Func::Host
 	virtual MIface* MNode_getLif(const char *aType) override;
 	// From MDVarGet
 	virtual string MDVarGet_Uid() const override { return getUid<MDVarGet>();}
+	virtual void MDVarGet_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	virtual MIface* DoGetDObj(const char *aName) override;
 	virtual string VarGetIfid() const override;
 	// From Func::Host
@@ -68,9 +69,10 @@ class TrAddVar: public TrVar
     public:
 	static const char* Type() { return "TrAddVar";};
 	TrAddVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
-	// From ATrVar
+	// From TrVar
 	virtual void Init(const string& aIfaceName) override;
 	virtual string GetInpUri(int aId) const override;
+	virtual int GetInpCpsCount() const override {return 2;}
 };
 
 /** @brief Agent function "Max of Var data"
@@ -155,6 +157,39 @@ class TrUri: public TrVar
 	// From TrVar.MDVarGet
 	virtual string VarGetIfid() const override;
 };
+
+
+/** @brief Transition "Getting container size"
+ * */
+class TrSizeVar: public TrVar
+{
+    public:
+	static const char* Type() { return "TrSizeVar";};
+	TrSizeVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From TrVar
+	virtual void Init(const string& aIfaceName) override;
+	virtual string GetInpUri(int aId) const override;
+	// From Func::Host
+	virtual int GetInpCpsCount() const override {return 1;}
+	// From MDVarGet
+	virtual string VarGetIfid() const override;
+};
+
+/** @brief Agent function "Getting component"
+ * */
+class TrAtVar: public TrVar
+{
+    public:
+	static const char* Type() { return "TrAtVar";};
+	TrAtVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From ATrVar
+	virtual void Init(const string& aIfaceName) override;
+	virtual string GetInpUri(int aId) const override;
+	// From Func::Host
+	virtual int GetInpCpsCount() const override {return 2;}
+};
+
+
 
 
 /** @brief Agent functions "Mut composer" base

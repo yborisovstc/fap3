@@ -42,6 +42,7 @@ class GUri
 	bool isName() const;
     public:
 	static const string nil; // TODO YB move to proper place
+	static const string K_Self;
     private:
 	void parse(const string& aSrc);
     private:

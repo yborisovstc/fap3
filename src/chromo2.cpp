@@ -332,7 +332,7 @@ streampos SeekCtrl(istream& aIs, streampos aBeg, streampos aEnd, char aChar)
 
 string GenerateName(const string& aParent, int aPos)
 {
-    return string("_") + aParent + to_string(aPos);
+    return aParent + string("_") + to_string(aPos);
 }
 
 bool IsLexCtx(const string& aLex)
@@ -1075,18 +1075,28 @@ void Chromo2Mdl::rdp_name(istream& aIs, string& aRes)
 
 void Chromo2Mdl::rdp_spname_ns(istream& aIs, string& aRes)
 {
-    char c = aIs.get();
+    char c1 = aIs.get(), c2 = aIs.get();
     aRes.clear();
-    if (c == '_') {
-	aRes.push_back(c);
-	c = aIs.get();
-	if (c == '@') {
-	    aRes.push_back(c);
-	}
+    if (c1 == '_' && c2 == '@') {
+	aRes.push_back(c1);
+	aRes.push_back(c2);
     } else {
 	SetErr(aIs, RDPE_WrongName);
     }
 }
+
+void Chromo2Mdl::rdp_spname_self(istream& aIs, string& aRes)
+{
+    char c1 = aIs.get(), c2 = aIs.get();
+    aRes.clear();
+    if (c1 == '_' && c2 == '$') {
+	aRes.push_back(c1);
+	aRes.push_back(c2);
+    } else {
+	SetErr(aIs, RDPE_WrongName);
+    }
+}
+
 
 void Chromo2Mdl::rdp_string(istream& aIs, string& aRes)
 {
@@ -1109,22 +1119,29 @@ void Chromo2Mdl::rdp_uri(istream& aIs, string& aRes)
 {
     aRes.clear();
     string elem;
-    streampos pos = aIs.tellg(); // debug
-    rdp_name(aIs, elem);
-    aRes.append(elem);
+    streampos pos = aIs.tellg();
+    rdp_spname_self(aIs, elem);
     if (!IsError()) {
-	char c = aIs.get();
-	while (c == KT_UriSep && !IsError()) {
-	    aRes.push_back(c);
-	    rdp_name(aIs, elem);
-	    if (!IsError()) {
-		aRes.append(elem);
-		c = aIs.get();
-	    }
-	};
-	aIs.seekg(-1, aIs.cur);
+	aRes.append(elem);
     } else {
-	SetErr(aIs, RDPE_WrongUriElem);
+	aIs.seekg(pos, aIs.beg); // Backtrack
+	ResetErr();
+	rdp_name(aIs, elem);
+	aRes.append(elem);
+	if (!IsError()) {
+	    char c = aIs.get();
+	    while (c == KT_UriSep && !IsError()) {
+		aRes.push_back(c);
+		rdp_name(aIs, elem);
+		if (!IsError()) {
+		    aRes.append(elem);
+		    c = aIs.get();
+		}
+	    };
+	    aIs.seekg(-1, aIs.cur);
+	} else {
+	    SetErr(aIs, RDPE_WrongUriElem);
+	}
     }
 }
 
