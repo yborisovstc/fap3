@@ -234,11 +234,17 @@ class AMnodeAdp : public AAdp
 	void GetOwner(Sdata<string>& aData);
 	// From AAdp
 	virtual void OnMagUpdated() override;
+	// From MDesSyncable
+	virtual void update() override;
+	// Local
+	void OnInpMut();
+	void ApplyMut();
     protected:
 	// Comps count param adapter. Even if the count can be get via comp names vector we support separate param for convenience
 	AdpPap<int> mApCmpCount = AdpPap<int>(*this, [this](Sdata<int>& aData) {GetCompsCount(aData);}); /*!< Comps count access point */
 	AdpPapB<TCmpNames> mApCmpNames = AdpPapB<TCmpNames>([this](TCmpNames& aData) {GetCompNames(aData);}); /*!< Comp names access point */
 	AdpPap<string> mPapOwner = AdpPap<string>(*this, [this](Sdata<string>& aData) {GetOwner(aData);}); /*!< Comps count access point */
+	AdpIap mIapInpMut = AdpIap(*this, [this]() {OnInpMut();}); /*!< Mut Add Widget input access point */
 	// From AAdp
 	virtual void NotifyInpsUpdated() override;
 	virtual void onMagOwnedAttached(MObservable* aObl, MOwned* aOwned) override;
@@ -246,6 +252,7 @@ class AMnodeAdp : public AAdp
 	TCmpNames mCompNames;
 	bool mCompNamesUpdated = true;
 	bool mOwnerUpdated = true;
+	bool mInpMutChanged = true;
 };
 
 /** @brief MElem iface ADP agent

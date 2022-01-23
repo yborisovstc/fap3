@@ -33,6 +33,24 @@ MyRoot : Elem {
                 Inp ~ St2;
                 Index ~ : State { = "SI 2"; };
             };
+            # "Tuple composer";
+            TupleRes : State @ {
+                _@ < {
+                    = "TPL,SS:name,SI:value none 0";
+                    Debug.LogLevel = "Dbg";
+                }
+                Inp ~ : TrTuple @ {
+                    Inp ~ : State {
+                        = "TPL,SS:name,SI:value none 0";
+                    };
+                    _@ < {
+                        name : CpStateInp;
+                        value : CpStateInp;
+                    }
+                    name ~ : State { = "SS Test_name"; };
+                    value ~ : State { = "SI 24"; };
+                };
+            }
         }
     }
 }

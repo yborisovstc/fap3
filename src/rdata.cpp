@@ -625,10 +625,16 @@ bool NTuple::operator==(const MDtBase& sb)
 { 
     const NTuple& b = dynamic_cast<const NTuple&>(sb);
     bool res = true;
-    if (&b != NULL && DtBase::operator==(b) || mData.size() != b.mData.size()) {
+    if (!&b || DtBase::operator!=(b) || mData.size() != b.mData.size()) {
 	res = false;
-    }
-    else {
+    } else {
+	for (int ind = 0; ind < mData.size() && res; ind++) {
+	    auto acomp = mData.at(ind);
+	    auto bcomp = b.mData.at(ind);
+	    if (acomp.first != bcomp.first || !acomp.second  || !bcomp.second || *acomp.second != *bcomp.second) {
+		res = false;
+	    }
+	}
     }
     return res;
 };

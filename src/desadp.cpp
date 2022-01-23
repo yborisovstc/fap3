@@ -405,12 +405,12 @@ void AAdp::AdpIap::onInpUpdated()
 const string K_CpUriCompNames = "CompNames";
 const string K_CpUriCompCount = "CompsCount";
 const string K_CpUriOwner = "Owner";
+const string K_InpMUtpUri = "InpMut";
 
 AMnodeAdp::AMnodeAdp(const string &aType, const string& aName, MEnv* aEnv): AAdp(aType, aName, aEnv)
 {
     mCompNames.mValid = false;
 }
-
 
 void AMnodeAdp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 {
@@ -432,9 +432,14 @@ void AMnodeAdp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 		}
 	    }
 	}
-    } else {
-	AAdp::resolveIfc(aName, aReq);
+    } else if (aName == MDesInpObserver::Type()) {
+	MNode* inpMut = ahostGetNode(K_InpMUtpUri);
+	if (isRequestor(aReq, inpMut)) {
+	    MIface* iface = dynamic_cast<MDesInpObserver*>(&mIapInpMut);
+	    addIfpLeaf(iface, aReq);
+	}
     }
+    AAdp::resolveIfc(aName, aReq);
 }
 
 void AMnodeAdp::GetCompsCount(Sdata<int>& aData)
@@ -464,7 +469,6 @@ void AMnodeAdp::GetOwner(Sdata<string>& aData)
 	aData.mValid = true;
     }
 }
-
 
 void AMnodeAdp::confirm() {
     if (mMag) {
@@ -518,11 +522,77 @@ void AMnodeAdp::NotifyInpsUpdated()
     NotifyInpUpdated(cp);
 }
 
+void AMnodeAdp::OnInpMut()
+{
+    mInpMutChanged = true;
+    setActivated();
+}
+
+void AMnodeAdp::ApplyMut()
+{
+    if (mMag) {
+	bool eres = false;
+	MNode* inp = ahostGetNode(K_InpMUtpUri);
+	MUnit* inpu = inp ? inp->lIf(inpu) : nullptr;
+	MDVarGet* vget = inpu ? inpu->getSif(vget) : nullptr;
+	if (vget) {
+	    MDtGet<DMut>* gsd = vget->GetDObj(gsd);
+	    if (gsd) {
+		DMut dmut;
+		gsd->DtGet(dmut);
+		TMut& mut = dmut.mData;
+		if (mut.IsValid() && mut.Type() != ENt_None && mut.Type() != ENt_Unknown) {
+		    TNs ns; MutCtx mutctx(NULL, ns);
+		    MChromo* chr = mEnv->provider()->createChromo();
+		    chr->Init(ENt_Node);
+		    chr->Root().AddChild(mut);
+		    mMag->mutate(chr->Root(), false, mutctx, true);
+		    delete chr;
+		    string muts = mut.ToString();
+		    Logger()->Write(EInfo, this, "Managed agent is mutated [%s]", muts.c_str());
+		} else if (!mut.IsValid() || mut.Type() == ENt_Unknown) {
+		    Logger()->Write(EErr, this, "Invalid mutation [%s]", mut.operator string().c_str());
+		}
+	    } else {
+		MDtGet<DChr2>* gsd = vget->GetDObj(gsd);
+		if (gsd) {
+		    DChr2 data;
+		    gsd->DtGet(data);
+		    Chromo2& chromo = data.mData;
+		    if (data.IsValid()) {
+			TNs ns; MutCtx mutctx(NULL, ns);
+			mMag->mutate(chromo.Root(), false, mutctx);
+			string datas = chromo.Root();
+			Logger()->Write(EInfo, this, "Managed agent is mutated [%s]", datas.c_str());
+		    } else {
+			string datas = chromo.Root();
+			Logger()->Write(EErr, this, "Invalid mutations [%s]", datas.c_str());
+		    }
+
+		} else  {
+		    Logger()->Write(EErr, this, "Cannot get data from Inp");
+		}
+	    }
+	} else {
+	    Logger()->Write(EErr, this, "Cannot get input");
+	}
+    }
+}
+
+void AMnodeAdp::update()
+{
+    if (mInpMutChanged) {
+	ApplyMut();
+	mInpMutChanged = false;
+    }
+    AAdp::update();
+}
+
+
 
 // MElem DES adapter
 
 const string K_MutApplOutpUri = "MutationApplied";
-const string K_InpMUtpUri = "InpMut";
 
 AMelemAdp::AMelemAdp(const string& aType, const string& aName, MEnv* aEnv): AAdp(aType, aName, aEnv)
 {

@@ -73,16 +73,26 @@ testroot : Elem
                 = "SS Target3";
             }
             # "Target switcher";
-            Const_3 : State;
-            Const_3 < = "SI 3";
-            Cmp_Ge : TrCmpVar;
-            Cmp_Ge.Inp ~ Counter;
-            Cmp_Ge.Inp2 ~ Const_3;
-            Sw : TrSwitchBool;
-            Sw.Sel ~ Cmp_Ge;
-            Sw.Inp1 ~ MagUri;
-            Sw.Inp2 ~ MagUri2;
+            Const_3 : State { = "SI 3"; }
+            Sw : TrSwitchBool @ {
+                Sel ~ Cmp_Ge : TrCmpVar @ {
+                    Inp ~ Counter;
+                    Inp2 ~ Const_3;
+                };
+                Inp1 ~ MagUri;
+                Inp2 ~ MagUri2;
+            }
             Adapter.InpMagUri ~ Sw;
+            # "Mutating: adding component";
+            Adapter.InpMut ~ SwMut : TrSwitchBool @ {
+                Debug.LogLevel = "Dbg";
+                Sel ~ Cmp2_Eq : TrCmpVar @ {
+                    Inp ~ Counter;
+                    Inp2 ~ : State { = "SI 6"; };
+                };
+                Inp1 ~ : State { = "MUT none"; };
+                Inp2 ~ : State { = "MUT node,id:New_node,parent:Node"; };
+            };
         }
     }
 }

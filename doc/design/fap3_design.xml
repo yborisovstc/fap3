@@ -1467,6 +1467,11 @@
 		</simpara>
 	    </sect3>
 	</sect2>
+	<sect2 id="ds_ibc_dgit"><title>[DS_IBC_DGIT] Do we need MDtGet iface as templated one?</title>
+	    <simpara>Potentially we can have non-templated MDtGet that provides the access to base data iface MDtBase.</simpara>
+	    <simpara>The indication of week desing is the problems with TrTuple: it is not possible to update the tuple components. The input of the 
+		transition can get the access to data only via templated MDtGet but the type isn't explicitly known.</simpara>
+	</sect2>
     </sect1>
 
     <sect1 id="ds_iss"><title>Issues</title>

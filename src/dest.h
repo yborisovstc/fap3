@@ -190,6 +190,27 @@ class TrAtVar: public TrVar
 };
 
 
+/** @brief Agent functions "Tuple composer"
+ * */
+class TrTuple: public TrBase, public MDVarGet, public MDtGet<NTuple>
+{
+    public:
+	static const char* Type() { return "TrTuple";};
+	TrTuple(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From MNode
+	virtual MIface* MNode_getLif(const char *aType) override;
+	// From MDVarGet
+	virtual string MDVarGet_Uid() const override { return getUid<MDVarGet>();}
+	virtual MIface* DoGetDObj(const char *aName) override;
+	virtual string VarGetIfid() const override;
+	// From MDtGet
+	virtual void DtGet(NTuple& aData) override;
+    protected:
+	NTuple mRes;  /*<! Cached result */
+	const static string K_InpName;
+};
+
+
 
 
 /** @brief Agent functions "Mut composer" base

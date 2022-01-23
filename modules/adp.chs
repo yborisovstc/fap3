@@ -17,6 +17,7 @@ AdpComps : Elem {
         CompsCount : CpStateOutp;
         CompNames : CpStateOutp;
         Owner : CpStateOutp;
+        InpMut : CpStateInp;
     }
     ElemAdp : AdpBase
     {

@@ -172,7 +172,7 @@ void Ut_adp::test_MnodeAdp_3()
     MNode* adp = root->getNode("test.Controller.Adapter");
     CPPUNIT_ASSERT_MESSAGE("Fail to get adapter", adp);
 
-    bool res = mEnv->RunSystem(7);
+    bool res = mEnv->RunSystem(9);
 
     // Verify comps count
     MNode* cmpCount = root->getNode("test.Controller.Adapter.CompsCount");
@@ -185,7 +185,7 @@ void Ut_adp::test_MnodeAdp_3()
     Sdata<int> cmpCountSi = 0;
     cmpCountGsi->DtGet(cmpCountSi);
     int cc = cmpCountSi.mData;
-    CPPUNIT_ASSERT_MESSAGE("Incorrect CompsCount value", cc == 4);
+    CPPUNIT_ASSERT_MESSAGE("Incorrect CompsCount value", cc == 5);
 
     delete mEnv;
 }

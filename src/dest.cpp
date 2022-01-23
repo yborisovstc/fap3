@@ -1,6 +1,7 @@
 
 #include "dest.h"
 #include "syst.h"
+#include "data.h"
 
 
 TrBase::TrBase(const string &aType, const string& aName, MEnv* aEnv): CpStateOutp(aType, aName, aEnv)
@@ -511,6 +512,89 @@ string TrAtVar::GetInpUri(int aId) const
     else if (aId == Func::EInp1) return "Inp";
     else return string();
 }
+
+
+
+// Agent functions "Tuple composer"
+
+
+const string TrTuple::K_InpName = "Inp";
+
+TrTuple::TrTuple(const string& aType, const string& aName, MEnv* aEnv): TrBase(aType, aName, aEnv)
+{
+    AddInput(K_InpName);
+}
+
+MIface* TrTuple::MNode_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MDVarGet>(aType));
+    else res = TrBase::MNode_getLif(aType);
+    return res;
+}
+
+MIface* TrTuple::DoGetDObj(const char *aName)
+{
+    MIface* res = NULL;
+    if (strcmp(aName, MDtGet<NTuple>::Type()) == 0) {
+	res = dynamic_cast<MDtGet<NTuple>*>(this);
+    }
+    return res;
+}
+
+string TrTuple::VarGetIfid() const
+{
+    return MDtGet<NTuple>::Type();
+}
+
+// TODO The design is ugly and bulky. To redesing, ref ds_ibc_dgit 
+void TrTuple::DtGet(NTuple& aData)
+{
+    bool res = false;
+    MNode* tinp = getNode(K_InpName);
+    GetGData(tinp, aData);
+    auto compo = owner()->firstPair();
+    while (compo) {
+	MNode* compn = compo->provided()->lIf(compn);
+	assert(compn);
+	if (compn->name() != K_InpName) {
+	    MUnit* inpu = compn->lIf(inpu);
+	    MDVarGet* inpvg = inpu ? inpu->getSif(inpvg) : nullptr;
+	    if (inpvg) {
+		DtBase* elem = aData.GetElem(compn->name());
+		if (elem) {
+		    string dgtype = string("MDtGet_") + elem->GetTypeSig();
+		    MIface* inpdg = inpvg->DoGetDObj(dgtype.c_str());
+		    if (inpdg) {
+			HBase* inphb = dynamic_cast<HBase*>(inpdg);
+			if (inphb) {
+			    string values;
+			    inphb->ToString(values);
+			    elem->FromString(values);
+			}
+		    } else {
+			Log(TLog(EErr, this) + "Input [" + compn->name() + "] is incompatible with tuple component");
+		    }
+		} else {
+		    Log(TLog(EErr, this) + "No such component [" + compn->name() + "] of tuple");
+		}
+	    }
+	    /*
+	       string value;
+	       res = GetSData(compn, value);
+	       if (!res) {
+	       Log(TLog(EErr, this) + "Cannot get input data  [" + compn->name() + "]");
+	       }
+	       DtBase* elem = aData.GetElem(compn->name());
+	       elem->FromString(value);
+	       */
+	}
+	compo = owner()->nextPair(compo);
+    }
+    mRes = aData;
+}
+
+
 
 
 
