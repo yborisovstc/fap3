@@ -23,6 +23,7 @@ class DMut: public DtBase
 	virtual void DataToString(stringstream& aStream) const override;
 	virtual bool operator==(const MDtBase& b) override {
 	    return this->DtBase::operator==(b) && (mData == dynamic_cast<const DMut&>(b).mData);}
+	virtual bool operator!=(const MDtBase& b) override { return !DMut::operator==(b);}
 	//virtual bool IsCompatible(const DtBase& aSrc) override;
     public:
 	TMut mData;

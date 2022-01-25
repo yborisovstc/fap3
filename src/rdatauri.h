@@ -23,6 +23,7 @@ class DGuri: public DtBase
 	virtual void DataToString(stringstream& aStream) const override;
 	virtual bool operator==(const MDtBase& b) override {
 	    return this->DtBase::operator==(b) && (mData == dynamic_cast<const DGuri&>(b).mData);}
+	virtual bool operator!=(const MDtBase& b) override { return !DGuri::operator==(b);}
 	bool operator>(const DGuri& b) const { return mData > b.mData;};
 	bool operator>=(const DGuri& b) const { return mData >= b.mData;};
 	bool operator<(const DGuri& b) const { return mData < b.mData;};
