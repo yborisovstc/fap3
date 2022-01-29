@@ -29,6 +29,9 @@ class TrBase: public CpStateOutp
 	//virtual string reqName() const override;
     protected:
 	void AddInput(const string& aName);
+	virtual string GetInpUri(int aId) const = 0;
+	template<typename T> bool GetInpSdata(int aId, T& aRes);
+	template<typename T> bool GetInpData(int aId, T& aRes);
 };
 
 
@@ -52,7 +55,7 @@ class TrVar: public TrBase, public MDVarGet, public Func::Host
 	virtual MIfProv::TIfaces* GetInps(int aId, const string& aIfName, bool aOpt) override;
     protected:
 	virtual void Init(const string& aIfaceName);
-	virtual string GetInpUri(int aId) const;
+	virtual string GetInpUri(int aId) const override;
 	/** @brief Gets value of MDVarGet MDtGet input */
 	template<typename T> bool DtGetInp(T& aData, const string& aInpName);
 	/** @brief Gets value of MDVarGet MDtGet Sdata<T> input */
@@ -206,6 +209,8 @@ class TrTuple: public TrBase, public MDVarGet, public MDtGet<NTuple>
 	// From MDtGet
 	virtual void DtGet(NTuple& aData) override;
     protected:
+	virtual string GetInpUri(int aId) const override { return string();} 
+    protected:
 	NTuple mRes;  /*<! Cached result */
 	const static string K_InpName;
 };
@@ -220,7 +225,6 @@ class TrMut: public TrBase, public MDVarGet, public MDtGet<DMut>
     public:
 	static const char* Type() { return "TrMut";};
 	TrMut(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
-	template<typename T> bool GetInp(int aId, T& aRes);
 	virtual string GetInpUri(int aId) const = 0;
 	// From MNode
 	virtual MIface* MNode_getLif(const char *aType) override;
@@ -262,6 +266,32 @@ class TrMutConn: public TrMut
 	// From MDtGet
 	virtual void DtGet(DMut& aData) override;
 };
+
+
+/** @brief Agent function "Chromo composer"
+ * */
+class TrChr: public TrBase, public MDVarGet, public MDtGet<DChr2>
+{
+    public:
+	enum { EInpBase, EInpMut };
+    public:
+	static const char* Type() { return "TrChr";};
+	TrChr(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From MNode
+	virtual MIface* MNode_getLif(const char *aType) override;
+	// From MDVarGet
+	virtual string MDVarGet_Uid() const override { return getUid<MDVarGet>();}
+	virtual MIface* DoGetDObj(const char *aName) override;
+	virtual string VarGetIfid() const override;
+	// From MDtGet
+	virtual void DtGet(DChr2& aData) override;
+    protected:
+	// From TrBase
+	virtual string GetInpUri(int aId) const override;
+    protected:
+	DChr2 mRes;  /*<! Cached result */
+};
+
 
 
 

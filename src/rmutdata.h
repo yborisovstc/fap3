@@ -50,10 +50,38 @@ class DChr2: public DtBase
 	virtual void DataToString(stringstream& aStream) const override;
 	virtual bool operator==(const MDtBase& b) override {
 	    return this->DtBase::operator==(b) && (mData == dynamic_cast<const DChr2&>(b).mData);}
+	virtual bool operator!=(const MDtBase& b) override { return !DChr2::operator==(b);}
     public:
 	Chromo2 mData;
 };
 
+
+#if 0
+/** @brief Chromo segment data
+ * The segment combines with DMut
+ * */
+class DMutSeg : public DtBase
+{
+    public:
+	using TData = vector<TMut>;
+    public:
+	DMutSeg(): DtBase() {}
+	DMutSeg(const DMutSeg& aSrc): DtBase(aSrc), mData(aSrc.mData) {}
+	static const char* TypeSig();
+	static bool IsSrepFit(const string& aString);
+	static bool IsDataFit(const DMutSeg& aData);
+    public:
+	// From DtBase
+	virtual string GetTypeSig() const override { return TypeSig();};
+	virtual bool DataFromString(istringstream& aStream, bool& aRes) override;
+	virtual void DataToString(stringstream& aStream) const override;
+	virtual bool operator==(const MDtBase& b) override {
+	    return this->DtBase::operator==(b) && (mData == dynamic_cast<const DMutSeg&>(b).mData);}
+	virtual bool operator!=(const MDtBase& b) override { return !DMutSeg::operator==(b);}
+    public:
+	TData mData;
+};
+#endif
 
 #endif
 

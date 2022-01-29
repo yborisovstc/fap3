@@ -13,9 +13,10 @@ class Ut_adp : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_adp);
 
-    CPPUNIT_TEST(test_MnodeAdp_1);
-    CPPUNIT_TEST(test_MnodeAdp_2);
-    CPPUNIT_TEST(test_MnodeAdp_3);
+    //CPPUNIT_TEST(test_MnodeAdp_1);
+    //CPPUNIT_TEST(test_MnodeAdp_2);
+    //CPPUNIT_TEST(test_MnodeAdp_3);
+    CPPUNIT_TEST(test_AdpDcs_1);
     CPPUNIT_TEST_SUITE_END();
     public:
     virtual void setUp();
@@ -24,6 +25,7 @@ class Ut_adp : public CPPUNIT_NS::TestFixture
     void test_MnodeAdp_1();
     void test_MnodeAdp_2();
     void test_MnodeAdp_3();
+    void test_AdpDcs_1();
     private:
     Env* mEnv;
 };
@@ -189,3 +191,29 @@ void Ut_adp::test_MnodeAdp_3()
 
     delete mEnv;
 }
+
+/** @brief MNode DES adapter DCS test/example: ordering of agents
+ * */
+void Ut_adp::test_AdpDcs_1()
+{
+    printf("\n === DCS test/example: agents ordering \n");
+
+    const string specn("ut_adp_dcs_1");
+    string ext = "chs";
+    string spec = specn + string(".") + ext;
+    string log = specn + "_" + ext + ".log";
+    mEnv = new Env(spec, log);
+    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv != 0);
+    mEnv->ImpsMgr()->ResetImportsPaths();
+    mEnv->ImpsMgr()->AddImportsPaths("../modules");
+    mEnv->constructSystem();
+    MNode* root = mEnv->Root();
+    MElem* eroot = root ? root->lIf(eroot) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get root", root && eroot);
+
+    bool res = mEnv->RunSystem(9, 5);
+
+
+    delete mEnv;
+}
+

@@ -91,11 +91,18 @@
 		    <xref linkend="ds_daa"/> </para></glossdef>
 	</glossentry>
 
-	<glossentry id="gls_dce"><glossterm>DCE</glossterm> <acronym>DAA</acronym>
+	<glossentry id="gls_dce"><glossterm>DCE</glossterm> <acronym>DCE</acronym>
 	    <glossdef> <para>
 			Dedicated Content Element of native hier.  Approach of content support based on dedicated elements of native hier. Ref
 		    <xref linkend="ds_dce"/> for desing details </para></glossdef>
 	</glossentry>
+
+	<glossentry id="gls_dcs"><glossterm>DCS</glossterm> <acronym>DCS</acronym>
+	    <glossdef> <para>
+			DES Control of System, the mechanism of managing some subsystem by DES. 
+		    <xref linkend="ds_dcs"/> for desing details </para></glossdef>
+	</glossentry>
+
 
 	<glossentry id="gls_deds"><glossterm>DEDS</glossterm> <acronym>DEDS</acronym>
 	    <glossdef> <para>
@@ -305,7 +312,7 @@
 		</listitem>
 		<listitem>
 		    Redesign chromo to make it really copyable.
-		    <simpara>At lease one related use-case is MElem <xref linkend="gls_adp"/> that can mutate managed agent basing on the input
+		    <simpara>At least one related use-case is MElem <xref linkend="gls_adp"/> that can mutate managed agent basing on the input
 			receiveing chromo. Current chromo desing potentially allows copy (ref DChr2 data based state) but in rather messy way.
 			Ref <xref linkend="ds_mcrc"/>
 		    </simpara>
@@ -1420,6 +1427,62 @@
 		    Const_1 because "confirm" doesn't try to notify, the constant state is not updated actually - both updated and confirmed values are equal.</simpara>
 		<simpara>State (and const state also) notifies the inp observers on "value" content set, but the problem here is that at content set moment
 		    the Const_1 is not connected so IFR path isn't formed.</simpara>
+	    </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_dcs"><title>DES control of system (<xref linkend="gls_dcs"/>)</title>
+	<sect2 id="ds_dcs_itr"><title>Intro</title>
+	    <sect3 id="ds_dcs_itr_cs"><title>The current solution: mutation via DES adapter.</title>
+		<simpara>Currently (ca30980a3dae3) the controlling of system is used in some tests and apps - some subsystems are mutated by another subsystem via DES.
+		    The "naive" approach was used to implement such controlling: managed sybsystem is considered as DES (i.e. represents itself via "states" where the "states" are
+		    even native elements of subsystem, for instance its components), managing DES just gives controling data (mutation) to managed subsystem.</simpara>
+		<simpara>Even this schema looks reasonable it still causes the questions:</simpara>
+		<itemizedlist>
+		    <listitem><xref linkend="ds_dcs_itr_nrd"/></listitem>
+		    <listitem><xref linkend="ds_dcs_itr_sna"/></listitem>
+		    <listitem><xref linkend="ds_dcs_itr_sar"/></listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3 id="ds_dcs_itr_nrd"><title> Mutation as "controlling data" is not a regular DES data but an action.  </title>
+		<para>First of all its nature is impuls: controlling subsystem needs to remove the mutation data as soon as it is done. This is not something
+		    wrong, there are the models where "impulse" data is used sometimes, especially for representing "events" - mouse button press for instance.
+		    However this "events" approach causes a lot of inconvenieces. With it DES controlling looks like the typical computer program - just
+		    the sequence of the "commands".</para>
+		<para>Is this really the problem. From the first glance it is not. This seems almost same as simple incrementor - new incrementor status is the
+		    current status plus delta. In case of mutation the new controlled subsystem status is the current status (current structure) and the changed defined by
+		    the mutation.</para>
+	    </sect3>
+	    <sect3 id="ds_dcs_itr_sna"><title>Controlled subsystem is not activated on mutation</title>
+		<simpara>It was analogy to incrementor discussed in <xref linkend="ds_dcs_itr_nrd"/>. But there is the difference: controlled subsystem is not
+		    activated on the mutation.</simpara>
+	    </sect3>
+	    <sect3 id="ds_dcs_itr_sar"><title>Special adapter is required DES control a subsystem.</title>
+		<simpara>Using the adapter isn't convenient. Morover it is possible to "attach" more than one adapter to the subsystem. There aren't any policies to
+		   avoid the possible conflicts when some controlling subsustems try to control same controlled subsystem.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2><title>Using special layer for controlling systems.</title>
+	    <sect3><title>Intro</title>
+		<simpara>On initial times of DES desing there was the idea of how such systems can be controlled. The idea was that specific layer needs to be used.
+		    This layer represent underlying layer (controlled) as data. This means that controlling layer defines controlled layer via some data
+		    (it should be structured data and complex enough). In fact this data is the static description of the structure of the controlled layer.
+		    In contrast of chromosome this description doesn't specify the system in "dynamic" manner (i.e. via the chromo - spec of changes the sytem)
+		    but statically, as existed structure. There shall be the transitions that can manipulate with such definitions, for instance delete one 
+		    branch in sytem hierarchy etc.</simpara>
+	    </sect3>
+	    <sect3><title>This is just another form of the current solution</title>
+		<simpara>At the first look this seems same as <xref linkend="ds_dcs_itr_cs"/> but different form. With special layer the controlling subsytem
+		    updata is DES standard: the data (controlled system definition) is modifyed in the proper transition that the controlled system "apply" this
+		    data to it controlled model (i.e. changes the model). In DES adapter there is no explicit transition. Instead, the adapter performs "the transition" via
+		    direct changing (mutating) of the controlled system. The only diff is <xref linkend="ds_dcs_itr_sna"/> - this causes the different behaviour.
+		</simpara>
+	    </sect3>
+	</sect2>
+	<sect2><title>DCS example/test - ordering of agents.</title>
+	    <sect3><title>Intro</title>
+		<simpara>We need to create numberer of examples to discover the weaknesses of the current DCS approach and find the proper solutions. The first
+		    example is ordering of agents.</simpara>
 	    </sect3>
 	</sect2>
     </sect1>

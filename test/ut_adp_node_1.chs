@@ -31,6 +31,7 @@ testroot : Elem
                    Target3 < Cmp3_3 : Node;
                 }
                 AgentUri : Content { = "Targets.Target"; }
+                SelfAsMagBase = "y";
             }
             # "Components_count";
             CompCount : State {

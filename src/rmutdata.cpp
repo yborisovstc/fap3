@@ -68,3 +68,37 @@ void DChr2::DataToString(stringstream& aStream) const
     aStream << spec;
 }
 
+
+#if 0
+
+const char* DMutSeg::TypeSig() { return  "MSEG";};
+
+bool DMutSeg::IsSrepFit(const string& aString)
+{
+    return DtBase::IsSrepFit(aString, TypeSig());
+}
+
+bool DMutSeg::IsDataFit(const DMutSeg& aData)
+{
+    bool res = aData.mValid && aData.GetTypeSig() == TypeSig();
+    return res;
+}
+
+bool DMutSeg::DataFromString(istringstream& aStream, bool& aRes)
+{
+    // Not supported 
+    aRes = false;
+    return false;
+}
+
+void DMutSeg::DataToString(stringstream& aStream) const
+{
+    for (auto item : mData) {
+	aStream << item.ToString();
+	aStream << endl;
+    }
+}
+
+#endif
+
+

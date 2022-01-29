@@ -11,13 +11,14 @@
 // DES adapter base
 
 const string KCont_AgentUri = "AgentUri";
+const string KCont_SelfAsMagBase = "SelfAsMagBase";
 const string K_CpUriInpMagUri = "InpMagUri";
 const string K_CpUriInpMagBase = "InpMagBase";
 const string K_MagOwnerLinkUri = "MagOwnerLink";
 
 AAdp::AAdp(const string &aType, const string& aName, MEnv* aEnv): Unit(aType, aName, aEnv),
    mMagOwner(nullptr), mMag(NULL), mObrCp(this), mAgtCp(this), mUpdNotified(false), mActNotified(false),
-    mMagUriValid(false)
+    mMagUriValid(false), mSelfAsBase(false)
 {
 }
 
@@ -85,6 +86,11 @@ void AAdp::onObsContentChanged(MObservable* aObl, const MContent* aCont)
 	    string magUri;
 	    cow->getContent(KCont_AgentUri, magUri);
 	    bool sres = UpdateMag(magUri);
+	} else if (aCont == cow->getCont(KCont_SelfAsMagBase)) {
+	    string selfAsBase;
+	    cow->getContent(KCont_SelfAsMagBase, selfAsBase);
+	    mSelfAsBase= (selfAsBase == "y");
+	    UpdateMag();
 	}
     }
 }
@@ -98,6 +104,9 @@ void AAdp::onObsChanged(MObservable* aObl)
 	MLink* magolinkl = magolinkn->lIf(magolinkl);
 	MNode* magon = magolinkl->pair();
 	bool res = UpdateMagOwner(magon);
+	if (!res) {
+	    Log(TLog(EErr, this) + "Failed to set MAG base [" + magon->Uid() + "]");
+	}
     } else {
 	// Handling Mag base input change
 	// TODO this observing mechanism works just in some cases - when the connection
@@ -243,21 +252,39 @@ void AAdp::onInpUpdated()
 
 bool AAdp::UpdateMagOwner(MNode* aMagOwner)
 {
+    bool res = false;
     // TODO to implement all use-cases
     // Handle mount point specifically
     MMntp* momp = aMagOwner->lIf(momp);
-    mMagOwner = momp ? momp->root() : aMagOwner;
-    return true;
+    MNode* mowner = momp ? momp->root() : aMagOwner;
+    if (mMagOwner != mowner) {
+	mMagOwner = mowner;
+	UpdateMag();
+	res = true;
+    }
+    return res;
 }
 
 void AAdp::UpdateMag()
 {
+    bool res = false;
     MNode* inp = ahostGetNode(K_CpUriInpMagUri);
     if (inp) {
 	string magUri;
-	bool res = GetSData(inp, magUri);
+	res = GetSData(inp, magUri);
 	if (res) {
 	    UpdateMag(magUri);
+	}
+    }
+    if (!res) {
+	MNode* host = ahostNode();
+	MContentOwner* cow = host ? host->lIf(cow) : nullptr;
+	if (cow) {
+	    if (cow->getCont(KCont_AgentUri)) {
+		string magUri;
+		cow->getContent(KCont_AgentUri, magUri);
+		UpdateMag(magUri);
+	    }
 	}
     }
 }
@@ -268,10 +295,20 @@ bool AAdp::UpdateMag(const string& aMagUri)
     if (!mMagUriValid || aMagUri != mMagUri) {
 	mMagUri = aMagUri;
 	mMagUriValid = true;
-	MNode* mag = mMagOwner ? mMagOwner->getNode(mMagUri) : ahostGetNode(mMagUri);
+    }
+    if (mMagUriValid) {
+	MNode* mag = nullptr;
+	bool hasMagOwner = true;
+	if (mMagOwner) {
+	    mag = mMagOwner->getNode(mMagUri);
+	} else if (mSelfAsBase) {
+	    mag = ahostGetNode(mMagUri);
+	} else {
+	    hasMagOwner = false;
+	}
 	if (mag) {
 	    UpdateMag(mag);
-	} else {
+	} else if (hasMagOwner) {
 	    Logger()->Write(EErr, this, "Cannot find managed agent [%s]", mMagUri.c_str());
 	}
     }
@@ -281,17 +318,19 @@ bool AAdp::UpdateMag(const string& aMagUri)
 bool AAdp::UpdateMag(MNode* aMag)
 {
     bool res = false;
-    if (mMag) {
-	MObservable* prevmagob = mMag->lIf(prevmagob);
-	prevmagob->rmObserver(&mMagObs.mOcp);
+    if (mMag != aMag) {
+	if (mMag) {
+	    MObservable* prevmagob = mMag->lIf(prevmagob);
+	    prevmagob->rmObserver(&mMagObs.mOcp);
+	}
+	mMag = aMag;
+	res = true;
+	OnMagUpdated();
+	MObservable* magob = mMag->lIf(magob);
+	magob->addObserver(&mMagObs.mOcp);
+	NotifyInpsUpdated();
+	Log(TLog(EInfo, this) + "Managed agent attached [" + mMag->Uid() + "]");
     }
-    mMag = aMag;
-    res = true;
-    OnMagUpdated();
-    MObservable* magob = mMag->lIf(magob);
-    magob->addObserver(&mMagObs.mOcp);
-    NotifyInpsUpdated();
-    Logger()->Write(EInfo, this, "Managed agent attached [%s]", mMagUri.c_str());
     return res;
 }
 
@@ -316,7 +355,6 @@ bool AAdp::ApplyMagBase()
     }
     return res;
 }
-
 
 void AAdp::OnInpMagUri()
 {

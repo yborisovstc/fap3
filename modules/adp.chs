@@ -2,7 +2,8 @@ AdpComps : Elem {
     # "DES adapter module";
     About : Content { = "Agents DES adaptor module"; }
     AdpBase : Syst {
-        # "Content AgentUri accepted";
+        # "Content AgentUri - Managed agent URI ()";
+        # "Content SelfAsMagBase - set self as managed agent base";
         InpMagUri : CpStateInp;
         # "Link to the node owning managed agents";
         MagOwnerLink : Link;

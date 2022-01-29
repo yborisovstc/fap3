@@ -51,6 +51,19 @@ MyRoot : Elem {
                     value ~ : State { = "SI 24"; };
                 };
             }
+            # "Chrom composer";
+            ChromoRes : State @ {
+                _@ < {
+                    = "CHR2 : Node";
+                    Debug.LogLevel = "Dbg";
+                }
+                Inp ~ : TrChr @ {
+                    Mut ~ : TrMutNode @ {
+                       Parent ~ : State { = "SS Node"; }; 
+                       Name ~ : State { = "SS Test_Node"; }; 
+                    };
+                };
+            }
         }
     }
 }

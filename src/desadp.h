@@ -186,6 +186,7 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 	TAgtCp mAgtCp;                   /*!< Agent connpoint */
 	bool mUpdNotified;  //<! Sign of that State notified observers on Update
 	bool mActNotified;  //<! Sign of that State notified observers on Activation
+	bool mSelfAsBase;  //<! Sign of that host is acts as MAG base
 };
 
 // Access point, using Sdata

@@ -77,6 +77,32 @@ void TrBase::AddInput(const string& aName)
     assert(res);
 }
 
+template<typename T> bool TrBase::GetInpSdata(int aId, T& aRes)
+{
+    bool res = false;
+    MNode* inp = getNode(GetInpUri(aId));
+    if (inp) {
+	res =  GetSData(inp, aRes);
+    } else {
+	Logger()->Write(EErr, this, "Cannot get input [%s]", GetInpUri(aId).c_str());
+    }
+    return res;
+}
+
+template<typename T> bool TrBase::GetInpData(int aId, T& aRes)
+{
+    bool res = false;
+    MNode* inp = getNode(GetInpUri(aId));
+    if (inp) {
+	res =  GetGData(inp, aRes);
+    } else {
+	Logger()->Write(EErr, this, "Cannot get input [%s]", GetInpUri(aId).c_str());
+    }
+    return res;
+}
+
+
+
 
 
 
@@ -630,19 +656,6 @@ string TrMut::VarGetIfid() const
     return MDtGet<DMut>::Type();
 }
 
-template<typename T> bool TrMut::GetInp(int aId, T& aRes)
-{
-    bool res = false;
-    MNode* inp = getNode(GetInpUri(aId));
-    if (inp) {
-	res =  GetSData(inp, aRes);
-    } else {
-	Logger()->Write(EErr, this, "Cannot get input [%s]", GetInpUri(aId).c_str());
-    }
-    return res;
-}
-
-
 
 
 // Agent function "Mut Node composer"
@@ -664,10 +677,10 @@ void TrMutNode::DtGet(DMut& aData)
 {
     bool res = false;
     string name;
-    res = GetInp(EInpName, name);
+    res = GetInpSdata(EInpName, name);
     if (res) {
 	string parent;
-	res = GetInp(EInpParent, parent);
+	res = GetInpSdata(EInpParent, parent);
 	if (res) {
 	    aData.mData = TMut(ENt_Node, ENa_Parent, parent, ENa_Id, name);
 	    aData.mValid = true;
@@ -700,16 +713,70 @@ void TrMutConn::DtGet(DMut& aData)
 {
     bool res = false;
     string cp1;
-    res = GetInp(EInpCp1, cp1);
+    res = GetInpSdata(EInpCp1, cp1);
     if (res) {
 	string cp2;
-	res = GetInp(EInpCp2, cp2);
+	res = GetInpSdata(EInpCp2, cp2);
 	if (res) {
 	    aData.mData = TMut(ENt_Conn, ENa_P, cp1, ENa_Q, cp2);
 	    aData.mValid = true;
 	} else {
 	    aData.mValid = false;
 	}
+    } else {
+	aData.mValid = false;
+    }
+    mRes = aData;
+}
+
+
+
+// Agent function "Chromo2 composer"
+
+TrChr::TrChr(const string& aType, const string& aName, MEnv* aEnv): TrBase(aType, aName, aEnv)
+{
+    AddInput(GetInpUri(EInpBase));
+    AddInput(GetInpUri(EInpMut));
+}
+
+MIface* TrChr::MNode_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MDVarGet>(aType));
+    else res = TrBase::MNode_getLif(aType);
+    return res;
+}
+
+string TrChr::GetInpUri(int aId) const
+{
+    if (aId == EInpBase) return "Base";
+    else if (aId == EInpMut) return "Mut";
+    else return string();
+}
+
+MIface* TrChr::DoGetDObj(const char *aName)
+{
+    MIface* res = NULL;
+    if (strcmp(aName, MDtGet<DChr2>::Type()) == 0) {
+	res = dynamic_cast<MDtGet<DChr2>*>(this);
+    }
+    return res;
+}
+
+string TrChr::VarGetIfid() const
+{
+    return MDtGet<DChr2>::Type();
+}
+
+void TrChr::DtGet(DChr2& aData)
+{
+    bool res = false;
+    res = GetInpData(EInpBase, aData);
+    DMut mut;
+    res = GetInpData(EInpMut, mut);
+    if (res) {
+	aData.mData.Root().AddChild(mut.mData);
+	aData.mValid = true;
     } else {
 	aData.mValid = false;
     }

@@ -696,7 +696,10 @@ void Chromo2Mdl::DumpToLog(const THandle& aNode, MLogRec* aLogRec)
 
 bool Chromo2Mdl::ToString(const THandle& aNode, string& aString) const
 {
-    assert(false);
+    ostringstream os;
+    OutputNode(mRoot, os, 0, K_Indent);
+    aString = os.str();
+    return true;
 }
 
 void Chromo2Mdl::Save(const string& aFileName, int aIndent) const
@@ -785,8 +788,12 @@ THandle Chromo2Mdl::SetFromSpec(const string& aSpec)
 THandle Chromo2Mdl::Set(const THandle& aHandle)
 {
     C2MdlNode* node = aHandle.Data(node);
-    mRoot.CloneFrom(*node, true);
-    mRoot.BindTree(NULL);
+    if (node) {
+	mRoot.CloneFrom(*node, true);
+	mRoot.BindTree(NULL);
+    } else {
+	mRoot = C2MdlNode();
+    }
     return &mRoot;
 }
 

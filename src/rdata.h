@@ -29,6 +29,7 @@ class MDtBase
     public:
 	virtual string GetTypeSig() const { return "?";}
 	virtual void DataToString(stringstream& aStream) const {aStream << "?";}
+	// TODO to swap aRes and return data (sign of change)
 	virtual bool DataFromString(istringstream& aStream, bool& aRes) { return false;}
 	virtual bool IsCompatible(const MDtBase& b) {return true;}
     public:

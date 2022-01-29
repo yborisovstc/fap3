@@ -40,7 +40,7 @@ const ProvDef::TFReg ProvDef::mReg ( {
 	Item<CpStateMnodeInp>(),  Item<CpStateMnodeOutp>(),
 	Item<DesLauncher>(), Item<Sout>(), Item<ADes>(), Item<Socket>(), Item<TrMaxVar>(), Item<TrSwitchBool>(), Item<TrCmpVar>(),
 	Item<TrAndVar>(), Item<TrNegVar>(), Item<TrUri>(), Item<TrMutNode>(), Item<TrMutConn>(), Item<TrSizeVar>(), Item<TrAtVar>(),
-	Item<TrTuple>(), 
+	Item<TrTuple>(), Item<TrChr>(), 
 	Item<AMnodeAdp>(), Item<AMelemAdp>(), Item<AMntp>(),
 	});
 
