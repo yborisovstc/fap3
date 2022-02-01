@@ -272,9 +272,6 @@ ChromoNode::ChromoNode(const ChromoNode& aNode): iMdl(aNode.iMdl), iHandle(aNode
 
 ChromoNode& ChromoNode::operator=(const ChromoNode& aNode)
 {
-    // TODO [YB] Wrong to assign model because its base is not assignable (Base). To redesign.
-//    iMdl = aNode.iMdl; iHandle = aNode.iHandle;
-    assert(&iMdl == NULL || &iMdl == &aNode.iMdl);
     iMdl = aNode.iMdl;
     iHandle = aNode.iHandle;
     return *this;
@@ -292,7 +289,7 @@ bool ChromoNode::operator==(const ChromoNode& aNode) const
 
 const string ChromoNode::Attr(TNodeAttr aAttr)
 {
-    return  iMdl.GetAttr(iHandle, aAttr); 
+    return  iMdl->GetAttr(iHandle, aAttr);
     /*
     string res; 
     if (sattr != NULL)
@@ -304,7 +301,7 @@ const string ChromoNode::Attr(TNodeAttr aAttr)
 
 const string ChromoNode::Attr(TNodeAttr aAttr) const
 {
-    return iMdl.GetAttr(iHandle, aAttr); 
+    return iMdl->GetAttr(iHandle, aAttr);
     /*
     string res; 
     if (sattr != NULL)
@@ -336,25 +333,25 @@ string ChromoNode::GetName(const string& aTname)
 
 ChromoNode::Iterator ChromoNode::Parent()
 {
-    THandle parent = iMdl.Parent(iHandle);
+    THandle parent = iMdl->Parent(iHandle);
     return  (parent == THandle()) ?  End() : Iterator(ChromoNode(iMdl, parent));
 }
 
 ChromoNode::Iterator ChromoNode::Root()
 {
-    THandle root = iMdl.Root(iHandle);
+    THandle root = iMdl->Root(iHandle);
     return  (root == THandle()) ?  End() : Iterator(ChromoNode(iMdl, root));
 }
 
 ChromoNode::Const_Iterator ChromoNode::Root() const 
 {
-    THandle root = iMdl.Root(iHandle);
+    THandle root = iMdl->Root(iHandle);
     return  (root == THandle()) ?  End() : Const_Iterator(ChromoNode(iMdl, root));
 }
 
 ChromoNode::Const_Iterator ChromoNode::Parent() const
 {
-    THandle parent = iMdl.Parent(iHandle);
+    THandle parent = iMdl->Parent(iHandle);
     return  (parent == THandle()) ?  End() : Const_Iterator(ChromoNode(iMdl, parent));
 }
 
@@ -446,12 +443,12 @@ int ChromoNode::Count() const
 
 ChromoNode ChromoNode::AddChild(TNodeType aType) 
 { 
-    return ChromoNode(iMdl, iMdl.AddChild(iHandle, aType)); 
+    return ChromoNode(iMdl, iMdl->AddChild(iHandle, aType));
 }
 
 ChromoNode ChromoNode::AddChild(const TMut& aMut)
 {
-    ChromoNode mut(iMdl, iMdl.AddChild(iHandle, aMut.Type()));
+    ChromoNode mut(iMdl, iMdl->AddChild(iHandle, aMut.Type()));
     for (TMut::TAttrs::const_iterator it = aMut.Attrs().begin(); it != aMut.Attrs().end(); it++) {
 	mut.SetAttr(it->first, it->second);
     }
@@ -460,7 +457,7 @@ ChromoNode ChromoNode::AddChild(const TMut& aMut)
 
 ChromoNode ChromoNode::AddChild(const ChromoNode& aNode, bool aCopy, bool aRecursively) 
 { 
-    return ChromoNode(iMdl, iMdl.AddChild(iHandle, aNode.Handle(), aCopy, aRecursively)); 
+    return ChromoNode(iMdl, iMdl->AddChild(iHandle, aNode.Handle(), aCopy, aRecursively));
 }
 
 ChromoNode::Iterator ChromoNode::GetChildOwning(const ChromoNode& aNode) const
@@ -533,9 +530,9 @@ ChromoNode::operator string() const
     return res;
 }
 
-void ChromoNode::Dump() const { iMdl.Dump(iHandle);}
+void ChromoNode::Dump() const { iMdl->Dump(iHandle);}
 
-void ChromoNode::DumpBackTree() const { iMdl.DumpBackTree(iHandle);}
+void ChromoNode::DumpBackTree() const { iMdl->DumpBackTree(iHandle);}
 
 void ChromoNode::GetTarget(GUri& aTargUri, const ChromoNode& aBase) const
 {

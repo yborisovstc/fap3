@@ -338,6 +338,7 @@
 		</listitem>
 		<listitem>Implement <xref linkend="gls_ddmc"/>, ref <xref linkend="ds_ddmc"/></listitem>
 		<listitem>Improve means of debugging, ref <xref linkend="ds_dbg"/></listitem>
+		<listitem>Keep consistent tree-ish chromo on run-time. Ref <xref linkend="ds_tch"/></listitem>
 	    </itemizedlist>
 	</sect2>
 	<sect2 id="ds_itr_dp"><title>Dependent projects</title>
@@ -1086,7 +1087,7 @@
 		    </simpara>
 		</sect4>
 		<sect4><title>Status</title>
-		    <simpara>Implemented over 187c6f05d35.</simpara>
+		    <simpara>Implemented over eed4231d23f6.</simpara>
 		</sect4>
 	    </sect3>
 	</sect2>
@@ -1373,7 +1374,52 @@
     <sect1 id="ds_mdc"><title>Modify DES cycle to avoid polling the comps but keep the lists of active/updated in owner.</title>
     </sect1>
 
-    <sect1 id="ds_mcrc"><title>Redesign chromo to make it really copyable.</title>
+    <sect1 id="ds_mcrc"><title>[DS_MCRC] Redesign chromo to make it really copyable.</title>
+	<sect2><title>Intro</title>
+	    <simpara>Let's apply the simplest solution. We just need to update ChromoNode to be copiable - just replace ref to model by 
+		ptr to model. Also a number of small updates of chromo2 is needed.</simpara>
+	</sect2>
+	<sect2><title>Status</title>
+	    <simpara>Implemented in next of 0297b38cfca8.</simpara>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_tch"><title>Keep consistent tree-ish chromo on run-time.</title>
+	<sect2><title>Intro</title>
+	    <simpara>Currently (0297b38cfca8) the chromo of created model differs from the original chromo - the resulted chromo
+		is not same fully tree-ish as the original chromo. For instance the mutation. Ref ut_des_dmc_1.chs as example.
+		Input chromo:</simpara>
+	    <programlisting>
+		|  St1.Inp ~ : TrAddVar @ {
+		|      _@ &lt; Debug.LogLevel = "Dbg";
+	    </programlisting>
+	    <simpara>Resulted chromo (ut_des_dmc_1_saved.chs):</simpara>
+	    <programlisting>
+		|  TrAddVar_279 : TrAddVar;
+		|  TrAddVar_279 @ {
+		|      _@ &lt; Debug.LogLevel = "Dbg";
+	    </programlisting>
+	    <simpara>Actually there are two problems here:</simpara>
+	    <itemizedlist>
+		<listitem>
+			#1 Input tree-ish chromo is parsed into non-treish chromo2. Chromo2 model is not tree-ish.
+		    <para>Ref <xref linkend="ds_tch_c2nt"/> for analysis</para>
+		</listitem>
+		<listitem>#2 Tree-ish chromo is not suitable for simple <xref linkend="gls_osm"/> mutation scheme.</listitem>
+	    </itemizedlist>
+	</sect2>
+	<sect2 id="ds_tch_c2nt"><title>Input tree-ish chromo is parsed into non-treish chromo2. Chromo2 model is not tree-ish.</title>
+	    <sect3><title>In chromo2 the dependencies are resolved.</title>
+		<simpara>The tree-ish structure of input chromo is caused by the dependencies within the chromo. The main
+		    dependency is on the node that shall be created by some mutation. In the example above this node is
+		    anonymous node TrAddVar_279.</simpara>
+		<simpara>Currenly this dependency is resolved on chromo parsing phase, so the node creaton mutation is "extracted"
+		    from the tree and node name is use for dependency resolution. This allows to keep the current "linear"
+		    sequence of mutation: one by one.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_tch_c2t"><title>Approach: make chromo2 model fully tre-ish, remove ChromoNode wrapper and used chromo2 directly</title>
+	</sect2>
     </sect1>
 
     <sect1 id="ds_ams"><title>Agents mechanism support</title>

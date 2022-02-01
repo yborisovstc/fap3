@@ -54,7 +54,7 @@ MyRoot : Elem {
             # "Chrom composer";
             ChromoRes : State @ {
                 _@ < {
-                    = "CHR2 : Node";
+                    = "CHR2 Root : Node { }";
                     Debug.LogLevel = "Dbg";
                 }
                 Inp ~ : TrChr @ {

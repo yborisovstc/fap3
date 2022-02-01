@@ -119,6 +119,8 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
 	virtual void update() override;
 	virtual void confirm() override;
+	virtual void setUpdated() override;
+	virtual void setActivated() override;
 	// From MDesInpObserver
 	virtual string MDesInpObserver_Uid() const {return getUid<MDesInpObserver>();}
 	virtual void MDesInpObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
@@ -157,8 +159,6 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 	virtual void onConnected() override;
 	virtual void onDisconnected() override;
 	// Local
-	void setUpdated();
-	void setActivated();
 	void refreshInpObsIfr();
     protected:
 	BdVar* mPdata;   //<! Preparing (updating) phase data
@@ -189,6 +189,8 @@ class Des: public Syst, public MDesSyncable, public MDesObserver
 	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	virtual void update() override;
 	virtual void confirm() override;
+	virtual void setUpdated() override;
+	virtual void setActivated() override;
 	// From MDesObserver
 	virtual string MDesObserver_Uid() const override {return getUid<MDesObserver>();}
 	virtual void MDesObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override;
@@ -226,6 +228,8 @@ class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver
 	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	virtual void update() override;
 	virtual void confirm() override;
+	virtual void setUpdated() override;
+	virtual void setActivated() override;
 	// From MDesObserver
 	virtual string MDesObserver_Uid() const override {return getUid<MDesObserver>();}
 	virtual void onActivated(MDesSyncable* aComp) override;

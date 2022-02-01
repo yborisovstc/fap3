@@ -60,14 +60,8 @@ class MDesSyncable: public MIface
 	// Local
 	virtual void update() = 0;
 	virtual void confirm() = 0;
-	/*
-	virtual bool isUpdated() const = 0;
 	virtual void setUpdated() = 0;
-	virtual void resetUpdated() = 0;
-	virtual bool isActive() const = 0;
-	virtual void setActive() = 0;
-	virtual void resetActive() = 0;
-	*/
+	virtual void setActivated() = 0;
 };
 
 

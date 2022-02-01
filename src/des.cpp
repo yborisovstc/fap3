@@ -373,7 +373,7 @@ bool State::SContValue::setData(const string& aData)
 	    mHost.NotifyInpsUpdated();
 	}
     }  else {
-	mHost.Log(TLog(EErr, &mHost) + "Error on applying content [" + mName + "]");
+	mHost.Log(TLog(EErr, &mHost) + "Error on applying content [" + mName + "] value [" + aData + "]");
 	res = mHost.mPdata->FromString(aData);
     }
     return res;
@@ -448,15 +448,34 @@ void Des::confirm()
     }
 }
 
-void Des::onActivated(MDesSyncable* aComp)
+void Des::setUpdated()
 {
-    if (!mActNotified) { // Notify owner
-	MDesObserver* obs = Owner() ? Owner()->lIf(obs) : nullptr;
+    if (!mUpdNotified) {
+	MUnit* ownu = Owner() ? Owner()->lIf(ownu) : nullptr;
+	MDesObserver* obs = ownu ? ownu->getSif(obs) : nullptr;
+	if (obs) {
+	    obs->onUpdated(this);
+	    mUpdNotified = true;
+	}
+    }
+}
+
+void Des::setActivated()
+{
+    if (!mActNotified) {
+	// Propagate activation to owner
+	MUnit* ownu = Owner() ? Owner()->lIf(ownu) : nullptr;
+	MDesObserver* obs = ownu ? ownu->getSif(obs) : nullptr;
 	if (obs) {
 	    obs->onActivated(this);
 	    mActNotified = true;
 	}
     }
+}
+
+void Des::onActivated(MDesSyncable* aComp)
+{
+    setActivated();
     if (aComp) {
 	mActive.push_back(aComp);
     }
@@ -464,13 +483,7 @@ void Des::onActivated(MDesSyncable* aComp)
 
 void Des::onUpdated(MDesSyncable* aComp)
 {
-    if (!mUpdNotified) { // Notify owner
-	MDesObserver* obs = Owner() ? Owner()->lIf(obs) : nullptr;
-	if (obs) {
-	    obs->onUpdated(this);
-	    mUpdNotified = true;
-	}
-    }
+    setUpdated();
     if (aComp) {
 	mUpdated.push_back(aComp);
     }
@@ -481,7 +494,7 @@ void Des::onOwnedAttached(MOwned* aOwned)
     MUnit* osu = aOwned->lIf(osu);
     MDesSyncable* os = osu ? osu->getSif(os) : nullptr;
     if (os) {
-	mActive.push_back(os);
+	os->setActivated();
     }
 }
 
@@ -598,21 +611,7 @@ MDesObserver* ADes::getDesObs()
     return obs;
 }
 
-void ADes::onActivated(MDesSyncable* aComp)
-{
-    if (!mActNotified) { // Notify owner
-	MDesObserver* obs = getDesObs();
-	if (obs) {
-	    obs->onActivated(this);
-	    mActNotified = true;
-	}
-    }
-    if (aComp) {
-	mActive.push_back(aComp);
-    }
-}
-
-void ADes::onUpdated(MDesSyncable* aComp)
+void ADes::setUpdated()
 {
     if (!mUpdNotified) { // Notify owner
 	MDesObserver* obs = getDesObs();
@@ -621,6 +620,30 @@ void ADes::onUpdated(MDesSyncable* aComp)
 	    mUpdNotified = true;
 	}
     }
+}
+
+void ADes::setActivated()
+{
+    if (!mActNotified) { // Notify owner
+	MDesObserver* obs = getDesObs();
+	if (obs) {
+	    obs->onActivated(this);
+	    mActNotified = true;
+	}
+    }
+}
+
+void ADes::onActivated(MDesSyncable* aComp)
+{
+    setActivated();
+    if (aComp) {
+	mActive.push_back(aComp);
+    }
+}
+
+void ADes::onUpdated(MDesSyncable* aComp)
+{
+    setUpdated();
     if (aComp) {
 	mUpdated.push_back(aComp);
     }

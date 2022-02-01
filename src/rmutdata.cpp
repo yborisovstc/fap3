@@ -51,6 +51,7 @@ bool DChr2::IsDataFit(const DChr2& aData)
 bool DChr2::DataFromString(istringstream& aStream, bool& aRes)
 {
     bool changed = true;
+    mData.Reset();
     mData.SetFromSpec(aStream.str());
     aRes = !mData.IsError();
     if (aRes) {

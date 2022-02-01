@@ -163,6 +163,12 @@ C2MdlCtxNode::C2MdlCtxNode(const string& aType, const string& aValue): mType(aTy
 */
 
 
+bool C2Mut::operator==(const C2Mut& b) const
+{
+    return mP == b.mP && mQ == b.mQ && mR == b.mR;
+}
+
+
 
 C2MdlNode::C2MdlNode(): mOwner(NULL), mQnode(NULL), mChromoPos(-1)
 {
@@ -191,12 +197,10 @@ C2MdlNode::C2MdlNode(const C2MdlNode& aSrc, C2MdlNode* aOwner): mOwner(aOwner), 
 
 C2MdlNode::~C2MdlNode()
 {
-    /*
     if (mQnode) {
 	delete mQnode;
-	mQnode = NULL;
+	mQnode = nullptr;
     }
-    */
 }
 
 void C2MdlNode::CloneFrom(const C2MdlNode& aSrc, bool aChromo)
@@ -283,6 +287,32 @@ bool C2MdlNode::IsChildOf(const C2MdlNode* aParent) const
     }
     return (parent == aParent);
 }
+
+void C2MdlNode::Reset()
+{
+    if (mQnode) {
+	delete mQnode;
+	mQnode = nullptr;
+    }
+    mContext.clear();
+    mMut = C2Mut();
+    mChromo.clear();
+    mChromoPos = -1;
+}
+
+bool C2MdlNode::operator==(const C2MdlNode& b) const
+{
+    bool res = (mMut == b.mMut);
+    if (res) {
+	res = (mChromo == b.mChromo);
+    }
+    if (res) {
+	res = (!mQnode && !b.mQnode) || (mQnode && b.mQnode && mQnode == b.mQnode);
+    }
+    return res;
+}
+
+
 
 // **** Chromo2Mdl *****
 
@@ -805,7 +835,8 @@ THandle Chromo2Mdl::Init(TNodeType aRootType)
 
 void Chromo2Mdl::Reset()
 {
-    assert(false);
+    mRoot.Reset();
+    ResetErr();
 }
 
 static void DumpIs(istream& aIs, streampos aStart, streampos aEnd)
@@ -1239,21 +1270,26 @@ bool Chromo2Mdl::rdp_segment(istream& aIs, C2MdlNode& aMnode)
     if (c == KT_ChromoStart) {
 	rdp_sep(aIs);
 	if (!IsError()) {
-	    res = rdp_chromo_node(aIs, aMnode);
-	    if (!IsError()) {
-		do {
-		    rdp_sep(aIs);
-		    if (!IsError()) {
-			c = aIs.get();
-			if (c == KT_ChromoEnd) {
-			} else {
-			    aIs.seekg(-1, aIs.cur);
-			    rdp_chromo_node(aIs, aMnode);
-			    if (!IsError()) {
+	    pos = aIs.tellg();
+	    c = aIs.get();
+	    if (c != KT_ChromoEnd) {
+		aIs.seekg(pos, aIs.beg); // Backtrack
+		res = rdp_chromo_node(aIs, aMnode);
+		if (!IsError()) {
+		    do {
+			rdp_sep(aIs);
+			if (!IsError()) {
+			    c = aIs.get();
+			    if (c == KT_ChromoEnd) {
+			    } else {
+				aIs.seekg(-1, aIs.cur);
+				rdp_chromo_node(aIs, aMnode);
+				if (!IsError()) {
+				}
 			    }
 			}
-		    }
-		} while (!IsError() && c != KT_ChromoEnd);
+		    } while (!IsError() && c != KT_ChromoEnd);
+		}
 	    }
 	}
     } else {
@@ -1736,10 +1772,12 @@ void Chromo2Mdl::rdp_sep(istream& aIs)
     }
 }
 
-bool Chromo2Mdl::operator==(const Chromo2Mdl& b)
+bool Chromo2Mdl::operator==(const Chromo2Mdl& b) const
 {
-    // TODO to implement
     bool res = !mErr.IsSet() && !b.mErr.IsSet();
+    if (res) {
+	res = (mRoot == b.mRoot);
+    }
     return res;
 }
 
@@ -1749,7 +1787,7 @@ bool Chromo2Mdl::operator==(const Chromo2Mdl& b)
 
 
 
-Chromo2::Chromo2(): mRootNode(mMdl, THandle())
+Chromo2::Chromo2(): mRootNode(&mMdl, THandle())
 {
 }
 
@@ -1762,7 +1800,7 @@ void Chromo2::SetFromFile(const string& aFileName)
 {
     THandle root = mMdl.SetFromFile(aFileName);
     C2MdlNode* nroot = root.Data(nroot);
-    mRootNode = ChromoNode(mMdl, root);
+    mRootNode = ChromoNode(&mMdl, root);
 }
 
 bool Chromo2::Set(const string& aUri)
@@ -1770,7 +1808,7 @@ bool Chromo2::Set(const string& aUri)
     bool res = false;
     THandle root = mMdl.Set(aUri);
     if (root != NULL) {
-	mRootNode = ChromoNode(mMdl, root);
+	mRootNode = ChromoNode(&mMdl, root);
 	res = true;
     }
     return res;
@@ -1790,7 +1828,7 @@ bool Chromo2::SetFromSpec(const string& aSpec)
     }
     THandle root = mMdl.SetFromSpec(aSpec);
     if (root != NULL) {
-	mRootNode = ChromoNode(mMdl, root);
+	mRootNode = ChromoNode(&mMdl, root);
 	res = true;
     }
     return res;
@@ -1800,7 +1838,7 @@ bool Chromo2::SetFromSpec(const string& aSpec)
 void Chromo2::Set(const ChromoNode& aRoot)
 {
     THandle root = mMdl.Set(aRoot.Handle());
-    mRootNode = ChromoNode(mMdl, root);
+    mRootNode = ChromoNode(&mMdl, root);
     //int cnt = mRootNode.Count();
     //cout << cnt << endl;
 }
@@ -1827,7 +1865,7 @@ void Chromo2::Reset()
 void Chromo2::Init(TNodeType aRootType)
 {
     THandle root = mMdl.Init(aRootType);
-    mRootNode = ChromoNode(mMdl, root);
+    mRootNode = ChromoNode(&mMdl, root);
 }
 
 void Chromo2::Save(const string& aFileName, int aIndent) const
@@ -1841,7 +1879,7 @@ void Chromo2::Save(const string& aFileName, int aIndent) const
 
 ChromoNode Chromo2::CreateNode(const THandle& aHandle)
 {
-    return ChromoNode(mMdl, aHandle);
+    return ChromoNode(&mMdl, aHandle);
 }
 
 void Chromo2::ReduceToSelection(const ChromoNode& aSelNode)
@@ -2108,7 +2146,7 @@ void Chromo2::TransfTlNode(ChromoNode& aDst, const ChromoNode& aSrc, bool aTarg)
     }
 }
 
-bool Chromo2::operator==(const Chromo2& b)
+bool Chromo2::operator==(const Chromo2& b) const
 {
     return mMdl == b.mMdl;
 }

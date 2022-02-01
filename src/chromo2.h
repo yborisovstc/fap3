@@ -17,6 +17,7 @@ class C2Mut
     public:
 	C2Mut() {}
 	C2Mut(const C2Mut& aSrc): mP(aSrc.mP), mQ(aSrc.mQ), mR(aSrc.mR) {}
+	bool operator==(const C2Mut& b) const;
     public:
 	string mP; /*!< P object */
 	string mQ; /*!< Q object */
@@ -71,10 +72,13 @@ class C2MdlNode
 	C2MdlNode* GetPrevComp(C2MdlNode* aComp);
 	void BindTree(C2MdlNode* aOwner);
 	bool ExistsContextByAttr(TNodeAttr aAttr);
+	bool operator==(const C2MdlNode& b) const;
 	/** @brief Adds Qnode (DMC dependency) */
 	void AddQnode(const C2MdlNode& aNode);
 	/** @brief Checks if the node is a parent */ 
 	bool IsChildOf(const C2MdlNode* aParent) const;
+	/** @brief Resets the node */
+	void Reset();
     public:
 	C2MdlNode* mOwner = NULL;
 	TC2MdlCtx mContext;       /*!< Context */
@@ -155,7 +159,7 @@ class Chromo2Mdl: public MChromoMdl
 	virtual THandle Init(TNodeType aRootType);
 	void Reset();
 	const CError& Error() const { return mErr;};
-	bool operator==(const Chromo2Mdl& b);
+	bool operator==(const Chromo2Mdl& b) const;
     protected:
 	/** Recursive descent parser: parse name
 	 * */
@@ -250,7 +254,7 @@ class Chromo2: public MChromo
 	virtual void ReduceToSelection(const ChromoNode& aSelNode);
 	virtual bool IsError() const;
 	virtual const CError& Error() const;
-	bool operator==(const Chromo2& b);
+	bool operator==(const Chromo2& b) const;
     protected:
 	void ConvertNode(ChromoNode& aDst, const ChromoNode& aSrc);
 	void TransfTlNode(ChromoNode& aDst, const ChromoNode& aSrc, bool aTarg);

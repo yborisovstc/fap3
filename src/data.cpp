@@ -6,6 +6,7 @@
 #include "data.h"
 #include "vert.h"
 #include "rmutdata.h"
+#include "rdatauri.h"
 
 
 // Matrix
@@ -241,6 +242,7 @@ bool BdVar::Init(const string& aString, MDVarGet* aInpv)
     else if ((mData = HDt<DMut>::Create(this, aString, aInpv)) != NULL);
     else if ((mData = HDt<DChr2>::Create(this, aString, aInpv)) != NULL);
     else if ((mData = HDt<Vector<string>>::Create(this, aString, aInpv)) != NULL);
+    else if ((mData = HDt<DGuri>::Create(this, aString, aInpv)) != NULL);
     /* Seems it is not required, Value init should be done on creation phase
        if (mData != NULL && !aString.empty()) {
        res = mData->FromString(aString);
