@@ -233,6 +233,7 @@ class AMnodeAdp : public AAdp
 	void GetCompsCount(Sdata<int>& aData);
 	void GetCompNames(TCmpNames& aData);
 	void GetOwner(Sdata<string>& aData);
+	void GetName(Sdata<string>& aData);
 	// From AAdp
 	virtual void OnMagUpdated() override;
 	// From MDesSyncable
@@ -245,6 +246,7 @@ class AMnodeAdp : public AAdp
 	AdpPap<int> mApCmpCount = AdpPap<int>(*this, [this](Sdata<int>& aData) {GetCompsCount(aData);}); /*!< Comps count access point */
 	AdpPapB<TCmpNames> mApCmpNames = AdpPapB<TCmpNames>([this](TCmpNames& aData) {GetCompNames(aData);}); /*!< Comp names access point */
 	AdpPap<string> mPapOwner = AdpPap<string>(*this, [this](Sdata<string>& aData) {GetOwner(aData);}); /*!< Comps count access point */
+	AdpPap<string> mPapName = AdpPap<string>(*this, [this](Sdata<string>& aData) {GetName(aData);}); /*!< Name access point */
 	AdpIap mIapInpMut = AdpIap(*this, [this]() {OnInpMut();}); /*!< Mut Add Widget input access point */
 	// From AAdp
 	virtual void NotifyInpsUpdated() override;
@@ -253,6 +255,7 @@ class AMnodeAdp : public AAdp
 	TCmpNames mCompNames;
 	bool mCompNamesUpdated = true;
 	bool mOwnerUpdated = true;
+	bool mNameUpdated = true;
 	bool mInpMutChanged = true;
 };
 

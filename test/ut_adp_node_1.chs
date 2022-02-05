@@ -35,19 +35,25 @@ testroot : Elem
             }
             # "Components_count";
             CompCount : State {
-                Debug : Content { Update : Content { = "y"; } }
+                Debug.LogLevel = "Dbg";
                 = "SI 0";
             }
             CompCount.Inp ~ Adapter.CompsCount;
             # "Components";
             CompNames : State {
-                Debug : Content { Update : Content { = "y"; } }
+                Debug.LogLevel = "Dbg";
                 = "VS";
             }
             CompNames.Inp ~ Adapter.CompNames;
+            # "Name";
+            Name : State {
+                Debug.LogLevel = "Dbg";
+                = "SS";
+            }
+            Name.Inp ~ Adapter.Name;
             # "Tics_Counter";
             Counter : State {
-                Debug : Content { Update : Content { = "y"; } }
+                Debug.LogLevel = "Dbg";
                 = "SI 0";
             }
             Incr : TrAddVar;
@@ -59,12 +65,12 @@ testroot : Elem
             Incr.Inp ~ Counter;
             # "Managed agent 1 URI";
             MagUri : State {
-                Debug : Content { Update : Content { = "y"; } }
+                Debug.LogLevel = "Dbg";
                 = "SS Targets.Target2";
             }
             # "Managed agent 2 URI";
             MagUri2 : State {
-                Debug : Content { Update : Content { = "y"; } }
+                Debug.LogLevel = "Dbg";
                 = "SS Targets.Target3";
             }
             # "Target switcher";

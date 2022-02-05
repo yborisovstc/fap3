@@ -62,8 +62,35 @@ MyRoot : Elem {
                        Parent ~ : State { = "SS Node"; }; 
                        Name ~ : State { = "SS Test_Node"; }; 
                     };
+                    Mut ~ : TrMutNode @ {
+                       Parent ~ : State { = "SS Test_Node"; }; 
+                       Name ~ : State { = "SS Test_Node2"; }; 
+                    };
                 };
             }
+            # "Append of string";
+            StrApndRes : State @ {
+                _@ < {
+                    = "SS";
+                    Debug.LogLevel = "Dbg";
+                }
+                Inp ~ : TrApndVar @ {
+                    Inp1 ~ : State  { = "SS Part1_"; };
+                    Inp2 ~ : State  { = "SS Part2"; };
+                };
+            }
+            # "Append of URI";
+            UriApndRes : State @ {
+                _@ < {
+                    = "URI";
+                    Debug.LogLevel = "Dbg";
+                }
+                Inp ~ : TrApndVar @ {
+                    Inp1 ~ : State  { = "URI Node1.Node2"; };
+                    Inp2 ~ : State  { = "URI Node3"; };
+                };
+            }
+
         }
     }
 }

@@ -443,6 +443,7 @@ void AAdp::AdpIap::onInpUpdated()
 const string K_CpUriCompNames = "CompNames";
 const string K_CpUriCompCount = "CompsCount";
 const string K_CpUriOwner = "Owner";
+const string K_CpUriName = "Name";
 const string K_InpMUtpUri = "InpMut";
 
 AMnodeAdp::AMnodeAdp(const string &aType, const string& aName, MEnv* aEnv): AAdp(aType, aName, aEnv)
@@ -467,6 +468,12 @@ void AMnodeAdp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 		if (isRequestor(aReq, out)) {
 		    MIface* iface = dynamic_cast<MDVarGet*>(&mPapOwner);
 		    addIfpLeaf(iface, aReq);
+		} else {
+		    MNode* out = ahostGetNode(K_CpUriName);
+		    if (isRequestor(aReq, out)) {
+			MIface* iface = dynamic_cast<MDVarGet*>(&mPapName);
+			addIfpLeaf(iface, aReq);
+		    }
 		}
 	    }
 	}
@@ -508,6 +515,17 @@ void AMnodeAdp::GetOwner(Sdata<string>& aData)
     }
 }
 
+void AMnodeAdp::GetName(Sdata<string>& aData)
+{
+    if (mMag) {
+	aData.mData = mMag->name();
+	aData.mValid = true;
+    } else {
+	aData.mData = GUri::nil;
+	aData.mValid = true;
+    }
+}
+
 void AMnodeAdp::confirm() {
     if (mMag) {
 	if (mCompNamesUpdated) {
@@ -532,6 +550,11 @@ void AMnodeAdp::confirm() {
 	    NotifyInpUpdated(cp);
 	    mOwnerUpdated = false;
 	}
+	if (mNameUpdated) {
+	    MNode* cp = ahostGetNode(K_CpUriName);
+	    NotifyInpUpdated(cp);
+	    mNameUpdated = false;
+	}
     } else {
 	Logger()->Write(EErr, this, "Managed agent is not attached");
     }
@@ -541,12 +564,14 @@ void AMnodeAdp::confirm() {
 void AMnodeAdp::onMagOwnedAttached(MObservable* aObl, MOwned* aOwned)
 {
     mCompNamesUpdated = true;
+    mNameUpdated = true;
 }
 
 void AMnodeAdp::OnMagUpdated()
 {
     mCompNamesUpdated = true;
     mOwnerUpdated = true;
+    mNameUpdated = true;
     setUpdated();
 }
 
@@ -599,7 +624,7 @@ void AMnodeAdp::ApplyMut()
 		    Chromo2& chromo = data.mData;
 		    if (data.IsValid()) {
 			TNs ns; MutCtx mutctx(NULL, ns);
-			mMag->mutate(chromo.Root(), false, mutctx);
+			mMag->mutate(chromo.Root(), false, mutctx, true);
 			string datas = chromo.Root();
 			Logger()->Write(EInfo, this, "Managed agent is mutated [%s]", datas.c_str());
 		    } else {

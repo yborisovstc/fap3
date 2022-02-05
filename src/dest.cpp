@@ -477,6 +477,39 @@ string TrUri::VarGetIfid() const
     return MDtGet<DGuri>::Type();
 }
 
+///// Append
+
+TrApndVar::TrApndVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+{
+    AddInput(GetInpUri(Func::EInp1));
+    AddInput(GetInpUri(Func::EInp2));
+}
+
+void TrApndVar::Init(const string& aIfaceName)
+{
+    if (mFunc) {
+	delete mFunc;
+	mFunc = NULL;
+    }
+    MDVarGet* inp = GetInp(Func::EInp1);
+    if (inp) {
+	string t_inp = inp->VarGetIfid();
+	if ((mFunc = FApnd<Sdata<string>>::Create(this, aIfaceName, t_inp)));
+	else if ((mFunc = FApnd<DGuri>::Create(this, aIfaceName, t_inp)));
+	else {
+	    Logger()->Write(EErr, this, "Failed init function");
+	}
+    }
+}
+
+string TrApndVar::GetInpUri(int aId) const
+{
+    if (aId == Func::EInp1) return "Inp1";
+    else if (aId == Func::EInp2) return "Inp2";
+    else return string();
+}
+
+
 
 // Transition agent "Getting container size"
 
@@ -731,6 +764,44 @@ void TrMutConn::DtGet(DMut& aData)
 
 
 
+// Agent function "Mut Disconnect composer"
+
+TrMutDisconn::TrMutDisconn(const string& aType, const string& aName, MEnv* aEnv): TrMut(aType, aName, aEnv)
+{
+    AddInput(GetInpUri(EInpCp1));
+    AddInput(GetInpUri(EInpCp2));
+}
+
+string TrMutDisconn::GetInpUri(int aId) const
+{
+    if (aId == EInpCp1) return "Cp1";
+    else if (aId == EInpCp2) return "Cp2";
+    else return string();
+}
+
+void TrMutDisconn::DtGet(DMut& aData)
+{
+    bool res = false;
+    string cp1;
+    res = GetInpSdata(EInpCp1, cp1);
+    if (res) {
+	string cp2;
+	res = GetInpSdata(EInpCp2, cp2);
+	if (res) {
+	    aData.mData = TMut(ENt_Disconn, ENa_P, cp1, ENa_Q, cp2);
+	    aData.mValid = true;
+	} else {
+	    aData.mValid = false;
+	}
+    } else {
+	aData.mValid = false;
+    }
+    mRes = aData;
+}
+
+
+
+
 // Agent function "Chromo2 composer"
 
 TrChr::TrChr(const string& aType, const string& aName, MEnv* aEnv): TrBase(aType, aName, aEnv)
@@ -770,23 +841,43 @@ string TrChr::VarGetIfid() const
 
 void TrChr::DtGet(DChr2& aData)
 {
-    bool res = false;
-    res = GetInpData(EInpBase, aData);
-    DMut mut;
-    res = GetInpData(EInpMut, mut);
-    if (res) {
-	aData.mData.Root().AddChild(mut.mData);
-	aData.mValid = true;
+    // Base
+    GetInpData(EInpBase, aData);
+    // Mut
+    MNode* inp = getNode(GetInpUri(EInpMut));
+    if (inp) {
+	MUnit* vgetu = inp->lIf(vgetu);
+	auto* ifcs = vgetu ? vgetu->getIfs<MDVarGet>() : nullptr;
+	if (ifcs) {
+	    aData.mValid = true;
+	    for (MIface* iface : *ifcs) {
+		MDVarGet* vget = dynamic_cast<MDVarGet*>(iface);
+		if (vget) {
+		    MDtGet<DMut>* gsd = vget->GetDObj(gsd);
+		    if (gsd) {
+			DMut mut;
+			gsd->DtGet(mut);
+			if (mut.mValid) {
+			    aData.mData.Root().AddChild(mut.mData);
+			} else {
+			    aData.mValid = false;
+			    break;
+			}
+		    } else {
+			aData.mValid = false;
+			break;
+		    }
+		} else {
+		    aData.mValid = false;
+		    break;
+		}
+	    }
+	} else {
+	    aData.mValid = false;
+	}
     } else {
+	Log(TLog(EErr, this) + "Cannot get input  [" + GetInpUri(EInpMut) + "]");
 	aData.mValid = false;
     }
     mRes = aData;
 }
-
-
-
-
-
-
-
-

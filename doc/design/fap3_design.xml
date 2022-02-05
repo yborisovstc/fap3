@@ -1659,6 +1659,18 @@
 		<simpara>The issue happens after introducing <xref linkend="gls_asr"/> solution, ref <xref linkend="ds_asr_cbs"/></simpara>
 	    </sect3>
 	</sect2>
+	<sect2 id="ds_iss_005"><title>[DS_ISS_005] Chromo2 desing assumes the top is mut_create_chromo - it is inconvenient</title>
+	    <sect3><title>Intro</title>
+		<simpara>
+		    The inconvenience is that very ofter we need just segment chromo without root. Currently we need to use
+		    mutation operation option "TreatAsChromo". Ref for instance  desadp.cpp:AMnodeAdp::ApplyMut():
+		</simpara>
+		<programlisting>
+		    mMag->mutate(chromo.Root(), false, mutctx, true);
+		</programlisting>
+		<simpara>So we need to redesign chromo to support pure "segment" chromo.</simpara>
+	    </sect3>
+	</sect2>
 
     </sect1>
 

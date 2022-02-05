@@ -193,9 +193,6 @@ Func* FUri::Create(Host* aHost, const string& aOutIid, const string& aInpIid)
     return res;
 }
 
-
-
-
 MIface* FUri::getLif(const char *aName)
 {
     MIface* res = NULL;
@@ -239,6 +236,88 @@ string FUri::GetInpExpType(int aId) const
     }
     return res;
 }
+
+
+/// Append
+//
+template<class T>
+Func* FApnd<T>::Create(Host* aHost, const string& aOutIid, const string& aInpIid)
+{
+    Func* res = NULL;
+    if (!aOutIid.empty()) {
+	if (aOutIid == MDtGet<TData>::Type() && aInpIid == MDtGet<TInpData>::Type()) {
+	    res = new FApnd<T>(*aHost);
+	}
+    } else {
+	// Weak negotiation - wrong case here
+	//mHost.log(EErr, "Creating instance, wrong outp [" + aOutIid + "] or inp [" + aInpIid + "] types");
+    }
+    return res;
+}
+
+template<class T>
+MIface* FApnd<T>::getLif(const char *aName)
+{
+    MIface* res = NULL;
+    if (res = checkLif<MDtGet<TData>>(aName));
+    return res;
+}
+
+template<class T>
+void FApnd<T>::DtGet(TData& aData)
+{
+    bool res = true;
+    // Inp1
+    MDVarGet* dget1 = mHost.GetInp(EInp1);
+    MDtGet<TInpData>* dfget1 = dget1 ? dget1->GetDObj(dfget1) : nullptr;
+    if (dfget1) {
+	TInpData arg1;
+	dfget1->DtGet(arg1);
+	if (arg1.mValid) {
+	    aData.mData = arg1.mData;
+	    aData.mValid = true;
+	    // Inp2
+	    MDVarGet* dget2 = mHost.GetInp(EInp2);
+	    MDtGet<TInpData>* dfget2 = dget2 ? dget2->GetDObj(dfget2) : nullptr;
+	    if (dfget2) {
+		TInpData arg2;
+		dfget2->DtGet(arg2);
+		if (arg2.mValid) {
+		    aData += arg2;
+		    aData.mValid = true;
+		} else {
+		    mHost.log(EErr, "Incorrect Inp2 data");
+		    res = false;
+		}
+	    } else {
+		mHost.log(EErr, "Cannot get input [" + mHost.GetInpUri(EInp2) + "]");
+		res = false;
+	    }
+	} else {
+	    mHost.log(EErr, "Incorrect Inp2 data");
+	    res = false;
+	}
+    } else {
+	mHost.log(EErr, "Cannot get input [" + mHost.GetInpUri(EInp1) + "]");
+	res = false;
+    }
+    aData.mValid = res;
+    if (mRes != aData) {
+	mRes = aData;
+	mHost.OnFuncContentChanged();
+    }
+}
+
+template<class T>
+string FApnd<T>::GetInpExpType(int aId) const
+{
+    string res;
+    if (aId == EInp1 || aId == EInp2) {
+	res = MDtGet<TInpData>::Type();
+    }
+    return res;
+}
+
 
 
 
@@ -652,6 +731,8 @@ void Init()
     FCmp<DGuri>::Create(host, "", "", FCmpBase::ELt);
     FSizeVect<string>::Create(host, string(), string());
     FAtVect<string>::Create(host, string(), string());
+    FApnd<Sdata<string>>::Create(host, string(), string());
+    FApnd<DGuri>::Create(host, string(), string());
 }
 
 

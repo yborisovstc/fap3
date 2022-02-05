@@ -38,8 +38,9 @@ const ProvDef::TFReg ProvDef::mReg ( {
 	Item<Syst>(), Item<ConnPointu>(), Item<CpMnodeOutp>(), Item<CpMnodeInp>(),
 	Item<Extd>(), Item<State>(), Item<Des>(), Item<TrAddVar>(), Item<CpStateInp>(),  Item<CpStateOutp>(),
 	Item<CpStateMnodeInp>(),  Item<CpStateMnodeOutp>(),
-	Item<DesLauncher>(), Item<Sout>(), Item<ADes>(), Item<Socket>(), Item<TrMaxVar>(), Item<TrSwitchBool>(), Item<TrCmpVar>(),
-	Item<TrAndVar>(), Item<TrNegVar>(), Item<TrUri>(), Item<TrMutNode>(), Item<TrMutConn>(), Item<TrSizeVar>(), Item<TrAtVar>(),
+	Item<DesLauncher>(), Item<Sout>(), Item<ADes>(), Item<Socket>(),
+	Item<TrMaxVar>(), Item<TrSwitchBool>(), Item<TrCmpVar>(), Item<TrApndVar>(),
+	Item<TrAndVar>(), Item<TrNegVar>(), Item<TrUri>(), Item<TrMutNode>(), Item<TrMutConn>(), Item<TrMutDisconn>(), Item<TrSizeVar>(), Item<TrAtVar>(),
 	Item<TrTuple>(), Item<TrChr>(), 
 	Item<AMnodeAdp>(), Item<AMelemAdp>(), Item<AMntp>(),
 	});

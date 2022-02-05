@@ -103,6 +103,25 @@ class FUri: public Func, public MDtGet<DGuri> {
 	TData mRes;
 };
 
+/** @brief Append
+ * */
+template <class T>
+class FApnd: public Func, public MDtGet<T> {
+    public:
+	using TData = T;
+	using TInpData = T;
+    public:
+	static Func* Create(Host* aHost, const string& aOutIid, const string& aInp1Id);
+	FApnd(Host& aHost): Func(aHost) {}
+	virtual MIface* getLif(const char *aName) override;
+	virtual string IfaceGetId() const { return MDtGet<TData>::Type();}
+	virtual void DtGet(TData& aData);
+	virtual void GetResult(string& aResult) const {mRes.ToString(aResult);}
+	virtual string GetInpExpType(int aId) const;
+	TData mRes;
+};
+
+
 
 
 // Maximum, variable type

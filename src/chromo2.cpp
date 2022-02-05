@@ -768,6 +768,7 @@ int Chromo2Mdl::GetAttrInt(void *aHandle, const char *aName)
     assert(false);
 }
 
+// TODO to support pure "segment" chromo, ref DS_ISS_005 
 THandle Chromo2Mdl::SetFromFile(const string& aFileName)
 {
     ifstream is(aFileName, std::ifstream::in);

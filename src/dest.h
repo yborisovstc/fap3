@@ -162,6 +162,20 @@ class TrUri: public TrVar
 };
 
 
+/** @brief Transition agent "Append"
+ * */
+class TrApndVar: public TrVar
+{
+    public:
+	static const char* Type() { return "TrApndVar";}
+	TrApndVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From ATrVar
+	virtual void Init(const string& aIfaceName) override;
+	virtual string GetInpUri(int aId) const override;
+};
+
+
+
 /** @brief Transition "Getting container size"
  * */
 class TrSizeVar: public TrVar
@@ -266,6 +280,22 @@ class TrMutConn: public TrMut
 	// From MDtGet
 	virtual void DtGet(DMut& aData) override;
 };
+
+/** @brief Agent function "Mut disconnect composer"
+ * */
+class TrMutDisconn: public TrMut
+{
+    public:
+	enum { EInpCp1, EInpCp2 };
+    public:
+	static const char* Type() { return "TrMutDisconn";};
+	TrMutDisconn(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From ATrcMut
+	virtual string GetInpUri(int aId) const override;
+	// From MDtGet
+	virtual void DtGet(DMut& aData) override;
+};
+
 
 
 /** @brief Agent function "Chromo composer"
