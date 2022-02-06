@@ -283,6 +283,9 @@ class DesLauncher: public Des, public MLauncher
 	// Local
 	virtual void OnIdle();
     protected:
+	void updateCounter(int aCnt);
+	void outputCounter(int aCnt);
+    protected:
 	int mCounter = 0;
 	bool mStop;
 };

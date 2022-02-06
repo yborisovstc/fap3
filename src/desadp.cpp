@@ -528,6 +528,10 @@ void AMnodeAdp::GetName(Sdata<string>& aData)
 
 void AMnodeAdp::confirm() {
     if (mMag) {
+	if (mInpMutChanged) {
+	    mInpMutChanged = false;
+	    ApplyMut();
+	}
 	if (mCompNamesUpdated) {
 	    // Comps names
 	    mCompNames.mData.clear();
@@ -620,6 +624,7 @@ void AMnodeAdp::ApplyMut()
 		MDtGet<DChr2>* gsd = vget->GetDObj(gsd);
 		if (gsd) {
 		    DChr2 data;
+		    data.FromString("CHR2 {  }");
 		    gsd->DtGet(data);
 		    Chromo2& chromo = data.mData;
 		    if (data.IsValid()) {
@@ -644,10 +649,12 @@ void AMnodeAdp::ApplyMut()
 
 void AMnodeAdp::update()
 {
+    /*
     if (mInpMutChanged) {
 	ApplyMut();
 	mInpMutChanged = false;
     }
+    */
     AAdp::update();
 }
 

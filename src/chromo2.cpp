@@ -195,6 +195,16 @@ C2MdlNode::C2MdlNode(const C2MdlNode& aSrc, C2MdlNode* aOwner): mOwner(aOwner), 
     }
 }
 
+C2MdlNode& C2MdlNode::operator=(const C2MdlNode& aSrc)
+{
+    // Owner isn't touched
+    mContext = aSrc.mContext;
+    mMut = aSrc.mMut;
+    mChromo = aSrc.mChromo;
+    mQnode = nullptr;
+    return *this;
+}
+
 C2MdlNode::~C2MdlNode()
 {
     if (mQnode) {
@@ -321,6 +331,17 @@ Chromo2Mdl::Chromo2Mdl()
 {
 }
 
+Chromo2Mdl::Chromo2Mdl(const Chromo2Mdl& aSrc): mRoot(aSrc.mRoot), mErr(aSrc.mErr)
+{
+}
+
+Chromo2Mdl& Chromo2Mdl::operator=(const Chromo2Mdl& aSrc)
+{
+    mRoot = aSrc.mRoot;
+    mErr = aSrc.mErr;
+    return *this;
+}
+
 Chromo2Mdl::~Chromo2Mdl()
 {
 }
@@ -375,7 +396,6 @@ TNodeType Chromo2Mdl::GetType(const THandle& aHandle) {
     C2MdlNode* node = aHandle.Data(node);
     string rel = node->mMut.mR;
     if (rel.empty()) {
-	assert(!node->mChromo.empty());
 	res = ENt_Seg;
     } else  if (rel == KMS_Add) {
 	res = ENt_Node;
@@ -1053,6 +1073,10 @@ void Chromo2Mdl::OutputNode(const C2MdlNode& aNode, ostream& aOs, int aLevel, in
 	    OutputNode(node, aOs, aLevel + 1, aIndent);
 	}
 	Offset(aLevel, aIndent, aOs); aOs << "}" << endl;
+    }
+
+    if (aNode.mMut.mR.empty() && cnum == 0) {
+	Offset(aLevel, aIndent, aOs); aOs << "{ }" << endl;
     }
 }
 
@@ -1755,7 +1779,13 @@ void Chromo2Mdl::rdp_context(istream& aIs, C2MdlNode& aMnode)
 void Chromo2Mdl::rdp_model_spec(istream& aIs, streampos aStart, C2MdlNode& aMnode)
 {
     aIs.seekg(aStart, aIs.beg);
-    rdp_mut_create_chromo(aIs, aMnode);
+    streampos pos = aIs.tellg();
+    rdp_segment(aIs, aMnode);
+    if (IsError()) {
+	aIs.seekg(pos, aIs.beg); // Backtrack
+	ResetErr();
+	rdp_mut_create_chromo(aIs, aMnode);
+    }
 }
 
 void Chromo2Mdl::rdp_sep(istream& aIs)
@@ -1792,9 +1822,18 @@ Chromo2::Chromo2(): mRootNode(&mMdl, THandle())
 {
 }
 
-Chromo2::Chromo2(const Chromo2& aSrc)
+Chromo2::Chromo2(const Chromo2& aSrc): mMdl(aSrc.mMdl)
+				       //, mRootNode(const_cast<Chromo2Mdl*>(&aSrc.mMdl), const_cast<Chromo2Mdl&>(aSrc.mMdl).Hroot())
 {
-    Set(aSrc.Root());
+    mRootNode = ChromoNode(const_cast<Chromo2Mdl*>(&aSrc.mMdl), const_cast<Chromo2Mdl&>(aSrc.mMdl).Hroot());
+    //Set(aSrc.Root());
+}
+
+Chromo2& Chromo2::operator=(const Chromo2& aSrc)
+{
+    mMdl = aSrc.mMdl;
+    mRootNode = ChromoNode(&mMdl, mMdl.Hroot());
+    return *this;
 }
 
 void Chromo2::SetFromFile(const string& aFileName)

@@ -63,6 +63,7 @@ class C2MdlNode
 	C2MdlNode(C2MdlNode* aOwner);
 	C2MdlNode(const C2MdlNode& aSrc);
 	C2MdlNode(const C2MdlNode& aSrc, C2MdlNode* aOwner);
+	C2MdlNode& operator=(const C2MdlNode& aSrc);
 	~C2MdlNode();
     public:
 	void CloneFrom(const C2MdlNode& aSrc, bool aChromo);
@@ -116,7 +117,10 @@ class Chromo2Mdl: public MChromoMdl
 	static inline const char *Type() { return "ChromoMdlX";}; 
     public:
 	Chromo2Mdl();
+	Chromo2Mdl(const Chromo2Mdl& aSrc);
 	virtual ~Chromo2Mdl();
+	Chromo2Mdl& operator=(const Chromo2Mdl& aSrc);
+	THandle Hroot() { return &mRoot;}
 	// From MChromoMdl
 	virtual TNodeType GetType(const THandle& aHandle);
 	virtual THandle Root(const THandle& aHandle);
@@ -237,6 +241,7 @@ class Chromo2: public MChromo
 	Chromo2(const string& aFileName);
 	virtual ~Chromo2();
     public:
+	Chromo2& operator=(const Chromo2& aSrc);
 	// From MChromo
 	virtual ChromoNode& Root();
 	virtual const ChromoNode& Root() const;

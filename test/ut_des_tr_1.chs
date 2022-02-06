@@ -54,7 +54,7 @@ MyRoot : Elem {
             # "Chrom composer";
             ChromoRes : State @ {
                 _@ < {
-                    = "CHR2 Root : Node { }";
+                    = "CHR2 { }";
                     Debug.LogLevel = "Dbg";
                 }
                 Inp ~ : TrChr @ {
@@ -68,6 +68,18 @@ MyRoot : Elem {
                     };
                 };
             }
+            # "Chrom composer - from chromos";
+            ChromocRes : State @ {
+                _@ < {
+                    = "CHR2 { }";
+                    Debug.LogLevel = "Dbg";
+                }
+                Inp ~ : TrChrc @ {
+                    Inp ~ : State  { = "CHR2 { Node : TestNode; }"; };
+		    Inp ~ : State  { = "CHR2 { Node2 : TestNode; }"; };
+                };
+            }
+
             # "Append of string";
             StrApndRes : State @ {
                 _@ < {

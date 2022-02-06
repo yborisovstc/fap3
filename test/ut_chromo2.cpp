@@ -47,6 +47,13 @@ void Ut_chromo2::test_Chr1()
 {
     printf("\n === Test of Chromo2 creation\n");
     Chromo2 chr;
+    // Chromo as segment or mutation_create_chromo
+    chr.SetFromSpec("{ }");
+    printf("\n Empty chromo: %s\n", chr.Root().operator string().c_str());
+    chr.Root().AddChild(TMut(ENt_Node, ENa_Id, "MyNode", ENa_Parent, "Node"));
+    Chromo2 chr2;
+    chr2 = chr;
+    // Creation from file
     const string fileName("ut_chr2_1.chs");
     cout << "Chromo set from file [" << fileName << "]" << endl;
     chr.SetFromFile(fileName);

@@ -137,7 +137,13 @@ void ConnPointu::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	    // Requested provided iface - cannot be obtain via pairs - redirect to host
 	    auto owner = Owner();
 	    MUnit* ownu = owner ? const_cast<MOwner*>(owner)->lIf(ownu): nullptr;
-	    if (ownu) ownu->resolveIface(aName, aReq);
+	    if (ownu) {
+		MIfProvOwner* ownupo = ownu ? ownu->lIf(ownupo) : nullptr;
+		bool isReq = aReq->provided()->isRequestor(ownupo);
+		if (!isReq) {
+		    ownu->resolveIface(aName, aReq);
+		}
+	    }
 	} else if (aName == reqName()) {
 	    // Requested required iface - redirect to pairs
 	    for (MVert* pair : mPairs) {

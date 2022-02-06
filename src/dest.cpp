@@ -881,3 +881,80 @@ void TrChr::DtGet(DChr2& aData)
     }
     mRes = aData;
 }
+
+
+
+// Agent function "Chromo2 composer form chromo"
+
+TrChrc::TrChrc(const string& aType, const string& aName, MEnv* aEnv): TrBase(aType, aName, aEnv)
+{
+    AddInput(GetInpUri(EInp));
+}
+
+MIface* TrChrc::MNode_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MDVarGet>(aType));
+    else res = TrBase::MNode_getLif(aType);
+    return res;
+}
+
+string TrChrc::GetInpUri(int aId) const
+{
+    if (aId == EInp) return "Inp";
+    else return string();
+}
+
+MIface* TrChrc::DoGetDObj(const char *aName)
+{
+    MIface* res = NULL;
+    if (strcmp(aName, MDtGet<DChr2>::Type()) == 0) {
+	res = dynamic_cast<MDtGet<DChr2>*>(this);
+    }
+    return res;
+}
+
+string TrChrc::VarGetIfid() const
+{
+    return MDtGet<DChr2>::Type();
+}
+
+void TrChrc::DtGet(DChr2& aData)
+{
+    MNode* inp = getNode(GetInpUri(EInp));
+    if (inp) {
+	MUnit* vgetu = inp->lIf(vgetu);
+	auto* ifcs = vgetu ? vgetu->getIfs<MDVarGet>() : nullptr;
+	if (ifcs) {
+	    aData.mValid = true;
+	    for (MIface* iface : *ifcs) {
+		MDVarGet* vget = dynamic_cast<MDVarGet*>(iface);
+		if (vget) {
+		    MDtGet<DChr2>* gsd = vget->GetDObj(gsd);
+		    if (gsd) {
+			DChr2 item;
+			gsd->DtGet(item);
+			if (item.mValid) {
+			    aData.mData.Root().AddChild(item.mData.Root());
+			} else {
+			    aData.mValid = false;
+			    break;
+			}
+		    } else {
+			aData.mValid = false;
+			break;
+		    }
+		} else {
+		    aData.mValid = false;
+		    break;
+		}
+	    }
+	} else {
+	    aData.mValid = false;
+	}
+    } else {
+	Log(TLog(EErr, this) + "Cannot get input  [" + GetInpUri(EInp) + "]");
+	aData.mValid = false;
+    }
+    mRes = aData;
+}

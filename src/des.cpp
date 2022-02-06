@@ -743,6 +743,8 @@ MNode* ADes::ahostGetNode(const GUri& aUri)
 
 
 const string KCont_TopDesUri = "Path";
+const string KCont_Output = "OutpCount";
+const string KUri_Counter = "Counter";
 
 
 DesLauncher::DesLauncher(const string &aType, const string& aName, MEnv* aEnv): Des(aType, aName, aEnv), mStop(false)
@@ -756,10 +758,12 @@ bool DesLauncher::Run(int aCount, int aIdleCount)
     int idlecnt = 0;
     while (!mStop && (aCount == 0 || cnt < aCount) && (aIdleCount == 0 || idlecnt < aIdleCount)) {
 	if (!mActive.empty()) {
+	    updateCounter(cnt);
 	    Log(TLog(EInfo, this) + ">>> Update [" + to_string(cnt) + "]");
 	    update();
 	    if (!mUpdated.empty()) {
 		Log(TLog(EInfo, this) + ">>> Confirm [" + to_string(cnt) + "]");
+		outputCounter(cnt);
 		confirm();
 	    }
 	    cnt++;
@@ -798,4 +802,22 @@ MIface* DesLauncher::MNode_getLif(const char *aType)
     if (res = checkLif<MLauncher>(aType));
     else res = Des::MNode_getLif(aType);
     return res;
+}
+
+void DesLauncher::updateCounter(int aCnt)
+{
+    MNode* ctrn = getNode(KUri_Counter);
+    if (ctrn) {
+	MContentOwner* cnto = ctrn ? ctrn->lIf(cnto) : nullptr;
+	if (cnto) {
+	    cnto->setContent("", string("SS " + to_string(aCnt)));
+	}
+    }
+}
+
+void DesLauncher::outputCounter(int aCnt)
+{
+    if (getCont(KCont_Output)) {
+	cout << "Count : " << aCnt << endl;
+    }
 }

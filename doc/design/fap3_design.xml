@@ -1508,6 +1508,12 @@
 		   avoid the possible conflicts when some controlling subsustems try to control same controlled subsystem.</simpara>
 	    </sect3>
 	</sect2>
+	<sect2><title>DES controlling phiylosophy: objsect os data</title>
+	    <sect3><title>Intro</title>
+		<simpara>DES controlling needs to be considered in the scope of DES nature: updating the states data via transormation of the data of
+		    dependencies. The only sepcific of DES controlling is that the data to be updating is the controlled object.</simpara>
+	    </sect3>
+	</sect2>
 	<sect2><title>Using special layer for controlling systems.</title>
 	    <sect3><title>Intro</title>
 		<simpara>On initial times of DES desing there was the idea of how such systems can be controlled. The idea was that specific layer needs to be used.
@@ -1525,10 +1531,21 @@
 		</simpara>
 	    </sect3>
 	</sect2>
-	<sect2><title>DCS example/test - ordering of agents.</title>
+	<sect2 id="ds_dcs_ord"><title>DCS example/test - ordering of agents.</title>
 	    <sect3><title>Intro</title>
 		<simpara>We need to create numberer of examples to discover the weaknesses of the current DCS approach and find the proper solutions. The first
 		    example is ordering of agents.</simpara>
+		<simpara>The model is as "fap3/test/ut_adp_dcs_1.chs".</simpara>
+	    </sect3>
+	</sect2>
+	<sect2><title>Activating system via implicit dependencies.</title>
+	    <sect3><title>Intro</title>
+		<simpara>It is normal case in the system using controlling when the controlled systme (i.e. system + adapter) depends on itlself implicitly. The example
+		    is <xref linkend="ds_dcs_ord"/> - the system is mutated with transition that gets system itself (acually internal connections) as input.</simpara>
+		<simpara>In contrast of typical DES there aren't explicit dependencies, e.g states that depends each other.</simpara>
+		<simpara>The questin is how to understand if subsystem depends on another subsystem (or even on itself) if threre aren't explicit dependencies?
+		    Let's look at the example <xref linkend="ds_dcs_ord"/>: how to get known if controlled system (Root.Launcher) depends on itself via the mutating
+			transition?</simpara>
 	    </sect3>
 	</sect2>
     </sect1>

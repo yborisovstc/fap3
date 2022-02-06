@@ -322,6 +322,31 @@ class TrChr: public TrBase, public MDVarGet, public MDtGet<DChr2>
 	DChr2 mRes;  /*<! Cached result */
 };
 
+/** @brief Agent function "Chromo composer from chromo"
+ * */
+class TrChrc: public TrBase, public MDVarGet, public MDtGet<DChr2>
+{
+    public:
+	enum { EInp };
+    public:
+	static const char* Type() { return "TrChrc";};
+	TrChrc(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From MNode
+	virtual MIface* MNode_getLif(const char *aType) override;
+	// From MDVarGet
+	virtual string MDVarGet_Uid() const override { return getUid<MDVarGet>();}
+	virtual MIface* DoGetDObj(const char *aName) override;
+	virtual string VarGetIfid() const override;
+	// From MDtGet
+	virtual void DtGet(DChr2& aData) override;
+    protected:
+	// From TrBase
+	virtual string GetInpUri(int aId) const override;
+    protected:
+	DChr2 mRes;  /*<! Cached result */
+};
+
+
 
 
 
