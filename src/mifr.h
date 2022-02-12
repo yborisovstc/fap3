@@ -50,8 +50,10 @@ class MIfReq: public MIface
 	virtual void MIfReq_doDump(int aLevel, int aIdt, ostream& aOs) const =0;
 	//virtual const MIfProv* owner() const = 0;
 	virtual MIfProv* next(MIfProv::TCp* aProvCp) const = 0;
-	/** @brief Indicates if giver owner is in requestors chain */
-	virtual bool isRequestor(MIfProvOwner* aOwner) const = 0;
+	/** @brief Indicates if giver owner is in back requestors chain on aPos position
+	 * @parem aPos  the position checked, -1 means all positions
+	 * */
+	virtual bool isRequestor(MIfProvOwner* aOwner, int aPos = -1) const = 0;
 	/** @brief Gets the owner */
 	virtual const MIfProvOwner* rqOwner() const = 0;
 	/** @brief Gets previous requestor in the chain */

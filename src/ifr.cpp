@@ -92,10 +92,9 @@ void IfrNode::MIfReq_doDump(int aLevel, int aIdt, ostream& aOs) const
     aOs  << "[" << name() << "], " << mOwner->Uid() << ", Valid: " << mValid << endl;
     auto self = const_cast<IfrNode*>(this);
     auto prev = self->binded()->provided()->prev();
-    aIdt += 2;
-    while (prev) {
+    if (prev) {
+	aIdt += 2;
 	prev->doDump(aLevel, aIdt, aOs);
-	prev = prev->prev();
     }
 }
 
@@ -180,14 +179,15 @@ void IfrNode::erase()
     }
 }
 
-bool IfrNode::isRequestor(MIfProvOwner* aOwner) const
+bool IfrNode::isRequestor(MIfProvOwner* aOwner, int aPos) const
 {
     bool res = aOwner == mOwner;
-    if (!res && mPair) {
-	res = mPair->provided()->isRequestor(aOwner);
+    if (aPos-- && !res && mPair) {
+	res = mPair->provided()->isRequestor(aOwner, aPos);
     }
     return res;
 }
+
 
 // Override firstLeaf, nextLeaf to resolve invalidated node
 IfrNode::TSelf* IfrNode::firstLeafB()

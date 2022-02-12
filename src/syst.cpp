@@ -134,12 +134,14 @@ void ConnPointu::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
     }
     if (!ifr) { // TODO this disables both local and remote ifaces. To fix
 	if (aName == provName()) {
-	    // Requested provided iface - cannot be obtain via pairs - redirect to host
+	    // Requested provided iface - cannot be obtain via pairs - redirect to owner
 	    auto owner = Owner();
 	    MUnit* ownu = owner ? const_cast<MOwner*>(owner)->lIf(ownu): nullptr;
 	    if (ownu) {
 		MIfProvOwner* ownupo = ownu ? ownu->lIf(ownupo) : nullptr;
-		bool isReq = aReq->provided()->isRequestor(ownupo);
+		// Disable routing to direct requestor only. Redirecting to non-direct
+		// requestor is enabled to support loop-back IRM path
+		bool isReq = aReq->provided()->isRequestor(ownupo, 1);
 		if (!isReq) {
 		    ownu->resolveIface(aName, aReq);
 		}

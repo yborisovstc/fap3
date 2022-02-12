@@ -37,7 +37,7 @@ class IfrNode : public NTnnp<MIfProv, MIfReq>, public MIfProv, protected MIfReq
 	virtual string MIfReq_Uid() const override { return mOwner->Uid() + Ifu::KUidSepIc + MIfReq::Type();}
 	virtual void MIfReq_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	virtual MIfProv* next(MIfProv::TCp* aProvCp) const override;
-	virtual bool isRequestor(MIfProvOwner* aOwner) const override;
+	virtual bool isRequestor(MIfProvOwner* aOwner, int aPos) const override;
 	virtual const MIfProvOwner* rqOwner() const override { return mOwner;}
 	virtual MIfReq* prev() override;
 	virtual MIfReq* tail() override;
