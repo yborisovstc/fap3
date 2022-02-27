@@ -22,6 +22,7 @@
 #include "dest.h"
 #include "desio.h"
 #include "desadp.h"
+#include "dessdc.h"
 #include "mnt.h"
 #include "link.h"
 
@@ -43,6 +44,8 @@ const ProvDef::TFReg ProvDef::mReg ( {
 	Item<TrAndVar>(), Item<TrNegVar>(), Item<TrUri>(), Item<TrMutNode>(), Item<TrMutConn>(), Item<TrMutDisconn>(), Item<TrSizeVar>(), Item<TrAtVar>(),
 	Item<TrTuple>(), Item<TrChr>(), Item<TrChrc>(),
 	Item<AMnodeAdp>(), Item<AMelemAdp>(), Item<AMntp>(),
+	/* SDCs */
+	Item<ASdcComp>(), Item<ASdcConn>(),
 	});
 
 

@@ -77,6 +77,8 @@ libfap3_la_SOURCES = \
 		       chromo2.cpp \
 		       desadp.h \
 		       desadp.cpp \
+		       dessdc.h \
+		       dessdc.cpp \
 		       mnt.h \
 		       mnt.cpp \
 		       dbg.h \

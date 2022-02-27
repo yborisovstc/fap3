@@ -426,13 +426,6 @@ void AAdp::onOwnerAttached()
 
 }
 
-// Input access point
-
-void AAdp::AdpIap::onInpUpdated()
-{
-    mHandler();
-}
-
 
 
 

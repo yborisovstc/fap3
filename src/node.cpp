@@ -386,6 +386,8 @@ MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
 	} else {
 	    Logger()->Write(EErr, this, "Creating [%s] - parent [%s] not found", sname.c_str(), sparent.c_str());
 	}
+    } else {
+	Log(TLog(EErr, this) + "Missing parent name");
     }
     if (!aUpdOnly && !mutadded) {
 	notifyNodeMutated(aMut, aCtx);

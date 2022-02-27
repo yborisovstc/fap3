@@ -570,26 +570,28 @@ void Syst::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
     MIface* ifr = MNode_getLif(aName.c_str());
     if (ifr) {
 	addIfpLeaf(ifr, aReq);
-    }
-    if (aName == MAgent::Type()) {
-	for (int i = 0; i < owner()->pcount(); i++) {
-	    MOwned* comp = owner()->pairAt(i)->provided();
-	    MNode* compn = comp->lIf(compn);
-	    MAgent* compa = compn ? compn->lIf(compa) : nullptr;
-	    if (compa) {
-		addIfpLeaf(compa, aReq);
-	    }
-	}
     } else {
-	// Redirect to agents
-	MIfProv* ifp = defaultIfProv(MAgent::Type());
-	MIfProv* maprov = ifp->first();
-	while (maprov) {
-	    MUnit* agtu = maprov ? maprov->iface()->lIf(agtu) : nullptr;
-	    if (agtu) {
-		agtu->resolveIface(aName, aReq);
+	// Stop resolving if local iface matches
+	if (aName == MAgent::Type()) {
+	    for (int i = 0; i < owner()->pcount(); i++) {
+		MOwned* comp = owner()->pairAt(i)->provided();
+		MNode* compn = comp->lIf(compn);
+		MAgent* compa = compn ? compn->lIf(compa) : nullptr;
+		if (compa) {
+		    addIfpLeaf(compa, aReq);
+		}
 	    }
-	    maprov = maprov->next();
+	} else {
+	    // Redirect to agents
+	    MIfProv* ifp = defaultIfProv(MAgent::Type());
+	    MIfProv* maprov = ifp->first();
+	    while (maprov) {
+		MUnit* agtu = maprov ? maprov->iface()->lIf(agtu) : nullptr;
+		if (agtu) {
+		    agtu->resolveIface(aName, aReq);
+		}
+		maprov = maprov->next();
+	    }
 	}
     }
 }

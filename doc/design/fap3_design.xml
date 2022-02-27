@@ -243,6 +243,14 @@
 		    <xref linkend="ds_mae_scc"/>. Ref <xref linkend="gls_ssc"/> for another design solution.  </para></glossdef>
 	</glossentry>
 
+	<glossentry id="gls_sdc"><glossterm>SDC</glossterm> <acronym>SDC</acronym>
+	    <glossdef> <para>
+		System DES controller. The mechanism of system structure update controlled by DES where the controlling DES "accesses"
+		to managed system structure via a number of specialized systems performing certain mutation. 
+		     Anoter desing soluRef <xref linkend="gls_adp"/> for another design solution.  </para></glossdef>
+	</glossentry>
+
+
 	<glossentry id="gls_slc"><glossterm>SLC</glossterm> <acronym>SCC</acronym>
 	    <glossdef> <para>
 		ockets Loopback Connections. Socket design approach when loopback connections are supported
@@ -1508,11 +1516,45 @@
 		   avoid the possible conflicts when some controlling subsustems try to control same controlled subsystem.</simpara>
 	    </sect3>
 	</sect2>
-	<sect2><title>DES controlling phiylosophy: objsect os data</title>
+	<sect2><title>DES controlling phiylosophy: objsect as data</title>
 	    <sect3><title>Intro</title>
 		<simpara>DES controlling needs to be considered in the scope of DES nature: updating the states data via transormation of the data of
 		    dependencies. The only sepcific of DES controlling is that the data to be updating is the controlled object.</simpara>
 	    </sect3>
+	</sect2>
+	<sect2 id="ds_dcs_ucs"><title>How to support update-confirm scheme when controlling system</title>
+	    <sect3><title>Into</title>
+		<simpara>
+		    DES architecture is based on updata-confirm principle: current sytem state is updated (calculated new state value). Current DES
+		    desing implements the current-new system state via update-confirm pattern. Confirmed data is the current state whereas updated data is new state.
+		    This desing is compact and effective in case of updating regular data. But how this pattern can be apply to updating system structure?
+		</simpara>
+		<simpara>
+		    Let's distinguish "system data" and "system structue data". "System data" is the data of system states. "System structure data" is the data
+		    representation of system structure. There could be different representation. For instance system chromo is one of them.
+		    Obviously it is wrong to update system structure on update phase - this would make the update process not deterministic because the system structure
+		    can be changed at any time during update. This would be OK if we had the same solution for system structure data as for system data. System data is 
+		    "double buffered" - on update phase updated not state value but buffered one. But this solution hardly possible for system structure data.
+		    Updating system structure on confirmation phase is also wrong because the structure update depends on some system data but the data can be
+		    change on confirm phase, the double buffering copy is not deterministic here.
+		</simpara>
+	    </sect3>
+	    <sect3 id="ds_dcs_ucs_cip"><title>Current implementation - a problem.</title>
+		<sect4><title>Intro</title>
+		    <simpara>
+			How the problem with system structure update is solved at the moment (239ba130a63)? Node adapter is used for updating system structure - the update
+			performs via system mutation. Adapter performs the mutation on confirmation phase. It is assumes that the mutation formed by DES depens on system data only
+			but not system structure date. So on update phase the system structure is unchanged. But the problem is (!!) with system structure update on confirmation
+			phase: the system data on what the mut depends can change during confirmation phase (it depends on the sequence of system states confirmation).
+		    </simpara>
+		    <simpara>The previous NodeAdp implementation perfored the system mutation on update phase. But is also was wrong because the change of system structure
+			affects the system states so affects the process of update depending states.</simpara>
+		</sect4>
+	    </sect3>
+	    <sect4><title>Solution : to buffer the mutation</title>
+		<simpara>We can avoid the system mut dependency from system data by buffering the mut. With that approach NodeAdp updates and save mut on update phase and
+		    apply the buffered mut on confirm phase.</simpara>
+	    </sect4>
 	</sect2>
 	<sect2><title>Using special layer for controlling systems.</title>
 	    <sect3><title>Intro</title>
@@ -1529,6 +1571,71 @@
 		    data to it controlled model (i.e. changes the model). In DES adapter there is no explicit transition. Instead, the adapter performs "the transition" via
 		    direct changing (mutating) of the controlled system. The only diff is <xref linkend="ds_dcs_itr_sna"/> - this causes the different behaviour.
 		</simpara>
+	    </sect3>
+	</sect2>
+	<sect2><title>System update: chromo vs system structure data.</title>
+	    <sect3><title>Intro</title>
+		<simpara>
+		    Currently the mut is used to update system structure via Node DES adapter (NodeAdp). But this solution is not convenient - the mut is specific
+		    data and we need to form this data via rather complicated transition. What is the alternative? It is the solution where system structure data
+		    is represented as simple data, for instance boolean data that represened the sign of some component of the system. Updating this data to true
+		    means that system shall create that compoment.
+		</simpara>
+	    </sect3>
+	    <sect3><title>System structue data is just another representation of Node DES adapter.</title>
+		<simpara>
+		    Indeed, the structure data can be implemented in the scope of adapter with adding specific inputs, outputs and internal modules.
+		    Morover the system structure update via structure data finally uses mutation - we just don't have another way to change system structure.
+		</simpara>
+		<simpara>
+		    However these two approach differs from usage point of view. With NodeAdp we need to form the sequence of mutations with complex transitions. System structure
+		    data potentially can be implemeted as separate DES. Let's call this DES "system data controller". In that case With system structure data we can create two
+		    controllers. There is an argument that we could create two adapters with embedded system data controller feature, but this would be rather expensive. Another
+		    way is to create controller in the adapter.
+		</simpara>
+		<simpara>
+		    Actually forming mutation for adapter is not true DES approach - in most cases we form just the sequence of mutations. With DES approach we shouldn't use
+		    the sequence by set mutation depending on some valuable data (not just sequence counter).
+		</simpara>
+	    </sect3>
+	    <sect3><title>System structure DES controller (<xref linkend="gls_sdc"/>).</title>
+		<sect4><title>Controller as controlled system agent.</title>
+		    <simpara>
+			It is the common case that controlling DES is implemented right in controlled DES. We can intoduce specific agents - 
+			<xref linkend="gls_sdc"/> to simplify the control. This agent input on one hand form "query" to managed system so the query provides
+			    boolean result (for instance, for "Comp" controller that creates new comp there are inputs "Name", "Parent" that forms the query
+			    "Is there component of type "Parent" and name "Name"). Let's call the query result as "output" of controller.
+			    On another hand the inputs forms control action - "Comp" controller creates the component.
+			    Controller also contains special boolean input "Enable" that enables the contolling action.
+			    Such controller scheme allows to create the controlling DES more convenient. One controller output connects to another controller
+			    "Enable" input so DES-stype dependencies are simply established.
+		    </simpara>
+		</sect4>
+		<sect4><title>How to control "remote" system.</title>
+		    <simpara>
+			Another case is when controlled system is not direct owner of controller. The solution here can be collect the controllers in
+			special host DES where we can provide controllers with "environmental" access to controlled system. This "environmental" access can
+			be implemented as the link to managed system that (this link is "known" to controllers). If we need to support more comples use-cases
+			(for instance the main case of modnav - select managed sub-system via navigation thru given system) then we can create custorm host DES that updates this 
+			link to managed system in same manner as DES adaptor does.
+		    </simpara>
+		</sect4>
+		<sect4><title>Controller can be implemented as non-native agent</title>
+		    <simpara>
+			Indeed, we can have controller as a system that includes adapter to managed system. The control action can be done via
+			    the mutation thru the adapter, the controller output can be formed via specific functions getting data from the adapter.
+		    </simpara>
+		    <simpara>
+			The problem here is that the adapter performs the mutation on confirmation phase but the sequence of confirmation is not
+			detarministic: some inputs can be changed.
+		    </simpara>
+		</sect4>
+		<sect4><title>Controller native implementation.</title>
+		    <simpara>
+			Native implementation can help to avoid the problem with non-deterministic inputs update on confirmation phase, see the problem
+			description above.
+		    </simpara>
+		</sect4>
 	    </sect3>
 	</sect2>
 	<sect2 id="ds_dcs_ord"><title>DCS example/test - ordering of agents.</title>
@@ -1686,6 +1793,11 @@
 		    mMag->mutate(chromo.Root(), false, mutctx, true);
 		</programlisting>
 		<simpara>So we need to redesign chromo to support pure "segment" chromo.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_iss_006"><title>[DS_ISS_006] NodeAdp current sytem update-confirm scheme is wrong.</title>
+	    <sect3><title>Intro</title>
+		<simpara>Ref <xrefl linkend="ds_dcs_ucs_cip"/></simpara>
 	    </sect3>
 	</sect2>
 

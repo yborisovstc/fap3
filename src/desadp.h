@@ -30,7 +30,7 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 	    public:
 		AdpIap(MNode& aHost, THandler aHandler): mHost(aHost), mHandler(aHandler){}
 		// From MDesInpObserver
-		virtual void onInpUpdated() override;
+		virtual void onInpUpdated() override { mHandler();}
 		virtual string MDesInpObserver_Uid() const {return MDesInpObserver::Type();}
 		virtual void MDesInpObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
 	    protected:
