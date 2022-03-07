@@ -763,6 +763,42 @@ void TrMutConn::DtGet(DMut& aData)
 }
 
 
+// Agent function "Mut Content composer"
+
+TrMutCont::TrMutCont(const string& aType, const string& aName, MEnv* aEnv): TrMut(aType, aName, aEnv)
+{
+    AddInput(GetInpUri(EInpName));
+    AddInput(GetInpUri(EInpValue));
+}
+
+string TrMutCont::GetInpUri(int aId) const
+{
+    if (aId == EInpName) return "Name";
+    else if (aId == EInpValue) return "Value";
+    else return string();
+}
+
+void TrMutCont::DtGet(DMut& aData)
+{
+    bool res = false;
+    string name;
+    res = GetInpSdata(EInpName, name);
+    if (res) {
+	string value;
+	res = GetInpSdata(EInpValue, value);
+	if (res) {
+	    aData.mData = TMut(ENt_Cont, ENa_Id, name, ENa_MutVal, value);
+	    aData.mValid = true;
+	} else {
+	    aData.mValid = false;
+	}
+    } else {
+	aData.mValid = false;
+    }
+    mRes = aData;
+}
+
+
 
 // Agent function "Mut Disconnect composer"
 

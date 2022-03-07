@@ -54,6 +54,8 @@ bool Content::setData(const string& aCont)
 
 void Content::mutContent(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 {
+    /* TODO What is the reason of changing content of node not supporting"
+     * This decision is not clear. Enable the change - use base mutContent 
     string snode = aMut.Attr(ENa_MutNode);
     if (snode.empty()) {
 	string sdata = aMut.Attr(ENa_MutVal);
@@ -67,6 +69,8 @@ void Content::mutContent(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aC
     if (!aUpdOnly) {
 	notifyNodeMutated(aMut, aCtx);
     }
+    */
+    Node::mutContent(aMut, aUpdOnly, aCtx);
 }
 
 void Content::onContentChanged(const MContent* aCont)

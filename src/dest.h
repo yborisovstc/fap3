@@ -281,6 +281,22 @@ class TrMutConn: public TrMut
 	virtual void DtGet(DMut& aData) override;
 };
 
+/** @brief Agent function "Mut content composer"
+ * */
+class TrMutCont: public TrMut
+{
+    public:
+	enum { EInpName, EInpValue };
+    public:
+	static const char* Type() { return "TrMutCont";};
+	TrMutCont(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From ATrcMut
+	virtual string GetInpUri(int aId) const override;
+	// From MDtGet
+	virtual void DtGet(DMut& aData) override;
+};
+
+
 /** @brief Agent function "Mut disconnect composer"
  * */
 class TrMutDisconn: public TrMut

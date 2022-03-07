@@ -197,10 +197,15 @@ C2MdlNode::C2MdlNode(const C2MdlNode& aSrc, C2MdlNode* aOwner): mOwner(aOwner), 
 
 C2MdlNode& C2MdlNode::operator=(const C2MdlNode& aSrc)
 {
-    // Owner isn't touched
     mContext = aSrc.mContext;
     mMut = aSrc.mMut;
-    mChromo = aSrc.mChromo;
+    //mChromo = aSrc.mChromo;
+    mChromo.clear();
+    for (auto sitem : aSrc.mChromo) {
+	C2MdlNode item(this);
+	mChromo.push_back(item);
+	mChromo.back() = sitem;
+    }
     mQnode = nullptr;
     return *this;
 }
@@ -1026,6 +1031,8 @@ bool ContainsSep(const string& aLex)
     return res;
 }
 
+string EscapeCtrls(const string& aData, const string& aCtrls);
+
 /** @brief Groups lexeme
  * */
 string GroupLexeme(const string& aLex, bool aGroup)
@@ -1035,7 +1042,7 @@ string GroupLexeme(const string& aLex, bool aGroup)
     if (aGroup) {
 	res = KT_TextDelim;
     }
-    res += aLex;
+    res += EscapeCtrls(aLex, "\"");
     if (aGroup) {
 	res += KT_TextDelim;
     }
@@ -1164,10 +1171,16 @@ void Chromo2Mdl::rdp_spname_self(istream& aIs, string& aRes)
 void Chromo2Mdl::rdp_string(istream& aIs, string& aRes)
 {
     char c = aIs.get();
+    bool esc = false;
     if (c == KT_TextDelim ) {
 	c = aIs.get();
-	while (c != KT_TextDelim && c != KT_EOL) {
-	    aRes.push_back(c);
+	while ((c != KT_TextDelim || c == KT_TextDelim && esc)  && c != KT_EOL) {
+	    if (c == KT_Escape) {
+		esc = true;
+	    } else {
+		aRes.push_back(c);
+		esc = false;
+	    }
 	    c = aIs.get();
 	}
 	if (c != KT_TextDelim) {
@@ -1818,7 +1831,7 @@ bool Chromo2Mdl::operator==(const Chromo2Mdl& b) const
 
 
 
-Chromo2::Chromo2(): mRootNode(&mMdl, THandle())
+Chromo2::Chromo2(): mRootNode(&mMdl, mMdl.Hroot())
 {
 }
 

@@ -51,7 +51,9 @@ MyRoot : Elem {
                     value ~ : State { = "SI 24"; };
                 };
             }
-            # "Chrom composer";
+            # "Chromo data";
+            ChrD :  State { = "CHR2 { Text = \"Button 3\";  BgColor < { R = \"0.0\"; G = \"0.0\"; B = \"1.0\"; } }"; }
+            # "Chromo composer";
             ChromoRes : State @ {
                 _@ < {
                     = "CHR2 { }";

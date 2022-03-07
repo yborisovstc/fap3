@@ -1,5 +1,6 @@
 root : Elem
 {
+  Cnt1 = "\"Test of escape sequence";
   e1 : Elem;
   e1 <  e1_0 : Elem;
   # "Comment";

@@ -3,6 +3,7 @@
 #include "des.h"
 #include "env.h"
 #include "prov.h"
+#include "rmutdata.h"
 
 #include <cppunit/extensions/HelperMacros.h>
 
@@ -158,6 +159,16 @@ void Ut_des::test_des_tr_1()
     MNode* root = mEnv->Root();
     MElem* eroot = root ? root->lIf(eroot) : nullptr;
     CPPUNIT_ASSERT_MESSAGE("Fail to get root", eroot);
+
+    // Verifiy chromo2 data
+    cout << "Verifiy chromo2 data" << endl;
+    MNode* chrdn = root->getNode("Launcher.Ds1.ChrD");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get ChrD", chrdn);
+    DChr2 data;
+    GetGData(chrdn, data);
+    Chromo2& cdc = data.mData;
+    cout << "chromo2 data root dump:" << endl;
+    cdc.Root().Dump();
 
     // Run 
     bool res = mEnv->RunSystem(3);

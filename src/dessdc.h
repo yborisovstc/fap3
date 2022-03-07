@@ -11,8 +11,13 @@
 #include "msyst.h"
 #include "unit.h"
 #include "desadp.h"
+#include "rmutdata.h"
 
 /** @brief SDC base agent
+ * NOTE: In normal cases MDesObserver iface is not used, so we just keep in for the rare case
+ * for instance if the agent includes DES or states.
+ * To avoid the agent providing MDesObserver iface to agent host and interfering main DES agent
+ * the request from agent host is ignoring in resolveIfc()
  * */
 class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesInpObserver, public MAgent, public MDVarGet, public MObserver
 {
@@ -25,6 +30,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesI
 	class SdcIapb: public MDesInpObserver, public MDesSyncable {
 	    public:
 		SdcIapb(ASdc* aHost, const string& aInpUri): mHost(aHost), mInpUri(aInpUri), mUpdated(false), mActivated(false), mChanged(false) {}
+		string getInpUri() const { return mInpUri;}
 		// From MDesInpObserver
 		virtual void onInpUpdated() override { setActivated();}
 		virtual string MDesInpObserver_Uid() const override {return MDesInpObserver::Type();}
@@ -42,12 +48,28 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesI
 		bool mChanged; /*!< Indication of data is changed */
 	};
 
- 	/** @brief Input access point
+ 	/** @brief Input access point operating with Sdata
+	 * @param  T  Sdata type 
 	 * */
 	template <class T>
 	class SdcIap: public SdcIapb {
 	    public:
 		SdcIap(ASdc* aHost, const string& aInpUri): SdcIapb(aHost, aInpUri) {}
+		// From MDesSyncable
+		virtual void update() override;
+		virtual void confirm() override;
+	    public:
+		T mUdt;  /*!< Updated data */
+		T mCdt;  /*!< Confirmed data */
+	};
+
+ 	/** @brief Input access point operating with generic data
+	 * @param  T  data type 
+	 * */
+	template <class T>
+	class SdcIapg: public SdcIapb {
+	    public:
+		SdcIapg(ASdc* aHost, const string& aInpUri): SdcIapb(aHost, aInpUri) {}
 		// From MDesSyncable
 		virtual void update() override;
 		virtual void confirm() override;
@@ -127,15 +149,19 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesI
 	virtual void onObsChanged(MObservable* aObl) override;
 	// From Node.MOwned
 	virtual void onOwnerAttached() override;
+    public:
+	bool registerIap(SdcIapb& aIap);
     protected:
 	bool rifDesIobs(SdcIapb& aIap, MIfReq::TIfReqCp* aReq);
 	template<typename T> bool GetInpSdata(const string aInpUri, T& aRes);
+	template<typename T> bool GetInpData(const string aInpUri, T& aRes);
 	MNode* ahostNode();
 	void getOut(Sdata<bool>& aData);
 	// Utilities
 	void addInput(const string& aName);
 	virtual void addOutput(const string& aName);
 	// Local
+	virtual bool doCtl() { return false;}
 	/** @brief Gets status of the query */
 	virtual bool getState() {return false;}
     protected:
@@ -146,7 +172,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesI
 	bool mActNotified;  //<! Sign of that State notified observers on Activation
 	ASdc::SdcIap<bool> mIapEnb; /*!< "Enable" input access point */
 	ASdc::SdcPap<bool> mOapOut; /*!< Comps count access point */
-	bool mInpEnbUpdated = true;
+	vector<SdcIapb*> mIaps; /*!< Input adapters registry */
 };
 
 template <typename T> MIface* ASdc::SdcPap<T>::DoGetDObj(const char *aName)
@@ -160,6 +186,27 @@ template <typename T> MIface* ASdc::SdcPap<T>::DoGetDObj(const char *aName)
 }
 
 
+/** @brief SDC agent "Mutate"
+ * Performs generic mutation
+ * */
+class ASdcMut : public ASdc
+{
+    public:
+	static const char* Type() { return "ASdcMut";};
+	ASdcMut(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	virtual ~ASdcMut();
+	// From Unit.MIfProvOwner
+	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+    protected:
+	// From ASdc
+	virtual bool getState() override;
+	bool doCtl() override;
+    protected:
+	ASdc::SdcIap<string> mIapTarg; /*!< "Target" input access point, URI */
+	ASdc::SdcIapg<DChr2> mIapMut; /*!< "Mutation" input access point, Chromo2 */
+	bool mMutApplied; /*!< Indicatio of mut has been applied successfully */
+};
+
 
 /** @brief SDC agent "Component"
  * */
@@ -169,15 +216,12 @@ class ASdcComp : public ASdc
 	static const char* Type() { return "ASdcComp";};
 	ASdcComp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual ~ASdcComp();
-	// From ASdc
-	virtual bool getState();
-	// From MDesSyncable
-	virtual void update() override;
-	virtual void confirm() override;
 	// From Unit.MIfProvOwner
 	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
     protected:
-	bool addComp();
+	// From ASdc
+	virtual bool getState() override;
+	bool doCtl() override;
     protected:
 	ASdc::SdcIap<string> mIapName; /*!< "Name" input access point */
 	ASdc::SdcIap<string> mIapParent; /*!< "Parent" input access point */
@@ -191,19 +235,59 @@ class ASdcConn : public ASdc
 	static const char* Type() { return "ASdcConn";};
 	ASdcConn(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual ~ASdcConn();
-	// From ASdc
-	virtual bool getState();
-	// From MDesSyncable
-	virtual void update() override;
-	virtual void confirm() override;
 	// From Unit.MIfProvOwner
 	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
     protected:
+	// From ASdc
+	virtual bool getState() override;
+	bool doCtl() override;
+    protected:
+	ASdc::SdcIap<string> mIapV1; /*!< "V1" input access point */
+	ASdc::SdcIap<string> mIapV2; /*!< "V2" input access point */
+};
+
+/** @brief SDC agent "Disonnect"
+ * */
+class ASdcDisconn : public ASdc
+{
+    public:
+	static const char* Type() { return "ASdcDisconn";};
+	ASdcDisconn(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	virtual ~ASdcDisconn();
+	// From Unit.MIfProvOwner
+	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+    protected:
+	// From ASdc
+	virtual bool getState() override;
 	bool doCtl();
     protected:
 	ASdc::SdcIap<string> mIapV1; /*!< "V1" input access point */
 	ASdc::SdcIap<string> mIapV2; /*!< "V2" input access point */
 };
+
+/** @brief SDC agent "Insert"
+ * Inserts system between given CP and its pair
+ * */
+class ASdcInsert : public ASdc
+{
+    public:
+	static const char* Type() { return "ASdcInsert";};
+	ASdcInsert(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	virtual ~ASdcInsert();
+	// From Unit.MIfProvOwner
+	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+    protected:
+	// From ASdc
+	virtual bool getState() override;
+	bool doCtl();
+    protected:
+	ASdc::SdcIap<string> mIapCp; /*!< "Given CP" input access point */
+	ASdc::SdcIap<string> mIapIcp; /*!< "Inserted system CP conn to given CP" input access point */
+	ASdc::SdcIap<string> mIapIcpp; /*!< "Inserted system CP conn to given CP pair" input access point */
+	MVert* mCpPair;
+};
+
+
 
 
 #endif // __FAP3_DESSDC_H

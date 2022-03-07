@@ -38,7 +38,7 @@ class DChr2: public DtBase
     public:
 	using TData = Chromo2;
     public:
-	DChr2(): DtBase() {};
+	DChr2();
 	DChr2(const DChr2& aSrc): DtBase(aSrc), mData(aSrc.mData) {};
 	static const char* TypeSig();
 	static bool IsSrepFit(const string& aString);

@@ -618,6 +618,10 @@ void ADes::setUpdated()
 	if (obs) {
 	    obs->onUpdated(this);
 	    mUpdNotified = true;
+	    //Log(TLog(EInfo, this) + "setUpdated, observer: " + obs->Uid());
+	    //obs = getDesObs();
+	} else {
+	    //Log(TLog(EInfo, this) + "setUpdated, observer not found");
 	}
     }
 }
@@ -629,6 +633,9 @@ void ADes::setActivated()
 	if (obs) {
 	    obs->onActivated(this);
 	    mActNotified = true;
+	} else {
+	    //Log(TLog(EInfo, this) + "setActivated, observer not found");
+	    //obs = getDesObs();
 	}
     }
 }

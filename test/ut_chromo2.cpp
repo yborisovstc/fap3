@@ -13,10 +13,11 @@
 class Ut_chromo2 : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_chromo2);
-    CPPUNIT_TEST(test_Chr1);
+//    CPPUNIT_TEST(test_Chr1);
 //    CPPUNIT_TEST(test_Chr2);
 //    CPPUNIT_TEST(test_Chr3);
 //    CPPUNIT_TEST(test_Chr4);
+    CPPUNIT_TEST(test_Chr5);
     CPPUNIT_TEST_SUITE_END();
 public:
     virtual void setUp();
@@ -26,6 +27,7 @@ private:
     void test_Chr2();
     void test_Chr3();
     void test_Chr4();
+    void test_Chr5();
 private:
     //Env* iEnv;
 };
@@ -137,6 +139,31 @@ void Ut_chromo2::test_Chr4()
     ChromoNode croot = chr.Root();
     CPPUNIT_ASSERT_MESSAGE("Chromo root is empty", croot != ChromoNode());
 }
+
+void Ut_chromo2::test_Chr5()
+{
+    printf("\n === Test of Chromo2 setting from spec\n");
+    Chromo2 chr;
+    cout << "Chromo set from spec" << endl;
+    string spec = "{ N1 : Node; N1 < Cnt = \"Value\"; N1 < BgColor : Content; }";
+    chr.SetFromSpec(spec);
+    if (chr.IsError()) {
+	cout << "Pos: " << chr.Error().mPos << " -- " << chr.Error().mText << endl;
+    }
+    chr.Root().Dump();
+    CPPUNIT_ASSERT_MESSAGE("Chromo parsing error", !chr.IsError());
+    spec = "{ Text = \"Button 3\";  BgColor < { R = \"0.0\"; G = \"0.0\"; B = \"1.0\"; } }";
+    chr.SetFromSpec(spec);
+    if (chr.IsError()) {
+	cout << "Pos: " << chr.Error().mPos << " -- " << chr.Error().mText << endl;
+    }
+    CPPUNIT_ASSERT_MESSAGE("Chromo parsing error", !chr.IsError());
+    chr.Root().Dump();
+    int count = chr.Root().Count();
+    CPPUNIT_ASSERT_MESSAGE("Wrong chromo nodes count", count == 2);
+
+}
+
 
 
 

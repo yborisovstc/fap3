@@ -37,6 +37,10 @@ void DMut::DataToString(stringstream& aStream) const
 
 const char* DChr2::TypeSig() { return  "CHR2";};
 
+DChr2::DChr2(): DtBase()
+{
+};
+
 bool DChr2::IsSrepFit(const string& aString)
 {
     return DtBase::IsSrepFit(aString, TypeSig());
