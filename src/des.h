@@ -81,12 +81,15 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 	/** @brief Pseudo content */
 	class SCont : public MContent {
 	    public:
-	    SCont(State& aHost, const string& aName) : mName(aName), mHost(aHost) {}
+	    SCont(State& aHost, const string& aName) : mName(aName), mHost(aHost), mUpdated(false) {}
 	    // From MContent
 	    virtual string MContent_Uid() const override { return mHost.getCntUid(mName, MContent::Type());}
 	    virtual MIface* MContent_getLif(const char *aType) override { return nullptr;}
 	    virtual void MContent_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
 	    virtual string contName() const override { return mName;}
+	    public:
+	    bool mUpdated;
+	    string mValue;
 	    protected:
 	    string mName;
 	    State& mHost;

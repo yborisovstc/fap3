@@ -29,7 +29,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesI
 	 * */
 	class SdcIapb: public MDesInpObserver, public MDesSyncable {
 	    public:
-		SdcIapb(ASdc* aHost, const string& aInpUri): mHost(aHost), mInpUri(aInpUri), mUpdated(false), mActivated(false), mChanged(false) {}
+		SdcIapb(ASdc* aHost, const string& aInpUri);
 		string getInpUri() const { return mInpUri;}
 		// From MDesInpObserver
 		virtual void onInpUpdated() override { setActivated();}
@@ -150,7 +150,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesI
 	// From Node.MOwned
 	virtual void onOwnerAttached() override;
     public:
-	bool registerIap(SdcIapb& aIap);
+	bool registerIap(SdcIapb* aIap);
     protected:
 	bool rifDesIobs(SdcIapb& aIap, MIfReq::TIfReqCp* aReq);
 	template<typename T> bool GetInpSdata(const string aInpUri, T& aRes);
@@ -165,6 +165,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesI
 	/** @brief Gets status of the query */
 	virtual bool getState() {return false;}
     protected:
+	vector<SdcIapb*> mIaps; /*!< Input adapters registry */
 	TObserverCp mObrCp;               /*!< Observer connpoint */
 	TAgtCp mAgtCp;                   /*!< Agent connpoint */
 	MNode* mMag; /*!< Managed agent */
@@ -172,7 +173,6 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesI
 	bool mActNotified;  //<! Sign of that State notified observers on Activation
 	ASdc::SdcIap<bool> mIapEnb; /*!< "Enable" input access point */
 	ASdc::SdcPap<bool> mOapOut; /*!< Comps count access point */
-	vector<SdcIapb*> mIaps; /*!< Input adapters registry */
 };
 
 template <typename T> MIface* ASdc::SdcPap<T>::DoGetDObj(const char *aName)
@@ -194,9 +194,6 @@ class ASdcMut : public ASdc
     public:
 	static const char* Type() { return "ASdcMut";};
 	ASdcMut(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
-	virtual ~ASdcMut();
-	// From Unit.MIfProvOwner
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
     protected:
 	// From ASdc
 	virtual bool getState() override;
@@ -215,9 +212,6 @@ class ASdcComp : public ASdc
     public:
 	static const char* Type() { return "ASdcComp";};
 	ASdcComp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
-	virtual ~ASdcComp();
-	// From Unit.MIfProvOwner
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
     protected:
 	// From ASdc
 	virtual bool getState() override;
@@ -234,9 +228,6 @@ class ASdcConn : public ASdc
     public:
 	static const char* Type() { return "ASdcConn";};
 	ASdcConn(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
-	virtual ~ASdcConn();
-	// From Unit.MIfProvOwner
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
     protected:
 	// From ASdc
 	virtual bool getState() override;
@@ -253,13 +244,10 @@ class ASdcDisconn : public ASdc
     public:
 	static const char* Type() { return "ASdcDisconn";};
 	ASdcDisconn(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
-	virtual ~ASdcDisconn();
-	// From Unit.MIfProvOwner
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
     protected:
 	// From ASdc
 	virtual bool getState() override;
-	bool doCtl();
+	bool doCtl() override;
     protected:
 	ASdc::SdcIap<string> mIapV1; /*!< "V1" input access point */
 	ASdc::SdcIap<string> mIapV2; /*!< "V2" input access point */
@@ -273,13 +261,10 @@ class ASdcInsert : public ASdc
     public:
 	static const char* Type() { return "ASdcInsert";};
 	ASdcInsert(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
-	virtual ~ASdcInsert();
-	// From Unit.MIfProvOwner
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
     protected:
 	// From ASdc
 	virtual bool getState() override;
-	bool doCtl();
+	bool doCtl() override;
     protected:
 	ASdc::SdcIap<string> mIapCp; /*!< "Given CP" input access point */
 	ASdc::SdcIap<string> mIapIcp; /*!< "Inserted system CP conn to given CP" input access point */

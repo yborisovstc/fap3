@@ -7,6 +7,10 @@
 const string K_CpUri_Enable = "Enable";
 const string K_CpUri_Outp = "Outp";
 
+ASdc::SdcIapb::SdcIapb(ASdc* aHost, const string& aInpUri): mHost(aHost), mInpUri(aInpUri), mUpdated(false), mActivated(false), mChanged(false)
+{
+    mHost->registerIap(this);
+}
 
 template <class T>
 void ASdc::SdcIap<T>::update()
@@ -50,12 +54,12 @@ void ASdc::SdcIapg<T>::confirm()
 
 
 ASdc::ASdc(const string &aType, const string& aName, MEnv* aEnv): Unit(aType, aName, aEnv),
-   mMag(NULL), mUpdNotified(false), mActNotified(false), mObrCp(this), mAgtCp(this), mIapEnb(this, K_CpUri_Enable),
+    mIaps(), mMag(NULL), mUpdNotified(false), mActNotified(false), mObrCp(this), mAgtCp(this), mIapEnb(this, K_CpUri_Enable),
     mOapOut(this, K_CpUri_Outp)
 {
-    addInput(K_CpUri_Enable);
+    mIapEnb.mUdt = false;
+    mIapEnb.mCdt = false;
     addOutput(K_CpUri_Outp);
-    mIaps.push_back(&mIapEnb);
 }
 
 ASdc::~ASdc()
@@ -88,7 +92,9 @@ bool ASdc::rifDesIobs(SdcIapb& aIap, MIfReq::TIfReqCp* aReq)
 void ASdc::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 {
     if (aName == MDesInpObserver::Type()) {
-	rifDesIobs(mIapEnb, aReq);
+	for (auto iap : mIaps) {
+	    rifDesIobs(*iap, aReq);
+	}
     } else if (aName == MDesObserver::Type()) {
 	if (!isRequestor(aReq, ahostNode())) {
 	    MIface* iface = MNode_getLif(MDesObserver::Type());
@@ -248,6 +254,7 @@ void ASdc::getOut(Sdata<bool>& aData)
 {
     aData.mData = getState();
     aData.mValid = true;
+    Log(TLog(EDbg, this) + "Outp: " + (aData.mData ? "true" : "false"));
 }
 
 void ASdc::onOwnerAttached()
@@ -302,10 +309,10 @@ template<typename T> bool ASdc::GetInpData(const string aInpUri, T& aRes)
     return res;
 }
 
-bool ASdc::registerIap(SdcIapb& aIap)
+bool ASdc::registerIap(SdcIapb* aIap)
 {
-    addInput(aIap.getInpUri());
-    mIaps.push_back(&aIap);
+    addInput(aIap->getInpUri());
+    mIaps.push_back(aIap);
     return true;
 }
 
@@ -338,12 +345,6 @@ const string K_CpUri_Mut = "Mut";
 ASdcMut::ASdcMut(const string &aType, const string& aName, MEnv* aEnv): ASdc(aType, aName, aEnv),
     mIapTarg(this, K_CpUri_Targ), mIapMut(this, K_CpUri_Mut)
 {
-    registerIap(mIapTarg);
-    registerIap(mIapMut);
-}
-
-ASdcMut::~ASdcMut()
-{
 }
 
 bool ASdcMut::getState()
@@ -373,18 +374,6 @@ bool ASdcMut::doCtl()
     return res;
 }
 
-void ASdcMut::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
-{
-    if (aName == MDesInpObserver::Type()) {
-	rifDesIobs(mIapTarg, aReq);
-	rifDesIobs(mIapMut, aReq);
-    }
-    ASdc::resolveIfc(aName, aReq);
-}
-
-
-
-
 
 /* SDC agent "Component" */
 
@@ -393,16 +382,7 @@ const string K_CpUri_Parent = "Parent";
 
 ASdcComp::ASdcComp(const string &aType, const string& aName, MEnv* aEnv): ASdc(aType, aName, aEnv),
     mIapName(this, K_CpUri_Name), mIapParent(this, K_CpUri_Parent)
-{
-    addInput(K_CpUri_Name);
-    addInput(K_CpUri_Parent);
-    mIaps.push_back(&mIapName);
-    mIaps.push_back(&mIapParent);
-}
-
-ASdcComp::~ASdcComp()
-{
-}
+{ }
 
 bool ASdcComp::getState()
 {
@@ -433,16 +413,6 @@ bool ASdcComp::doCtl()
     return res;
 }
 
-void ASdcComp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
-{
-    if (aName == MDesInpObserver::Type()) {
-	rifDesIobs(mIapName, aReq);
-	rifDesIobs(mIapParent, aReq);
-    }
-    ASdc::resolveIfc(aName, aReq);
-}
-
-
 
 /* SDC agent "Connect" */
 
@@ -451,16 +421,7 @@ const string K_CpUri_V2 = "V2";
 
 ASdcConn::ASdcConn(const string &aType, const string& aName, MEnv* aEnv): ASdc(aType, aName, aEnv),
     mIapV1(this, K_CpUri_V1), mIapV2(this, K_CpUri_V2)
-{
-    addInput(K_CpUri_V1);
-    addInput(K_CpUri_V2);
-    mIaps.push_back(&mIapV1);
-    mIaps.push_back(&mIapV2);
-}
-
-ASdcConn::~ASdcConn()
-{
-}
+{ }
 
 bool ASdcConn::getState()
 {
@@ -498,29 +459,12 @@ bool ASdcConn::doCtl()
     return res;
 }
 
-void ASdcConn::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
-{
-    if (aName == MDesInpObserver::Type()) {
-	rifDesIobs(mIapV1, aReq);
-	rifDesIobs(mIapV2, aReq);
-    }
-    ASdc::resolveIfc(aName, aReq);
-}
 
 /* SDC agent "Disonnect" */
 
 ASdcDisconn::ASdcDisconn(const string &aType, const string& aName, MEnv* aEnv): ASdc(aType, aName, aEnv),
     mIapV1(this, K_CpUri_V1), mIapV2(this, K_CpUri_V2)
-{
-    addInput(K_CpUri_V1);
-    addInput(K_CpUri_V2);
-    mIaps.push_back(&mIapV1);
-    mIaps.push_back(&mIapV2);
-}
-
-ASdcDisconn::~ASdcDisconn()
-{
-}
+{ }
 
 bool ASdcDisconn::getState()
 {
@@ -558,15 +502,6 @@ bool ASdcDisconn::doCtl()
     return res;
 }
 
-void ASdcDisconn::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
-{
-    if (aName == MDesInpObserver::Type()) {
-	rifDesIobs(mIapV1, aReq);
-	rifDesIobs(mIapV2, aReq);
-    }
-    ASdc::resolveIfc(aName, aReq);
-}
-
 
 // SDC agent "Insert"
 
@@ -576,18 +511,7 @@ const string K_CpUri_Icpp = "ICpp";
 
 ASdcInsert::ASdcInsert(const string &aType, const string& aName, MEnv* aEnv): ASdc(aType, aName, aEnv),
     mIapCp(this, K_CpUri_Cp), mIapIcp(this, K_CpUri_Icp), mIapIcpp(this, K_CpUri_Icpp)
-{
-    addInput(K_CpUri_Cp);
-    mIaps.push_back(&mIapCp);
-    addInput(K_CpUri_Icp);
-    mIaps.push_back(&mIapIcp);
-    addInput(K_CpUri_Icpp);
-    mIaps.push_back(&mIapIcpp);
-}
-
-ASdcInsert::~ASdcInsert()
-{
-}
+{ }
 
 bool ASdcInsert::getState()
 {
@@ -603,7 +527,7 @@ bool ASdcInsert::getState()
 	if (cpn && icpn && icppn) {
 	    MVert* cpv = cpn->lIf(cpv);
 	    MVert* icpv = icpn->lIf(icpv);
-	    MVert* icppv = icpn->lIf(icppv);
+	    MVert* icppv = icppn->lIf(icppv);
 	    res = cpv->isConnected(icpv) && mCpPair->isConnected(icppv);
 	}
     }
@@ -671,15 +595,3 @@ bool ASdcInsert::doCtl()
     }
     return res;
 }
-
-void ASdcInsert::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
-{
-    if (aName == MDesInpObserver::Type()) {
-	rifDesIobs(mIapCp, aReq);
-	rifDesIobs(mIapIcp, aReq);
-	rifDesIobs(mIapIcpp, aReq);
-    }
-    ASdc::resolveIfc(aName, aReq);
-}
-
-

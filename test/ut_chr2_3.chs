@@ -13,6 +13,10 @@ root : Elem
             Value = "Test Value";
         }
         v1 ~ v2 : Vert;
+        v4 : Vert;
+        v5 : Vert;
+        v4 ~ v5;
+        v4 !~ v5;
     }
     # "Check of how DMC mut is detected";
 }

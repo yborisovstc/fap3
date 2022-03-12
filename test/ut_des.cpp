@@ -17,9 +17,10 @@ class Ut_des : public CPPUNIT_NS::TestFixture
 //    CPPUNIT_TEST(test_des_ades_1);
 //    CPPUNIT_TEST(test_des_dmc_1);
 //    CPPUNIT_TEST(test_des_ifr_inval_1);
-    CPPUNIT_TEST(test_des_tr_1);
+    //CPPUNIT_TEST(test_des_tr_1);
 //    CPPUNIT_TEST(test_des_asr_1);
 //    CPPUNIT_TEST(test_des_asr_2);
+    CPPUNIT_TEST(test_des_utl_1);
     CPPUNIT_TEST_SUITE_END();
     public:
     virtual void setUp();
@@ -32,6 +33,7 @@ class Ut_des : public CPPUNIT_NS::TestFixture
     void test_des_tr_1();
     void test_des_asr_1();
     void test_des_asr_2();
+    void test_des_utl_1();
     private:
     Env* mEnv;
 };
@@ -420,6 +422,34 @@ void Ut_des::test_des_asr_2()
     Sdata<int> val;
     dgi->DtGet(val);
     CPPUNIT_ASSERT_MESSAGE("Wrong final state valud", val.mData == 2);
+
+    delete mEnv;
+}
+
+
+/** @brief Test of ifr activation on DES reconfiguration
+ * */
+void Ut_des::test_des_utl_1()
+{
+    cout << endl << "=== Test of DES utilities  ===" << endl;
+
+    const string specn("ut_des_utl_1");
+    string ext = "chs";
+    string spec = specn + string(".") + "chs";
+    string log = specn + "_" + ext + ".log";
+    mEnv = new Env(spec, log);
+    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv);
+    mEnv->constructSystem();
+    MNode* root = mEnv->Root();
+    MElem* eroot = root ? root->lIf(eroot) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get root", eroot);
+    // Run
+    bool res = mEnv->RunSystem(10, 2);
+    CPPUNIT_ASSERT_MESSAGE("Failed running system", eroot);
+    MNode* launcher = root->getNode("Launcher");
+    CPPUNIT_ASSERT_MESSAGE("Failed getting launcher", launcher);
+    MDesSyncable* ls = launcher->lIf(ls);
+    CPPUNIT_ASSERT_MESSAGE("Failed getting launcher syncable", ls);
 
     delete mEnv;
 }

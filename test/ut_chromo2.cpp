@@ -144,8 +144,28 @@ void Ut_chromo2::test_Chr5()
 {
     printf("\n === Test of Chromo2 setting from spec\n");
     Chromo2 chr;
-    cout << "Chromo set from spec" << endl;
-    string spec = "{ N1 : Node; N1 < Cnt = \"Value\"; N1 < BgColor : Content; }";
+
+    cout << "Chromo set from spec #1" << endl;
+    string spec = "{ V1 !~ V2; }";
+    chr.SetFromSpec(spec);
+    if (chr.IsError()) {
+	cout << "Pos: " << chr.Error().mPos << " -- " << chr.Error().mText << endl;
+    }
+    chr.Root().Dump();
+    CPPUNIT_ASSERT_MESSAGE("Chromo parsing error", !chr.IsError());
+
+    cout << "Chromo set from spec #2" << endl;
+    spec = "{ + Module; }";
+    chr.SetFromSpec(spec);
+    if (chr.IsError()) {
+	cout << "Pos: " << chr.Error().mPos << " -- " << chr.Error().mText << endl;
+    }
+    chr.Root().Dump();
+    CPPUNIT_ASSERT_MESSAGE("Chromo parsing error", !chr.IsError());
+
+
+    cout << "Chromo set from spec #3" << endl;
+    spec = "{ N1 : Node; N1 < Cnt = \"Value\"; N1 < BgColor : Content; }";
     chr.SetFromSpec(spec);
     if (chr.IsError()) {
 	cout << "Pos: " << chr.Error().mPos << " -- " << chr.Error().mText << endl;

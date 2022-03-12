@@ -9,7 +9,8 @@ sconfdir = $(pkgdatadir)/conf
 
 modulesdir = $(pkgdatadir)/modules
 dist_modules_DATA = \
-	     modules/adp.chs
+	     modules/adp.chs \
+	     modules/dutil.chs
 
 
 EXTRA_DIST = \

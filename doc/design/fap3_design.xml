@@ -247,7 +247,7 @@
 	    <glossdef> <para>
 		System DES controller. The mechanism of system structure update controlled by DES where the controlling DES "accesses"
 		to managed system structure via a number of specialized systems performing certain mutation. 
-		     Anoter desing soluRef <xref linkend="gls_adp"/> for another design solution.  </para></glossdef>
+		     Ref <xref linkend="gls_adp"/> for another design solution.  </para></glossdef>
 	</glossentry>
 
 
@@ -1598,8 +1598,8 @@
 		    the sequence by set mutation depending on some valuable data (not just sequence counter).
 		</simpara>
 	    </sect3>
-	    <sect3><title>System structure DES controller (<xref linkend="gls_sdc"/>).</title>
-		<sect4><title>Controller as controlled system agent.</title>
+	    <sect3><title>System DES controller (<xref linkend="gls_sdc"/>).</title>
+		<sect4><title>Controller as controlling system agent.</title>
 		    <simpara>
 			It is the common case that controlling DES is implemented right in controlled DES. We can intoduce specific agents - 
 			<xref linkend="gls_sdc"/> to simplify the control. This agent input on one hand form "query" to managed system so the query provides
@@ -1610,6 +1610,8 @@
 			    Such controller scheme allows to create the controlling DES more convenient. One controller output connects to another controller
 			    "Enable" input so DES-stype dependencies are simply established.
 		    </simpara>
+		    <simpara>The main idea of this approach is "distributed" nature of controlling : there can be complex controlling scheme that includes
+			many controlling agents. The agents forms "standard" DES via connecting one to another.</simpara>
 		</sect4>
 		<sect4><title>How to control "remote" system.</title>
 		    <simpara>
@@ -1636,6 +1638,20 @@
 			description above.
 		    </simpara>
 		</sect4>
+		<sect4><title>"Multi-client" controlling.</title>
+		    <simpara>Major benefit of SDC solution is that the controlling of target system can be performed from many point of the model. It is
+			similar to "client-server" approach. However we can see the potential problems here. Let's look at fap3-vis DContainer. It embeds the 
+			controlling syb-system that allows to add widget. DController expose specific socket as an input to this subsystem. Also the controlling status
+			output is included into the socket.</simpara>
+		    <simpara>But what is we need that DContainer control performs from tho parts of the model? How to support this?  </simpara>
+		    <simpara> The firt approach is to 
+			pull out this controlling subsystem from DContainer. In that case we can create two controlling sybsystem for each controlling 
+			parts ("clients"). However we need to support such "remote" controlling providing the controlling system with access to managed system like it
+			is done for DES adapter. Also it is not nice solution. The controlling DES is specific for DContainer so it would be architecturally more
+			correct way to have controling system incapsulated into container.</simpara>
+		    <simpara>Another solution would be to keep controlling subsytem inside DContainer but provide the container with means of creating other such
+			controling subsystem (again via controloing of DContainer.</simpara>
+		</sect4>
 	    </sect3>
 	</sect2>
 	<sect2 id="ds_dcs_ord"><title>DCS example/test - ordering of agents.</title>
@@ -1647,12 +1663,20 @@
 	</sect2>
 	<sect2><title>Activating system via implicit dependencies.</title>
 	    <sect3><title>Intro</title>
-		<simpara>It is normal case in the system using controlling when the controlled systme (i.e. system + adapter) depends on itlself implicitly. The example
+		<simpara>It is normal case in the system using controlling when the controlled system (i.e. system + adapter) depends on itlself implicitly. The example
 		    is <xref linkend="ds_dcs_ord"/> - the system is mutated with transition that gets system itself (acually internal connections) as input.</simpara>
 		<simpara>In contrast of typical DES there aren't explicit dependencies, e.g states that depends each other.</simpara>
-		<simpara>The questin is how to understand if subsystem depends on another subsystem (or even on itself) if threre aren't explicit dependencies?
+		<simpara>The question is how to understand if subsystem depends on another subsystem (or even on itself) if threre aren't explicit dependencies?
 		    Let's look at the example <xref linkend="ds_dcs_ord"/>: how to get known if controlled system (Root.Launcher) depends on itself via the mutating
 			transition?</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_dcs_trs"><title>DCS transaction</title>
+	    <sect3><title>Intro</title>
+		<simpara>Let's consider an example: DContainer adding widget. It is DCS SDC solution that includes 4 SDCs: CreateWdg, CreateSlot, ConnectSlot, InsertSlot.
+		    What if some SDC fails, lets say InsertSlot. In that case we will have the managed system messed: there will be created widget, new slot but the widget
+		    will not be shown. It is clear that we need to consider all these 4 SDCs as the single controlling DES. It looks like the transaction in database
+		    solutions.  </simpara>
 	    </sect3>
 	</sect2>
     </sect1>
@@ -1798,6 +1822,21 @@
 	<sect2 id="ds_iss_006"><title>[DS_ISS_006] NodeAdp current sytem update-confirm scheme is wrong.</title>
 	    <sect3><title>Intro</title>
 		<simpara>Ref <xrefl linkend="ds_dcs_ucs_cip"/></simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_iss_007"><title>[DS_ISS_007] State content change on creation phase blocks update notification</title>
+	    <sect3><title>Intro</title>
+		<simpara>Ver next to 3ebc09ad1022d85</simpara>
+		<simpara>
+		    Created fap3/modules/dutil.chs. Tested with test/ut_des.cpp:ut_des_utl_1.chs. Observed the problem that BChange DES doesn't confirm even Delay state updated from false to true.
+		    Analyzed. The root-cause is that Delay state content is set on creation phase - state notifies thru incomplete owning chain (so didn't reach the launcher) but the flag 
+		    mUpdated was set, that prevent complete owning chain notifying on the first update.
+		</simpara>
+	    </sect3>
+	    <sect3><title>Solution#1: avoid setting state mPdata and mCdata on content change.</title>
+		<simpara>With this solution State doesn't change its datas immediately on content change but just keeps content and change mPdata on update phase from content kept.</simpara>
+		<simpara>This solution doesn't work properly. The reason is that in the first init the constant state are undefined. This causes to dependent states gets undefined that
+		    in turn causes the whole DES stop. Shortly saying we don't have initial conditions set for DES actually.</simpara>
 	    </sect3>
 	</sect2>
 

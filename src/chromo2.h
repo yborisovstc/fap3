@@ -178,6 +178,7 @@ class Chromo2Mdl: public MChromoMdl
 	void rdp_mut_content(istream& aIs, C2MdlNode& aMnode);
 	void rdp_mut_comment(istream& aIs, C2MdlNode& aMnode);
 	bool rdp_mut_connect(istream& aIs, C2MdlNode& aMnode);
+	bool rdp_mut_disconnect(istream& aIs, C2MdlNode& aMnode);
 	void rdp_mut_import(istream& aIs, C2MdlNode& aMnode);
 	void rdp_mut_remove(istream& aIs, C2MdlNode& aMnode);
 	void rdp_sep(istream& aIs);

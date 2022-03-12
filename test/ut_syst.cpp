@@ -313,6 +313,15 @@ void Ut_syst::test_syst_1()
     s1n->mutate(chr->Root(), false, MutCtx(), true);
     delete chr;
 
+    // Check V3, V4 disconnection
+    MNode* v3n = root->getNode("S1.V3");
+    MVert* v3v = v3n ? v3n->lIf(v3v) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get v3v", v3v);
+    MNode* v4n = root->getNode("S1.V4");
+    MVert* v4v = v4n ? v4n->lIf(v4v) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get v4v", v4v);
+    res = v3v->isPair(v4v);
+    CPPUNIT_ASSERT_MESSAGE("V3 isn't disconnected from V4", !res);
 
     delete mEnv;
 }

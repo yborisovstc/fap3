@@ -81,6 +81,8 @@ static const string RDPE_MissingMutSmb = "Missing mutation symbol";
 static const string RDPE_MissingCtxSmb = "Missing context symbol";
 static const string RDPE_MissingMutSmbAdd = "Missing symbol of Add mutation";
 static const string RDPE_MissingUriSep = "Missing URI separator";
+static const string RDPE_MissingPArg = "Missing P-arg";
+static const string RDPE_MissingQArg = "Missing Q-arg";
 static const string RDPE_MissingChromo = "Missing chromo";
 static const string RDPE_MissingMutSep = "Missing mut separator";
 static const string RDPE_MissingTextDelim = "Missing text delimiter";
@@ -1238,7 +1240,7 @@ bool Chromo2Mdl::rdp_mut(istream& aIs, C2MdlNode& aMnode)
 		aIs.seekg(pos, aIs.beg); // Backtrack
 		ResetErr();
 		res = rdp_mut_connect(aIs, aMnode);
-		if (IsError() && !res) {
+		if (IsError() || !res) {
 		    aIs.seekg(pos, aIs.beg); // Backtrack
 		    ResetErr();
 		    rdp_mut_remove(aIs, aMnode);
@@ -1246,6 +1248,11 @@ bool Chromo2Mdl::rdp_mut(istream& aIs, C2MdlNode& aMnode)
 			aIs.seekg(pos, aIs.beg); // Backtrack
 			ResetErr();
 			rdp_mut_import(aIs, aMnode);
+			if (IsError()) {
+			    aIs.seekg(pos, aIs.beg); // Backtrack
+			    ResetErr();
+			    res = rdp_mut_disconnect(aIs, aMnode);
+			}
 		    }
 		}
 	    }
@@ -1432,6 +1439,44 @@ void Chromo2Mdl::rdp_mut_create(istream& aIs, C2MdlNode& aMnode)
 	    SetErr(aIs, RDPE_MissingMutSmbAdd);
 	}
     }
+}
+
+bool Chromo2Mdl::rdp_mut_disconnect(istream& aIs, C2MdlNode& aMnode)
+{
+    bool res = false;
+    streampos pos = aIs.tellg();
+    string name1, name2;
+    rdp_uri(aIs, name1);
+    if (!IsError()) {
+	rdp_sep(aIs);
+	if (!IsError()) {
+	    char c1 = aIs.get(), c2 = aIs.get();
+	    if (c1 == KMS_Disconn.at(0) && c2 == KMS_Disconn.at(1)) {
+		rdp_sep(aIs);
+		if (!IsError()) {
+		    rdp_uri(aIs, name2);
+		    if (!IsError()) {
+			aMnode.mMut.mP = name1;
+			aMnode.mMut.mR = KMS_Disconn;
+			aMnode.mMut.mQ = name2;
+			aMnode.mChromoPos = pos;
+			res = true;
+		    } else {
+			SetErr(aIs, RDPE_MissingQArg);
+		    }
+		} else {
+		    SetErr(aIs, RDPE_MissingMutSep);
+		}
+	    } else {
+		SetErr(aIs, RDPE_MissingMutSmb);
+	    }
+	} else {
+	    SetErr(aIs, RDPE_MissingMutSep);
+	}
+    } else {
+	SetErr(aIs, RDPE_MissingPArg);
+    }
+    return res;
 }
 
 bool Chromo2Mdl::rdp_mut_connect(istream& aIs, C2MdlNode& aMnode)
