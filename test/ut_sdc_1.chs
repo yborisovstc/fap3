@@ -28,6 +28,7 @@ Root : Elem {
             Parent ~ : State { = "SS Vert"; };
         }
         Dc_Conn : ASdcConn @ {
+            _@ < Debug.LogLevel = "Dbg";
             Enable ~ Dc_V2.Outp;
             V1 ~ : State { = "SS V1"; };
             V2 ~ : State { = "SS V2"; };

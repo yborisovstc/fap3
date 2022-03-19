@@ -7,15 +7,41 @@
 const string K_CpUri_Enable = "Enable";
 const string K_CpUri_Outp = "Outp";
 
-ASdc::SdcIapb::SdcIapb(ASdc* aHost, const string& aInpUri): mHost(aHost), mInpUri(aInpUri), mUpdated(false), mActivated(false), mChanged(false)
+ASdc::SdcIapb::SdcIapb(const string& aName, ASdc* aHost, const string& aInpUri):
+    mName(aName), mHost(aHost), mInpUri(aInpUri), mUpdated(false), mActivated(false), mChanged(false)
 {
     mHost->registerIap(this);
 }
+
+ASdc::SdcPapb::SdcPapb(const string& aName, ASdc* aHost, const string& aCpUri):
+    mName(aName), mHost(aHost), mCpUri(aCpUri)
+{
+    mHost->registerPap(this);
+}
+
+ASdc::SdcMapb::SdcMapb(const string& aName, ASdc* aHost):
+    mName(aName), mHost(aHost), mUpdated(false), mActivated(false), mChanged(false)
+{
+    mHost->registerMap(this);
+}
+
+void ASdc::SdcMapb::onMagUpdated()
+{
+    setActivated();
+}
+
+template <typename T> string toStr(const T& aData) { return to_string(aData); }
+
+string toStr(const string& aData) { return aData;}
+
 
 template <class T>
 void ASdc::SdcIap<T>::update()
 {
     bool res = mHost->GetInpSdata<T>(mInpUri, mUdt);
+    if (mHost->isLogLevel(EDbg) && mUdt != mCdt) {
+	mHost->Log(TLog(EDbg, mHost) + "[" + mName + "] Updated: [" + toStr(mCdt) + "] -> [" + toStr(mUdt) + "]");
+    }
     mActivated = false;
     setUpdated();
 }
@@ -52,14 +78,38 @@ void ASdc::SdcIapg<T>::confirm()
     mUpdated = false;
 }
 
+template <class T>
+void ASdc::SdcMap<T>::update()
+{
+    mGetData(mUdt);
+    if (mHost->isLogLevel(EDbg) && mUdt != mCdt) {
+	mHost->Log(TLog(EDbg, mHost) + "[" + mName + "] Updated: [" + toStr(mCdt) + "] -> [" + toStr(mUdt) + "]");
+    }
+    mActivated = false;
+    setUpdated();
+}
+
+template <class T>
+void ASdc::SdcMap<T>::confirm()
+{
+    if (mUdt != mCdt) {
+	mCdt = mUdt;
+	mChanged = true;
+    } else {
+	mChanged = false;
+    }
+    mUpdated = false;
+}
+
+
 
 ASdc::ASdc(const string &aType, const string& aName, MEnv* aEnv): Unit(aType, aName, aEnv),
-    mIaps(), mMag(NULL), mUpdNotified(false), mActNotified(false), mObrCp(this), mAgtCp(this), mIapEnb(this, K_CpUri_Enable),
-    mOapOut(this, K_CpUri_Outp)
+    mIaps(), mMag(NULL), mUpdNotified(false), mActNotified(false), mObrCp(this), mAgtCp(this), mIapEnb("Enb", this, K_CpUri_Enable),
+    mOapOut("Outp", this, K_CpUri_Outp, [this](Sdata<bool>& aData) {getOut(aData);}), mMapCcd("Ccd", this, [this](bool& aData) {getCcd(aData);}),
+    mMagObs(this)
 {
     mIapEnb.mUdt = false;
     mIapEnb.mCdt = false;
-    addOutput(K_CpUri_Outp);
 }
 
 ASdc::~ASdc()
@@ -148,6 +198,11 @@ void ASdc::update()
 	    iap->update();
 	}
     }
+    for (auto map : mMaps) {
+	if (map->mActivated) {
+	    map->update();
+	}
+    }
     mActNotified = false;
     setUpdated();
 }
@@ -164,6 +219,12 @@ void ASdc::confirm()
 	if (iap->mUpdated) {
 	    iap->confirm();
 	    changed |= iap->mChanged;
+	}
+    }
+    for (auto map : mMaps) {
+	if (map->mUpdated) {
+	    map->confirm();
+	    changed |= map->mChanged;
 	}
     }
     if (changed) {
@@ -228,6 +289,13 @@ void ASdc::onInpUpdated()
     setActivated();
 }
 
+void ASdc::notifyMaps()
+{
+    for (auto map : mMaps) {
+	map->onMagUpdated();
+    }
+}
+
 void ASdc::onObsOwnedAttached(MObservable* aObl, MOwned* aOwned)
 {
 }
@@ -275,6 +343,8 @@ void ASdc::onOwnerAttached()
     }
     // Set managed agent
     mMag = ahostNode();
+    MObservable* magob = mMag->lIf(magob);
+    magob->addObserver(&mMagObs.mOcp);
 }
 
 MNode* ASdc::ahostNode()
@@ -316,6 +386,21 @@ bool ASdc::registerIap(SdcIapb* aIap)
     return true;
 }
 
+bool ASdc::registerPap(SdcPapb* aPap)
+{
+    addOutput(aPap->getCpUri());
+    mPaps.push_back(aPap);
+    return true;
+}
+
+bool ASdc::registerMap(SdcMapb* aMap)
+{
+    mMaps.push_back(aMap);
+    return true;
+}
+
+
+
 void ASdc::SdcPapb::NotifyInpsUpdated()
 {
     MNode* cp = mHost->getNode(mCpUri);
@@ -343,7 +428,7 @@ const string K_CpUri_Targ = "Target";
 const string K_CpUri_Mut = "Mut";
 
 ASdcMut::ASdcMut(const string &aType, const string& aName, MEnv* aEnv): ASdc(aType, aName, aEnv),
-    mIapTarg(this, K_CpUri_Targ), mIapMut(this, K_CpUri_Mut)
+    mIapTarg("Targ", this, K_CpUri_Targ), mIapMut("Mut", this, K_CpUri_Mut)
 {
 }
 
@@ -379,9 +464,10 @@ bool ASdcMut::doCtl()
 
 const string K_CpUri_Name = "Name";
 const string K_CpUri_Parent = "Parent";
+const string K_CpUri_OutpName = "OutpName";
 
 ASdcComp::ASdcComp(const string &aType, const string& aName, MEnv* aEnv): ASdc(aType, aName, aEnv),
-    mIapName(this, K_CpUri_Name), mIapParent(this, K_CpUri_Parent)
+    mIapName("Name", this, K_CpUri_Name), mIapParent("Parent", this, K_CpUri_Parent)
 { }
 
 bool ASdcComp::getState()
@@ -420,8 +506,23 @@ const string K_CpUri_V1 = "V1";
 const string K_CpUri_V2 = "V2";
 
 ASdcConn::ASdcConn(const string &aType, const string& aName, MEnv* aEnv): ASdc(aType, aName, aEnv),
-    mIapV1(this, K_CpUri_V1), mIapV2(this, K_CpUri_V2)
+    mIapV1("V1", this, K_CpUri_V1), mIapV2("V2", this, K_CpUri_V2)
 { }
+
+void ASdcConn::getCcd(bool& aData)
+{
+    bool res = false;
+    MNode* v1n = mMag->getNode(mIapV1.mCdt);
+    MNode* v2n = mMag->getNode(mIapV2.mCdt);
+    if (v1n && v2n) {
+	MVert* v1v = v1n->lIf(v1v);
+	MVert* v2v = v2n->lIf(v2v);
+	if (v1v && v2v) {
+	    res = !v1v->isConnected(v2v);
+	}
+    }
+    aData = res;
+}
 
 bool ASdcConn::getState()
 {
@@ -435,7 +536,9 @@ bool ASdcConn::getState()
 	if (v1n && v2n) {
 	    MVert* v1v = v1n->lIf(v1v);
 	    MVert* v2v = v2n->lIf(v2v);
-	    res = v1v->isConnected(v2v);
+	    if (v1v && v2v) {
+		res = v1v->isConnected(v2v);
+	    }
 	}
     }
     return res;
@@ -444,17 +547,34 @@ bool ASdcConn::getState()
 bool ASdcConn::doCtl()
 {
     bool res = true;
-    if (mMag && mIapEnb.mCdt) {
+    if (mMag && mMapCcd.mCdt /*&& mIapEnb.mCdt*/) {
 	res = false;
-	TNs ns; MutCtx mutctx(NULL, ns);
-	MChromo* chr = mEnv->provider()->createChromo();
-	TMut mut(ENt_Conn, ENa_P, mIapV1.mCdt, ENa_Q, mIapV2.mCdt);
-	chr->Root().AddChild(mut);
-	mMag->mutate(chr->Root(), false, mutctx, true);
-	delete chr;
-	string muts = mut.ToString();
-	Log(TLog(EInfo, this) + "Managed agent is mutated  [" + muts + "]");
-	res = true;
+	// Checking the control condition met
+	MNode* v1n = mMag->getNode(mIapV1.mCdt);
+	MNode* v2n = mMag->getNode(mIapV2.mCdt);
+	if (v1n && v2n) {
+	    MVert* v1v = v1n->lIf(v1v);
+	    MVert* v2v = v2n->lIf(v2v);
+	    if (v1v && v2v) {
+		if (!v1v->isConnected(v2v)) {
+		    TNs ns; MutCtx mutctx(NULL, ns);
+		    MChromo* chr = mEnv->provider()->createChromo();
+		    TMut mut(ENt_Conn, ENa_P, mIapV1.mCdt, ENa_Q, mIapV2.mCdt);
+		    chr->Root().AddChild(mut);
+		    mMag->mutate(chr->Root(), false, mutctx, true);
+		    delete chr;
+		    string muts = mut.ToString();
+		    Log(TLog(EInfo, this) + "Managed agent is mutated  [" + muts + "]");
+		    res = true;
+		} else {
+		    Log(TLog(EInfo, this) + "CPs are already connected: [" + mIapV1.mCdt + "] and [" + mIapV2.mCdt + "]");
+		}
+	    } else {
+		Log(TLog(EInfo, this) + "CPs are not vertexes: [" + mIapV1.mCdt + "] or [" + mIapV2.mCdt + "]");
+	    }
+	} else {
+	    Log(TLog(EInfo, this) + "CPs are not exist: [" + mIapV1.mCdt + "] or [" + mIapV2.mCdt + "]");
+	}
     }
     return res;
 }
@@ -463,7 +583,7 @@ bool ASdcConn::doCtl()
 /* SDC agent "Disonnect" */
 
 ASdcDisconn::ASdcDisconn(const string &aType, const string& aName, MEnv* aEnv): ASdc(aType, aName, aEnv),
-    mIapV1(this, K_CpUri_V1), mIapV2(this, K_CpUri_V2)
+    mIapV1("V1", this, K_CpUri_V1), mIapV2("V2", this, K_CpUri_V2)
 { }
 
 bool ASdcDisconn::getState()
@@ -510,8 +630,32 @@ const string K_CpUri_Icp = "ICp";
 const string K_CpUri_Icpp = "ICpp";
 
 ASdcInsert::ASdcInsert(const string &aType, const string& aName, MEnv* aEnv): ASdc(aType, aName, aEnv),
-    mIapCp(this, K_CpUri_Cp), mIapIcp(this, K_CpUri_Icp), mIapIcpp(this, K_CpUri_Icpp)
+    mIapCp("Cp", this, K_CpUri_Cp), mIapIcp("Icp", this, K_CpUri_Icp), mIapIcpp("Icpp", this, K_CpUri_Icpp)
 { }
+
+void ASdcInsert::getCcd(bool& aData)
+{
+    bool res = false;
+    string cp, icp, icpp;
+    bool rr = GetInpSdata(K_CpUri_Cp, cp);
+    rr = rr && GetInpSdata(K_CpUri_Icp, icp);
+    rr = rr && GetInpSdata(K_CpUri_Icpp, icpp);
+    if (rr && mMag) {
+	MNode* cpn = mMag->getNode(cp);
+	MNode* icpn = mMag->getNode(icp);
+	MNode* icppn = mMag->getNode(icpp);
+	if (cpn && icpn && icppn) {
+	    MVert* cpv = cpn->lIf(cpv);
+	    MVert* icpv = icpn->lIf(icpv);
+	    MVert* icppv = icppn->lIf(icppv);
+	    if (cpv && icpv && icppv) {
+		res = (cpv->pairsCount() == 1) && (icpv->pairsCount() == 0) && (icppv->pairsCount() == 0);
+	    }
+	}
+    }
+    aData = res;;
+
+}
 
 bool ASdcInsert::getState()
 {
@@ -537,7 +681,7 @@ bool ASdcInsert::getState()
 bool ASdcInsert::doCtl()
 {
     bool res = true;
-    if (mMag && mIapEnb.mCdt) {
+    if (mMag && mMapCcd.mCdt && mIapEnb.mCdt) {
 	res = false;
 	// Verify conditions
 	MNode* cp = mMag->getNode(mIapCp.mCdt);
@@ -568,7 +712,7 @@ bool ASdcInsert::doCtl()
 			    if (!cres) {
 				Log(TLog(EInfo, this) + "Failed connecting [" + icppv->Uid() + "] - [" + mCpPair->Uid() + "]");
 			    } else {
-				Log(TLog(EInfo, this) + "Managed agent is updated");
+				Log(TLog(EInfo, this) + "Managed agent is updated, inserted [" + icpv->Uid() + "] into [" + cpv->Uid() + "]");
 				res = true;
 			    }
 			}

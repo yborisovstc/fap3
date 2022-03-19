@@ -21,7 +21,7 @@ class MDtBase
     public:
 	static const char* Type() { return "MDtBase";};
     public:
-	virtual void ToString(string& aString) const = 0;
+	virtual void ToString(string& aString, bool aSig = true) const = 0;
 	virtual bool FromString(const string& aString) = 0;
 	virtual bool IsValid() const { return false;}
 	virtual bool operator==(const MDtBase& b) = 0;
@@ -45,11 +45,11 @@ class DtBase : public MDtBase
 	DtBase(): mValid(false) {};
 	DtBase(const DtBase& d): mValid(d.mValid), mSigTypeOK(false) {};
 	virtual ~DtBase();
-	string ToString() const { string res; ToString(res); return res; }
+	string ToString(bool aSig = true) const { string res; ToString(res, aSig); return res; }
 	static int ParseSigPars(const string& aCont, string& aSig);
 	static bool IsSrepFit(const string& aString, const string& aTypeSig);
 	static bool IsDataFit(const DtBase& aData, const string& aTypeSig);
-	virtual void ToString(string& aString) const override;
+	virtual void ToString(string& aString, bool aSig = true) const override;
 	virtual bool FromString(const string& aString) override;
 	virtual bool operator==(const MDtBase& b) override { return mValid == b.IsValid();}
 	virtual bool operator!=(const MDtBase& b) override { return !DtBase::operator==(b);}
@@ -135,7 +135,7 @@ class MtrBase: public DtBase
 	MtrBase(): DtBase(), mType(EMt_Unknown), mDim(TMtrDim(0, 0)) {};
 	MtrBase(TMtrType aType, TMtrDim aDim): DtBase(), mType(aType), mDim(aDim) {};
 	MtrBase(const MtrBase& aMtr): DtBase(aMtr), mType(aMtr.mType), mDim(aMtr.mDim) {};
-	virtual void ToString(string& aString) const;
+	virtual void ToString(string& aString, bool aSig = true) const;
 	bool FromString(const string& aString);
 	static bool IsSrepFit(const string& aString, const string& aTypeSig);
 	static bool IsDataFit(const MtrBase& aData, const string& aTypeSig);
@@ -283,7 +283,7 @@ class NTuple: public DtBase
 	static bool IsDataFit(const NTuple& aData);
 	static int ParseSigPars(const string& aCont, string& aSig, tCTypes& aCTypes);
 	void Init(const tCTypes& aCt);
-	virtual void ToString(string& aString) const;
+	virtual void ToString(string& aString, bool aSig = true) const override;
 	bool FromString(const string& aString);
 	DtBase* GetElem(const string& aName);
 	virtual bool operator==(const MDtBase& sb) override;
@@ -314,7 +314,7 @@ class Enum: public DtBase
 	static int ParseSigPars(const string& aCont, string& aSig, tSet& aSet);
 	static int ParseSig(const string& aCont, string& aSig);
 	bool AreTypeParsFit(const tSet& aSet) const;
-	virtual void ToString(string& aString) const;
+	virtual void ToString(string& aString, bool aSig = true) const override;
 	bool FromString(const string& aString);
 	void Init(const tSet& aSet);
     public:

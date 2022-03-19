@@ -270,6 +270,35 @@ class FAtVect: public FAtBase, public MDtGet<Sdata<T>> {
 };
 
 
+/** @brief Conversion to string
+ * */
+class FToStrBase: public Func, public MDtGet<Sdata<string>>
+{
+    public:
+	enum { EInp = EInp1 };
+	FToStrBase(Host& aHost): Func(aHost) {}
+	virtual MIface* getLif(const char *aName) override;
+	virtual string IfaceGetId() const override { return MDtGet<Sdata<string>>::Type();}
+	virtual void GetResult(string& aResult) const override;
+	Sdata<string> mRes;
+};
+
+
+/** @brief Conversion Sdata to string
+ * @param T  type of original data
+ * */
+template <class T>
+class FSToStr: public FToStrBase
+{
+    public:
+	enum { EInp = EInp1 };
+	static Func* Create(Host* aHost, const string& aIface, const string& aInpTSig);
+	FSToStr(Host& aHost): FToStrBase(aHost) {}
+	virtual void DtGet(Sdata<string>& aData) override;
+};
+
+
+
 
 
 

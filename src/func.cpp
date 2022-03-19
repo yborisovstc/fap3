@@ -710,6 +710,59 @@ template <class T> string FAtVect<T>::GetInpExpType(int aId) const
 }
 
 
+/// Conversion to string base
+
+MIface* FToStrBase::getLif(const char *aName)
+{
+    MIface* res = NULL;
+    if (res = checkLif<MDtGet<Sdata<string>>>(aName));
+    return res;
+}
+
+void FToStrBase::GetResult(string& aResult) const
+{
+    mRes.ToString(aResult);
+}
+
+
+/// Conversion to string
+
+template <class T>
+Func* FSToStr<T>::Create(Host* aHost, const string& aIface, const string& aInpTSig)
+{
+    Func* res = nullptr;
+    if (aIface == MDtGet<Sdata<string>>::Type() && aInpTSig == MDtGet<Sdata<T>>::Type()) {
+	res = new FSToStr<T>(*aHost);
+    }
+    return res;
+}
+
+template <class T>
+void FSToStr<T>::DtGet(Sdata<string>& aData)
+{
+    bool res = true;
+    MDVarGet* dget = mHost.GetInp(EInp1);
+    if (dget) {
+	MDtGet<Sdata<T>>* dfget = dget->GetDObj(dfget);
+	if (dfget) {
+	    Sdata<T> arg;
+	    dfget->DtGet(arg);
+	    arg.ToString(aData.mData, false);
+	    aData.mValid = true;
+	}
+    } else {
+	dget = mHost.GetInp(EInp1);
+	res = false;
+    }
+    aData.mValid = res;
+    if (mRes != aData) {
+	mRes = aData;
+	mHost.OnFuncContentChanged();
+    }
+}
+
+
+
 
 
 
@@ -733,6 +786,7 @@ void Init()
     FAtVect<string>::Create(host, string(), string());
     FApnd<Sdata<string>>::Create(host, string(), string());
     FApnd<DGuri>::Create(host, string(), string());
+    FSToStr<int>::Create(host, string(), string());
 }
 
 

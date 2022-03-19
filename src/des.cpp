@@ -491,10 +491,12 @@ void Des::onUpdated(MDesSyncable* aComp)
 
 void Des::onOwnedAttached(MOwned* aOwned)
 {
+    Syst::onOwnedAttached(aOwned);
     MUnit* osu = aOwned->lIf(osu);
     MDesSyncable* os = osu ? osu->getSif(os) : nullptr;
     if (os) {
 	os->setActivated();
+	os->setUpdated();
     }
 }
 
@@ -676,6 +678,7 @@ void ADes::onObsOwnedAttached(MObservable* aObl, MOwned* aOwned)
     MDesSyncable* ss = MNode::lIf(ss); // self
     if (os && os != ss) {
 	onActivated(os);
+	onUpdated(os);
     }
 }
 

@@ -1832,11 +1832,17 @@
 		    Analyzed. The root-cause is that Delay state content is set on creation phase - state notifies thru incomplete owning chain (so didn't reach the launcher) but the flag 
 		    mUpdated was set, that prevent complete owning chain notifying on the first update.
 		</simpara>
+		<simpara>Curren solution is Solution#2, ref below.</simpara>
 	    </sect3>
 	    <sect3><title>Solution#1: avoid setting state mPdata and mCdata on content change.</title>
 		<simpara>With this solution State doesn't change its datas immediately on content change but just keeps content and change mPdata on update phase from content kept.</simpara>
 		<simpara>This solution doesn't work properly. The reason is that in the first init the constant state are undefined. This causes to dependent states gets undefined that
 		    in turn causes the whole DES stop. Shortly saying we don't have initial conditions set for DES actually.</simpara>
+	    </sect3>
+	    <sect3><title>Solution#2: activate owned on owned attached</title>
+		<simpara> The idea is to force owned active when attaching it to owner. There are variations of this solution.  </simpara>
+		<simpara> The Var#1 is rather "brutal" - just to activate the owner unconditionally.  </simpara>
+		<simpara> The Var#2 is to activate only if the owned was already activated. We need to add methods "isActivated" and "isUpdated" to MDesSyncable in this case.</simpara>
 	    </sect3>
 	</sect2>
 

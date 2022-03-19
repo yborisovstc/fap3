@@ -229,6 +229,19 @@ class TrTuple: public TrBase, public MDVarGet, public MDtGet<NTuple>
 	const static string K_InpName;
 };
 
+/** @brief Transition agent "To string"
+ * */
+class TrTostrVar: public TrVar
+{
+    public:
+	static const char* Type() { return "TrTostrVar";}
+	TrTostrVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From ATrVar
+	virtual void Init(const string& aIfaceName) override;
+	virtual string GetInpUri(int aId) const override;
+};
+
+
 
 
 

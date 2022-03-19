@@ -104,7 +104,16 @@ MyRoot : Elem {
                     Inp2 ~ : State  { = "URI Node3"; };
                 };
             }
-
+            # "Conversion to string";
+            IntToStr : State @ {
+                _@ < {
+                    = "SS 0";
+                    Debug.LogLevel = "Dbg";
+                }
+                Inp ~ : TrTostrVar @ {
+                    Inp ~ : State  { = "SI 34"; };
+                };
+            }
         }
     }
 }

@@ -653,6 +653,36 @@ void TrTuple::DtGet(NTuple& aData)
     mRes = aData;
 }
 
+///// To string
+
+TrTostrVar::TrTostrVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+{
+    AddInput(GetInpUri(Func::EInp1));
+}
+
+void TrTostrVar::Init(const string& aIfaceName)
+{
+    if (mFunc) {
+	delete mFunc;
+	mFunc = NULL;
+    }
+    MDVarGet* inp = GetInp(Func::EInp1);
+    if (inp) {
+	string t_inp = inp->VarGetIfid();
+	if ((mFunc = FSToStr<int>::Create(this, aIfaceName, t_inp)));
+	else {
+	    Logger()->Write(EErr, this, "Failed init function");
+	}
+    }
+}
+
+string TrTostrVar::GetInpUri(int aId) const
+{
+    if (aId == Func::EInp1) return "Inp";
+    else return string();
+}
+
+
 
 
 

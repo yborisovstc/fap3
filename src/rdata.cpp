@@ -56,10 +56,12 @@ bool DtBase::IsDataFit(const DtBase& aData, const string& aTypeSig)
     return  aData.mValid && aData.GetTypeSig() == aTypeSig;
 }
 
-void DtBase::ToString(string& aString) const
+void DtBase::ToString(string& aString, bool aSig) const
 {
     stringstream ss;
-    ss << GetTypeSig() << " ";
+    if (aSig) {
+	ss << GetTypeSig() << " ";
+    }
     if (!mValid) {
 	ss << "<ERR>";
     }
@@ -200,10 +202,12 @@ bool MtrBase::IsDataFit(const MtrBase& aData, const string& aTypeSig)
     return  aData.mValid && aData.GetTypeSig() == aTypeSig &&  aData.mType != EMt_Unknown && aData.mDim.first != 0 && aData.mDim.second != 0;
 }
 
-void MtrBase::ToString(string& aString) const
+void MtrBase::ToString(string& aString, bool aSig) const
 {
     stringstream ss;
-    ss << GetTypeSig();
+    if (aSig) {
+	ss << GetTypeSig() << " ";
+    }
     char mt = 'R';
     switch (mType) {
 	case MtrBase::EMt_Unknown: mt = '?'; break;
@@ -535,10 +539,12 @@ void NTuple::DataToString(stringstream& aStream) const
 	comp.second->DataToString(aStream);
     }
 }
-void NTuple::ToString(string& aString) const
+void NTuple::ToString(string& aString, bool aSig) const
 {
     stringstream ss;
-    ss << GetTypeSig() << KSigToParsSep;
+    if (aSig) {
+	ss << GetTypeSig() << KSigToParsSep;
+    }
     if (!mValid) {
 	ss << " <ERROR>";
     }
@@ -806,10 +812,12 @@ void Enum::TypeParsToString(stringstream& aStream) const
     }
 }
 
-void Enum::ToString(string& aString) const
+void Enum::ToString(string& aString, bool aSig) const
 {
     stringstream ss;
-    ss << GetTypeSig() << KSigToParsSep;
+    if (aSig) {
+	ss << GetTypeSig() << KSigToParsSep;
+    }
     if (!mValid) {
 	ss << " <ERROR>";
     }
