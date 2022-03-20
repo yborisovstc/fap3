@@ -38,12 +38,12 @@ string toStr(const string& aData) { return aData;}
 template <class T>
 void ASdc::SdcIap<T>::update()
 {
-    bool res = mHost->GetInpSdata<T>(mInpUri, mUdt);
-    if (mHost->isLogLevel(EDbg) && mUdt != mCdt) {
+    bool res = mHost->GetInpSdata<T>(mInpUri, mCdt);
+    if (mHost->isLogLevel(EDbg)/* && mUdt != mCdt*/) {
 	mHost->Log(TLog(EDbg, mHost) + "[" + mName + "] Updated: [" + toStr(mCdt) + "] -> [" + toStr(mUdt) + "]");
     }
     mActivated = false;
-    setUpdated();
+    //setUpdated();
 }
 
 template <class T>
@@ -61,9 +61,9 @@ void ASdc::SdcIap<T>::confirm()
 template <class T>
 void ASdc::SdcIapg<T>::update()
 {
-    bool res = mHost->GetInpData<T>(mInpUri, mUdt);
+    bool res = mHost->GetInpData<T>(mInpUri, mCdt);
     mActivated = false;
-    setUpdated();
+    //setUpdated();
 }
 
 template <class T>
@@ -105,7 +105,7 @@ void ASdc::SdcMap<T>::confirm()
 
 ASdc::ASdc(const string &aType, const string& aName, MEnv* aEnv): Unit(aType, aName, aEnv),
     mIaps(), mMag(NULL), mUpdNotified(false), mActNotified(false), mObrCp(this), mAgtCp(this), mIapEnb("Enb", this, K_CpUri_Enable),
-    mOapOut("Outp", this, K_CpUri_Outp, [this](Sdata<bool>& aData) {getOut(aData);}), mMapCcd("Ccd", this, [this](bool& aData) {getCcd(aData);}),
+    mOapOut("Outp", this, K_CpUri_Outp, [this](Sdata<bool>& aData) {getOut(aData);})/*, mMapCcd("Ccd", this, [this](bool& aData) {getCcd(aData);})*/,
     mMagObs(this)
 {
     mIapEnb.mUdt = false;
@@ -198,11 +198,13 @@ void ASdc::update()
 	    iap->update();
 	}
     }
+    /*
     for (auto map : mMaps) {
 	if (map->mActivated) {
 	    map->update();
 	}
     }
+    */
     mActNotified = false;
     setUpdated();
 }
@@ -215,19 +217,23 @@ void ASdc::confirm()
     }
     */
     bool changed = false;
+    /*
     for (auto iap : mIaps) {
 	if (iap->mUpdated) {
 	    iap->confirm();
 	    changed |= iap->mChanged;
 	}
     }
+    */
+    /*
     for (auto map : mMaps) {
 	if (map->mUpdated) {
 	    map->confirm();
 	    changed |= map->mChanged;
 	}
     }
-    if (changed) {
+    */
+    if (true) {
 	bool res = doCtl();
 	if (!res) {
 	    Log(TLog(EErr, this) + "Failed controlling managed agent");
@@ -275,18 +281,15 @@ void ASdc::onActivated(MDesSyncable* aComp)
 
 void ASdc::onUpdated(MDesSyncable* aComp)
 {
-    if (!mUpdNotified) { // Notify owner
-	MDesObserver* obs = Owner() ? Owner()->lIf(obs) : nullptr;
-	if (obs) {
-	    obs->onUpdated(this);
-	    mUpdNotified = true;
-	}
-    }
+    // Should not be called
+    assert(false);
 }
 
 void ASdc::onInpUpdated()
 {
     setActivated();
+    // Notify Outp
+    mOapOut.NotifyInpsUpdated();
 }
 
 void ASdc::notifyMaps()
@@ -343,8 +346,10 @@ void ASdc::onOwnerAttached()
     }
     // Set managed agent
     mMag = ahostNode();
+    /* MAG access point is disabled ATM
     MObservable* magob = mMag->lIf(magob);
     magob->addObserver(&mMagObs.mOcp);
+    */
 }
 
 MNode* ASdc::ahostNode()
@@ -405,12 +410,21 @@ void ASdc::SdcPapb::NotifyInpsUpdated()
 {
     MNode* cp = mHost->getNode(mCpUri);
     MUnit* cpu = cp ? cp->lIf(cpu) : nullptr;
+    /* TODO The ifaces aren't collected. To debug
     auto ifaces = cpu->getIfs<MDesInpObserver>();
     if (ifaces) for (auto ifc : *ifaces) {
 	MDesInpObserver* ifco = dynamic_cast<MDesInpObserver*>(ifc);
 	if (ifco) {
 	    ifco->onInpUpdated();
 	}
+    }
+    */
+    MIfProv* ifp = cpu->defaultIfProv(MDesInpObserver::Type());
+    MIfProv* prov = ifp->first();
+    while (prov) {
+	MDesInpObserver* obs = dynamic_cast<MDesInpObserver*>(prov->iface());
+	obs->onInpUpdated();
+	prov = prov->next();
     }
 }
 
@@ -547,7 +561,7 @@ bool ASdcConn::getState()
 bool ASdcConn::doCtl()
 {
     bool res = true;
-    if (mMag && mMapCcd.mCdt /*&& mIapEnb.mCdt*/) {
+    if (mMag && /*mMapCcd.mCdt &&*/ mIapEnb.mCdt) {
 	res = false;
 	// Checking the control condition met
 	MNode* v1n = mMag->getNode(mIapV1.mCdt);
@@ -681,7 +695,7 @@ bool ASdcInsert::getState()
 bool ASdcInsert::doCtl()
 {
     bool res = true;
-    if (mMag && mMapCcd.mCdt && mIapEnb.mCdt) {
+    if (mMag && /*mMapCcd.mCdt &&*/ mIapEnb.mCdt) {
 	res = false;
 	// Verify conditions
 	MNode* cp = mMag->getNode(mIapCp.mCdt);

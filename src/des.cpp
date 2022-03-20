@@ -677,8 +677,8 @@ void ADes::onObsOwnedAttached(MObservable* aObl, MOwned* aOwned)
     MDesSyncable* os = osu ? osu->getSif(os) : nullptr;
     MDesSyncable* ss = MNode::lIf(ss); // self
     if (os && os != ss) {
-	onActivated(os);
-	onUpdated(os);
+	os->setActivated();
+	os->setUpdated();
     }
 }
 

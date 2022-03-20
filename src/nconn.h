@@ -754,8 +754,10 @@ class NCpOmnp : public MNcpp<TPif, TRif>
 	virtual TPair* nextLeaf(TPair* aLeaf) override {
 	    TPair* res = nullptr;
 	    auto np = nextPair(aLeaf);
-	    if (np) {
+	    while (np) {
 		res = np->binded() ? np->firstLeafB() : np;
+		if (res) break;
+		np = nextPair(np);
 	    }
 	    if (! res && binded()) {
 		res = binded()->nextLeaf();

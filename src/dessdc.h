@@ -69,14 +69,14 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesI
 		SdcIapb(const string& aName, ASdc* aHost, const string& aInpUri);
 		string getInpUri() const { return mInpUri;}
 		// From MDesInpObserver
-		virtual void onInpUpdated() override { setActivated();}
+		virtual void onInpUpdated() override { setActivated(); mHost->onInpUpdated();}
 		virtual string MDesInpObserver_Uid() const override {return MDesInpObserver::Type();}
 		virtual void MDesInpObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
 		// From MDesSyncable
 		virtual string MDesSyncable_Uid() const override {return MDesSyncable::Type();} 
 		virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
 		virtual void setUpdated() override { mUpdated = true; mHost->setUpdated();}
-		virtual void setActivated() override { mActivated = true; mHost->setActivated(); mHost->notifyMaps();}
+		virtual void setActivated() override { mActivated = true; /*mHost->setActivated(); mHost->notifyMaps();*/}
 	    public:
 		ASdc* mHost;
 		string mName;    /*!< Iap name */
@@ -251,7 +251,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesI
 	bool mActNotified;  //<! Sign of that State notified observers on Activation
 	ASdc::SdcIap<bool> mIapEnb; /*!< "Enable" input access point */
 	ASdc::SdcPap<bool> mOapOut; /*!< Comps count access point */
-	ASdc::SdcMap<bool> mMapCcd; /*!< "Control condition" MAG access point */
+	//ASdc::SdcMap<bool> mMapCcd; /*!< "Control condition" MAG access point */
 	MagObs mMagObs;             /*!< MAG observer */
 };
 
