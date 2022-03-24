@@ -8,7 +8,7 @@ const string K_CpUri_Enable = "Enable";
 const string K_CpUri_Outp = "Outp";
 
 ASdc::SdcIapb::SdcIapb(const string& aName, ASdc* aHost, const string& aInpUri):
-    mName(aName), mHost(aHost), mInpUri(aInpUri)/*, mUpdated(false)*/, mActivated(false)/*, mChanged(false) */
+    mName(aName), mHost(aHost), mInpUri(aInpUri), mUpdated(false), mActivated(true), mChanged(false)
 {
     mHost->registerIap(this);
 }
@@ -38,12 +38,25 @@ string toStr(const string& aData) { return aData;}
 template <class T>
 void ASdc::SdcIap<T>::update()
 {
-    bool res = mHost->GetInpSdata<T>(mInpUri, mCdt);
+    T old_data = mUdt;
+    bool res = mHost->GetInpSdata<T>(mInpUri, mUdt);
     if (mHost->isLogLevel(EDbg)/* && mUdt != mCdt*/) {
-	mHost->Log(TLog(EDbg, mHost) + "[" + mName + "] Updated -> [" + toStr(mCdt) + "]");
+	mHost->Log(TLog(EDbg, mHost) + "[" + mName + "] Updated: [" + toStr(old_data) + "] -> [" + toStr(mUdt) + "]");
     }
     mActivated = false;
-    //setUpdated();
+    setUpdated();
+}
+
+template <class T>
+void ASdc::SdcIap<T>::confirm()
+{
+    if (mUdt != mCdt) {
+	mCdt = mUdt;
+	mChanged = true;
+    } else {
+	mChanged = false;
+    }
+    mUpdated = false;
 }
 
 template <class T>
@@ -52,6 +65,18 @@ void ASdc::SdcIapg<T>::update()
     bool res = mHost->GetInpData<T>(mInpUri, mCdt);
     mActivated = false;
     //setUpdated();
+}
+
+template <class T>
+void ASdc::SdcIapg<T>::confirm()
+{
+    if (mUdt != mCdt) {
+	mCdt = mUdt;
+	mChanged = true;
+    } else {
+	mChanged = false;
+    }
+    mUpdated = false;
 }
 
 template <class T>
@@ -84,6 +109,7 @@ ASdc::ASdc(const string &aType, const string& aName, MEnv* aEnv): Unit(aType, aN
     mOapOut("Outp", this, K_CpUri_Outp, [this](Sdata<bool>& aData) {getOut(aData);})/*, mMapCcd("Ccd", this, [this](bool& aData) {getCcd(aData);})*/,
     mMagObs(this)
 {
+    mIapEnb.mUdt = false;
     mIapEnb.mCdt = false;
 }
 
@@ -114,6 +140,19 @@ bool ASdc::rifDesIobs(SdcIapb& aIap, MIfReq::TIfReqCp* aReq)
     return res;
 }
 
+bool ASdc::rifDesPaps(SdcPapb& aPap, MIfReq::TIfReqCp* aReq)
+{
+    bool res = false;
+    MNode* cp = getNode(aPap.getCpUri());
+    if (isRequestor(aReq, cp)) {
+	MIface* iface = dynamic_cast<MDVarGet*>(&aPap);
+	addIfpLeaf(iface, aReq);
+	res = true;
+    }
+    return res;
+}
+
+
 void ASdc::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 {
     if (aName == MDesInpObserver::Type()) {
@@ -126,10 +165,8 @@ void ASdc::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	    addIfpLeaf(iface, aReq);
 	}
     } else if (aName == MDVarGet::Type()) {
-	MNode* cp = getNode(K_CpUri_Outp);
-	if (isRequestor(aReq, cp)) {
-	    MIface* iface = dynamic_cast<MDVarGet*>(&mOapOut);
-	    addIfpLeaf(iface, aReq);
+	for (auto pap : mPaps) {
+	    rifDesPaps(*pap, aReq);
 	}
     } else {
 	Unit::resolveIfc(aName, aReq);
@@ -181,7 +218,18 @@ void ASdc::update()
 
 void ASdc::confirm()
 {
+    /*
+    if (mIapEnb.mUpdated) {
+	mIapEnb.confirm();
+    }
+    */
     bool changed = false;
+    for (auto iap : mIaps) {
+	if (iap->mUpdated) {
+	    iap->confirm();
+	    changed |= iap->mChanged;
+	}
+    }
     /*
     for (auto map : mMaps) {
 	if (map->mUpdated) {
@@ -190,12 +238,11 @@ void ASdc::confirm()
 	}
     }
     */
-    if (true) {
+    if (changed) {
 	bool res = doCtl();
 	if (!res) {
 	    Log(TLog(EErr, this) + "Failed controlling managed agent");
 	} else {
-	    Log(TLog(EDbg, this) + "Managed agent is modified");
 	    mOapOut.NotifyInpsUpdated();
 	}
     }
@@ -247,7 +294,7 @@ void ASdc::onInpUpdated()
 {
     setActivated();
     // Notify Outp
-    mOapOut.NotifyInpsUpdated();
+    //mOapOut.NotifyInpsUpdated();
 }
 
 void ASdc::notifyMaps()
@@ -430,7 +477,8 @@ const string K_CpUri_Parent = "Parent";
 const string K_CpUri_OutpName = "OutpName";
 
 ASdcComp::ASdcComp(const string &aType, const string& aName, MEnv* aEnv): ASdc(aType, aName, aEnv),
-    mIapName("Name", this, K_CpUri_Name), mIapParent("Parent", this, K_CpUri_Parent)
+    mIapName("Name", this, K_CpUri_Name), mIapParent("Parent", this, K_CpUri_Parent),
+    mOapName("OutName", this, K_CpUri_OutpName)
 { }
 
 bool ASdcComp::getState()
@@ -457,6 +505,7 @@ bool ASdcComp::doCtl()
 	delete chr;
 	string muts = mut.ToString();
 	Log(TLog(EInfo, this) + "Managed agent is mutated  [" + muts + "]");
+	mOapName.updateData(mIapName.mCdt);
 	res = true;
     }
     return res;

@@ -8,6 +8,7 @@ Root : Elem {
     Launcher :  DesLauncher {
         # "Creating component";
         Dc_Comp : ASdcComp @ {
+            _@ < Debug.LogLevel = "Dbg";
             Enable ~ : State { = "SB true"; };
             Name ~ : State { = "SS Comp"; };
             Parent ~ : State { = "SS Node"; };
@@ -18,11 +19,13 @@ Root : Elem {
         }
         # "Connecting vert";
         Dc_V1 : ASdcComp @ {
+            _@ < Debug.LogLevel = "Dbg";
             Enable ~ : State { = "SB true"; };
             Name ~ : State { = "SS V1"; };
             Parent ~ : State { = "SS Vert"; };
         }
         Dc_V2 : ASdcComp @ {
+            _@ < Debug.LogLevel = "Dbg";
             Enable ~ Dc_V1.Outp;
             Name ~ : State { = "SS V2"; };
             Parent ~ : State { = "SS Vert"; };
@@ -30,8 +33,8 @@ Root : Elem {
         Dc_Conn : ASdcConn @ {
             _@ < Debug.LogLevel = "Dbg";
             Enable ~ Dc_V2.Outp;
-            V1 ~ : State { = "SS V1"; };
-            V2 ~ : State { = "SS V2"; };
+            V1 ~ Dc_V1.OutpName;
+            V2 ~ Dc_V2.OutpName;
         }
         Dc_Conn_Dbg : State @ {
             _@ < { Debug.LogLevel = "Dbg"; = "SB false"; }
