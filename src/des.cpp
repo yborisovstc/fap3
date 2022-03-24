@@ -22,6 +22,12 @@ void CpState::notifyInpsUpdated()
     }
 }
 
+void CpState::onConnected()
+{
+    ConnPointu::onConnected();
+    notifyInpsUpdated();
+}
+
 void CpState::onDisconnected()
 {
     ConnPointu::onDisconnected();
@@ -54,7 +60,7 @@ CpStateOutp::CpStateOutp(const string &aType, const string& aName, MEnv* aEnv): 
 
 /* Connection point - input of state */
 
-CpStateMnodeInp::CpStateMnodeInp(const string &aType, const string& aName, MEnv* aEnv): ConnPointu(aType, aName, aEnv)
+CpStateMnodeInp::CpStateMnodeInp(const string &aType, const string& aName, MEnv* aEnv): CpState(aType, aName, aEnv)
 {
     bool res = setContent("Provided", "MDesInpObserver");
     res = setContent("Required", "MLink");
@@ -63,7 +69,7 @@ CpStateMnodeInp::CpStateMnodeInp(const string &aType, const string& aName, MEnv*
 
 /* Connection point - output of combined chain state AStatec */
 
-CpStateMnodeOutp::CpStateMnodeOutp(const string &aType, const string& aName, MEnv* aEnv): ConnPointu(aType, aName, aEnv)
+CpStateMnodeOutp::CpStateMnodeOutp(const string &aType, const string& aName, MEnv* aEnv): CpState(aType, aName, aEnv)
 {
     bool res = setContent("Provided", "MLink");
     res = setContent("Required", "MDesInpObserver");

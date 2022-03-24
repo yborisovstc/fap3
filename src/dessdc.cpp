@@ -8,7 +8,7 @@ const string K_CpUri_Enable = "Enable";
 const string K_CpUri_Outp = "Outp";
 
 ASdc::SdcIapb::SdcIapb(const string& aName, ASdc* aHost, const string& aInpUri):
-    mName(aName), mHost(aHost), mInpUri(aInpUri), mUpdated(false), mActivated(false), mChanged(false)
+    mName(aName), mHost(aHost), mInpUri(aInpUri)/*, mUpdated(false)*/, mActivated(false)/*, mChanged(false) */
 {
     mHost->registerIap(this);
 }
@@ -40,22 +40,10 @@ void ASdc::SdcIap<T>::update()
 {
     bool res = mHost->GetInpSdata<T>(mInpUri, mCdt);
     if (mHost->isLogLevel(EDbg)/* && mUdt != mCdt*/) {
-	mHost->Log(TLog(EDbg, mHost) + "[" + mName + "] Updated: [" + toStr(mCdt) + "] -> [" + toStr(mUdt) + "]");
+	mHost->Log(TLog(EDbg, mHost) + "[" + mName + "] Updated -> [" + toStr(mCdt) + "]");
     }
     mActivated = false;
     //setUpdated();
-}
-
-template <class T>
-void ASdc::SdcIap<T>::confirm()
-{
-    if (mUdt != mCdt) {
-	mCdt = mUdt;
-	mChanged = true;
-    } else {
-	mChanged = false;
-    }
-    mUpdated = false;
 }
 
 template <class T>
@@ -64,18 +52,6 @@ void ASdc::SdcIapg<T>::update()
     bool res = mHost->GetInpData<T>(mInpUri, mCdt);
     mActivated = false;
     //setUpdated();
-}
-
-template <class T>
-void ASdc::SdcIapg<T>::confirm()
-{
-    if (mUdt != mCdt) {
-	mCdt = mUdt;
-	mChanged = true;
-    } else {
-	mChanged = false;
-    }
-    mUpdated = false;
 }
 
 template <class T>
@@ -108,7 +84,6 @@ ASdc::ASdc(const string &aType, const string& aName, MEnv* aEnv): Unit(aType, aN
     mOapOut("Outp", this, K_CpUri_Outp, [this](Sdata<bool>& aData) {getOut(aData);})/*, mMapCcd("Ccd", this, [this](bool& aData) {getCcd(aData);})*/,
     mMagObs(this)
 {
-    mIapEnb.mUdt = false;
     mIapEnb.mCdt = false;
 }
 
@@ -188,11 +163,6 @@ void ASdc::addOutput(const string& aName)
 
 void ASdc::update()
 {
-    /*
-    if (mIapEnb.mActivated) {
-	mIapEnb.update();
-    }
-    */
     for (auto iap : mIaps) {
 	if (iap->mActivated) {
 	    iap->update();
@@ -211,20 +181,7 @@ void ASdc::update()
 
 void ASdc::confirm()
 {
-    /*
-    if (mIapEnb.mUpdated) {
-	mIapEnb.confirm();
-    }
-    */
     bool changed = false;
-    /*
-    for (auto iap : mIaps) {
-	if (iap->mUpdated) {
-	    iap->confirm();
-	    changed |= iap->mChanged;
-	}
-    }
-    */
     /*
     for (auto map : mMaps) {
 	if (map->mUpdated) {
@@ -238,6 +195,7 @@ void ASdc::confirm()
 	if (!res) {
 	    Log(TLog(EErr, this) + "Failed controlling managed agent");
 	} else {
+	    Log(TLog(EDbg, this) + "Managed agent is modified");
 	    mOapOut.NotifyInpsUpdated();
 	}
     }
@@ -410,21 +368,12 @@ void ASdc::SdcPapb::NotifyInpsUpdated()
 {
     MNode* cp = mHost->getNode(mCpUri);
     MUnit* cpu = cp ? cp->lIf(cpu) : nullptr;
-    /* TODO The ifaces aren't collected. To debug
     auto ifaces = cpu->getIfs<MDesInpObserver>();
     if (ifaces) for (auto ifc : *ifaces) {
 	MDesInpObserver* ifco = dynamic_cast<MDesInpObserver*>(ifc);
 	if (ifco) {
 	    ifco->onInpUpdated();
 	}
-    }
-    */
-    MIfProv* ifp = cpu->defaultIfProv(MDesInpObserver::Type());
-    MIfProv* prov = ifp->first();
-    while (prov) {
-	MDesInpObserver* obs = dynamic_cast<MDesInpObserver*>(prov->iface());
-	obs->onInpUpdated();
-	prov = prov->next();
     }
 }
 

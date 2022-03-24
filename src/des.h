@@ -20,6 +20,7 @@ class CpState: public ConnPointu
 	CpState(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
     protected:
 	// From Vertu
+	virtual void onConnected() override;
 	virtual void onDisconnected() override;
 	// From MUnit
 	virtual void onIfpInvalidated(MIfProv* aProv) override;
@@ -50,7 +51,7 @@ class CpStateOutp: public CpState
 /** @brief Connection point - input of state required MNode iface
  * Just ConnPointu with pre-configured prepared/required
  * */
-class CpStateMnodeInp: public ConnPointu
+class CpStateMnodeInp: public CpState
 {
     public:
 	static const char* Type() { return "CpStateMnodeInp";};
@@ -60,7 +61,7 @@ class CpStateMnodeInp: public ConnPointu
 /** @brief Connection point - output of state provided MNode iface
  * Just ConnPointu with pre-configured prepared/required
  * */
-class CpStateMnodeOutp: public ConnPointu
+class CpStateMnodeOutp: public CpState
 {
     public:
 	static const char* Type() { return "CpStateMnodeOutp";};

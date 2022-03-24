@@ -63,6 +63,9 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesI
 
 
  	/** @brief Input access point base
+	 * It implements MDesSyncable but is not DES syncable actually
+	 * the interface is used for convenience. In fact the access point just
+	 * buffers the data to keep the data till ASdc confirm phase
 	 * */
 	class SdcIapb: public MDesInpObserver, public MDesSyncable {
 	    public:
@@ -75,15 +78,13 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesI
 		// From MDesSyncable
 		virtual string MDesSyncable_Uid() const override {return MDesSyncable::Type();} 
 		virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
-		virtual void setUpdated() override { mUpdated = true; mHost->setUpdated();}
-		virtual void setActivated() override { mActivated = true; /*mHost->setActivated(); mHost->notifyMaps();*/}
+		virtual void setUpdated() override { }
+		virtual void setActivated() override { mActivated = true; /* mHost->notifyMaps();*/}
 	    public:
 		ASdc* mHost;
 		string mName;    /*!< Iap name */
 		string mInpUri;  /*!< Input URI */
 		bool mActivated; /*!< Indication of data is active (to be updated) */
-		bool mUpdated; /*!< Indication of data is updated */
-		bool mChanged; /*!< Indication of data is changed */
 	};
 
  	/** @brief Input access point operating with Sdata
@@ -95,9 +96,8 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesI
 		SdcIap(const string& aName, ASdc* aHost, const string& aInpUri): SdcIapb(aName, aHost, aInpUri) {}
 		// From MDesSyncable
 		virtual void update() override;
-		virtual void confirm() override;
+		virtual void confirm() override {}
 	    public:
-		T mUdt;  /*!< Updated data */
 		T mCdt;  /*!< Confirmed data */
 	};
 
@@ -110,9 +110,8 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesI
 		SdcIapg(const string& aName, ASdc* aHost, const string& aInpUri): SdcIapb(aName, aHost, aInpUri) {}
 		// From MDesSyncable
 		virtual void update() override;
-		virtual void confirm() override;
+		virtual void confirm() override {}
 	    public:
-		T mUdt;  /*!< Updated data */
 		T mCdt;  /*!< Confirmed data */
 	};
 
