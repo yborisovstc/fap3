@@ -17,6 +17,11 @@ Root : Elem {
             _@ < { Debug.LogLevel = "Dbg"; = "SB false"; }
             Inp ~ Dc_Comp.Outp;
         }
+        Dc_Rm : ASdcRm @ {
+            _@ < Debug.LogLevel = "Dbg";
+            Enable ~ Dc_Comp.Outp;
+            Name ~ Dc_Comp.OutpName;
+        }
         # "Connecting vert";
         Dc_V1 : ASdcComp @ {
             _@ < Debug.LogLevel = "Dbg";

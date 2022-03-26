@@ -96,6 +96,8 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesI
 		// From MDesSyncable
 		virtual void update() override;
 		virtual void confirm() override;
+		// Local
+		T& data() {return mCdt;}
 	    public:
 		T mUdt;  /*!< Updated data */
 		T mCdt;  /*!< Confirmed data */
@@ -269,9 +271,9 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesI
 	bool mUpdNotified;  //<! Sign of that State notified observers on Update
 	bool mActNotified;  //<! Sign of that State notified observers on Activation
 	ASdc::SdcIap<bool> mIapEnb; /*!< "Enable" input access point */
-	ASdc::SdcPap<bool> mOapOut; /*!< Comps count access point */
-	//ASdc::SdcMap<bool> mMapCcd; /*!< "Control condition" MAG access point */
+	ASdc::SdcPap<bool> mOapOut; /*!< Controlling status access point */
 	MagObs mMagObs;             /*!< MAG observer */
+	bool mCdone;               /*!<  Sign that controlling was completed, ref ds_dcs_sdc_dsgn_cc */
 };
 
 template <typename T> MIface* ASdc::SdcPap<T>::DoGetDObj(const char *aName)
@@ -323,7 +325,7 @@ class ASdcMut : public ASdc
 };
 
 
-/** @brief SDC agent "Component"
+/** @brief SDC agent "Adding Component"
  * */
 class ASdcComp : public ASdc
 {
@@ -337,8 +339,26 @@ class ASdcComp : public ASdc
     protected:
 	ASdc::SdcIap<string> mIapName; /*!< "Name" input access point */
 	ASdc::SdcIap<string> mIapParent; /*!< "Parent" input access point */
-	ASdc::SdcPapc<string> mOapName; /*!< Comps Name parameter point */
+	ASdc::SdcPapc<string> mOapName; /*!< Comps Name parameter point, Name pipelined, ref ds_dcs_sdc_dsgn_idp */
 };
+
+/** @brief SDC agent "Removing Component"
+ * */
+class ASdcRm : public ASdc
+{
+    public:
+	static const char* Type() { return "ASdcRm";};
+	ASdcRm(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+    protected:
+	// From ASdc
+	virtual bool getState() override;
+	bool doCtl() override;
+    protected:
+	ASdc::SdcIap<string> mIapName; /*!< "Name" input access point */
+	ASdc::SdcPapc<string> mOapName; /*!< Comps Name parameter point, Name pipelined, ref ds_dcs_sdc_dsgn_idp */
+};
+
+
 
 /** @brief SDC agent "Connect"
  * */
@@ -375,6 +395,9 @@ class ASdcDisconn : public ASdc
 
 /** @brief SDC agent "Insert"
  * Inserts system between given CP and its pair
+ * There are improved version 2.
+ * The current version is required because the ver.2 isn't compatible
+ * with current version of vis container.
  * */
 class ASdcInsert : public ASdc
 {
@@ -392,6 +415,46 @@ class ASdcInsert : public ASdc
 	ASdc::SdcIap<string> mIapIcpp; /*!< "Inserted system CP conn to given CP pair" input access point */
 	MVert* mCpPair;
 };
+
+/** @brief SDC agent "Insert node into list, ver. 2"
+ * */
+class ASdcInsert2 : public ASdc
+{
+    public:
+	static const char* Type() { return "ASdcInsert2";};
+	ASdcInsert2(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+    protected:
+	// From ASdc
+	virtual bool getState() override;
+	bool doCtl() override;
+    protected:
+	ASdc::SdcIap<string> mIapName; /*!< "Link name" input access point */
+	ASdc::SdcIap<string> mIapPrev; /*!< "Prev CP" input access point */
+	ASdc::SdcIap<string> mIapNext; /*!< "Next CP" input access point */
+	ASdc::SdcIap<string> mIapPname; /*!< "Position - name" input access point */
+	MVert* mCpPair;
+};
+
+
+/** @brief SDC agent "Extract, reverse to Insert"
+ * Extract the link from the chain
+ * */
+class ASdcExtract : public ASdc
+{
+    public:
+	static const char* Type() { return "ASdcExtract";};
+	ASdcExtract(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+    protected:
+	// From ASdc
+	virtual bool getState() override;
+	bool doCtl() override;
+    protected:
+	ASdc::SdcIap<string> mIapName; /*!< "Link name" input access point */
+	ASdc::SdcIap<string> mIapPrev; /*!< "Prev CP" input access point */
+	ASdc::SdcIap<string> mIapNext; /*!< "Next CP" input access point */
+	MVert* mCpPair;
+};
+
 
 
 

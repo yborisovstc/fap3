@@ -644,9 +644,11 @@ void Chromo2Mdl::SetAttr(const THandle& aHandle, TNodeAttr aType, const string& 
     C2MdlNode* node = aHandle.Data(node);
     string rel = node->mMut.mR;
     if (aType == ENa_Id) {
-	assert (rel == KMS_Add || rel == KMS_Cont || rel == KMS_Import);
+	assert (rel == KMS_Add || rel == KMS_Remove || rel == KMS_Cont || rel == KMS_Import);
 	if (rel == KMS_Add || rel == KMS_Cont) {
 	    node->mMut.mP = aVal;
+	} else if (rel == KMS_Remove) {
+	    node->mMut.mQ = aVal;
 	} else if (rel == KMS_Import) {
 	    node->mMut.mQ = aVal;
 	    node->mMut.mP = KT_Default;

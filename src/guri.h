@@ -35,6 +35,8 @@ class GUri
 	bool operator<=(const GUri& aSrc) const { return *this < aSrc || *this == aSrc;}
 	bool operator>(const GUri& aSrc) const { return aSrc < *this;}
 	bool operator>=(const GUri& aSrc) const { return aSrc <= *this;}
+	GUri& operator+=(const GUri& aSrc) { append(aSrc); return *this;}
+	GUri operator+(const GUri& aSrc) const { GUri res(*this); res.append(aSrc); return res;}
 	operator string() const { return toString();}
 	string toString() const;
 	bool isAbsolute() const;

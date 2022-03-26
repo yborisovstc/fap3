@@ -247,9 +247,14 @@
 	    <glossdef> <para>
 		System DES controller. The mechanism of system structure update controlled by DES where the controlling DES "accesses"
 		to managed system structure via a number of specialized systems performing certain mutation. 
-		     Ref <xref linkend="gls_adp"/> for another design solution.  </para></glossdef>
+		     Ref <xref linkend="gls_adp"/> for another design solution.</para></glossdef>
 	</glossentry>
 
+	<glossentry id="gls_sdo"><glossterm>SDO</glossterm> <acronym>SDO</acronym>
+	    <glossdef> <para>
+		System DES observer. The mechanism of system structure observing compatible with DES.
+		     Ref <xref linkend="ds_dcs_sdo"/> for details.</para></glossdef>
+	</glossentry>
 
 	<glossentry id="gls_slc"><glossterm>SLC</glossterm> <acronym>SCC</acronym>
 	    <glossdef> <para>
@@ -1573,7 +1578,7 @@
 		</simpara>
 	    </sect3>
 	</sect2>
-	<sect2><title>System update: chromo vs system structure data.</title>
+	<sect2 id="ds_dcs_cssd"><title>System update: chromo vs system structure data.</title>
 	    <sect3><title>Intro</title>
 		<simpara>
 		    Currently the mut is used to update system structure via Node DES adapter (NodeAdp). But this solution is not convenient - the mut is specific
@@ -1598,62 +1603,136 @@
 		    the sequence by set mutation depending on some valuable data (not just sequence counter).
 		</simpara>
 	    </sect3>
-	    <sect3><title>System DES controller (<xref linkend="gls_sdc"/>).</title>
-		<sect4><title>Controller as controlling system agent.</title>
-		    <simpara>
-			It is the common case that controlling DES is implemented right in controlled DES. We can intoduce specific agents - 
-			<xref linkend="gls_sdc"/> to simplify the control. This agent input on one hand form "query" to managed system so the query provides
-			    boolean result (for instance, for "Comp" controller that creates new comp there are inputs "Name", "Parent" that forms the query
-			    "Is there component of type "Parent" and name "Name"). Let's call the query result as "output" of controller.
-			    On another hand the inputs forms control action - "Comp" controller creates the component.
-			    Controller also contains special boolean input "Enable" that enables the contolling action.
-			    Such controller scheme allows to create the controlling DES more convenient. One controller output connects to another controller
-			    "Enable" input so DES-stype dependencies are simply established.
-		    </simpara>
-		    <simpara>The main idea of this approach is "distributed" nature of controlling : there can be complex controlling scheme that includes
-			many controlling agents. The agents forms "standard" DES via connecting one to another.</simpara>
+	    <sect3><title>System DES controller</title>
+		<simpara>Ref <xref linkend="ds_dcs_sdc"/></simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_dcs_sdc"><title>System DES controller (<xref linkend="gls_sdc"/>).</title>
+	    <sect3><title>Controller as controlling system agent.</title>
+		<simpara>
+		    It is the common case that controlling DES is implemented right in controlled DES. We can intoduce specific agents - 
+		    <xref linkend="gls_sdc"/> to simplify the control. This agent input on one hand form "query" to managed system so the query provides
+			boolean result (for instance, for "Comp" controller that creates new comp there are inputs "Name", "Parent" that forms the query
+			"Is there component of type "Parent" and name "Name"). Let's call the query result as "output" of controller.
+			On another hand the inputs forms control action - "Comp" controller creates the component.
+			Controller also contains special boolean input "Enable" that enables the contolling action.
+			Such controller scheme allows to create the controlling DES more convenient. One controller output connects to another controller
+			"Enable" input so DES-stype dependencies are simply established.
+		</simpara>
+		<simpara>The main idea of this approach is "distributed" nature of controlling : there can be complex controlling scheme that includes
+		    many controlling agents. The agents forms "standard" DES via connecting one to another.</simpara>
+	    </sect3>
+	    <sect3><title>How to control "remote" system.</title>
+		<simpara>
+		    Another case is when controlled system is not direct owner of controller. The solution here can be collect the controllers in
+		    special host DES where we can provide controllers with "environmental" access to controlled system. This "environmental" access can
+		    be implemented as the link to managed system that (this link is "known" to controllers). If we need to support more comples use-cases
+		    (for instance the main case of modnav - select managed sub-system via navigation thru given system) then we can create custorm host DES that updates this 
+		    link to managed system in same manner as DES adaptor does.
+		</simpara>
+	    </sect3>
+	    <sect3><title>Controller can be implemented as non-native agent</title>
+		<simpara>
+		    Indeed, we can have controller as a system that includes adapter to managed system. The control action can be done via
+		    the mutation thru the adapter, the controller output can be formed via specific functions getting data from the adapter.
+		</simpara>
+		<simpara>
+		    The problem here is that the adapter performs the mutation on confirmation phase but the sequence of confirmation is not
+		    detarministic: some inputs can be changed.
+		</simpara>
+	    </sect3>
+	    <sect3><title>Controller native implementation.</title>
+		<simpara>
+		    Native implementation can help to avoid the problem with non-deterministic inputs update on confirmation phase, see the problem
+		    description above.
+		</simpara>
+	    </sect3>
+	    <sect3><title>"Multi-client" controlling.</title>
+		<simpara>Major benefit of SDC solution is that the controlling of target system can be performed from many points of the model. It is
+		    similar to "client-server" approach. However we can see the potential problems here. Let's look at fap3-vis DContainer. It embeds the 
+		    controlling syb-system that allows to add widget. DController expose specific socket as an input to this subsystem. Also the controlling status
+		    output is included into the socket.</simpara>
+		<simpara>But what is we need that DContainer control performs from tho parts of the model? How to support this?  </simpara>
+		<simpara> The firt approach is to 
+		    pull out this controlling subsystem from DContainer. In that case we can create two controlling sybsystem for each controlling 
+		    parts ("clients"). However we need to support such "remote" controlling providing the controlling system with access to managed system like it
+		    is done for DES adapter. Also it is not nice solution. The controlling DES is specific for DContainer so it would be architecturally more
+		    correct way to have controling system incapsulated into container.</simpara>
+		<simpara>Another solution would be to keep controlling subsytem inside DContainer but provide the container with means of creating other such
+		    controling subsystem (again via controloing of DContainer.</simpara>
+	    </sect3>
+	    <sect3 id="ds_dcs_sdc_uc"><title>Use-cases</title>
+		<sect4><title>[<glossterm id="uc_sdc_01">UC_SDC_01</glossterm>] Loading the pipeline</title>
+		    <simpara>The first data is loaded the pipeline (for container example it is that Name value is set for IoAddWidg.Enable input)
+			- The controlling chain is completed (for container example it is that the widget was added and last SDCs in the chain sets outp Outp to true)
+			- New Name is set to pipeline input - the controlling chain creates new widget successfully.</simpara>
 		</sect4>
-		<sect4><title>How to control "remote" system.</title>
+		<sect4><title>[<glossterm id="uc_sdc_02">UC_SDC_02</glossterm>] Controller doesn't change system in case of DES Inp notification comes but inputs are not changed actually</title>
+		    <simpara>The first data is loaded the pipeline (for container example it is that Name value is set for IoAddWidg.Enable input)
+			- The controlling chain is completed (for container example it is that the widget was added and last SDCs in the chain sets outp Outp to true)
+			- Some controller input (for instance IoAddWidg.Name) gets DES inp notification comes but the input data is not changed actually (this can happed
+			especially if the input connects to some function output and func input is changed but doesn't cause func outp change actually)
+			- Controller doesn't change the system.</simpara>
+		    <sect5><title>Discussion</title>
+			<simpara>This means that controller is not sensitive to "fake" input change. In regular DES such feature is not needed - in case of 
+			    "fake" change DES just recalculate it't states (they keep unchanged in result). But for SDC it is inportant because the controller DES data
+			    is not simple dataThis means that controller is not sensitive to "fake" input change. In regular DES such feature is not needed - in case of 
+			    "fake" change DES just recalculate it't states (they keep unchanged in result). But for SDC it is inportant because the controller DES data
+			    is not simple data, controller changes the system structure incrementally. </simpara>
+			<simpara>But do we really need this? Ponentially controller can avoid incorrect system update via checking if the system is updated already.</simpara>
+		    </sect5>
+		</sect4>
+		<sect4><title>[<glossterm id="uc_sdc_03">UC_SDC_03</glossterm>] SDCs form right control trigger</title>
 		    <simpara>
-			Another case is when controlled system is not direct owner of controller. The solution here can be collect the controllers in
-			special host DES where we can provide controllers with "environmental" access to controlled system. This "environmental" access can
-			be implemented as the link to managed system that (this link is "known" to controllers). If we need to support more comples use-cases
-			(for instance the main case of modnav - select managed sub-system via navigation thru given system) then we can create custorm host DES that updates this 
-			link to managed system in same manner as DES adaptor does.
+			There is the pipeline of SDCs: SDC_1 (creating node_1), SDC_2 (creating node_2), SDC_3 (removing node_1), SDC_4 (removing node_2).
+			SDC_4 triggering condition is SDC_3 status (Outp). This mean SDC_4 is to remove node_2 only after node_1 is removed. 
+			System starts, SDC_3 formal condition is met (on this phase node_1 doesn't exitst). SDC_4 gets correct trigger only creating and then removeing node_1.
 		    </simpara>
 		</sect4>
-		<sect4><title>Controller can be implemented as non-native agent</title>
+	    </sect3>
+	    <sect3 id="ds_dcs_sdc_dsgn"><title>Pipelined controlling. Design of native SDC</title>
+		<sect4><title>Intro</title>
+		    <simpara>The tipical system controlling consists of number of SDCs combining in a chain so that some controlling operation happens depending on
+			"previous" operation gets completed. This structure actually creates controlling pipeline. The example is the adding the widget into vis container,
+			refer to fap3-vis/modules/container.chs. Initial SDC design already contains support of such pipeline - there was input "Enable" and "Outp" output:
+			The current SDC depends(inp Enable) on previous SDCs completion (out Outp).  Such structure however posesses its specific use-cases and design specifics.</simpara>
+		    <simpara>Ref <xref linkend="ds_dcs_sdc_uc"/> for the pipeline specific use-cases.</simpara>
+		</sect4>
+		<sect4><title>Controlling phase</title>
+		    <simpara>SDC changes the controlled system on Confirmation phase.</simpara>
+		</sect4>
+		<sect4><title>Inputs buffering</title>
+		    <simpara>To support of controlling on confirmation phase the controller buffers all the inputs. Ref fap3 6db8376c3f3e:src/dessdc ASdc::Iap desing
+			(mUdt, mCdt etc).</simpara>
 		    <simpara>
-			Indeed, we can have controller as a system that includes adapter to managed system. The control action can be done via
-			    the mutation thru the adapter, the controller output can be formed via specific functions getting data from the adapter.
-		    </simpara>
-		    <simpara>
-			The problem here is that the adapter performs the mutation on confirmation phase but the sequence of confirmation is not
-			detarministic: some inputs can be changed.
+			Is this really needed? Why not just get the inputs data on confirmation phase when controlling? This is the support of
+			<xref linkend="uc_sdc_02"/>. But as stated in the UC discussion there are other desing solution for that.
 		    </simpara>
 		</sect4>
-		<sect4><title>Controller native implementation.</title>
+		<sect4 id="ds_dcs_sdc_dsgn_idp"><title>Inputs data pipeline in SDC</title>
 		    <simpara>
-			Native implementation can help to avoid the problem with non-deterministic inputs update on confirmation phase, see the problem
-			description above.
+			<xref linkend="uc_sdc_01"/> assumes that next pipeline chain proceeds reacting the data from previous one. For instance for the container example SdcConnWdg
+			    reacts on same IoAddWidg.Name that previous SDCs (CreateWdg, AddSlot) are reacting. But SdcConnWdg "V1" input cannot be connected directly to IoAddWidg.Name.
+			    This is because this input can be changed after CreateWdg is done. So we need to have SdcConnWdg "V1" input same data that CreateWdg was reacting. 
+			    The solution here is to pipeline the IoAddWidg.Name data also. For that we need to have IoAddWidg.Name corresponding output OutpName so input data is copyind
+			    to output.
 		    </simpara>
 		</sect4>
-		<sect4><title>"Multi-client" controlling.</title>
-		    <simpara>Major benefit of SDC solution is that the controlling of target system can be performed from many point of the model. It is
-			similar to "client-server" approach. However we can see the potential problems here. Let's look at fap3-vis DContainer. It embeds the 
-			controlling syb-system that allows to add widget. DController expose specific socket as an input to this subsystem. Also the controlling status
-			output is included into the socket.</simpara>
-		    <simpara>But what is we need that DContainer control performs from tho parts of the model? How to support this?  </simpara>
-		    <simpara> The firt approach is to 
-			pull out this controlling subsystem from DContainer. In that case we can create two controlling sybsystem for each controlling 
-			parts ("clients"). However we need to support such "remote" controlling providing the controlling system with access to managed system like it
-			is done for DES adapter. Also it is not nice solution. The controlling DES is specific for DContainer so it would be architecturally more
-			correct way to have controling system incapsulated into container.</simpara>
-		    <simpara>Another solution would be to keep controlling subsytem inside DContainer but provide the container with means of creating other such
-			controling subsystem (again via controloing of DContainer.</simpara>
+		<sect4 id="ds_dcs_sdc_dsgn_cc"><title>Forming status. Taking into account the completion of controlling.</title>
+		    <simpara>
+			<ref ulink="uc_sdc_03"/> for the use-case.
+		    </simpara>
+		    <simpara>The desing supporting this use-case is that we need to form pipeline erlier controllers status including the sign of controlling completion.</simpara>
 		</sect4>
 	    </sect3>
 	</sect2>
+	<sect2 id="ds_dcs_sdo"><title>System DES oberving (<xref linkend="gls_sdo"/>) </title>
+	    <sect3><title>Intro</title>
+		<simpara>Very often we need to observe the controlled system when creating controlling DES. Sometimes status functions embedded to SDC is enough, but in many cases
+		    we need separate functions to get controlled system status.</simpara>
+	    </sect3>
+	</sect2>
+
 	<sect2 id="ds_dcs_ord"><title>DCS example/test - ordering of agents.</title>
 	    <sect3><title>Intro</title>
 		<simpara>We need to create numberer of examples to discover the weaknesses of the current DCS approach and find the proper solutions. The first
@@ -1669,113 +1748,113 @@
 		<simpara>The question is how to understand if subsystem depends on another subsystem (or even on itself) if threre aren't explicit dependencies?
 		    Let's look at the example <xref linkend="ds_dcs_ord"/>: how to get known if controlled system (Root.Launcher) depends on itself via the mutating
 			transition?</simpara>
-	    </sect3>
-	</sect2>
-	<sect2 id="ds_dcs_trs"><title>DCS transaction</title>
-	    <sect3><title>Intro</title>
-		<simpara>Let's consider an example: DContainer adding widget. It is DCS SDC solution that includes 4 SDCs: CreateWdg, CreateSlot, ConnectSlot, InsertSlot.
-		    What if some SDC fails, lets say InsertSlot. In that case we will have the managed system messed: there will be created widget, new slot but the widget
-		    will not be shown. It is clear that we need to consider all these 4 SDCs as the single controlling DES. It looks like the transaction in database
-		    solutions.  </simpara>
-	    </sect3>
-	</sect2>
-    </sect1>
+		</sect3>
+	    </sect2>
+	    <sect2 id="ds_dcs_trs"><title>DCS transaction</title>
+		<sect3><title>Intro</title>
+		    <simpara>Let's consider an example: DContainer adding widget. It is DCS SDC solution that includes 4 SDCs: CreateWdg, CreateSlot, ConnectSlot, InsertSlot.
+			What if some SDC fails, lets say InsertSlot. In that case we will have the managed system messed: there will be created widget, new slot but the widget
+			will not be shown. It is clear that we need to consider all these 4 SDCs as the single controlling DES. It looks like the transaction in database
+			solutions.  </simpara>
+		</sect3>
+	    </sect2>
+	</sect1>
 
-    <sect1 id="ds_dbg"><title>Debugging</title>
-	<sect2><title>Intro</title>
-	    <simpara>The following improvements can be considered: </simpara>
-	    <itemizedlist>
-		<listitem>
-		    Unify the usage of debugging level 
-		    <para>
-			Currently the debugging level is almost unusable. Also in parallel the property "Update" is used to
-			specify the particular logging feature to log the state update whereas it is just specific logging level.
-			So we need to get rid of using the Update property.
-		    </para>
-		</listitem>
-		<listitem> Logging level forcing to owned, ref <xref linkend="ds_dbg_llf"/> </listitem>
-		<listitem>Using symbolic values for logging level, lile "Dbg.1"</listitem>
-	    </itemizedlist>
-	</sect2>
-	<sect2 id="ds_dbg_llf"><title>Logging level forcing to owned</title>
-	    <sect3><title>Intro</title>
-		<simpara>The idea is to provide the system developer the ability to quick set the logging level for the whole system or its part.
-		    Currently the logging level is set locally for the particular node only and doesn't affect the other nodes, even the owneds.</simpara>
-	    </sect3>
-	</sect2>
-	<sect2 id="ds_dbg_sfll"><title>Symbolic form of logging level</title>
-	    <sect3><title>Intro</title>
-		<simpara>The idea is to set logging level in symbolic form like "Dbg.2" where "Dbg" is the name of level and "2" is the extension.</simpara>
-	    </sect3>
-	</sect2>
-    </sect1>
+	<sect1 id="ds_dbg"><title>Debugging</title>
+	    <sect2><title>Intro</title>
+		<simpara>The following improvements can be considered: </simpara>
+		<itemizedlist>
+		    <listitem>
+			Unify the usage of debugging level 
+			<para>
+			    Currently the debugging level is almost unusable. Also in parallel the property "Update" is used to
+			    specify the particular logging feature to log the state update whereas it is just specific logging level.
+			    So we need to get rid of using the Update property.
+			</para>
+		    </listitem>
+		    <listitem> Logging level forcing to owned, ref <xref linkend="ds_dbg_llf"/> </listitem>
+		    <listitem>Using symbolic values for logging level, lile "Dbg.1"</listitem>
+		</itemizedlist>
+	    </sect2>
+	    <sect2 id="ds_dbg_llf"><title>Logging level forcing to owned</title>
+		<sect3><title>Intro</title>
+		    <simpara>The idea is to provide the system developer the ability to quick set the logging level for the whole system or its part.
+			Currently the logging level is set locally for the particular node only and doesn't affect the other nodes, even the owneds.</simpara>
+		</sect3>
+	    </sect2>
+	    <sect2 id="ds_dbg_sfll"><title>Symbolic form of logging level</title>
+		<sect3><title>Intro</title>
+		    <simpara>The idea is to set logging level in symbolic form like "Dbg.2" where "Dbg" is the name of level and "2" is the extension.</simpara>
+		</sect3>
+	    </sect2>
+	</sect1>
 
-    <sect1 id="ds_ibc"><title>Desing items to be considered</title>
-	<sect2><title>Intro</title>
-	    <simpara>Ref <xref linkend="ds_itr_sp"/> for the initial list of the problems need to be addressed in FAP3.</simpara>
-	</sect2>
-	<sect2 id="ds_ibc_roncc"><title>Root as the only node containing chromo</title>
-	    <sect3><title>Intro</title>
-		<simpara>
-		    Currently the model can contain many nodes that have theyrs own chromos - any Elem based nodes. This simplifies creating these nodes
-		    heirs. But on another hand this causes chromo duplication. Actually any node chromo can be "calculated" from root chromo. This approach
-		    was tried in some earlier version of FAP.
-		    This approach potentially can improve the model performance. We need to consider such design.
-		</simpara>
-	    </sect3>
-	</sect2>
-	<sect2 id="ds_ibc_dgit"><title>[DS_IBC_DGIT] Do we need MDtGet iface as templated one?</title>
-	    <simpara>Potentially we can have non-templated MDtGet that provides the access to base data iface MDtBase.</simpara>
-	    <simpara>The indication of week desing is the problems with TrTuple: it is not possible to update the tuple components. The input of the 
-		transition can get the access to data only via templated MDtGet but the type isn't explicitly known.</simpara>
-	</sect2>
-    </sect1>
+	<sect1 id="ds_ibc"><title>Desing items to be considered</title>
+	    <sect2><title>Intro</title>
+		<simpara>Ref <xref linkend="ds_itr_sp"/> for the initial list of the problems need to be addressed in FAP3.</simpara>
+	    </sect2>
+	    <sect2 id="ds_ibc_roncc"><title>Root as the only node containing chromo</title>
+		<sect3><title>Intro</title>
+		    <simpara>
+			Currently the model can contain many nodes that have theyrs own chromos - any Elem based nodes. This simplifies creating these nodes
+			heirs. But on another hand this causes chromo duplication. Actually any node chromo can be "calculated" from root chromo. This approach
+			was tried in some earlier version of FAP.
+			This approach potentially can improve the model performance. We need to consider such design.
+		    </simpara>
+		</sect3>
+	    </sect2>
+	    <sect2 id="ds_ibc_dgit"><title>[DS_IBC_DGIT] Do we need MDtGet iface as templated one?</title>
+		<simpara>Potentially we can have non-templated MDtGet that provides the access to base data iface MDtBase.</simpara>
+		<simpara>The indication of week desing is the problems with TrTuple: it is not possible to update the tuple components. The input of the 
+		    transition can get the access to data only via templated MDtGet but the type isn't explicitly known.</simpara>
+	    </sect2>
+	</sect1>
 
-    <sect1 id="ds_iss"><title>Issues</title>
-	<sect2 id="ds_iss_001"><title>[DS_ISS_001] Wrong chromo forming in case of namespace segment.</title>
-	    <sect3><title>Intro</title>
-		<simpara>
-		    Ref ut_elem.cpp:test_elem_inh_1() chromo ut_elem_inh_1.chs. The problem is that mutation 
-		    <programlisting>About = "N1_1 new";</programlisting>
-			will be included into E1 chormo twice: first entry is in the scope of namespace segment
-		    <programlisting>
-			N1_1 @ {
-			About = "N1_1 new";
-			}
-		    </programlisting>
-			and the second - in E1 chromo directly
-		</simpara>
-		<simpara>
-		    Ref <xref linkend="ds_eosm"/> for the details of <xref linkend="gls_eosm"/> current solution. The reported problem is
-			caused by this solution bad design.
-		</simpara>
-	    </sect3>
-	    <sect3><title>Analysis</title>
-		<simpara>
-		    The root-cause is that the algorithm of E1 chromo forming is wrong: mutation and "About = ..." will be included even 
-		    the namespace segment is alredy included.
-		</simpara>
-	    </sect3>
-	</sect2>
-	<sect2 id="ds_iss_002"><title>[DS_ISS_002] Cannot define monitored agent for <xref linkend="gls_adp"/></title>
-	    <sect3><title>Intro</title>
-		<simpara>
-		    It is very common case that the adapter is not owner of monitored agent. Potentially we can put monitored
-		    agent to adaper owneds but it is not convenient - there can be many adapters associated to single monitored object.
-		</simpara>
-		<simpara>
-		    This "not owning" causes the problem that we cannot simply define monitored object via URI - adapter will not
+	<sect1 id="ds_iss"><title>Issues</title>
+	    <sect2 id="ds_iss_001"><title>[DS_ISS_001] Wrong chromo forming in case of namespace segment.</title>
+		<sect3><title>Intro</title>
+		    <simpara>
+			Ref ut_elem.cpp:test_elem_inh_1() chromo ut_elem_inh_1.chs. The problem is that mutation 
+			<programlisting>About = "N1_1 new";</programlisting>
+			    will be included into E1 chormo twice: first entry is in the scope of namespace segment
+			<programlisting>
+			    N1_1 @ {
+			    About = "N1_1 new";
+			    }
+			</programlisting>
+			    and the second - in E1 chromo directly
+		    </simpara>
+		    <simpara>
+			Ref <xref linkend="ds_eosm"/> for the details of <xref linkend="gls_eosm"/> current solution. The reported problem is
+			    caused by this solution bad design.
+		    </simpara>
+		</sect3>
+		<sect3><title>Analysis</title>
+		    <simpara>
+			The root-cause is that the algorithm of E1 chromo forming is wrong: mutation and "About = ..." will be included even 
+			the namespace segment is alredy included.
+		    </simpara>
+		</sect3>
+	    </sect2>
+	    <sect2 id="ds_iss_002"><title>[DS_ISS_002] Cannot define monitored agent for <xref linkend="gls_adp"/></title>
+		<sect3><title>Intro</title>
+		    <simpara>
+			It is very common case that the adapter is not owner of monitored agent. Potentially we can put monitored
+			agent to adaper owneds but it is not convenient - there can be many adapters associated to single monitored object.
+		    </simpara>
+		    <simpara>
+			This "not owning" causes the problem that we cannot simply define monitored object via URI - adapter will not
 			be able to get not owned node.
-		</simpara>
-		<simpara>
-		    Ref <xref linkend="ds_sn_aul"/> for details of generic problem and approaches of how to workaround the
-			access restrictions.
-		</simpara>
-	    </sect3>
-	</sect2>
-	<sect2 id="ds_iss_003"><title>[DS_ISS_003] 20211212 git:930bb4ea585ece. Incorrect IFR for sockets</title>
-	    <sect3><title>Intro</title>
-		<simpara> UT Ut_ifr::test_inval_sock_1() fails. This means that IFR works incorrectly in case of sockets connecting/disconnecting.
+		    </simpara>
+		    <simpara>
+			Ref <xref linkend="ds_sn_aul"/> for details of generic problem and approaches of how to workaround the
+			    access restrictions.
+		    </simpara>
+		</sect3>
+	    </sect2>
+	    <sect2 id="ds_iss_003"><title>[DS_ISS_003] 20211212 git:930bb4ea585ece. Incorrect IFR for sockets</title>
+		<sect3><title>Intro</title>
+		    <simpara> UT Ut_ifr::test_inval_sock_1() fails. This means that IFR works incorrectly in case of sockets connecting/disconnecting.
 		</simpara>
 	    </sect3>
 	    <sect3><title>Analysis</title>

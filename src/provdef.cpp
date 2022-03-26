@@ -47,7 +47,8 @@ const ProvDef::TFReg ProvDef::mReg ( {
 	Item<TrTuple>(), Item<TrChr>(), Item<TrChrc>(),
 	Item<AMnodeAdp>(), Item<AMelemAdp>(), Item<AMntp>(),
 	/* SDCs */
-	Item<ASdcMut>(), Item<ASdcComp>(), Item<ASdcConn>(), Item<ASdcInsert>(),
+	Item<ASdcMut>(), Item<ASdcComp>(), Item<ASdcRm>(), Item<ASdcConn>(), Item<ASdcInsert>(), Item<ASdcInsert2>(),
+	Item<ASdcExtract>(), 
 	});
 
 

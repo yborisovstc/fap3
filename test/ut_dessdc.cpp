@@ -13,13 +13,17 @@ class Ut_sdc : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_sdc);
 
-    CPPUNIT_TEST(test_Sdc_1);
+//    CPPUNIT_TEST(test_Sdc_1);
+    //CPPUNIT_TEST(test_Sdc_2);
+    CPPUNIT_TEST(test_Sdc_3);
     CPPUNIT_TEST_SUITE_END();
     public:
     virtual void setUp();
     virtual void tearDown();
     private:
     void test_Sdc_1();
+    void test_Sdc_2();
+    void test_Sdc_3();
     private:
     Env* mEnv;
 };
@@ -46,6 +50,62 @@ void Ut_sdc::test_Sdc_1()
     printf("\n === Test of SDC base controllers\n");
 
     const string specn("ut_sdc_1");
+    string ext = "chs";
+    string spec = specn + string(".") + "chs";
+    string log = specn + "_" + ext + ".log";
+    mEnv = new Env(spec, log);
+    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv != 0);
+    mEnv->ImpsMgr()->ResetImportsPaths();
+    mEnv->ImpsMgr()->AddImportsPaths("../modules");
+    mEnv->constructSystem();
+    MNode* root = mEnv->Root();
+    MElem* eroot = root ? root->lIf(eroot) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get root", root && eroot);
+
+    bool res = mEnv->RunSystem(7, 2);
+
+    // Verify the comp created
+    MNode* comp = root->getNode("Launcher.Comp");
+    CPPUNIT_ASSERT_MESSAGE("Comp hasn't been created", comp);
+
+    delete mEnv;
+}
+
+/** @brief MNode DES adapter test
+ * */
+void Ut_sdc::test_Sdc_2()
+{
+    printf("\n === Test of SDC base controllers - list insertion/extraction\n");
+
+    const string specn("ut_sdc_2");
+    string ext = "chs";
+    string spec = specn + string(".") + "chs";
+    string log = specn + "_" + ext + ".log";
+    mEnv = new Env(spec, log);
+    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv != 0);
+    mEnv->ImpsMgr()->ResetImportsPaths();
+    mEnv->ImpsMgr()->AddImportsPaths("../modules");
+    mEnv->constructSystem();
+    MNode* root = mEnv->Root();
+    MElem* eroot = root ? root->lIf(eroot) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get root", root && eroot);
+
+    bool res = mEnv->RunSystem(7, 2);
+
+    // Verify the comp created
+    MNode* comp = root->getNode("Launcher.Comp");
+    CPPUNIT_ASSERT_MESSAGE("Comp hasn't been created", comp);
+
+    delete mEnv;
+}
+
+/** @brief MNode SDC test - create and remove node in cycle
+ * */
+void Ut_sdc::test_Sdc_3()
+{
+    printf("\n === Test of SDC: create and remove in cycle\n");
+
+    const string specn("ut_sdc_3");
     string ext = "chs";
     string spec = specn + string(".") + "chs";
     string log = specn + "_" + ext + ".log";

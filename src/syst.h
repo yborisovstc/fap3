@@ -12,6 +12,7 @@
  * Don't use Nodes content owner but uses custom conext
  * Has only 2 contents: Provided and Required
  * */
+// TODO Needs connpoint based on Vert (not Vertu) to support inheritance
 class ConnPointu: public Vertu, public MConnPoint, public Cnt::Host
 {
     public:
