@@ -17,6 +17,13 @@ Root : Elem {
             Enable ~ Dc_Create.Outp;
             Name ~ : State { = "SS Comp"; };
         }
-        Dc_Create.Enable ~ Dc_Rm.Outp;
+        # "Form start condition";
+        Dc_Create.Enable ~ : TrOrVar @ {
+            Inp ~ : State @ {
+                    _@ < = "SB true";
+                    Inp ~ : State { = "SB false"; };
+                };
+            Inp ~ Dc_Rm.Outp;
+        };
     }
 }

@@ -4,6 +4,9 @@
 
 
 static const string K_Cont_Debug_LogLevel = "Debug.LogLevel";
+static const string K_Cont_Explorable = "Explorable"; // Value "n", "y"
+static const string K_Cont_Val_Yes = "y";
+static const string K_Cont_Val_No = "n";
 static const string K_ContentType = "Content";
 static const char K_LogLevelSep= '.';
 static const string K_LogLevel_Err= "Err";
@@ -15,7 +18,7 @@ static const string K_LogLevel_Dbg= "Dbg";
 static const string K_SpName_Ns= "_@";
 
 Node::Node(const string &aType, const string &aName, MEnv* aEnv): mName(aName.empty() ? aType : aName), mEnv(aEnv), mOcp(this), mOnode(this, this),
-    mLogLevel(EInfo)
+    mLogLevel(EInfo), mExplorable(false)
 {
 } 
 
@@ -677,6 +680,8 @@ MIface* Node::MOwner_getLif(const char *aType)
     MIface* res = nullptr;
     // TODO Vulnerabilty, consider to configure the access
     if (res = checkLif<MObservable>(aType));
+    // TODO to introduce specific iface for explorable, ref ds_dcs_aes_acp
+    else if (res = mExplorable ? checkLif<MNode>(aType) : nullptr);
     else if (res = checkLif<MContentOwner>(aType));
     return res;
 }
@@ -737,6 +742,11 @@ void Node::onContentChanged(const MContent* aCont)
     bool res = getContent(K_Cont_Debug_LogLevel, level);
     if (res) {
 	mLogLevel = parseLogLevel(level);
+    } else {
+	string exbl;
+	if (getContent(K_Cont_Explorable, exbl)) {
+	    mExplorable = (exbl == K_Cont_Val_Yes);
+	}
     }
 
     // Notify observers

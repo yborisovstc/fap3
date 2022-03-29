@@ -133,6 +133,19 @@ class TrAndVar: public TrVar
 	virtual string GetInpUri(int aId) const override;
 };
 
+/** @brief Agent function "Boolena OR of Var data"
+ * */
+class TrOrVar: public TrVar
+{
+    public:
+	static const char* Type() { return "TrOrVar";};
+	TrOrVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From ATrVar
+	virtual void Init(const string& aIfaceName) override;
+	virtual string GetInpUri(int aId) const override;
+};
+
+
 /** @brief Agent function "Boolena negation of Var data"
  * */
 class TrNegVar: public TrVar

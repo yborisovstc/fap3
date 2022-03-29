@@ -73,6 +73,12 @@ testroot : Elem
                 Debug.LogLevel = "Dbg";
                 = "SS Targets.Target3";
             }
+            # "MagUri output";
+            Dbg_MagUriOutp : State @ {
+                _@ < Debug.LogLevel = "Dbg";
+                _@ < = "SS ";
+                Inp ~ Adapter.OutpMagUri;
+            }
             # "Target switcher";
             Const_3 : State;
             Const_3 < = "SI 3";

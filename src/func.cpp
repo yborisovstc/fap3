@@ -169,10 +169,76 @@ string FBAndDt::GetInpExpType(int aId) const
     return res;
 }
 
-
 void FBAndDt::GetResult(string& aResult) const
 {
     mRes.ToString(aResult);
+}
+
+
+/// Boolean Base
+
+MIface* FBBase::getLif(const char *aName)
+{
+    MIface* res = NULL;
+    if (res = checkLif<MDtGet<Sdata<bool>>>(aName));
+    return res;
+}
+
+string FBBase::GetInpExpType(int aId) const
+{
+    return  MDtGet<Sdata<bool>>::Type();
+}
+
+void FBBase::GetResult(string& aResult) const
+{
+    mRes.ToString(aResult);
+}
+
+
+
+
+/// Boolean OR
+
+Func* FBOrDt::Create(Host* aHost, const string& aString)
+{
+    return new FBOrDt(*aHost);
+}
+
+void FBOrDt::DtGet(Sdata<bool>& aData)
+{
+    bool res = true;
+
+    MIfProv::TIfaces* inps = mHost.GetInps(EInp, MDVarGet::Type(), false);
+    bool first = true;
+    if (inps) for (auto dgeti : *inps) {
+	MDVarGet* dget = dynamic_cast<MDVarGet*>(dgeti);
+	MDtGet<Sdata<bool>>* dfget = dget->GetDObj(dfget);
+	if (dfget != NULL) {
+	    Sdata<bool> arg = aData;
+	    dfget->DtGet(arg);
+	    if (arg.mValid) {
+		if (first) {
+		    aData = arg;
+		    first = false;
+		} else {
+		    aData.mData = aData.mData || arg.mData;
+		}
+	    } else {
+		mHost.log(EErr, "Incorrect argument [" + mHost.GetInpUri(EInp) + "]");
+		res = false; break;
+	    }
+	} else {
+	    mHost.log(EErr, "Incompatible argument [" + mHost.GetInpUri(EInp) + "]");
+	    dfget = dget->GetDObj(dfget);
+	    res = false; break;
+	}
+    }
+    aData.mValid = res;
+    if (mRes != aData) {
+	mRes = aData;
+	mHost.OnFuncContentChanged();
+	mHost.log(EDbg, string("Result: ") + (res ? (aData.mData ? "true" : "false") : "err"));
+    }
 }
 
 

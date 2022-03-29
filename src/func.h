@@ -68,8 +68,21 @@ template <class T> class FAddDt: public FAddBase, public MDtGet<T> {
 };
 
 
+/** @brief Boolean func base, generic data
+ * */
+class FBBase: public Func, public MDtGet<Sdata<bool>> {
+    public:
+	FBBase(Host& aHost): Func(aHost) {};
+	virtual MIface* getLif(const char *aName) override;
+	virtual string IfaceGetId() const { return MDtGet<Sdata<bool>>::Type();};
+	virtual void GetResult(string& aResult) const;
+	virtual string GetInpExpType(int aId) const;
+	Sdata<bool> mRes;
+};
+
 /** @brief Boolean AND, generic data
  * */
+// TODO to use Boolean base func
 class FBAndDt: public Func, public MDtGet<Sdata<bool>> {
     public:
 	enum { EInp = EInp1 };
@@ -82,6 +95,17 @@ class FBAndDt: public Func, public MDtGet<Sdata<bool>> {
 	virtual string GetInpExpType(int aId) const;
 	Sdata<bool> mRes;
 };
+
+/** @brief Boolean OR, generic data
+ * */
+class FBOrDt: public FBBase {
+    public:
+	enum { EInp = EInp1 };
+	static Func* Create(Host* aHost, const string& aString);
+	FBOrDt(Host& aHost): FBBase(aHost) {};
+	virtual void DtGet(Sdata<bool>& aData);
+};
+
 
 
 /** @brief Converting to GUri

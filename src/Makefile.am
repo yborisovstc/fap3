@@ -79,6 +79,8 @@ libfap3_la_SOURCES = \
 		       desadp.cpp \
 		       dessdc.h \
 		       dessdc.cpp \
+		       dessdo.h \
+		       dessdo.cpp \
 		       mnt.h \
 		       mnt.cpp \
 		       dbg.h \

@@ -336,6 +336,9 @@ class ASdcComp : public ASdc
 	// From ASdc
 	virtual bool getState() override;
 	bool doCtl() override;
+	// From MObserver
+	virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override;
+	virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override;
     protected:
 	ASdc::SdcIap<string> mIapName; /*!< "Name" input access point */
 	ASdc::SdcIap<string> mIapParent; /*!< "Parent" input access point */
@@ -353,6 +356,9 @@ class ASdcRm : public ASdc
 	// From ASdc
 	virtual bool getState() override;
 	bool doCtl() override;
+	// From MObserver
+	virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override;
+	virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override;
     protected:
 	ASdc::SdcIap<string> mIapName; /*!< "Name" input access point */
 	ASdc::SdcPapc<string> mOapName; /*!< Comps Name parameter point, Name pipelined, ref ds_dcs_sdc_dsgn_idp */
@@ -413,6 +419,7 @@ class ASdcInsert : public ASdc
 	ASdc::SdcIap<string> mIapCp; /*!< "Given CP" input access point */
 	ASdc::SdcIap<string> mIapIcp; /*!< "Inserted system CP conn to given CP" input access point */
 	ASdc::SdcIap<string> mIapIcpp; /*!< "Inserted system CP conn to given CP pair" input access point */
+	ASdc::SdcPapc<string> mOapName; /*!< Comps Name parameter point, Name pipelined, ref ds_dcs_sdc_dsgn_idp */
 	MVert* mCpPair;
 };
 

@@ -13,6 +13,7 @@
 const string KCont_AgentUri = "AgentUri";
 const string KCont_SelfAsMagBase = "SelfAsMagBase";
 const string K_CpUriInpMagUri = "InpMagUri";
+const string K_CpUri_OutpMagUri = "OutpMagUri";
 const string K_CpUriInpMagBase = "InpMagBase";
 const string K_MagOwnerLinkUri = "MagOwnerLink";
 
@@ -48,6 +49,12 @@ void AAdp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 		MIface* iface = dynamic_cast<MDesInpObserver*>(&mIapMagBase);
 		addIfpLeaf(iface, aReq);
 	    }
+	}
+    } else if (aName == MDVarGet::Type()) {
+	MNode* outp = ahostGetNode(K_CpUri_OutpMagUri);
+	if (isRequestor(aReq, outp)) {
+	    MIface* iface = dynamic_cast<MDVarGet*>(&mPapMagUri);
+	    addIfpLeaf(iface, aReq);
 	}
     } else {
 	Unit::resolveIfc(aName, aReq);
@@ -274,6 +281,8 @@ void AAdp::UpdateMag()
 	res = GetSData(inp, magUri);
 	if (res) {
 	    UpdateMag(magUri);
+	    MNode* outp = ahostGetNode(K_CpUri_OutpMagUri);
+	    NotifyInpUpdated(outp);
 	}
     }
     if (!res) {
@@ -354,6 +363,12 @@ bool AAdp::ApplyMagBase()
 	Log(TLog(EErr, this) + "Cannot get input [" + K_CpUriInpMagBase + "]");
     }
     return res;
+}
+
+void AAdp::GetMagUri(Sdata<string>& aData)
+{
+    aData.mData = mMagUri;
+    aData.mValid = true;
 }
 
 void AAdp::OnInpMagUri()

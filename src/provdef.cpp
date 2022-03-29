@@ -23,6 +23,7 @@
 #include "desio.h"
 #include "desadp.h"
 #include "dessdc.h"
+#include "dessdo.h"
 #include "mnt.h"
 #include "link.h"
 
@@ -41,7 +42,7 @@ const ProvDef::TFReg ProvDef::mReg ( {
 	Item<CpStateMnodeInp>(),  Item<CpStateMnodeOutp>(),
 	Item<DesLauncher>(), Item<Sout>(), Item<ADes>(), Item<Socket>(),
 	Item<TrMaxVar>(), Item<TrSwitchBool>(), Item<TrCmpVar>(), Item<TrApndVar>(),
-	Item<TrAndVar>(), Item<TrNegVar>(), Item<TrUri>(), Item<TrTostrVar>(),
+	Item<TrAndVar>(), Item<TrOrVar>(), Item<TrNegVar>(), Item<TrUri>(), Item<TrTostrVar>(),
 	Item<TrMutNode>(), Item<TrMutConn>(), Item<TrMutDisconn>(), Item<TrMutCont>(),
 	Item<TrSizeVar>(), Item<TrAtVar>(),
 	Item<TrTuple>(), Item<TrChr>(), Item<TrChrc>(),
@@ -49,6 +50,8 @@ const ProvDef::TFReg ProvDef::mReg ( {
 	/* SDCs */
 	Item<ASdcMut>(), Item<ASdcComp>(), Item<ASdcRm>(), Item<ASdcConn>(), Item<ASdcInsert>(), Item<ASdcInsert2>(),
 	Item<ASdcExtract>(), 
+	/* SDOs */
+        Item<SdoComp>(), Item<SdoConn>(),
 	});
 
 

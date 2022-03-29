@@ -1686,9 +1686,22 @@
 		    <simpara>
 			There is the pipeline of SDCs: SDC_1 (creating node_1), SDC_2 (creating node_2), SDC_3 (removing node_1), SDC_4 (removing node_2).
 			SDC_4 triggering condition is SDC_3 status (Outp). This mean SDC_4 is to remove node_2 only after node_1 is removed. 
-			System starts, SDC_3 formal condition is met (on this phase node_1 doesn't exitst). SDC_4 gets correct trigger only creating and then removeing node_1.
+			System starts, SDC_3 formal condition is met (because on this phase node_1 doesn't exitst). SDC_4 gets correct trigger only creating and then removeing node_1.
 		    </simpara>
 		</sect4>
+		<sect4><title>[<glossterm id="uc_sdc_04">UC_SDC_04</glossterm>] Creating/removing component in cycle</title>
+		    <simpara>
+			There is the pipeline of SDCs: SDC_1 (creating component "Comp"), SDC_2 (removing component "Comp").
+			SDC_2 triggering condition is SDC_1 status (Outp). This mean SDC_2 is to remove component "Comp" only after SDC_1 has created the comp. 
+			SDC_1 triggering condition is SDC_2 status (Outp). This mean SDC_1 is to create component "Comp" only after SDC_2 has removed the comp. 
+			System starts and run N ticks - SDCs create and remove component "Comp" N times.
+		    </simpara>
+		    <sect5><title>Notes</title>
+			<simpara>Ref ut_dessdc.cpp:test_Sdc_3 (ut_sdc_3.chs) for correspoiding unit test.</simpara>
+			<simpara>Ref <xref linkend="ds_dcs_sdc_dsgn_os"/> for desing item.</simpara>
+		    </sect5>
+		</sect4>
+
 	    </sect3>
 	    <sect3 id="ds_dcs_sdc_dsgn"><title>Pipelined controlling. Design of native SDC</title>
 		<sect4><title>Intro</title>
@@ -1719,10 +1732,14 @@
 		    </simpara>
 		</sect4>
 		<sect4 id="ds_dcs_sdc_dsgn_cc"><title>Forming status. Taking into account the completion of controlling.</title>
-		    <simpara>
-			<ref ulink="uc_sdc_03"/> for the use-case.
-		    </simpara>
-		    <simpara>The desing supporting this use-case is that we need to form pipeline erlier controllers status including the sign of controlling completion.</simpara>
+		    <simpara>Ref <xref linkend="uc_sdc_03"/> for the use-case.  </simpara>
+		    <simpara>The desing supporting this use-case is that we need to form pipeline controllers status with taking into account that the sign of controlling completion.</simpara>
+		</sect4>
+		<sect4 id="ds_dcs_sdc_dsgn_os"><title>Controller observs controlled system status and notifies inputs of Outp (SDC status) changed.</title>
+		    <simpara>Ref <xref linkend="uc_sdc_04"/> for the use-case.  </simpara>
+		    <simpara>Controller needs to notify controlling status (Outp) change on controlled system change. For that controller needs to observe controlled system.</simpara>
+		    <simpara>It is not obvious consideration but without this notification the cycle scheme described in use-case doesn't work. The root-cause of this problem is that for 
+			instance SDC_1 doesn't notify SDC_2 on status update when SDC_2 removes the comp thus the controling system sticks.</simpara>
 		</sect4>
 	    </sect3>
 	</sect2>
@@ -1730,6 +1747,21 @@
 	    <sect3><title>Intro</title>
 		<simpara>Very often we need to observe the controlled system when creating controlling DES. Sometimes status functions embedded to SDC is enough, but in many cases
 		    we need separate functions to get controlled system status.</simpara>
+	    </sect3>
+	    <sect3 id="ds_dcs_aes"><title>Design: access to explorable system</title>
+		<sect4><title>Intro</title>
+		    <simpara>SDO needs the access to explorable system. By default any owned components don't have an access to their owners. Same problem is actual for DCS. Current DCS
+			design utilized MAgent interface that allows DCS (i.e. agent) to have the acces to its owner. However this solution is not far from perfect. This is because MAgent interface
+			was not introduced for such purpose as system controlling. Instead it is just to establish "trusted" relationship between agent owner and agent so the agent can play the
+			role of owener "consiliary". Fro instance owener event redirects IRM requests to its agents.  So MAgent iface is too "heavy" for the purpose of observing.</simpara>
+		</sect4>
+		<sect4 id="ds_dcs_aes_acp"><title>Soution: Owner accessibility controlled by owner props</title>
+		    <simpara>The idea is to utilize MOwner local iface resolution mechanism to provide an access depending on owner props. For instance if owner property "Explorable" equals "y"
+			then MOwner provides owned with iface allowing exploring of the owner.</simpara>
+		    <simpara>The potential problem here is that this access is given for all owned compoments that expose the vulnerability. We can solve this problem using IRM mechanism instead
+			of local iface resolution. With IRM the requestor (owend) gets accessible to the owner so the owner can set some restriction. For instance the restriction can be that the owner
+			request some iface (kimd of MExploring) from the requestor.</simpara>
+		</sect4>
 	    </sect3>
 	</sect2>
 

@@ -415,6 +415,33 @@ string TrAndVar::GetInpUri(int aId) const
 }
 
 
+///// TrOrVar
+
+TrOrVar::TrOrVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+{
+    MNode* cp = Provider()->createNode(CpStateInp::Type(), "Inp", mEnv);
+    assert(cp);
+    bool res = attachOwned(cp);
+    assert(res);
+}
+
+void TrOrVar::Init(const string& aIfaceName)
+{
+    if (mFunc) {
+	delete mFunc;
+	mFunc = NULL;
+    }
+    if ((mFunc = FBOrDt::Create(this, aIfaceName)) != NULL);
+}
+
+string TrOrVar::GetInpUri(int aId) const 
+{
+    if (aId == FBOrDt::EInp) return "Inp";
+    else return string();
+}
+
+
+
 ///// TrNegVar
 
 TrNegVar::TrNegVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)

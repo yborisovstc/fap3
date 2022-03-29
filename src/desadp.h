@@ -172,6 +172,7 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 	void setActivated();
 	MDesObserver* getDesObs();
 	MNode* ahostNode();
+	void GetMagUri(Sdata<string>& aData);
     protected:
 	bool mInpMagUriUpdated = true;
 	bool mInpMagBaseUpdated = true;
@@ -181,6 +182,7 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 	bool mMagUriValid; /*!< Validity sign of mMagUri */
 	AdpIap mIapMagUri = AdpIap(*this, [this]() {OnInpMagUri();}); /*!< MAG URI input access point */
 	AdpIap mIapMagBase = AdpIap(*this, [this]() {OnInpMagBase();}); /*!< Input access point: Managed agent base */
+	AdpPap<string> mPapMagUri = AdpPap<string>(*this, [this](Sdata<string>& aData) {GetMagUri(aData);}); /*!< Mag URI access point */
 	TObserverCp mObrCp;               /*!< AHost Observer connpoint */
 	AdpMagObs<AAdp> mMagObs = AdpMagObs<AAdp>(this); /*!< Managed agent observer */
 	TAgtCp mAgtCp;                   /*!< Agent connpoint */

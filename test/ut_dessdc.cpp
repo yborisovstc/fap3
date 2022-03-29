@@ -16,14 +16,18 @@ class Ut_sdc : public CPPUNIT_NS::TestFixture
 //    CPPUNIT_TEST(test_Sdc_1);
     //CPPUNIT_TEST(test_Sdc_2);
     CPPUNIT_TEST(test_Sdc_3);
+    CPPUNIT_TEST(test_Sdo_1);
     CPPUNIT_TEST_SUITE_END();
     public:
     virtual void setUp();
     virtual void tearDown();
     private:
+    MNode* constructSystem(const string& aFname);
+    private:
     void test_Sdc_1();
     void test_Sdc_2();
     void test_Sdc_3();
+    void test_Sdo_1();
     private:
     Env* mEnv;
 };
@@ -31,6 +35,21 @@ class Ut_sdc : public CPPUNIT_NS::TestFixture
 CPPUNIT_TEST_SUITE_REGISTRATION( Ut_sdc );
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(Ut_sdc, "Ut_sdc");
 
+MNode* Ut_sdc::constructSystem(const string& aSpecn)
+{
+    string ext = "chs";
+    string spec = aSpecn + string(".") + "chs";
+    string log = aSpecn + "_" + ext + ".log";
+    mEnv = new Env(spec, log);
+    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv != 0);
+    mEnv->ImpsMgr()->ResetImportsPaths();
+    mEnv->ImpsMgr()->AddImportsPaths("../modules");
+    mEnv->constructSystem();
+    MNode* root = mEnv->Root();
+    MElem* eroot = root ? root->lIf(eroot) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get root", root && eroot);
+    return root;
+}
 
 void Ut_sdc::setUp()
 {
@@ -123,6 +142,38 @@ void Ut_sdc::test_Sdc_3()
     // Verify the comp created
     MNode* comp = root->getNode("Launcher.Comp");
     CPPUNIT_ASSERT_MESSAGE("Comp hasn't been created", comp);
+
+    delete mEnv;
+}
+
+/** @brief MNode SDO test - existence of component
+ * */
+void Ut_sdc::test_Sdo_1()
+{
+    printf("\n === Test of SDO: comps, connection\n");
+    MNode* root = constructSystem("ut_sdo_1");
+
+    bool res = mEnv->RunSystem(5, 2);
+
+    // Verify V1 observing
+    MNode* cdbg = root->getNode("Launcher.Dbg_DcoComp");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get Launcher.Dbg_DcoComp", cdbg);
+    bool dres = false;
+    GetSData(cdbg, dres);
+    CPPUNIT_ASSERT_MESSAGE("Wrong DCO result", dres);
+    // Verify V1~V2 observing
+    MNode* conndbg = root->getNode("Launcher.Dbg_DcoConn");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get Launcher.Dbg_DcoConn", conndbg);
+    dres = false;
+    GetSData(conndbg, dres);
+    CPPUNIT_ASSERT_MESSAGE("Wrong DCO V1~V2 result", dres);
+    // Verify V1~V3 observing
+    conndbg = root->getNode("Launcher.Dbg_DcoConn2");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get Launcher.Dbg_DcoConn2", conndbg);
+    dres = true;
+    GetSData(conndbg, dres);
+    CPPUNIT_ASSERT_MESSAGE("Wrong DCO V1~V3 result", !dres);
+
 
     delete mEnv;
 }

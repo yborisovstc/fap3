@@ -238,7 +238,7 @@ void ASdc::confirm()
 	}
     }
     */
-    if (changed) {
+    if (changed && mMag && mIapEnb.data()) {
 	bool res = doCtl();
 	if (!res) {
 	    Log(TLog(EErr, this) + "Failed controlling managed agent");
@@ -451,22 +451,19 @@ bool ASdcMut::getState()
 
 bool ASdcMut::doCtl()
 {
-    bool res = true;
-    if (mMag && mIapEnb.mCdt) {
-	res = false;
-	MNode* targn = mMag->getNode(mIapTarg.mCdt);
-	if (!targn) {
-	    Log(TLog(EInfo, this) + "Cannot find target  [" + mIapTarg.mCdt + "]");
-	} else {
-	    Chromo2& chromo = mIapMut.mCdt.mData;
-	    TNs ns; MutCtx mutctx(NULL, ns);
-	    chromo.Root().Dump();
-	    targn->mutate(chromo.Root(), false, mutctx, true);
-	    string muts;
-	    chromo.Root().ToString(muts);
-	    Log(TLog(EInfo, this) + "Managed agent is mutated  [" + muts + "]");
-	    res = true;
-	}
+    bool res = false;
+    MNode* targn = mMag->getNode(mIapTarg.mCdt);
+    if (!targn) {
+	Log(TLog(EInfo, this) + "Cannot find target  [" + mIapTarg.mCdt + "]");
+    } else {
+	Chromo2& chromo = mIapMut.mCdt.mData;
+	TNs ns; MutCtx mutctx(NULL, ns);
+	chromo.Root().Dump();
+	targn->mutate(chromo.Root(), false, mutctx, true);
+	string muts;
+	chromo.Root().ToString(muts);
+	Log(TLog(EInfo, this) + "Managed agent is mutated  [" + muts + "]");
+	res = true;
     }
     return res;
 }
@@ -496,22 +493,30 @@ bool ASdcComp::getState()
 
 bool ASdcComp::doCtl()
 {
-    bool res = true;
-    if (mMag && mIapEnb.mCdt) {
-	res = false;
-	TNs ns; MutCtx mutctx(NULL, ns);
-	MChromo* chr = mEnv->provider()->createChromo();
-	TMut mut(ENt_Node, ENa_Id, mIapName.mCdt, ENa_Parent, mIapParent.mCdt);
-	chr->Root().AddChild(mut);
-	mMag->mutate(chr->Root(), false, mutctx, true);
-	delete chr;
-	string muts = mut.ToString();
-	Log(TLog(EInfo, this) + "Managed agent is mutated  [" + muts + "]");
-	mOapName.updateData(mIapName.mCdt);
-	res = true;
-    }
+    bool res = false;
+    TNs ns; MutCtx mutctx(NULL, ns);
+    MChromo* chr = mEnv->provider()->createChromo();
+    TMut mut(ENt_Node, ENa_Id, mIapName.mCdt, ENa_Parent, mIapParent.mCdt);
+    chr->Root().AddChild(mut);
+    mMag->mutate(chr->Root(), false, mutctx, true);
+    delete chr;
+    string muts = mut.ToString();
+    Log(TLog(EInfo, this) + "Managed agent is mutated  [" + muts + "]");
+    mOapName.updateData(mIapName.mCdt);
+    res = true;
     return res;
 }
+
+void ASdcComp::onObsOwnedAttached(MObservable* aObl, MOwned* aOwned)
+{
+    mOapOut.NotifyInpsUpdated();
+}
+
+void ASdcComp::onObsOwnedDetached(MObservable* aObl, MOwned* aOwned)
+{
+    mOapOut.NotifyInpsUpdated();
+}
+
 
 /* SDC agent "Rm Component" */
 
@@ -535,22 +540,30 @@ bool ASdcRm::getState()
 
 bool ASdcRm::doCtl()
 {
-    bool res = true;
-    if (mMag && mIapEnb.mCdt) {
-	res = false;
-	TNs ns; MutCtx mutctx(NULL, ns);
-	MChromo* chr = mEnv->provider()->createChromo();
-	TMut mut(ENt_Rm, ENa_Id, mIapName.mCdt);
-	chr->Root().AddChild(mut);
-	mMag->mutate(chr->Root(), false, mutctx, true);
-	delete chr;
-	string muts = mut.ToString();
-	Log(TLog(EInfo, this) + "Managed agent is mutated  [" + muts + "]");
-	mOapName.updateData(mIapName.mCdt);
-	res = true;
-    }
+    bool res = false;
+    TNs ns; MutCtx mutctx(NULL, ns);
+    MChromo* chr = mEnv->provider()->createChromo();
+    TMut mut(ENt_Rm, ENa_Id, mIapName.mCdt);
+    chr->Root().AddChild(mut);
+    mMag->mutate(chr->Root(), false, mutctx, true);
+    delete chr;
+    string muts = mut.ToString();
+    Log(TLog(EInfo, this) + "Managed agent is mutated  [" + muts + "]");
+    mOapName.updateData(mIapName.mCdt);
+    res = true;
     return res;
 }
+
+void ASdcRm::onObsOwnedAttached(MObservable* aObl, MOwned* aOwned)
+{
+    mOapOut.NotifyInpsUpdated();
+}
+
+void ASdcRm::onObsOwnedDetached(MObservable* aObl, MOwned* aOwned)
+{
+    mOapOut.NotifyInpsUpdated();
+}
+
 
 
 
@@ -600,35 +613,32 @@ bool ASdcConn::getState()
 
 bool ASdcConn::doCtl()
 {
-    bool res = true;
-    if (mMag && /*mMapCcd.mCdt &&*/ mIapEnb.mCdt) {
-	res = false;
-	// Checking the control condition met
-	MNode* v1n = mMag->getNode(mIapV1.mCdt);
-	MNode* v2n = mMag->getNode(mIapV2.mCdt);
-	if (v1n && v2n) {
-	    MVert* v1v = v1n->lIf(v1v);
-	    MVert* v2v = v2n->lIf(v2v);
-	    if (v1v && v2v) {
-		if (!v1v->isConnected(v2v)) {
-		    TNs ns; MutCtx mutctx(NULL, ns);
-		    MChromo* chr = mEnv->provider()->createChromo();
-		    TMut mut(ENt_Conn, ENa_P, mIapV1.mCdt, ENa_Q, mIapV2.mCdt);
-		    chr->Root().AddChild(mut);
-		    mMag->mutate(chr->Root(), false, mutctx, true);
-		    delete chr;
-		    string muts = mut.ToString();
-		    Log(TLog(EInfo, this) + "Managed agent is mutated  [" + muts + "]");
-		    res = true;
-		} else {
-		    Log(TLog(EInfo, this) + "CPs are already connected: [" + mIapV1.mCdt + "] and [" + mIapV2.mCdt + "]");
-		}
+    bool res = false;
+    // Checking the control condition met
+    MNode* v1n = mMag->getNode(mIapV1.mCdt);
+    MNode* v2n = mMag->getNode(mIapV2.mCdt);
+    if (v1n && v2n) {
+	MVert* v1v = v1n->lIf(v1v);
+	MVert* v2v = v2n->lIf(v2v);
+	if (v1v && v2v) {
+	    if (!v1v->isConnected(v2v)) {
+		TNs ns; MutCtx mutctx(NULL, ns);
+		MChromo* chr = mEnv->provider()->createChromo();
+		TMut mut(ENt_Conn, ENa_P, mIapV1.mCdt, ENa_Q, mIapV2.mCdt);
+		chr->Root().AddChild(mut);
+		mMag->mutate(chr->Root(), false, mutctx, true);
+		delete chr;
+		string muts = mut.ToString();
+		Log(TLog(EInfo, this) + "Managed agent is mutated  [" + muts + "]");
+		res = true;
 	    } else {
-		Log(TLog(EInfo, this) + "CPs are not vertexes: [" + mIapV1.mCdt + "] or [" + mIapV2.mCdt + "]");
+		Log(TLog(EInfo, this) + "CPs are already connected: [" + mIapV1.mCdt + "] and [" + mIapV2.mCdt + "]");
 	    }
 	} else {
-	    Log(TLog(EInfo, this) + "CPs are not exist: [" + mIapV1.mCdt + "] or [" + mIapV2.mCdt + "]");
+	    Log(TLog(EInfo, this) + "CPs are not vertexes: [" + mIapV1.mCdt + "] or [" + mIapV2.mCdt + "]");
 	}
+    } else {
+	Log(TLog(EInfo, this) + "CPs are not exist: [" + mIapV1.mCdt + "] or [" + mIapV2.mCdt + "]");
     }
     return res;
 }
@@ -660,19 +670,16 @@ bool ASdcDisconn::getState()
 
 bool ASdcDisconn::doCtl()
 {
-    bool res = true;
-    if (mMag && mIapEnb.mCdt) {
-	res = false;
-	TNs ns; MutCtx mutctx(NULL, ns);
-	MChromo* chr = mEnv->provider()->createChromo();
-	TMut mut(ENt_Disconn, ENa_P, mIapV1.mCdt, ENa_Q, mIapV2.mCdt);
-	chr->Root().AddChild(mut);
-	mMag->mutate(chr->Root(), false, mutctx, true);
-	delete chr;
-	string muts = mut.ToString();
-	Log(TLog(EInfo, this) + "Managed agent is mutated  [" + muts + "]");
-	res = true;
-    }
+    bool res = false;
+    TNs ns; MutCtx mutctx(NULL, ns);
+    MChromo* chr = mEnv->provider()->createChromo();
+    TMut mut(ENt_Disconn, ENa_P, mIapV1.mCdt, ENa_Q, mIapV2.mCdt);
+    chr->Root().AddChild(mut);
+    mMag->mutate(chr->Root(), false, mutctx, true);
+    delete chr;
+    string muts = mut.ToString();
+    Log(TLog(EInfo, this) + "Managed agent is mutated  [" + muts + "]");
+    res = true;
     return res;
 }
 
@@ -682,9 +689,11 @@ bool ASdcDisconn::doCtl()
 const string K_CpUri_Cp = "TCp";
 const string K_CpUri_Icp = "ICp";
 const string K_CpUri_Icpp = "ICpp";
+const string K_CpUri_Ins_OutpName = "OutpName";
 
 ASdcInsert::ASdcInsert(const string &aType, const string& aName, MEnv* aEnv): ASdc(aType, aName, aEnv),
-    mIapCp("Cp", this, K_CpUri_Cp), mIapIcp("Icp", this, K_CpUri_Icp), mIapIcpp("Icpp", this, K_CpUri_Icpp)
+    mIapCp("Cp", this, K_CpUri_Cp), mIapIcp("Icp", this, K_CpUri_Icp), mIapIcpp("Icpp", this, K_CpUri_Icpp),
+    mOapName("OutName", this, K_CpUri_Ins_OutpName)
 { }
 
 void ASdcInsert::getCcd(bool& aData)
@@ -734,41 +743,41 @@ bool ASdcInsert::getState()
 
 bool ASdcInsert::doCtl()
 {
-    bool res = true;
-    if (mMag && /*mMapCcd.mCdt &&*/ mIapEnb.mCdt) {
-	res = false;
-	// Verify conditions
-	MNode* cp = mMag->getNode(mIapCp.mCdt);
-	MVert* cpv = cp ? cp->lIf(cpv) : nullptr;
-	if (!cpv) {
-	    Log(TLog(EErr, this) + "Cannot find Cp or Cp isn't vert [" + mIapCp.mCdt + "]");
+    bool res = false;
+    // Verify conditions
+    MNode* cp = mMag->getNode(mIapCp.mCdt);
+    MVert* cpv = cp ? cp->lIf(cpv) : nullptr;
+    if (!cpv) {
+	Log(TLog(EErr, this) + "Cannot find Cp or Cp isn't vert [" + mIapCp.mCdt + "]");
+    } else {
+	if (cpv->pairsCount() != 1) {
+	    Log(TLog(EErr, this) + "Cp pairs count != 1");
 	} else {
-	    if (cpv->pairsCount() != 1) {
-		Log(TLog(EErr, this) + "Cp pairs count != 1");
+	    mCpPair = cpv->getPair(0);	
+	    // Disconnect Cp
+	    bool cres = MVert::disconnect(cpv, mCpPair);
+	    if (!cres) {
+		Log(TLog(EInfo, this) + "Failed disconnecting [" + cpv->Uid() + "] - [" + mCpPair->Uid() + "]");
 	    } else {
-		mCpPair = cpv->getPair(0);	
-		// Disconnect Cp
-		bool cres = MVert::disconnect(cpv, mCpPair);
-		if (!cres) {
-		    Log(TLog(EInfo, this) + "Failed disconnecting [" + cpv->Uid() + "] - [" + mCpPair->Uid() + "]");
-		} else {
-		    // Connect
-		    MNode* icpn = mMag->getNode(mIapIcp.mCdt);
-		    MNode* icppn = mMag->getNode(mIapIcpp.mCdt);
-		    if (icpn && icppn) {
-			MVert* icpv = icpn->lIf(icpv);
-			MVert* icppv = icppn->lIf(icppv);
-			cres = MVert::connect(icpv, cpv);
+		// Connect
+		MNode* icpn = mMag->getNode(mIapIcp.data());
+		MNode* icppn = mMag->getNode(mIapIcpp.data());
+		if (icpn && icppn) {
+		    MVert* icpv = icpn->lIf(icpv);
+		    MVert* icppv = icppn->lIf(icppv);
+		    cres = MVert::connect(icpv, cpv);
+		    if (!cres) {
+			Log(TLog(EInfo, this) + "Failed connecting [" + icpv->Uid() + "] - [" + cpv->Uid() + "]");
+		    } else {
+			cres = MVert::connect(icppv, mCpPair);
 			if (!cres) {
-			    Log(TLog(EInfo, this) + "Failed connecting [" + icpv->Uid() + "] - [" + cpv->Uid() + "]");
+			    Log(TLog(EInfo, this) + "Failed connecting [" + icppv->Uid() + "] - [" + mCpPair->Uid() + "]");
 			} else {
-			    cres = MVert::connect(icppv, mCpPair);
-			    if (!cres) {
-				Log(TLog(EInfo, this) + "Failed connecting [" + icppv->Uid() + "] - [" + mCpPair->Uid() + "]");
-			    } else {
-				Log(TLog(EInfo, this) + "Managed agent is updated, inserted [" + icpv->Uid() + "] into [" + cpv->Uid() + "]");
-				res = true;
-			    }
+			    Log(TLog(EInfo, this) + "Managed agent is updated, inserted [" + icpv->Uid() + "] into [" + cpv->Uid() + "]");
+			    // TODO Replace this workaround with final code
+			    GUri icpuri(mIapIcp.data());
+			    mOapName.updateData(icpuri.at(0));
+			    res = true;
 			}
 		    }
 		}
@@ -795,28 +804,28 @@ bool ASdcInsert2::getState()
 {
     bool res = false;
     do {
-    MNode* comp = mMag->getNode(mIapName.mCdt);
-    if (!comp) {
-	Log(TLog(EErr, this) + "Cannot find comp [" + mIapName.mCdt + "]");
-	break;
-    }
-    GUri prev_uri(mIapName.data()); prev_uri += GUri(mIapPrev.data());
-    MNode* prev = mMag->getNode(prev_uri);
-    if (!prev) {
-	Log(TLog(EErr, this) + "Cannot find Prev Cp [" + prev_uri.toString() + "]");
-	break;
-    }
-    GUri next_uri(mIapName.data()); next_uri += GUri(mIapNext.data());
-    MNode* next = mMag->getNode(next_uri);
-    if (!next) {
-	Log(TLog(EErr, this) + "Cannot find Next Cp [" + next_uri.toString() + "]");
-	break;
-    }
-    MVert* prevv = prev->lIf(prevv);
-    if (!prevv) {
-	Log(TLog(EErr, this) + "Prev is not connectable [" + prev_uri.toString() + "]");
-	break;
-    }
+	MNode* comp = mMag->getNode(mIapName.mCdt);
+	if (!comp) {
+	    Log(TLog(EErr, this) + "Cannot find comp [" + mIapName.mCdt + "]");
+	    break;
+	}
+	GUri prev_uri(mIapName.data()); prev_uri += GUri(mIapPrev.data());
+	MNode* prev = mMag->getNode(prev_uri);
+	if (!prev) {
+	    Log(TLog(EErr, this) + "Cannot find Prev Cp [" + prev_uri.toString() + "]");
+	    break;
+	}
+	GUri next_uri(mIapName.data()); next_uri += GUri(mIapNext.data());
+	MNode* next = mMag->getNode(next_uri);
+	if (!next) {
+	    Log(TLog(EErr, this) + "Cannot find Next Cp [" + next_uri.toString() + "]");
+	    break;
+	}
+	MVert* prevv = prev->lIf(prevv);
+	if (!prevv) {
+	    Log(TLog(EErr, this) + "Prev is not connectable [" + prev_uri.toString() + "]");
+	    break;
+	}
 	MVert* nextv = next->lIf(nextv);
 	if (!nextv) {
 	    Log(TLog(EErr, this) + "Next is not connectable [" + next_uri.toString() + "]");
@@ -845,76 +854,73 @@ bool ASdcInsert2::getState()
 
 bool ASdcInsert2::doCtl()
 {
-    bool res = true;
-    if (mMag && mIapEnb.data()) {
-	res = false;
-	// Verify conditions
-	do {
-	    MNode* comp = mMag->getNode(mIapName.data());
-	    if (!comp) {
-		Log(TLog(EErr, this) + "Cannot find comp [" + mIapName.mCdt + "]");
-		break;
-	    }
-	    GUri prev_uri(mIapName.data()); prev_uri += GUri(mIapPrev.data());
-	    MNode* prev = mMag->getNode(prev_uri);
-	    if (!prev) {
-		Log(TLog(EErr, this) + "Cannot find Prev Cp [" + prev_uri.toString() + "]");
-		break;
-	    }
-	    GUri next_uri(mIapName.data()); next_uri += GUri(mIapNext.data());
-	    MNode* next = mMag->getNode(next_uri);
-	    if (!next) {
-		Log(TLog(EErr, this) + "Cannot find Next Cp [" + next_uri.toString() + "]");
-		break;
-	    }
-	    MVert* prevv = prev->lIf(prevv);
-	    if (!prevv) {
-		Log(TLog(EErr, this) + "Prev is not connectable [" + prev_uri.toString() + "]");
-		break;
-	    }
-	    MVert* nextv = next->lIf(nextv);
-	    if (!nextv) {
-		Log(TLog(EErr, this) + "Next is not connectable [" + next_uri.toString() + "]");
-		break;
-	    }
-	    MNode* pnode = mMag->getNode(mIapPname.data());
-	    if (!pnode) {
-		Log(TLog(EErr, this) + "Cannot find position node [" + mIapPname.data() + "]");
-		break;
-	    }
-	    GUri pnode_next_uri(mIapPname.data()); pnode_next_uri += GUri(mIapNext.data());
-	    MNode* pnode_next = mMag->getNode(pnode_next_uri);
-	    if (!pnode_next) {
-		Log(TLog(EErr, this) + "Cannot find position node next cp [" + pnode_next_uri.toString() + "]");
-		break;
-	    }
-	    MVert* pnode_nextv = pnode_next->lIf(pnode_nextv);
-	    if (pnode_nextv->pairsCount() != 1) {
-		Log(TLog(EErr, this) + "Position node next Cp pairs count != 1");
-		break;
-	    }
-	    mCpPair = pnode_nextv->getPair(0);	
-	    // Disconnect Cp
-	    bool cres = MVert::disconnect(pnode_nextv, mCpPair);
-	    if (!cres) {
-		Log(TLog(EInfo, this) + "Failed disconnecting [" + pnode_next->Uid() + "] - [" + mCpPair->Uid() + "]");
-		break;
-	    }
-	    // Connect
-	    cres = MVert::connect(prevv, pnode_nextv);
-	    if (!cres) {
-		Log(TLog(EInfo, this) + "Failed connecting [" + pnode_next->Uid() + "] - [" + next->Uid() + "]");
-		break;
-	    }
-	    cres = MVert::connect(nextv, mCpPair);
-	    if (!cres) {
-		Log(TLog(EInfo, this) + "Failed connecting [" + nextv->Uid() + "] - [" + mCpPair->Uid() + "]");
-		break;
-	    }
-	    Log(TLog(EInfo, this) + "Managed agent is updated, inserted [" + comp->Uid() + "] before [" + pnode->Uid() + "]");
-	    res = true;
-	} while (0);
-    }
+    bool res = false;
+    // Verify conditions
+    do {
+	MNode* comp = mMag->getNode(mIapName.data());
+	if (!comp) {
+	    Log(TLog(EErr, this) + "Cannot find comp [" + mIapName.mCdt + "]");
+	    break;
+	}
+	GUri prev_uri(mIapName.data()); prev_uri += GUri(mIapPrev.data());
+	MNode* prev = mMag->getNode(prev_uri);
+	if (!prev) {
+	    Log(TLog(EErr, this) + "Cannot find Prev Cp [" + prev_uri.toString() + "]");
+	    break;
+	}
+	GUri next_uri(mIapName.data()); next_uri += GUri(mIapNext.data());
+	MNode* next = mMag->getNode(next_uri);
+	if (!next) {
+	    Log(TLog(EErr, this) + "Cannot find Next Cp [" + next_uri.toString() + "]");
+	    break;
+	}
+	MVert* prevv = prev->lIf(prevv);
+	if (!prevv) {
+	    Log(TLog(EErr, this) + "Prev is not connectable [" + prev_uri.toString() + "]");
+	    break;
+	}
+	MVert* nextv = next->lIf(nextv);
+	if (!nextv) {
+	    Log(TLog(EErr, this) + "Next is not connectable [" + next_uri.toString() + "]");
+	    break;
+	}
+	MNode* pnode = mMag->getNode(mIapPname.data());
+	if (!pnode) {
+	    Log(TLog(EErr, this) + "Cannot find position node [" + mIapPname.data() + "]");
+	    break;
+	}
+	GUri pnode_next_uri(mIapPname.data()); pnode_next_uri += GUri(mIapNext.data());
+	MNode* pnode_next = mMag->getNode(pnode_next_uri);
+	if (!pnode_next) {
+	    Log(TLog(EErr, this) + "Cannot find position node next cp [" + pnode_next_uri.toString() + "]");
+	    break;
+	}
+	MVert* pnode_nextv = pnode_next->lIf(pnode_nextv);
+	if (pnode_nextv->pairsCount() != 1) {
+	    Log(TLog(EErr, this) + "Position node next Cp pairs count != 1");
+	    break;
+	}
+	mCpPair = pnode_nextv->getPair(0);	
+	// Disconnect Cp
+	bool cres = MVert::disconnect(pnode_nextv, mCpPair);
+	if (!cres) {
+	    Log(TLog(EInfo, this) + "Failed disconnecting [" + pnode_next->Uid() + "] - [" + mCpPair->Uid() + "]");
+	    break;
+	}
+	// Connect
+	cres = MVert::connect(prevv, pnode_nextv);
+	if (!cres) {
+	    Log(TLog(EInfo, this) + "Failed connecting [" + pnode_next->Uid() + "] - [" + next->Uid() + "]");
+	    break;
+	}
+	cres = MVert::connect(nextv, mCpPair);
+	if (!cres) {
+	    Log(TLog(EInfo, this) + "Failed connecting [" + nextv->Uid() + "] - [" + mCpPair->Uid() + "]");
+	    break;
+	}
+	Log(TLog(EInfo, this) + "Managed agent is updated, inserted [" + comp->Uid() + "] before [" + pnode->Uid() + "]");
+	res = true;
+    } while (0);
     return res;
 }
 
@@ -968,66 +974,63 @@ bool ASdcExtract::getState()
 
 bool ASdcExtract::doCtl()
 {
-    bool res = true;
-    if (mMag && mIapEnb.data()) {
-	res = false;
-	// Verify conditions
-	do {
-	    MNode* comp = mMag->getNode(mIapName.data());
-	    if (!comp) {
-		Log(TLog(EErr, this) + "Cannot find comp [" + mIapName.mCdt + "]");
-		break;
-	    }
-	    GUri prev_uri(mIapName.data()); prev_uri += GUri(mIapPrev.data());
-	    MNode* prev = mMag->getNode(prev_uri);
-	    if (!prev) {
-		Log(TLog(EErr, this) + "Cannot find Prev Cp [" + prev_uri.toString() + "]");
-		break;
-	    }
-	    GUri next_uri(mIapName.data()); next_uri += GUri(mIapNext.data());
-	    MNode* next = mMag->getNode(next_uri);
-	    if (!next) {
-		Log(TLog(EErr, this) + "Cannot find Next Cp [" + next_uri.toString() + "]");
-		break;
-	    }
-	    MVert* prevv = prev->lIf(prevv);
-	    if (!prevv) {
-		Log(TLog(EErr, this) + "Prev is not connectable [" + prev_uri.toString() + "]");
-		break;
-	    }
-	    MVert* nextv = next->lIf(nextv);
-	    if (!nextv) {
-		Log(TLog(EErr, this) + "Next is not connectable [" + next_uri.toString() + "]");
-		break;
-	    }
-	    if (prevv->pairsCount() != 1) {
-		Log(TLog(EErr, this) + "Node prev Cp pairs count != 1");
-		break;
-	    }
-	    if (nextv->pairsCount() != 1) {
-		Log(TLog(EErr, this) + "Node next Cp pairs count != 1");
-		break;
-	    }
-	    MVert* nextPair = nextv->getPair(0);
-	    bool cres = MVert::disconnect(nextv, nextPair);
-	    if (!cres) {
-		Log(TLog(EInfo, this) + "Failed disconnecting [" + nextv->Uid() + "] - [" + nextPair->Uid() + "]");
-		break;
-	    }
-	    MVert* prevPair = prevv->getPair(0);
-	    cres = MVert::disconnect(prevv, prevPair);
-	    if (!cres) {
-		Log(TLog(EInfo, this) + "Failed disconnecting [" + prevv->Uid() + "] - [" + prevPair->Uid() + "]");
-		break;
-	    }
-	    cres = MVert::connect(nextPair, prevPair);
-	    if (!cres) {
-		Log(TLog(EInfo, this) + "Failed connecting [" + nextPair->Uid() + "] - [" + prevPair->Uid() + "]");
-		break;
-	    }
-	    Log(TLog(EInfo, this) + "Managed agent is updated, extracted node [" + comp->Uid() + "] before [" + prevPair->Uid() + "]");
-	    res = true;
-	} while (0);
-    }
+    bool res = false;
+    // Verify conditions
+    do {
+	MNode* comp = mMag->getNode(mIapName.data());
+	if (!comp) {
+	    Log(TLog(EErr, this) + "Cannot find comp [" + mIapName.mCdt + "]");
+	    break;
+	}
+	GUri prev_uri(mIapName.data()); prev_uri += GUri(mIapPrev.data());
+	MNode* prev = mMag->getNode(prev_uri);
+	if (!prev) {
+	    Log(TLog(EErr, this) + "Cannot find Prev Cp [" + prev_uri.toString() + "]");
+	    break;
+	}
+	GUri next_uri(mIapName.data()); next_uri += GUri(mIapNext.data());
+	MNode* next = mMag->getNode(next_uri);
+	if (!next) {
+	    Log(TLog(EErr, this) + "Cannot find Next Cp [" + next_uri.toString() + "]");
+	    break;
+	}
+	MVert* prevv = prev->lIf(prevv);
+	if (!prevv) {
+	    Log(TLog(EErr, this) + "Prev is not connectable [" + prev_uri.toString() + "]");
+	    break;
+	}
+	MVert* nextv = next->lIf(nextv);
+	if (!nextv) {
+	    Log(TLog(EErr, this) + "Next is not connectable [" + next_uri.toString() + "]");
+	    break;
+	}
+	if (prevv->pairsCount() != 1) {
+	    Log(TLog(EErr, this) + "Node prev Cp pairs count != 1");
+	    break;
+	}
+	if (nextv->pairsCount() != 1) {
+	    Log(TLog(EErr, this) + "Node next Cp pairs count != 1");
+	    break;
+	}
+	MVert* nextPair = nextv->getPair(0);
+	bool cres = MVert::disconnect(nextv, nextPair);
+	if (!cres) {
+	    Log(TLog(EInfo, this) + "Failed disconnecting [" + nextv->Uid() + "] - [" + nextPair->Uid() + "]");
+	    break;
+	}
+	MVert* prevPair = prevv->getPair(0);
+	cres = MVert::disconnect(prevv, prevPair);
+	if (!cres) {
+	    Log(TLog(EInfo, this) + "Failed disconnecting [" + prevv->Uid() + "] - [" + prevPair->Uid() + "]");
+	    break;
+	}
+	cres = MVert::connect(nextPair, prevPair);
+	if (!cres) {
+	    Log(TLog(EInfo, this) + "Failed connecting [" + nextPair->Uid() + "] - [" + prevPair->Uid() + "]");
+	    break;
+	}
+	Log(TLog(EInfo, this) + "Managed agent is updated, extracted node [" + comp->Uid() + "] before [" + prevPair->Uid() + "]");
+	res = true;
+    } while (0);
     return res;
 }

@@ -5,6 +5,7 @@ AdpComps : Elem {
         # "Content AgentUri - Managed agent URI ()";
         # "Content SelfAsMagBase - set self as managed agent base";
         InpMagUri : CpStateInp;
+        OutpMagUri : CpStateOutp;
         # "Link to the node owning managed agents";
         MagOwnerLink : Link;
         # "CP provided managed agent owning base";

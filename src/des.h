@@ -186,8 +186,6 @@ class Des: public Syst, public MDesSyncable, public MDesObserver
 	virtual MIface* MOwner_getLif(const char *aType) override;
 	virtual void onOwnedAttached(MOwned* aOwned) override;
 	virtual MIface* MOwned_getLif(const char *aType);
-	// From Node.MContentOwner
-	virtual void onContentChanged(const MContent* aCont) override {}
 	// From MDesSyncable
 	virtual string MDesSyncable_Uid() const override {return getUid<MDesSyncable>();}
 	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override;
