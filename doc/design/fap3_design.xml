@@ -1666,6 +1666,9 @@
 		    <simpara>The first data is loaded the pipeline (for container example it is that Name value is set for IoAddWidg.Enable input)
 			- The controlling chain is completed (for container example it is that the widget was added and last SDCs in the chain sets outp Outp to true)
 			- New Name is set to pipeline input - the controlling chain creates new widget successfully.</simpara>
+		    <sect5><title>Discussion</title>
+			<simpara>This UC seems not valid. Ref <xref linkend="uc_sdc_05"/> for another UC that seems more reasonable.</simpara>
+		    </sect5>
 		</sect4>
 		<sect4><title>[<glossterm id="uc_sdc_02">UC_SDC_02</glossterm>] Controller doesn't change system in case of DES Inp notification comes but inputs are not changed actually</title>
 		    <simpara>The first data is loaded the pipeline (for container example it is that Name value is set for IoAddWidg.Enable input)
@@ -1701,7 +1704,28 @@
 			<simpara>Ref <xref linkend="ds_dcs_sdc_dsgn_os"/> for desing item.</simpara>
 		    </sect5>
 		</sect4>
-
+		<sect4><title>[<glossterm id="uc_sdc_05">UC_SDC_05</glossterm>] Controller change system when being notified thru "Enable" inp event inp value is not changed</title>
+		    <simpara>The direct specifying this case is rather exhausted. Ref fap3/test/ut_sdc_2.chs for the model. This UC contradicts to <xref linkend="uc_sdc_01"/></simpara>
+		    <simpara>PRECONDITIONS</simpara>
+		    <programlisting>
+			There is the model that contains 3 SDCs: SDC_Comp - creation component - list node, SDC_Insert - inserting the node into the list,
+			SDC_Extract - extracting the node from the list. The model insert/extract the node in the cycle. To do this SDC_Insert trigger ("Enable" inp)
+			depends on the switch that initially is switched to SDC_Comp status and then, after insertion switches to extraction status.
+		    </programlisting>
+		    <simpara>STEPS</simpara>
+		    <programlisting>
+			#0 - link node is created
+			#1 - insertion trigger is ok (switcher on status of creation). Node is inserted.
+			#2 - insertion status is OK, i.e. extraction trigger is OK. Switcher is still on status of creation (OK). Extracted.
+			#3 - Switcher on extraction status - OK, i.e insertion trigger is still 1. Expecting that insertion SDC performs the control.
+		    </programlisting>
+		    <sect5><title>Discussion.</title>
+			<simpara>Acc to <xref linkend="uc_sdc_01"/> the insertion on #3 cannot happen because the trigger value is not change.</simpara>
+		    </sect5>
+		    <sect5><title>Desing</title>
+			<simpara>Ref <xref linkend="ds_dcs_sdc_dsgn_oin"/> for the desing</simpara>
+		    </sect5>
+		</sect4>
 	    </sect3>
 	    <sect3 id="ds_dcs_sdc_dsgn"><title>Pipelined controlling. Design of native SDC</title>
 		<sect4><title>Intro</title>
@@ -1741,6 +1765,13 @@
 		    <simpara>It is not obvious consideration but without this notification the cycle scheme described in use-case doesn't work. The root-cause of this problem is that for 
 			instance SDC_1 doesn't notify SDC_2 on status update when SDC_2 removes the comp thus the controling system sticks.</simpara>
 		</sect4>
+		<sect4 id="ds_dcs_sdc_dsgn_oin"><title>Controller updating on inps notifications even input value not changed</title>
+		    <simpara>Ref <xref linked="uc_sdc_05"/> for the UC</simpara>
+		    <simpara>Main Solution#1 is simple - just enable control if inp was notified even its value is unchanged.  </simpara>
+		    <simpara>Alternative Solution#2 is to set SDC as updated (i.e. enable performing control) if controlled system data observation
+			(MagDobs) gets the event. The idea is that the event means the status can be changed, so we need to recalc the status and
+			perform the control if status isn't met.</simpara>
+		</sect4>
 	    </sect3>
 	</sect2>
 	<sect2 id="ds_dcs_sdo"><title>System DES oberving (<xref linkend="gls_sdo"/>) </title>
@@ -1764,7 +1795,6 @@
 		</sect4>
 	    </sect3>
 	</sect2>
-
 	<sect2 id="ds_dcs_ord"><title>DCS example/test - ordering of agents.</title>
 	    <sect3><title>Intro</title>
 		<simpara>We need to create numberer of examples to discover the weaknesses of the current DCS approach and find the proper solutions. The first
@@ -1932,7 +1962,7 @@
 	</sect2>
 	<sect2 id="ds_iss_006"><title>[DS_ISS_006] NodeAdp current sytem update-confirm scheme is wrong.</title>
 	    <sect3><title>Intro</title>
-		<simpara>Ref <xrefl linkend="ds_dcs_ucs_cip"/></simpara>
+		<simpara>Ref <xref linkend="ds_dcs_ucs_cip"/></simpara>
 	    </sect3>
 	</sect2>
 	<sect2 id="ds_iss_007"><title>[DS_ISS_007] State content change on creation phase blocks update notification</title>

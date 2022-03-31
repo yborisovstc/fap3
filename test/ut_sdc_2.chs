@@ -2,6 +2,7 @@ Root : Elem {
     # "Test of SDC, list insertion/extraction";
     Modules : Node
     {
+        + DesUtils; 
     } 
     # "Runner";
     Launcher :  DesLauncher {
@@ -29,7 +30,6 @@ Root : Elem {
             }
             Dc_Insert : ASdcInsert2 @ {
                 _@ < Debug.LogLevel = "Dbg";
-                Enable ~ Dc_Comp.Outp;
                 Name ~ Dc_Comp.OutpName;
                 Prev ~ : State { = "SS Prev"; };
                 Next ~ : State { = "SS Next"; };
@@ -50,6 +50,14 @@ Root : Elem {
                 _@ < { Debug.LogLevel = "Dbg"; = "SB false"; }
                 Inp ~ Dc_Extract.Outp;
             }
+            # "Enable insertion first on creation than on extraction";
+            Dc_Insert.Enable ~ : TrSwitchBool @ {
+                _@ < Debug.LogLevel = "Dbg";
+                Inp1 ~ Dc_Comp.Outp;
+                Inp2 ~ Dc_Extract.Outp;
+                WasInserted : DesUtils.SetTg @ { InpSet ~ Dc_Insert.Outp; }
+                Sel ~ WasInserted.Outp;
+            };
         }
     }
 }

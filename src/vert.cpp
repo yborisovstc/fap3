@@ -259,6 +259,7 @@ void Vert::onConnected()
 void Vert::onDisconnected()
 {
     invalidateIrm();
+    notifyChanged();
 }
 
 

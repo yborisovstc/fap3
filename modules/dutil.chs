@@ -36,4 +36,33 @@ DesUtils : Elem {
         }
         Outp.Int ~ Cnt;
     }
+    SetTg : Des {
+    # "Set trigger";
+        InpSet : Extd { Int : CpStateOutp; }
+        Outp : Extd { Int : CpStateInp; }
+        Outp.Int ~ Value : State @ {
+            _@ < { Debug.LogLevel = "Dbg"; = "SB false"; }
+            Inp ~ : TrOrVar @ {
+                Inp ~ InpSet.Int;
+                Inp ~ Value;
+            };
+       };
+   }
+   RSTg : Des {
+    # "R/S trigger, positive inputs";
+        InpS : Extd { Int : CpStateOutp; }
+        InpR : Extd { Int : CpStateOutp; }
+        Outp : Extd { Int : CpStateInp; }
+        Outp.Int ~ Value : State @ {
+            _@ < { Debug.LogLevel = "Dbg"; = "SB false"; }
+            Inp ~ : TrOrVar @ {
+                Inp ~ InpS.Int;
+                Inp ~ : TrAndVar @ {
+                    Inp ~ : TrNegVar @ { Inp ~ InpR.Int; };
+                    Inp ~ Value;
+                };
+            };
+       };
+   }
+
 }

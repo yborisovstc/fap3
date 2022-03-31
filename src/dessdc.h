@@ -25,6 +25,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesI
 	using TAgtCp = NCpOnp<MAgent, MAhost>;  /*!< Agent conn point */
 	using TObserverCp = NCpOmnp<MObserver, MObservable>;
     public:
+
  	/** @brief Mag access point base
 	 * */
 	class SdcMapb: public MDesSyncable {
@@ -102,6 +103,17 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesI
 		T mUdt;  /*!< Updated data */
 		T mCdt;  /*!< Confirmed data */
 	};
+
+ 	/** @brief Input "Enable" access point
+	 * @param  Specific is that boolean AND is applied for inp ifaces
+	 * */
+	class SdcIapEnb: public SdcIap<bool> {
+	    public:
+		SdcIapEnb(const string& aName, ASdc* aHost, const string& aInpUri): SdcIap<bool>(aName, aHost, aInpUri) {}
+		// From MDesSyncable
+		virtual void update() override;
+	};
+
 
  	/** @brief Input access point operating with generic data
 	 * @param  T  data type 
@@ -199,6 +211,43 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesI
 		ASdc* mHost;
 	};
 
+	/** @brief Mag data observer
+	 * */
+	class MagDobs : public MObserver {
+	    public:
+		/** @brief Event to be observed */
+		enum EObs{
+		    EO_ATCH = 0x01,
+		    EO_DTCH = 0x02,
+		    EO_CNT = 0x04,
+		    EO_CHG = 0x08,
+		    EO_ALL = EO_ATCH | EO_DTCH | EO_CNT | EO_CHG,
+		};
+	    public:
+		MagDobs(ASdc* aHost, int aMask = EO_ALL): mHost(aHost), mNuo(nullptr), mMask(aMask), mOcp(this) {}
+		virtual ~MagDobs() { }
+		void updateNuo(MNode* aNuo);
+		// From MObserver
+		virtual string MObserver_Uid() const {return mNuo->name() + "%" + MObserver::Type();}
+		virtual MIface* MObserver_getLif(const char *aName) override { return nullptr;}
+		virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override {
+		    if (mMask & EO_ATCH) mHost->notifyOutp();
+		}
+		virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override;
+		virtual void onObsContentChanged(MObservable* aObl, const MContent* aCont) override {
+		    if (mMask & EO_CNT) mHost->notifyOutp();
+		}
+		virtual void onObsChanged(MObservable* aObl) override {
+		    if (mMask & EO_CHG) mHost->notifyOutp();
+		}
+	    public:
+		MNode* mNuo;                   /*!< Node under observation */
+		int mMask;                     /*!< Events mask, EObs */
+		TObserverCp mOcp;               /*!< Observer connpoint */
+	    private:
+		ASdc* mHost;
+	};
+
     public:
 	static const char* Type() { return "ASdc";};
 	ASdc(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
@@ -259,6 +308,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesI
 	/** @brief Gets status of the query */
 	virtual bool getState() {return false;}
 	void notifyMaps();
+	void notifyOutp() { mOapOut.NotifyInpsUpdated(); }
 	/** @brief Calculate control conditions */
 	virtual void getCcd(bool& aData) {}
     protected:
@@ -270,7 +320,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesI
 	MNode* mMag; /*!< Managed agent */
 	bool mUpdNotified;  //<! Sign of that State notified observers on Update
 	bool mActNotified;  //<! Sign of that State notified observers on Activation
-	ASdc::SdcIap<bool> mIapEnb; /*!< "Enable" input access point */
+	ASdc::SdcIapEnb mIapEnb; /*!< "Enable" input access point */
 	ASdc::SdcPap<bool> mOapOut; /*!< Controlling status access point */
 	MagObs mMagObs;             /*!< MAG observer */
 	bool mCdone;               /*!<  Sign that controlling was completed, ref ds_dcs_sdc_dsgn_cc */
@@ -411,6 +461,8 @@ class ASdcInsert : public ASdc
 	static const char* Type() { return "ASdcInsert";};
 	ASdcInsert(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
     protected:
+	// From MObserver
+	virtual void onObsChanged(MObservable* aObl) override;
 	// From ASdc
 	virtual bool getState() override;
 	bool doCtl() override;
@@ -420,6 +472,7 @@ class ASdcInsert : public ASdc
 	ASdc::SdcIap<string> mIapIcp; /*!< "Inserted system CP conn to given CP" input access point */
 	ASdc::SdcIap<string> mIapIcpp; /*!< "Inserted system CP conn to given CP pair" input access point */
 	ASdc::SdcPapc<string> mOapName; /*!< Comps Name parameter point, Name pipelined, ref ds_dcs_sdc_dsgn_idp */
+	ASdc::MagDobs mDobsIcp; /*!< "Inserted system CP conn to given CP" observation */
 	MVert* mCpPair;
 };
 
@@ -431,6 +484,8 @@ class ASdcInsert2 : public ASdc
 	static const char* Type() { return "ASdcInsert2";};
 	ASdcInsert2(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
     protected:
+	// From MObserver
+	virtual void onObsChanged(MObservable* aObl) override;
 	// From ASdc
 	virtual bool getState() override;
 	bool doCtl() override;
@@ -439,6 +494,7 @@ class ASdcInsert2 : public ASdc
 	ASdc::SdcIap<string> mIapPrev; /*!< "Prev CP" input access point */
 	ASdc::SdcIap<string> mIapNext; /*!< "Next CP" input access point */
 	ASdc::SdcIap<string> mIapPname; /*!< "Position - name" input access point */
+	ASdc::MagDobs mDobsNprev; /*!< "Link prev CP" observation */
 	MVert* mCpPair;
 };
 

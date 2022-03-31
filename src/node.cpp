@@ -31,6 +31,8 @@ Node::~Node()
 	owdCp->provided()->deleteOwned();
 	owdCp = owner()->firstPair();
     }
+    // Disconnect all observers
+    mOcp.disconnectAll();
 }
 
 MIface* Node::MNode_getLif(const char *aType)

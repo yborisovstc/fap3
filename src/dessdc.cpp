@@ -7,6 +7,28 @@
 const string K_CpUri_Enable = "Enable";
 const string K_CpUri_Outp = "Outp";
 
+void ASdc::MagDobs::onObsOwnedDetached(MObservable* aObl, MOwned* aOwned)
+{
+    if (mMask & EO_DTCH) mHost->notifyOutp();
+}
+
+void ASdc::MagDobs::updateNuo(MNode* aNuo)
+{
+    assert(aNuo);
+    /*
+    if (aNuo != mNuo) {
+	MObservable* nuo = mNuo ? mNuo->lIf(nuo) : nullptr;
+	if (nuo) nuo->rmObserver(&mOcp);
+	mNuo = aNuo;
+	nuo = mNuo->lIf(nuo);
+	if (nuo) nuo->addObserver(&mOcp);
+    }
+    */
+    mOcp.disconnectAll();
+    MObservable* nuo = aNuo->lIf(nuo);
+    if (nuo) nuo->addObserver(&mOcp);
+}
+
 ASdc::SdcIapb::SdcIapb(const string& aName, ASdc* aHost, const string& aInpUri):
     mName(aName), mHost(aHost), mInpUri(aInpUri), mUpdated(false), mActivated(true), mChanged(false)
 {
@@ -59,7 +81,31 @@ void ASdc::SdcIap<T>::confirm()
     mUpdated = false;
 }
 
-template <class T>
+void ASdc::SdcIapEnb::update()
+{
+    bool old_data = mUdt;
+    MNode* inp = mHost->getNode(mInpUri);
+    MUnit* vgetu = inp->lIf(vgetu);
+    auto ifaces = vgetu->getIfs<MDVarGet>();
+    bool first = true;
+    if (ifaces) for (auto ifc : *ifaces) {
+	MDVarGet* vget = dynamic_cast<MDVarGet*>(ifc);
+	MDtGet<Sdata<bool>>* gsd = vget->GetDObj(gsd);
+	if (gsd) {
+	    Sdata<bool> st;
+	    gsd->DtGet(st);
+	    if (first) mUdt = st.mData; else mUdt &= st.mData;
+	    first = false;
+	}
+    }
+    if (mHost->isLogLevel(EDbg)) {
+	mHost->Log(TLog(EDbg, mHost) + "[" + mName + "] Updated: [" + toStr(old_data) + "] -> [" + toStr(mUdt) + "]");
+    }
+    mActivated = false;
+    setUpdated();
+}
+
+    template <class T>
 void ASdc::SdcIapg<T>::update()
 {
     bool res = mHost->GetInpData<T>(mInpUri, mCdt);
@@ -238,13 +284,15 @@ void ASdc::confirm()
 	}
     }
     */
-    if (changed && mMag && mIapEnb.data()) {
-	bool res = doCtl();
-	if (!res) {
-	    Log(TLog(EErr, this) + "Failed controlling managed agent");
-	} else {
-	    mCdone = true;
-	    mOapOut.NotifyInpsUpdated();
+    if (/*changed &&*/ mMag && mIapEnb.data()) { // Ref ds_dcs_sdc_dsgn_oin Solution#1
+	if (!getState()) { // Ref ds_dcs_sdc_dsgn_cc Solution#2
+	    bool res = doCtl();
+	    if (!res) {
+		Log(TLog(EErr, this) + "Failed controlling managed agent");
+	    } else {
+		mCdone = true;
+		mOapOut.NotifyInpsUpdated();
+	    }
 	}
     }
     mUpdNotified = false;
@@ -330,7 +378,7 @@ MIface* ASdc::MObserver_getLif(const char *aType)
 void ASdc::getOut(Sdata<bool>& aData)
 {
     // Form status taking into acc control completion, ref ds_dcs_sdc_dsgn_cc
-    aData.mData = getState() && mCdone;
+    aData.mData = getState()/* && mCdone*/;
     aData.mValid = true;
     Log(TLog(EDbg, this) + "Outp: " + (aData.mData ? "true" : "false"));
 }
@@ -693,7 +741,8 @@ const string K_CpUri_Ins_OutpName = "OutpName";
 
 ASdcInsert::ASdcInsert(const string &aType, const string& aName, MEnv* aEnv): ASdc(aType, aName, aEnv),
     mIapCp("Cp", this, K_CpUri_Cp), mIapIcp("Icp", this, K_CpUri_Icp), mIapIcpp("Icpp", this, K_CpUri_Icpp),
-    mOapName("OutName", this, K_CpUri_Ins_OutpName)
+    mOapName("OutName", this, K_CpUri_Ins_OutpName),
+    mDobsIcp(this, MagDobs::EO_CHG | MagDobs::EO_DTCH)
 { }
 
 void ASdcInsert::getCcd(bool& aData)
@@ -745,7 +794,7 @@ bool ASdcInsert::doCtl()
 {
     bool res = false;
     // Verify conditions
-    MNode* cp = mMag->getNode(mIapCp.mCdt);
+    MNode* cp = mMag->getNode(mIapCp.data());
     MVert* cpv = cp ? cp->lIf(cpv) : nullptr;
     if (!cpv) {
 	Log(TLog(EErr, this) + "Cannot find Cp or Cp isn't vert [" + mIapCp.mCdt + "]");
@@ -773,6 +822,7 @@ bool ASdcInsert::doCtl()
 			if (!cres) {
 			    Log(TLog(EInfo, this) + "Failed connecting [" + icppv->Uid() + "] - [" + mCpPair->Uid() + "]");
 			} else {
+			    mDobsIcp.updateNuo(icpn);
 			    Log(TLog(EInfo, this) + "Managed agent is updated, inserted [" + icpv->Uid() + "] into [" + cpv->Uid() + "]");
 			    // TODO Replace this workaround with final code
 			    GUri icpuri(mIapIcp.data());
@@ -787,6 +837,10 @@ bool ASdcInsert::doCtl()
     return res;
 }
 
+void ASdcInsert::onObsChanged(MObservable* aObl)
+{
+    mOapOut.NotifyInpsUpdated();
+}
 
 // SDC agent "Insert node into the list, ver. 2"
 
@@ -797,7 +851,8 @@ const string K_CpUri_Insr2_Pname = "Pname"; // Name of node before which given n
 
 ASdcInsert2::ASdcInsert2(const string &aType, const string& aName, MEnv* aEnv): ASdc(aType, aName, aEnv),
     mIapName("Name", this, K_CpUri_Insr2_Name), mIapPrev("Prev", this, K_CpUri_Insr2_Prev), mIapNext("Next", this, K_CpUri_Insr2_Next),
-    mIapPname("Pname", this, K_CpUri_Insr2_Pname)
+    mIapPname("Pname", this, K_CpUri_Insr2_Pname),
+    mDobsNprev(this, MagDobs::EO_CHG)
 { }
 
 bool ASdcInsert2::getState()
@@ -868,6 +923,7 @@ bool ASdcInsert2::doCtl()
 	    Log(TLog(EErr, this) + "Cannot find Prev Cp [" + prev_uri.toString() + "]");
 	    break;
 	}
+	mDobsNprev.updateNuo(prev);
 	GUri next_uri(mIapName.data()); next_uri += GUri(mIapNext.data());
 	MNode* next = mMag->getNode(next_uri);
 	if (!next) {
@@ -923,6 +979,12 @@ bool ASdcInsert2::doCtl()
     } while (0);
     return res;
 }
+
+void ASdcInsert2::onObsChanged(MObservable* aObl)
+{
+    mOapOut.NotifyInpsUpdated();
+}
+
 
 
 // SDC agent "Extract link from chain"
