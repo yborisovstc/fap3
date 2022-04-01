@@ -13,7 +13,7 @@ class Ut_sdc : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_sdc);
 
-//    CPPUNIT_TEST(test_Sdc_1);
+    //CPPUNIT_TEST(test_Sdc_1);
     CPPUNIT_TEST(test_Sdc_2);
     //CPPUNIT_TEST(test_Sdc_3);
     //CPPUNIT_TEST(test_Sdo_1);

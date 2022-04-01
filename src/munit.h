@@ -39,9 +39,10 @@ class MUnit: public MIface
 	virtual void resolveIface(const string& aName, MIfReq::TIfReqCp* aReq) = 0;
 	/** @brief Gets first iface resolved
 	 * */
-	template<class T> T* getSif(T* aInst) {
+	template<class T> T* getSif(T* aInst, bool aCheck = true) {
 	    auto prov = defaultIfProv(T::Type());
 	    MIface* ifc = (prov && prov->ifaces()) ? (prov->ifaces()->empty() ? nullptr : prov->ifaces()->at(0)) : nullptr;
+	    if (aCheck) assert(prov->ifaces()->size() <= 1);
 	    return aInst = dynamic_cast<T*>(ifc);
 	}
 	/** @brief Gets ifaces resolved

@@ -185,6 +185,7 @@ class Des: public Syst, public MDesSyncable, public MDesObserver
 	// From Node
 	virtual MIface* MOwner_getLif(const char *aType) override;
 	virtual void onOwnedAttached(MOwned* aOwned) override;
+	virtual void onOwnedDetached(MOwned* aOwned) override;
 	virtual MIface* MOwned_getLif(const char *aType);
 	// From MDesSyncable
 	virtual string MDesSyncable_Uid() const override {return getUid<MDesSyncable>();}
@@ -244,7 +245,7 @@ class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver
 	virtual string MObserver_Uid() const  override {return getUid<MObserver>();}
 	virtual MIface* MObserver_getLif(const char *aType) override;
 	virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override;
-	virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override {} // TODO implement
+	virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override;
 	virtual void onObsContentChanged(MObservable* aObl, const MContent* aCont) override {}
 	virtual void onObsChanged(MObservable* aObl) override {}
 	// From Node.MOwned

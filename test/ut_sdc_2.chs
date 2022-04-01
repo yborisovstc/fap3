@@ -18,6 +18,7 @@ Root : Elem {
            }
         }
         List : Des {
+            Controllable = "y";
             Start : LNode;
             End : LNode;
             Start.Prev ~ End.Next;

@@ -495,6 +495,11 @@ void Des::onUpdated(MDesSyncable* aComp)
     }
 }
 
+static void RmSyncable(list<MDesSyncable*>& aList, MDesSyncable* aScbl)
+{
+    aList.remove(aScbl);
+}
+
 void Des::onOwnedAttached(MOwned* aOwned)
 {
     Syst::onOwnedAttached(aOwned);
@@ -503,6 +508,17 @@ void Des::onOwnedAttached(MOwned* aOwned)
     if (os) {
 	os->setActivated();
 	os->setUpdated();
+    }
+}
+
+void Des::onOwnedDetached(MOwned* aOwned)
+{
+    Syst::onOwnedDetached(aOwned);
+    MUnit* osu = aOwned->lIf(osu);
+    MDesSyncable* os = osu ? osu->getSif(os) : nullptr;
+    if (os) {
+	RmSyncable(mActive, os);
+	RmSyncable(mUpdated, os);
     }
 }
 
@@ -685,6 +701,17 @@ void ADes::onObsOwnedAttached(MObservable* aObl, MOwned* aOwned)
     if (os && os != ss) {
 	os->setActivated();
 	os->setUpdated();
+    }
+}
+
+void ADes::onObsOwnedDetached(MObservable* aObl, MOwned* aOwned)
+{
+    MUnit* osu = aOwned->lIf(osu);
+    MDesSyncable* os = osu ? osu->getSif(os) : nullptr;
+    MDesSyncable* ss = MNode::lIf(ss); // self
+    if (os && os != ss) {
+	RmSyncable(mActive, os);
+	RmSyncable(mUpdated, os);
     }
 }
 

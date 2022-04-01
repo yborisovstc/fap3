@@ -1758,6 +1758,10 @@
 		<sect4 id="ds_dcs_sdc_dsgn_cc"><title>Forming status. Taking into account the completion of controlling.</title>
 		    <simpara>Ref <xref linkend="uc_sdc_03"/> for the use-case.  </simpara>
 		    <simpara>The desing supporting this use-case is that we need to form pipeline controllers status with taking into account that the sign of controlling completion.</simpara>
+		    <sect5><title>Status</title>
+			<simpara>This feature is disabled because of clear indication that the use-case is not valid. Alternative design Solution#2 is used - to check the status before 
+			    performing the control.</simpara>
+		    </sect5>
 		</sect4>
 		<sect4 id="ds_dcs_sdc_dsgn_os"><title>Controller observs controlled system status and notifies inputs of Outp (SDC status) changed.</title>
 		    <simpara>Ref <xref linkend="uc_sdc_04"/> for the use-case.  </simpara>
@@ -1804,120 +1808,136 @@
 	</sect2>
 	<sect2><title>Activating system via implicit dependencies.</title>
 	    <sect3><title>Intro</title>
-		<simpara>It is normal case in the system using controlling when the controlled system (i.e. system + adapter) depends on itlself implicitly. The example
-		    is <xref linkend="ds_dcs_ord"/> - the system is mutated with transition that gets system itself (acually internal connections) as input.</simpara>
-		<simpara>In contrast of typical DES there aren't explicit dependencies, e.g states that depends each other.</simpara>
-		<simpara>The question is how to understand if subsystem depends on another subsystem (or even on itself) if threre aren't explicit dependencies?
-		    Let's look at the example <xref linkend="ds_dcs_ord"/>: how to get known if controlled system (Root.Launcher) depends on itself via the mutating
-			transition?</simpara>
-		</sect3>
-	    </sect2>
-	    <sect2 id="ds_dcs_trs"><title>DCS transaction</title>
-		<sect3><title>Intro</title>
-		    <simpara>Let's consider an example: DContainer adding widget. It is DCS SDC solution that includes 4 SDCs: CreateWdg, CreateSlot, ConnectSlot, InsertSlot.
-			What if some SDC fails, lets say InsertSlot. In that case we will have the managed system messed: there will be created widget, new slot but the widget
-			will not be shown. It is clear that we need to consider all these 4 SDCs as the single controlling DES. It looks like the transaction in database
-			solutions.  </simpara>
-		</sect3>
-	    </sect2>
-	</sect1>
-
-	<sect1 id="ds_dbg"><title>Debugging</title>
-	    <sect2><title>Intro</title>
-		<simpara>The following improvements can be considered: </simpara>
-		<itemizedlist>
-		    <listitem>
-			Unify the usage of debugging level 
-			<para>
-			    Currently the debugging level is almost unusable. Also in parallel the property "Update" is used to
-			    specify the particular logging feature to log the state update whereas it is just specific logging level.
-			    So we need to get rid of using the Update property.
-			</para>
-		    </listitem>
-		    <listitem> Logging level forcing to owned, ref <xref linkend="ds_dbg_llf"/> </listitem>
-		    <listitem>Using symbolic values for logging level, lile "Dbg.1"</listitem>
-		</itemizedlist>
-	    </sect2>
-	    <sect2 id="ds_dbg_llf"><title>Logging level forcing to owned</title>
-		<sect3><title>Intro</title>
-		    <simpara>The idea is to provide the system developer the ability to quick set the logging level for the whole system or its part.
-			Currently the logging level is set locally for the particular node only and doesn't affect the other nodes, even the owneds.</simpara>
-		</sect3>
-	    </sect2>
-	    <sect2 id="ds_dbg_sfll"><title>Symbolic form of logging level</title>
-		<sect3><title>Intro</title>
-		    <simpara>The idea is to set logging level in symbolic form like "Dbg.2" where "Dbg" is the name of level and "2" is the extension.</simpara>
-		</sect3>
-	    </sect2>
-	</sect1>
-
-	<sect1 id="ds_ibc"><title>Desing items to be considered</title>
-	    <sect2><title>Intro</title>
-		<simpara>Ref <xref linkend="ds_itr_sp"/> for the initial list of the problems need to be addressed in FAP3.</simpara>
-	    </sect2>
-	    <sect2 id="ds_ibc_roncc"><title>Root as the only node containing chromo</title>
-		<sect3><title>Intro</title>
-		    <simpara>
-			Currently the model can contain many nodes that have theyrs own chromos - any Elem based nodes. This simplifies creating these nodes
-			heirs. But on another hand this causes chromo duplication. Actually any node chromo can be "calculated" from root chromo. This approach
-			was tried in some earlier version of FAP.
-			This approach potentially can improve the model performance. We need to consider such design.
-		    </simpara>
-		</sect3>
-	    </sect2>
-	    <sect2 id="ds_ibc_dgit"><title>[DS_IBC_DGIT] Do we need MDtGet iface as templated one?</title>
-		<simpara>Potentially we can have non-templated MDtGet that provides the access to base data iface MDtBase.</simpara>
-		<simpara>The indication of week desing is the problems with TrTuple: it is not possible to update the tuple components. The input of the 
-		    transition can get the access to data only via templated MDtGet but the type isn't explicitly known.</simpara>
-	    </sect2>
-	</sect1>
-
-	<sect1 id="ds_iss"><title>Issues</title>
-	    <sect2 id="ds_iss_001"><title>[DS_ISS_001] Wrong chromo forming in case of namespace segment.</title>
-		<sect3><title>Intro</title>
-		    <simpara>
-			Ref ut_elem.cpp:test_elem_inh_1() chromo ut_elem_inh_1.chs. The problem is that mutation 
-			<programlisting>About = "N1_1 new";</programlisting>
-			    will be included into E1 chormo twice: first entry is in the scope of namespace segment
-			<programlisting>
-			    N1_1 @ {
-			    About = "N1_1 new";
-			    }
-			</programlisting>
-			    and the second - in E1 chromo directly
-		    </simpara>
-		    <simpara>
-			Ref <xref linkend="ds_eosm"/> for the details of <xref linkend="gls_eosm"/> current solution. The reported problem is
-			    caused by this solution bad design.
-		    </simpara>
-		</sect3>
-		<sect3><title>Analysis</title>
-		    <simpara>
-			The root-cause is that the algorithm of E1 chromo forming is wrong: mutation and "About = ..." will be included even 
-			the namespace segment is alredy included.
-		    </simpara>
-		</sect3>
-	    </sect2>
-	    <sect2 id="ds_iss_002"><title>[DS_ISS_002] Cannot define monitored agent for <xref linkend="gls_adp"/></title>
-		<sect3><title>Intro</title>
-		    <simpara>
-			It is very common case that the adapter is not owner of monitored agent. Potentially we can put monitored
-			agent to adaper owneds but it is not convenient - there can be many adapters associated to single monitored object.
-		    </simpara>
-		    <simpara>
-			This "not owning" causes the problem that we cannot simply define monitored object via URI - adapter will not
-			be able to get not owned node.
-		    </simpara>
-		    <simpara>
-			Ref <xref linkend="ds_sn_aul"/> for details of generic problem and approaches of how to workaround the
-			    access restrictions.
-		    </simpara>
-		</sect3>
-	    </sect2>
-	    <sect2 id="ds_iss_003"><title>[DS_ISS_003] 20211212 git:930bb4ea585ece. Incorrect IFR for sockets</title>
-		<sect3><title>Intro</title>
-		    <simpara> UT Ut_ifr::test_inval_sock_1() fails. This means that IFR works incorrectly in case of sockets connecting/disconnecting.
+		<simpara>
+		    It is normal case in the system using controlling when the controlled system (i.e. system + adapter) depends on itlself implicitly. The example is
+		    <xref linkend="ds_dcs_ord"/> - the system is mutated with transition that gets system itself (acually internal connections) as input.
 		</simpara>
+		<simpara>In contrast of typical DES there aren't explicit dependencies, e.g states that depends each other.</simpara>
+		<simpara>
+		    The question is how to understand if subsystem depends on another subsystem (or even on itself) if threre aren't explicit dependencies?
+		    Let's look at the example
+		    <xref linkend="ds_dcs_ord"/>: how to get known if controlled system (Root.Launcher) depends on itself via the mutating
+			transition?
+		</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_dcs_trs"><title>DCS transaction</title>
+	    <sect3><title>Intro</title>
+		<simpara>Let's consider an example: DContainer adding widget. It is DCS SDC solution that includes 4 SDCs: CreateWdg, CreateSlot, ConnectSlot, InsertSlot.
+		    What if some SDC fails, lets say InsertSlot. In that case we will have the managed system messed: there will be created widget, new slot but the widget
+		    will not be shown. It is clear that we need to consider all these 4 SDCs as the single controlling DES. It looks like the transaction in database
+		    solutions.  </simpara>
+	    </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_dbg"><title>Debugging</title>
+	<sect2><title>Intro</title>
+	    <simpara>The following improvements can be considered: </simpara>
+	    <itemizedlist>
+		<listitem>
+		    Unify the usage of debugging level 
+		    <para>
+			Currently the debugging level is almost unusable. Also in parallel the property "Update" is used to
+			specify the particular logging feature to log the state update whereas it is just specific logging level.
+			So we need to get rid of using the Update property.
+		    </para>
+		</listitem>
+		<listitem> Logging level forcing to owned, ref <xref linkend="ds_dbg_llf"/> </listitem>
+		<listitem>Using symbolic values for logging level, lile "Dbg.1"</listitem>
+	    </itemizedlist>
+	</sect2>
+	<sect2 id="ds_dbg_llf"><title>Logging level forcing to owned</title>
+	    <sect3><title>Intro</title>
+		<simpara>The idea is to provide the system developer the ability to quick set the logging level for the whole system or its part.
+		    Currently the logging level is set locally for the particular node only and doesn't affect the other nodes, even the owneds.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_dbg_sfll"><title>Symbolic form of logging level</title>
+	    <sect3><title>Intro</title>
+		<simpara>The idea is to set logging level in symbolic form like "Dbg.2" where "Dbg" is the name of level and "2" is the extension.</simpara>
+	    </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_iis"><title>Setting initial invalid status of State</title>
+	<sect2><title>Intro</title>
+	    <simpara>It is the common case when we need to set the initial "invalid" value to State. For instance quite often we need to define state signature, i.e SS but
+		we don't want to set the value that can cause system movement, so currently we use something like "SS nil" assuming that the value "nil" has to be specifically handled
+		(but actually it is not). It would be good if we have support setting of kind of "invalid" or "value-is-not-set" value. Current State desing doesn't allow doing that. </simpara>
+	    <simpara>Not sure that currently supported by data "invalid" indication is suitable for such puproses. This indication currently interpreted as error.</simpara>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_ibc"><title>Desing items to be considered</title>
+	<sect2><title>Intro</title>
+	    <simpara>Ref <xref linkend="ds_itr_sp"/> for the initial list of the problems need to be addressed in FAP3.</simpara>
+	</sect2>
+	<sect2 id="ds_ibc_roncc"><title>Root as the only node containing chromo</title>
+	    <sect3><title>Intro</title>
+		<simpara>
+		    Currently the model can contain many nodes that have theyrs own chromos - any Elem based nodes. This simplifies creating these nodes
+		    heirs. But on another hand this causes chromo duplication. Actually any node chromo can be "calculated" from root chromo. This approach
+		    was tried in some earlier version of FAP.
+		    This approach potentially can improve the model performance. We need to consider such design.
+		</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_ibc_dgit"><title>[DS_IBC_DGIT] Do we need MDtGet iface as templated one?</title>
+	    <simpara>Potentially we can have non-templated MDtGet that provides the access to base data iface MDtBase.</simpara>
+	    <simpara>The indication of week desing is the problems with TrTuple: it is not possible to update the tuple components. The input of the 
+		transition can get the access to data only via templated MDtGet but the type isn't explicitly known.</simpara>
+	</sect2>
+	<sect2><title>Intitial invalid status of State</title>
+	    <simpara>Ref <xref linkend="ds_iis"/></simpara>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_iss"><title>Issues</title>
+	<sect2 id="ds_iss_001"><title>[DS_ISS_001] Wrong chromo forming in case of namespace segment.</title>
+	    <sect3><title>Intro</title>
+		<simpara>
+		    Ref ut_elem.cpp:test_elem_inh_1() chromo ut_elem_inh_1.chs. The problem is that mutation 
+		    <programlisting>About = "N1_1 new";</programlisting>
+			will be included into E1 chormo twice: first entry is in the scope of namespace segment
+		    <programlisting>
+			N1_1 @ {
+			About = "N1_1 new";
+			}
+		    </programlisting>
+			and the second - in E1 chromo directly
+		</simpara>
+		<simpara>
+		    Ref <xref linkend="ds_eosm"/> for the details of <xref linkend="gls_eosm"/> current solution. The reported problem is
+			caused by this solution bad design.
+		</simpara>
+	    </sect3>
+	    <sect3><title>Analysis</title>
+		<simpara>
+		    The root-cause is that the algorithm of E1 chromo forming is wrong: mutation and "About = ..." will be included even 
+		    the namespace segment is alredy included.
+		</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_iss_002"><title>[DS_ISS_002] Cannot define monitored agent for <xref linkend="gls_adp"/></title>
+	    <sect3><title>Intro</title>
+		<simpara>
+		    It is very common case that the adapter is not owner of monitored agent. Potentially we can put monitored
+		    agent to adaper owneds but it is not convenient - there can be many adapters associated to single monitored object.
+		</simpara>
+		<simpara>
+		    This "not owning" causes the problem that we cannot simply define monitored object via URI - adapter will not
+		    be able to get not owned node.
+		</simpara>
+		<simpara>
+		    Ref <xref linkend="ds_sn_aul"/> for details of generic problem and approaches of how to workaround the
+			access restrictions.
+		</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_iss_003"><title>[DS_ISS_003] 20211212 git:930bb4ea585ece. Incorrect IFR for sockets</title>
+	    <sect3><title>Intro</title>
+		<simpara> UT Ut_ifr::test_inval_sock_1() fails. This means that IFR works incorrectly in case of sockets connecting/disconnecting.  </simpara>
 	    </sect3>
 	    <sect3><title>Analysis</title>
 		<simpara>The current implementation of IFR tree update (ref <xref liknend="ds_irm_ut"/>) supports only vert connect/disconnect. The 
@@ -1986,8 +2006,9 @@
 		<simpara> The Var#2 is to activate only if the owned was already activated. We need to add methods "isActivated" and "isUpdated" to MDesSyncable in this case.</simpara>
 	    </sect3>
 	</sect2>
-
     </sect1>
+
+    <sect1></sect1>
 
 
 </article>

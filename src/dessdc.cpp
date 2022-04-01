@@ -151,7 +151,7 @@ void ASdc::SdcMap<T>::confirm()
 
 
 ASdc::ASdc(const string &aType, const string& aName, MEnv* aEnv): Unit(aType, aName, aEnv),
-    mIaps(), mMag(NULL), mUpdNotified(false), mActNotified(false), mObrCp(this), mAgtCp(this), mIapEnb("Enb", this, K_CpUri_Enable),
+    mIaps(), mMag(NULL), mUpdNotified(false), mActNotified(false), mObrCp(this), mIapEnb("Enb", this, K_CpUri_Enable),
     mOapOut("Outp", this, K_CpUri_Outp, [this](Sdata<bool>& aData) {getOut(aData);})/*, mMapCcd("Ccd", this, [this](bool& aData) {getCcd(aData);})*/,
     mMagObs(this), mCdone(false)
 {
@@ -167,8 +167,7 @@ MIface* ASdc::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
     if (res = checkLif<MDesSyncable>(aType));
-    else if (res = checkLif<MAgent>(aType));
-    else if (res = checkLif<MDesObserver>(aType));
+
     else if (res = checkLif<MDesInpObserver>(aType));
     else res = Unit::MNode_getLif(aType);
     return res;
@@ -206,10 +205,8 @@ void ASdc::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	    rifDesIobs(*iap, aReq);
 	}
     } else if (aName == MDesObserver::Type()) {
-	if (!isRequestor(aReq, ahostNode())) {
-	    MIface* iface = MNode_getLif(MDesObserver::Type());
-	    addIfpLeaf(iface, aReq);
-	}
+	MIface* iface = MNode_getLif(MDesObserver::Type());
+	addIfpLeaf(iface, aReq);
     } else if (aName == MDVarGet::Type()) {
 	for (auto pap : mPaps) {
 	    rifDesPaps(*pap, aReq);
@@ -217,15 +214,6 @@ void ASdc::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
     } else {
 	Unit::resolveIfc(aName, aReq);
     }
-}
-
-MIface* ASdc::MAgent_getLif(const char *aType)
-{
-    MIface* res = nullptr;
-    if (res = checkLif<MDesSyncable>(aType));
-    else if (res = checkLif<MUnit>(aType)); // To allow client to request IFR
-    else if (res = checkLif<MDesObserver>(aType));
-    return res;
 }
 
 void ASdc::addInput(const string& aName)
@@ -390,29 +378,19 @@ void ASdc::onOwnerAttached()
     if (obl) {
 	res = obl->addObserver(&mObrCp);
     }
-    if (!res) {
+    if (!res || !obl) {
 	Logger()->Write(EErr, this, "Cannot attach to observer");
+    } else {
+	// Getting controllable
+	// TODO to migrate to specific controllable iface
+	MNode* ownrc = Owner()->lIf(ownrc);
+	if (!ownrc) {
+	    Logger()->Write(EErr, this, "Cannot get owners controllable");
+	} else {
+	    // Set controlled system
+	    mMag = ownrc;
+	}
     }
-    // Registering in agent host
-    MActr* ac = Owner()->lIf(ac);
-    res = ac->attachAgent(&mAgtCp);
-    if (!res) {
-	Logger()->Write(EErr, this, "Cannot attach to host");
-    }
-    // Set managed agent
-    mMag = ahostNode();
-    /* MAG access point is disabled ATM
-    MObservable* magob = mMag->lIf(magob);
-    magob->addObserver(&mMagObs.mOcp);
-    */
-}
-
-MNode* ASdc::ahostNode()
-{
-    auto pair = mAgtCp.firstPair();
-    MAhost* ahost = pair ? pair->provided() : nullptr;
-    MNode* hostn = ahost ? ahost->lIf(hostn) : nullptr;
-    return hostn;
 }
 
 template<typename T> bool ASdc::GetInpSdata(const string aInpUri, T& aRes)

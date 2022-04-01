@@ -19,10 +19,9 @@
  * To avoid the agent providing MDesObserver iface to agent host and interfering main DES agent
  * the request from agent host is ignoring in resolveIfc()
  * */
-class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesInpObserver, public MAgent, public MDVarGet, public MObserver
+class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesInpObserver, public MDVarGet, public MObserver
 {
     public:
-	using TAgtCp = NCpOnp<MAgent, MAhost>;  /*!< Agent conn point */
 	using TObserverCp = NCpOmnp<MObserver, MObservable>;
     public:
 
@@ -257,9 +256,6 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesI
 	// From MUnit
 	// From Unit.MIfProvOwner
 	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
-	// From MAgent
-	virtual string MAgent_Uid() const override {return getUid<MAgent>();}
-	virtual MIface* MAgent_getLif(const char *aName) override;
 	// From MDVarGet
 	virtual string MDVarGet_Uid() const {return getUid<MDVarGet>();}
 	virtual MIface* DoGetDObj(const char *aName) override { return nullptr;}
@@ -298,7 +294,6 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesI
 	bool rifDesPaps(SdcPapb& aPap, MIfReq::TIfReqCp* aReq);
 	template<typename T> bool GetInpSdata(const string aInpUri, T& aRes);
 	template<typename T> bool GetInpData(const string aInpUri, T& aRes);
-	MNode* ahostNode();
 	void getOut(Sdata<bool>& aData);
 	// Utilities
 	void addInput(const string& aName);
@@ -316,7 +311,6 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesI
 	vector<SdcPapb*> mPaps; /*!< Param adapters registry */
 	vector<SdcMapb*> mMaps; /*!< Mag adapters registry */
 	TObserverCp mObrCp;               /*!< Observer connpoint */
-	TAgtCp mAgtCp;                   /*!< Agent connpoint */
 	MNode* mMag; /*!< Managed agent */
 	bool mUpdNotified;  //<! Sign of that State notified observers on Update
 	bool mActNotified;  //<! Sign of that State notified observers on Activation

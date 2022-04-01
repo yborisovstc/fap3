@@ -126,6 +126,7 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	TOwtNode mOnode;                  /*!< Ownership node */
 	int mLogLevel;                /*!< Logging level */
 	bool mExplorable;                /*!< Exploring is enabled, ref ds_dcs_aes_acp */
+	bool mControllable;             /*!< Control is enabled, ref ds_dcs_aes_acp */
 };
 
 #endif //  __FAP3_NODE_H
