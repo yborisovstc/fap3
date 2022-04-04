@@ -1,6 +1,7 @@
 
 #include <thread>
 
+#include "mlink.h"
 #include "des.h"
 #include "data.h"
 
@@ -864,3 +865,45 @@ void DesLauncher::outputCounter(int aCnt)
 	cout << "Count : " << aCnt << endl;
     }
 }
+
+
+
+// Embedded elements support
+
+/// Embedded Input buffered
+
+void DesEIbMnode::update()
+{
+    bool res = false;
+    DesEIbb::update();
+    MNode* inp = TP::mHost->getNode(TP::mUri);
+    MUnit* inpu = inp ? inp->lIf(inpu) : nullptr;
+    if (inpu) {
+	// Resolve MLink first to avoid MNode wrong resolution
+	MLink* mmtl = inpu->getSif(mmtl);
+	if (mmtl) {
+	    mUdt = mmtl->pair(); res = true;
+	}
+    }
+    if (!res) this->eHost()->logEmb(TLog(TLogRecCtg::EDbg, TP::mHost) + "Cannot get input [" + this->mUri + "]");
+    else { this->mActivated = false; this->setUpdated(); }
+}
+
+
+/// Embedded Output state
+
+void DesEOstb::NotifyInpsUpdated()
+{
+    MNode* cp = mHost->getNode(mCpUri);
+    MUnit* cpu = cp ? cp->lIf(cpu) : nullptr;
+    auto ifaces = cpu->getIfs<MDesInpObserver>();
+    if (ifaces) for (auto ifc : *ifaces) {
+	MDesInpObserver* ifco = dynamic_cast<MDesInpObserver*>(ifc);
+	if (ifco) {
+	    ifco->onInpUpdated();
+	}
+    }
+}
+
+
+

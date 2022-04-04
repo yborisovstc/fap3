@@ -15,6 +15,7 @@ enum TLogRecCtg {
     EWarn = 10,
     EInfo = 20,
     EDbg = 30,
+    EDbg2 = 31,
     ECtg_Max
 };
 

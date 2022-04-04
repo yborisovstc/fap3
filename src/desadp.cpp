@@ -360,7 +360,7 @@ bool AAdp::ApplyMagBase()
 	    }
 	}
     } else {
-	Log(TLog(EErr, this) + "Cannot get input [" + K_CpUriInpMagBase + "]");
+	Log(TLog(EDbg, this) + "Cannot get input [" + K_CpUriInpMagBase + "]");
     }
     return res;
 }
@@ -650,7 +650,7 @@ void AMnodeAdp::ApplyMut()
 		}
 	    }
 	} else {
-	    Logger()->Write(EErr, this, "Cannot get input");
+	    Logger()->Write(EDbg, this, "Cannot get input");
 	}
     }
 }
@@ -748,7 +748,7 @@ void AMelemAdp::ApplyMut()
 		}
 	    }
 	} else {
-	    Logger()->Write(EErr, this, "Cannot get input");
+	    Logger()->Write(EDbg, this, "Cannot get input");
 	}
     }
 }
@@ -771,4 +771,172 @@ void AMelemAdp::update()
 
 
 
+
+/// Composite DES adapter
+
+const string K_DAdp_CpUri_InpMagUri = "InpMagUri";
+const string K_DAdp_CpUri_InpMagBase = "InpMagBase";
+const string K_DAdp_CpUri_OutpMagUri = "OutpMagUri";
+
+DAdp::DAdp(const string &aType, const string& aName, MEnv* aEnv): Des(aType, aName, aEnv),
+    mIbMagUri(this, K_DAdp_CpUri_InpMagUri), mIbMagBase(this, K_DAdp_CpUri_InpMagBase),
+    mOstMagUri(this, K_DAdp_CpUri_OutpMagUri),
+    mMagBase(nullptr), mMag(nullptr), mMagObs(this)
+{
+}
+
+MIface* DAdp::MNode_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MDesAdapter>(aType));
+    else res = Des::MNode_getLif(aType);
+    return res;
+}
+
+MIface* DAdp::MOwner_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MDesAdapter>(aType));
+    else if (res = Des::MOwner_getLif(aType));
+    return res;
+}
+
+void DAdp::registerIb(DesEIbb* aIb)
+{
+    MNode* cp = Provider()->createNode(aIb->mCpType, aIb->getUri(), mEnv);
+    assert(cp);
+    bool res = attachOwned(cp);
+    assert(res);
+    mIbs.push_back(aIb);
+}
+
+void DAdp::registerOst(DesEOstb* aItem)
+{
+    MNode* cp = Provider()->createNode(aItem->mCpType, aItem->getCpUri(), mEnv);
+    assert(cp);
+    bool res = attachOwned(cp);
+    assert(res);
+    mOsts.push_back(aItem);
+}
+
+void DAdp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+{
+    if (aName == MDesInpObserver::Type()) {
+	for (auto iap : mIbs) {
+	    rifDesIobs(*iap, aReq);
+	}
+    } else if (aName == MDesObserver::Type()) {
+	MIface* iface = MNode_getLif(MDesObserver::Type());
+	addIfpLeaf(iface, aReq);
+    } else if (aName == MDVarGet::Type()) {
+	for (auto item : mOsts) {
+	    rifDesOsts(*item, aReq);
+	}
+    } else {
+	Des::resolveIfc(aName, aReq);
+    }
+}
+
+bool DAdp::rifDesIobs(DesEIbb& aIap, MIfReq::TIfReqCp* aReq)
+{
+    bool res = false;
+    MNode* cp = getNode(aIap.getUri());
+    if (isRequestor(aReq, cp)) {
+	MIface* iface = dynamic_cast<MDesInpObserver*>(&aIap);
+	addIfpLeaf(iface, aReq);
+	res = true;
+    }
+    return res;
+}
+
+bool DAdp::rifDesOsts(DesEOstb& aItem, MIfReq::TIfReqCp* aReq)
+{
+    bool res = false;
+    MNode* cp = getNode(aItem.getCpUri());
+    if (isRequestor(aReq, cp)) {
+	MIface* iface = dynamic_cast<MDVarGet*>(&aItem);
+	addIfpLeaf(iface, aReq);
+	res = true;
+    }
+    return res;
+}
+
+
+void DAdp::update()
+{
+    for (auto iap : mIbs) {
+	if (iap->mActivated) {
+	    iap->update();
+	}
+    }
+    Des::update();
+}
+
+void DAdp::confirm()
+{
+    for (auto iap : mIbs) {
+	if (iap->mUpdated) {
+	    iap->mChanged = false;
+	    iap->confirm();
+	}
+    }
+    if (mIbMagBase.mChanged) {
+	UpdateMagBase();
+    }
+    if (mIbMagUri.mChanged) {
+	UpdateMag();
+    }
+    Des::confirm();
+}
+
+bool DAdp::UpdateMagBase()
+{
+    bool res = false;
+    // TODO to implement all use-cases
+    // Handle mount point specifically
+    MNode* mbase = mIbMagBase.data();
+    if (mbase) {
+	if (mMagBase != mbase) {
+	    mMagBase = mbase;
+	    UpdateMag();
+	    res = true;
+	}
+    }
+    return res;
+}
+
+void DAdp::UpdateMag()
+{
+    bool res = false;
+    if (mIbMagUri.mValid && mMagBase) {
+	MNode* magn = mMagBase->getNode(mIbMagUri.data());
+	if (magn && magn != mMag) {
+	    if (mMag) {
+		// Rm observable
+		MObservable* prevmagob = mMag->lIf(prevmagob);
+		prevmagob->rmObserver(&mMagObs.mOcp);
+	    }
+	    mMag = magn;
+	    mOstMagUri.updateData(mMag->getUriS(mMagBase));
+	    // Notify observers. Using observer mechanism at the moment
+	    notifyChanged();
+	    // Add new observable
+	    MObservable* magob = mMag->lIf(magob);
+	    magob->addObserver(&mMagObs.mOcp);
+	    //NotifyInpsUpdated();
+	    Log(TLog(EInfo, this) + "Managed agent attached [" + mMag->Uid() + "]");
+	}
+    }
+}
+
+MNode* DAdp::getMag()
+{
+    return mMag;
+}
+
+
+MIface* DAdp::MagLink::MLink_getLif(const char *aType)
+{
+    return (strcmp(aType, MLink::Type()) == 0) ? dynamic_cast<MLink*>(this) : nullptr;;
+}
 

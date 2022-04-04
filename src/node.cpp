@@ -347,7 +347,7 @@ MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
     updateNs(ns, aMut);
     bool mutadded = false;
     bool res = false;
-    Log(TLog(EDbg, this, aMut) + "Adding element [" + sname + "]");
+    Log(TLog(EDbg2, this, aMut) + "Adding element [" + sname + "]");
 
     assert(!sname.empty());
     MNode* uelem = NULL;

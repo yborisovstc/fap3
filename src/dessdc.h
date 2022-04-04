@@ -19,7 +19,7 @@
  * To avoid the agent providing MDesObserver iface to agent host and interfering main DES agent
  * the request from agent host is ignoring in resolveIfc()
  * */
-class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesInpObserver, public MDVarGet, public MObserver
+class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObserver
 {
     public:
 	using TObserverCp = NCpOmnp<MObserver, MObservable>;
@@ -69,14 +69,14 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesI
 		SdcIapb(const string& aName, ASdc* aHost, const string& aInpUri);
 		string getInpUri() const { return mInpUri;}
 		// From MDesInpObserver
-		virtual void onInpUpdated() override { setActivated(); mHost->onInpUpdated();}
+		virtual void onInpUpdated() override { setActivated(); }
 		virtual string MDesInpObserver_Uid() const override {return MDesInpObserver::Type();}
 		virtual void MDesInpObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
 		// From MDesSyncable
 		virtual string MDesSyncable_Uid() const override {return MDesSyncable::Type();} 
 		virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
 		virtual void setUpdated() override { mUpdated = true; mHost->setUpdated();}
-		virtual void setActivated() override { mActivated = true; /*mHost->setActivated(); mHost->notifyMaps();*/}
+		virtual void setActivated() override { mActivated = true; mHost->setActivated();}
 	    public:
 		ASdc* mHost;
 		string mName;    /*!< Iap name */
@@ -256,10 +256,6 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesI
 	// From MUnit
 	// From Unit.MIfProvOwner
 	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
-	// From MDVarGet
-	virtual string MDVarGet_Uid() const {return getUid<MDVarGet>();}
-	virtual MIface* DoGetDObj(const char *aName) override { return nullptr;}
-	virtual string VarGetIfid() const override {return string();}
 	// From MDesSyncable
 	virtual string MDesSyncable_Uid() const override {return getUid<MDesSyncable>();}
 	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
@@ -272,10 +268,6 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesI
 	virtual void MDesObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
 	virtual void onActivated(MDesSyncable* aComp) override;
 	virtual void onUpdated(MDesSyncable* aComp) override;
-	// From MDesInpObserver
-	virtual string MDesInpObserver_Uid() const {return getUid<MDesInpObserver>();}
-	virtual void MDesInpObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
-	virtual void onInpUpdated() override;
 	// From MObserver
 	virtual string MObserver_Uid() const {return getUid<MObserver>();}
 	virtual MIface* MObserver_getLif(const char *aType) override;
@@ -304,6 +296,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MDesI
 	virtual bool getState() {return false;}
 	void notifyMaps();
 	void notifyOutp() { mOapOut.NotifyInpsUpdated(); }
+	void UpdateMag();
 	/** @brief Calculate control conditions */
 	virtual void getCcd(bool& aData) {}
     protected:

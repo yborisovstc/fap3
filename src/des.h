@@ -2,6 +2,7 @@
 #ifndef __FAP3_DES_H
 #define __FAP3_DES_H
 
+#include "mlog.h"
 #include "mdata.h"
 #include "mdes.h"
 #include "mlauncher.h"
@@ -265,8 +266,6 @@ class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver
 
 
 
-
-
 /** @brief Launcher of DES
  * Runs DES syncable owned
  * */
@@ -292,6 +291,7 @@ class DesLauncher: public Des, public MLauncher
 	int mCounter = 0;
 	bool mStop;
 };
+
 
 
 // Helpers
@@ -326,6 +326,295 @@ template <typename T> bool GetGData(MNode* aDvget, T& aData)
     }
     return res;
 }
+
+
+#if 0
+// Embedded DES elements support
+
+/** @brief Double buffering Input base, ref ds_dee_ssi
+ * This is lightweight solution for embedding states into some DES syncable 
+ * Another option of embedding the state would be separate simple input access point and pseudo state
+ * but this option is more complicated.
+ * Note: this embedding approach "erodes" strong DES design, so needs to be used carefully
+ *
+ * @parem Th  type of host
+ * */
+class DesEIbb: public MDesInpObserver, public MDesSyncable
+{
+    public:
+	DesEIbb(const string& aInpUri): mUri(aInpUri), mUpdated(false), mActivated(true), mChanged(false) {}
+	string getUri() const { return mUri;}
+	// From MDesInpObserver
+	virtual void onInpUpdated() override { setActivated();}
+	virtual string MDesInpObserver_Uid() const override {return MDesInpObserver::Type();}
+	virtual void MDesInpObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+	// From MDesSyncable
+	virtual string MDesSyncable_Uid() const override {return MDesSyncable::Type();} 
+	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+    public:
+	template <typename S> string toStr(const S& aData) { return to_string(aData); }
+	string toStr(const string& aData) { return aData; }
+    public:
+	string mUri;  /*!< Input URI */
+	bool mActivated; /*!< Indication of data is active (to be updated) */
+	bool mUpdated; /*!< Indication of data is updated */
+	bool mChanged; /*!< Indication of data is changed */
+};
+
+/** @brief Input buffered hosted
+ * @param  Th  host type 
+ * */
+template <typename Th>
+class DesEIbh: public DesEIbb
+{
+    public:
+	DesEIbh(Th* aHost, const string& aInpUri): DesEIbb(aInpUri), mHost(aHost) { mHost->registerIb(this);}
+	// From MDesSyncable
+	virtual void setUpdated() override { mUpdated = true; mHost->setUpdated();}
+	virtual void setActivated() override { mActivated = true; mHost->setUpdated();}
+    public:
+	Th* mHost;
+};
+
+#if 0
+/** @brief Input state Sdata based
+ * @param  T  Sdata type 
+ * */
+template <typename Th, typename T>
+class DesEIbs: public DesEIbb
+{
+    public:
+	DesEIbs(Th* aHost, const string& aInpUri): DesEIbb(aInpUri), mHost(aHost) {}
+	// From MDesSyncable
+	virtual void setUpdated() override { mUpdated = true; mHost->setUpdated();}
+	virtual void setActivated() override { mActivated = true; mHost->setUpdated();}
+	virtual void update() override;
+	virtual void confirm() override;
+	// Local
+	T& data() {return mCdt;}
+    public:
+	Th* mHost;
+	T mUdt;  /*!< Updated data */
+	T mCdt;  /*!< Confirmed data */
+};
+#endif
+
+/** @brief Input buffered Sdata based
+ * @param  Th  host type 
+ * @param  T  Sdata type 
+ * */
+template <typename Th, typename T>
+class DesEIbs: public DesEIbh<Th>
+{
+    public:
+	using TP = DesEIbh<Th>;
+    public:
+	DesEIbs(Th* aHost, const string& aInpUri): TP(aHost, aInpUri) {}
+	// From MDesSyncable
+	virtual void update() override;
+	virtual void confirm() override;
+	// Local
+	T& data() {return mCdt;}
+    public:
+	T mUdt;  /*!< Updated data */
+	T mCdt;  /*!< Confirmed data */
+};
+
+template <typename Th, typename T>
+void DesEIbs<Th, T>::update()
+{
+    bool res = false;
+    MNode* inp = TP::mHost->getNode(TP::mUri);
+    if (inp) res = GetSData(inp, mUdt);
+    if (!res)  TP::mHost->Log(TLog(TLogRecCtg::EDbg, TP::mHost) + "Cannot get input [" + TP::mUri + "]");
+    else { TP::mActivated = false; TP::setUpdated(); }
+}
+
+template <typename Th, typename T>
+void DesEIbs<Th, T>::confirm()
+{
+    if (mUdt != mCdt) {
+	TP::mHost->Log(TLog(TLogRecCtg::EDbg, TP::mHost) + "[" + TP::mUri + "] Updated: [" + toStr(mUdt) + "] -> [" + toStr(mCdt) + "]");
+	mCdt = mUdt; TP::mChanged = true;
+    } else TP::mChanged = false;
+    TP::mUpdated = false;
+}
+
+#endif
+
+class DesEIbb;
+class DesEOstb;
+
+/** @brief Local iface of the host of DES embedded elements
+ * */
+class IDesEmbHost
+{
+    public:
+	virtual void registerIb(DesEIbb* aIap) = 0;
+	virtual void registerOst(DesEOstb* aOst) = 0;
+	virtual void logEmb(const TLog& aRec) =0;
+};
+
+/** @brief Double buffering Input base, ref ds_dee_ssi
+ * This is lightweight solution for embedding states into some DES syncable 
+ * Another option of embedding the state would be separate simple input access point and pseudo state
+ * but this option is more complicated.
+ * Note: this embedding approach "erodes" strong DES design, so needs to be used carefully
+ *
+ * @parem Th  type of host
+ * */
+class DesEIbb: public MDesInpObserver, public MDesSyncable
+{
+    public:
+	DesEIbb(MNode* aHost, const string& aInpUri, const string& aCpType = CpStateInp::Type()):
+	    mHost(aHost), mUri(aInpUri), mCpType(aCpType), mUpdated(false), mActivated(true),
+	    mChanged(false), mValid(false) { eHost()->registerIb(this);}
+	string getUri() const { return mUri;}
+	// From MDesInpObserver
+	virtual void onInpUpdated() override { setActivated();}
+	virtual string MDesInpObserver_Uid() const override {return MDesInpObserver::Type();}
+	virtual void MDesInpObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+	// From MDesSyncable
+	virtual string MDesSyncable_Uid() const override {return MDesSyncable::Type();} 
+	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+	virtual void update() override { mChanged = false;}
+	virtual void setUpdated() override { mUpdated = true; sHost()->setUpdated();}
+	virtual void setActivated() override { mActivated = true; sHost()->setActivated();}
+    protected:
+	template <typename S> string toStr(const S& aData) { return to_string(aData); }
+	string toStr(const string& aData) { return aData; }
+	string toStr(MNode*& aData) { return (aData ? aData->Uid() : "nil"); }
+	MDesSyncable* sHost() { MDesSyncable* ss = mHost->lIf(ss); return ss;}
+	IDesEmbHost* eHost() { return dynamic_cast<IDesEmbHost*>(mHost);}
+    public:
+	MNode* mHost;  /*!< Host */
+	string mUri;  /*!< Input URI */
+	string mCpType; /*!< Type of input connpoint */
+	bool mActivated; /*!< Indication of data is active (to be updated) */
+	bool mUpdated; /*!< Indication of data is updated */
+	bool mChanged; /*!< Indication of data is changed */
+	bool mValid;  /*!< Indication of data validity */
+};
+
+/** @brief Input buffered with typed data
+ * @param  T  data type 
+ * */
+template <typename T> class DesEIbt: public DesEIbb
+{
+    public:
+	DesEIbt(MNode* aHost, const string& aInpUri, const string& aCpType = CpStateInp::Type()): DesEIbb(aHost, aInpUri, aCpType) {}
+	// From MDesSyncable
+	virtual void confirm() override;
+	// Local
+	T& data() {return mCdt;}
+    public:
+	T mUdt, mCdt;  /*!< Updated and confirmed data */
+};
+
+template <typename T> void DesEIbt<T>::confirm()
+{
+    if (mUdt != mCdt) {
+	eHost()->logEmb(TLog(TLogRecCtg::EDbg, mHost) + "[" + mUri + "] Updated: [" + toStr(mCdt) + "] -> [" + toStr(mUdt) + "]");
+	mCdt = mUdt; mChanged = true;
+    } else mChanged = false;
+    mUpdated = false;
+}
+
+/** @brief Input buffered Sdata based
+ * @param  T  data type 
+ * */
+template <typename T> class DesEIbs: public DesEIbt<T>
+{
+    public:
+	using TP = DesEIbb;
+	DesEIbs(MNode* aHost, const string& aInpUri): DesEIbt<T>(aHost, aInpUri) {}
+	// From MDesSyncable
+	virtual void update() override;
+};
+
+template <typename T> void DesEIbs<T>::update()
+{
+    DesEIbb::update();
+    MNode* inp = TP::mHost->getNode(TP::mUri);
+    if (inp) TP::mValid = GetSData(inp, this->mUdt);
+    if (!TP::mValid) this->eHost()->logEmb(TLog(TLogRecCtg::EDbg, TP::mHost) + "Cannot get input [" + this->mUri + "]");
+    else { this->mActivated = false; this->setUpdated(); }
+}
+
+
+/** @brief Input buffered MNode based
+ * @param  T  data type 
+ * */
+class DesEIbMnode: public DesEIbt<MNode*>
+{
+    public:
+	using TP = DesEIbb;
+	using TPT = DesEIbt<MNode*>;
+	DesEIbMnode(MNode* aHost, const string& aUri): DesEIbt<MNode*>(aHost, aUri, CpStateMnodeInp::Type())
+	{ TPT::mCdt = nullptr; TPT::mUdt = nullptr; }
+	// From MDesSyncable
+	virtual void update() override;
+};
+
+/** @brief Output state - embedded pseudo-state "connnected" to host output
+ * */
+class DesEOstb: public MDVarGet {
+    public:
+	DesEOstb(MNode* aHost, const string& aCpUri, const string& aCpType = CpStateOutp::Type()):
+	    mHost(aHost), mCpUri(aCpUri), mCpType(aCpType), mValid(false) { eHost()->registerOst(this);}
+	string getCpUri() const { return mCpUri;}
+	// From MDVarGet
+	virtual string MDVarGet_Uid() const override {return MDVarGet::Type();}
+    public:
+	void NotifyInpsUpdated();
+    protected:
+	MDesSyncable* sHost() { MDesSyncable* ss = mHost->lIf(ss); return ss;}
+	IDesEmbHost* eHost() { return dynamic_cast<IDesEmbHost*>(mHost);}
+    public:
+	MNode* mHost;
+	string mCpUri;  /*!< Output URI */
+	string mCpType; /*!< Type of input connpoint */
+	bool mValid;  /*!< Indication of data validity */
+};
+
+
+/** @brief Output state with Sdata
+ * */
+template <typename T> class DesEOsts: public DesEOstb, public MDtGet<Sdata<T>> {
+    public:
+	DesEOsts(MNode* aHost, const string& aCpUri): DesEOstb(aHost, aCpUri) {}
+	// From MDVarGet
+	virtual string VarGetIfid() const override {return MDtGet<Sdata<T>>::Type();}
+	virtual MIface* DoGetDObj(const char *aName) override;
+	// From MDtGet
+	virtual string MDtGet_Uid() const {return MDtGet<Sdata<T>>::Type();}
+	virtual void DtGet(Sdata<T>& aData) override { aData.mData = mData; aData.mValid = true;}
+	// Local
+	void updateData(const T& aData);
+    public:
+	T mData;
+};
+
+template <typename T>
+MIface* DesEOsts<T>::DoGetDObj(const char *aName)
+{
+    MIface* res = NULL;
+    string tt = MDtGet<Sdata<T> >::Type();
+    if (tt.compare(aName) == 0) {
+	res = dynamic_cast<MDtGet<Sdata<T> >*>(this);
+    }
+    return res;
+}
+
+template <typename T>
+void DesEOsts<T>::updateData(const T& aData)
+{
+    if (aData != mData) {
+	mData = aData;
+	NotifyInpsUpdated();
+    }
+}
+
 
 
 

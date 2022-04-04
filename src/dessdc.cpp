@@ -52,6 +52,7 @@ void ASdc::SdcMapb::onMagUpdated()
     setActivated();
 }
 
+
 template <typename T> string toStr(const T& aData) { return to_string(aData); }
 
 string toStr(const string& aData) { return aData;}
@@ -327,13 +328,6 @@ void ASdc::onUpdated(MDesSyncable* aComp)
     assert(false);
 }
 
-void ASdc::onInpUpdated()
-{
-    setActivated();
-    // Notify Outp
-    //mOapOut.NotifyInpsUpdated();
-}
-
 void ASdc::notifyMaps()
 {
     for (auto map : mMaps) {
@@ -355,6 +349,7 @@ void ASdc::onObsContentChanged(MObservable* aObl, const MContent* aCont)
 
 void ASdc::onObsChanged(MObservable* aObl)
 {
+    UpdateMag();
 }
 
 MIface* ASdc::MObserver_getLif(const char *aType)
@@ -382,16 +377,33 @@ void ASdc::onOwnerAttached()
 	Logger()->Write(EErr, this, "Cannot attach to observer");
     } else {
 	// Getting controllable
-	// TODO to migrate to specific controllable iface
-	MNode* ownrc = Owner()->lIf(ownrc);
-	if (!ownrc) {
-	    Logger()->Write(EErr, this, "Cannot get owners controllable");
-	} else {
-	    // Set controlled system
-	    mMag = ownrc;
+	UpdateMag();
+    }
+}
+
+void ASdc::UpdateMag()
+{
+    // Attempt MDesAdapter iface first
+    MDesAdapter* desa = Owner()->lIf(desa);
+    MNode* mag = nullptr;
+    if (desa) {
+	mag = desa->getMag();
+    } else {
+	// Then explorable of owner
+	mag = Owner()->lIf(mag);
+    }
+    if (!mag) {
+	//Log(TLog(EErr, this) + "Cannot get owners explorable");
+    } else {
+	// Set explored system
+	if (mag != mMag) {
+	    mMag = mag;
+	    notifyOutp();
+	    Log(TLog(EInfo, this) + "Controllable is attached [" + mMag->Uid() + "]");
 	}
     }
 }
+
 
 template<typename T> bool ASdc::GetInpSdata(const string aInpUri, T& aRes)
 {
@@ -400,7 +412,7 @@ template<typename T> bool ASdc::GetInpSdata(const string aInpUri, T& aRes)
     if (inp) {
 	res =  GetSData(inp, aRes);
     } else {
-	Log(TLog(EErr, this) + "Cannot get input [" + aInpUri + "]");
+	Log(TLog(EDbg, this) + "Cannot get input [" + aInpUri + "]");
     }
     return res;
 }
@@ -412,7 +424,7 @@ template<typename T> bool ASdc::GetInpData(const string aInpUri, T& aRes)
     if (inp) {
 	res =  GetGData(inp, aRes);
     } else {
-	Log(TLog(EErr, this) + "Cannot get input [" + aInpUri + "]");
+	Log(TLog(EDbg, this) + "Cannot get input [" + aInpUri + "]");
     }
     return res;
 }
@@ -484,7 +496,7 @@ bool ASdcMut::doCtl()
     } else {
 	Chromo2& chromo = mIapMut.mCdt.mData;
 	TNs ns; MutCtx mutctx(NULL, ns);
-	chromo.Root().Dump();
+	//chromo.Root().Dump(); // Debug
 	targn->mutate(chromo.Root(), false, mutctx, true);
 	string muts;
 	chromo.Root().ToString(muts);
@@ -837,6 +849,7 @@ bool ASdcInsert2::getState()
 {
     bool res = false;
     do {
+	if (!mMag) break;
 	MNode* comp = mMag->getNode(mIapName.mCdt);
 	if (!comp) {
 	    Log(TLog(EErr, this) + "Cannot find comp [" + mIapName.mCdt + "]");
@@ -979,6 +992,7 @@ bool ASdcExtract::getState()
 {
     bool res = false;
     do {
+	if (!mMag) break;
 	MNode* comp = mMag->getNode(mIapName.data());
 	if (!comp) {
 	    Log(TLog(EErr, this) + "Cannot find comp [" + mIapName.mCdt + "]");

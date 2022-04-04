@@ -5,9 +5,12 @@
 #include <functional> 
 
 #include "mdes.h"
+#include "mdadp.h"
 #include "mdata.h"
 #include "msyst.h"
+#include "mlink.h"
 #include "unit.h"
+#include "des.h"
 
 /** @brief DES adapter base
  * Internal "access points" are used to create required topology instead of
@@ -283,6 +286,87 @@ class AMelemAdp : public AAdp
 };
 
 
-
+/** @brief Composite DES adapter, ref ds_dcs_cda
+ * It is the initial part of the approach opposite to AAdp
+ * AAdp is a "monolitic" adapter obtaining link to managed node 
+ * and providing it's control and observation
+ * Dadp just provides its components with the link to managed or
+ * observed node. All observing and control is performing by
+ * Dadp components.
+ * */
+// TODO To intro Dese - DES with embedded elems, base DAdp on it
+class DAdp : public Des, public IDesEmbHost, public MDesAdapter
+{
+    public:
+	// TODO intro "hard link" instead of MLink (w/o conn, disconn)
+	class MagLink : public MLink {
+	    public:
+		MagLink(DAdp* aHost): mHost(aHost) {}
+		// From MLink
+		virtual string MLink_Uid() const { return mHost->getUid<MLink>();}
+		virtual MIface* MLink_getLif(const char *aType) override;
+		virtual void MLink_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+		virtual bool connect(MNode* aPair) override { return false;}
+		virtual bool disconnect(MNode* aPair) override { return false;}
+		virtual MNode* pair() override { return mHost->mMag; }
+	    private:
+		DAdp* mHost;
+	};
+	/** @brief Managed agent observer
+	 * */
+	class MagObs : public MObserver {
+	    using TObserverCp = NCpOmnp<MObserver, MObservable>;
+	    public:
+		MagObs(DAdp* aHost): mHost(aHost), mOcp(this) {}
+		// From MObserver
+		virtual string MObserver_Uid() const {return MObserver::Type();}
+		virtual MIface* MObserver_getLif(const char *aName) override { return nullptr;}
+		virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override { }
+		virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override { }
+		virtual void onObsContentChanged(MObservable* aObl, const MContent* aCont) override { }
+		virtual void onObsChanged(MObservable* aObl) override { }
+	    public:
+		TObserverCp mOcp;               /*!< Observer connpoint */
+	    private:
+		DAdp* mHost;
+	};
+    public:
+	static const char* Type() { return "DAdp";};
+	DAdp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+    public:
+	// From MNode
+	virtual MIface* MNode_getLif(const char *aName) override;
+	// From IDesEmbHost
+	virtual void registerIb(DesEIbb* aIap) override;
+	virtual void registerOst(DesEOstb* aItem) override;
+	virtual void logEmb(const TLog& aRec) override { Log(aRec);}
+	// From Unit.MIfProvOwner
+	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	// From MDesSyncable
+	virtual void update() override;
+	virtual void confirm() override;
+	// From MDesAdapter
+	virtual string MDesAdapter_Uid() const override { return getUid<MDesAdapter>(); }
+	virtual void MDesAdapter_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+	virtual MNode* getMag() override;
+	// From MOwner
+	virtual MIface* MOwner_getLif(const char *aType) override;
+    protected:
+	// Local transitions
+	bool UpdateMagBase();
+	void UpdateMag();
+	// Utils
+	bool rifDesIobs(DesEIbb& aIap, MIfReq::TIfReqCp* aReq);
+	bool rifDesOsts(DesEOstb& aItem, MIfReq::TIfReqCp* aReq);
+    protected:
+	vector<DesEIbb*> mIbs; /*!< Inputs buffered registry */
+	vector<DesEOstb*> mOsts; /*!< Output states buffered registry */
+	DesEIbs<string> mIbMagUri;   //!< Buffered input "MagUri"
+	DesEIbMnode mIbMagBase;   //!< Buffered input "Mag base"
+	DesEOsts<string> mOstMagUri;   //!< Output state "Mag Uri"
+	MNode* mMagBase;
+	MNode* mMag;
+	MagObs mMagObs;             /*!< MAG observer */
+};
 
 #endif

@@ -75,6 +75,7 @@ libfap3_la_SOURCES = \
 		       chromo.cpp \
 		       chromo2.h \
 		       chromo2.cpp \
+		       mdadp.h \
 		       desadp.h \
 		       desadp.cpp \
 		       dessdc.h \
@@ -130,6 +131,7 @@ include_HEADERS = \
 		  factr.h \
 		  desadp.h \
 		  dbg.h \
+		  mdadp.h \
 		  miface.h
 
 

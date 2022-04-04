@@ -284,7 +284,7 @@ void FUri::DtGet(TData& aData)
 	    res = false;
 	}
     } else {
-	mHost.log(EErr, "Cannot get input [" + mHost.GetInpUri(EInp) + "]");
+	mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp) + "]");
 	res = false;
     }
     aData.mValid = res;
@@ -356,7 +356,7 @@ void FApnd<T>::DtGet(TData& aData)
 		    res = false;
 		}
 	    } else {
-		mHost.log(EErr, "Cannot get input [" + mHost.GetInpUri(EInp2) + "]");
+		mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp2) + "]");
 		res = false;
 	    }
 	} else {
@@ -364,7 +364,7 @@ void FApnd<T>::DtGet(TData& aData)
 	    res = false;
 	}
     } else {
-	mHost.log(EErr, "Cannot get input [" + mHost.GetInpUri(EInp1) + "]");
+	mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp1) + "]");
 	res = false;
     }
     aData.mValid = res;
@@ -682,7 +682,7 @@ template <class T> void FSizeVect<T>::DtGet(TOutp& aData)
 	    res = false;
 	}
     } else {
-	mHost.log(EErr, "Cannot get input [" + mHost.GetInpUri(EInp1) + "]");
+	mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp1) + "]");
 	res = false;
     }
     aData.mValid = res;
@@ -747,15 +747,17 @@ void FAtVect<T>::DtGet(Sdata<T>& aData)
 		aData.mValid = arg.GetElem(ind.mData, aData.mData);
 		res = true;
 	    } else {
-		mHost.log(EErr, "Index is exceeded");
+		string inds;
+		ind.ToString(inds, false);
+		mHost.log(EErr, "Index is exceeded: " + inds);
 	    }
 	} else {
 	    mHost.log(EErr, "Incorrect argument");
 	}
     } else if (!dfget) {
-	mHost.log(EErr, "Cannot get input [" + mHost.GetInpUri(EInp1) + "]");
+	mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp1) + "]");
     } else if (!diget) {
-	mHost.log(EErr, "Cannot get input [" + mHost.GetInpUri(EInp2) + "]");
+	mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp2) + "]");
     }
     aData.mValid = res;
     if (mRes != aData) {

@@ -30,7 +30,7 @@ class SdoBase : public CpStateOutp, public MDVarGet, public MObserver
 		    if (inp) {
 			res = GetSData(inp, aData);
 		    } else {
-			mHost->Log(TLog(EErr, mHost) + "Cannot get input [" + mName + "]");
+			mHost->Log(TLog(EDbg, mHost) + "Cannot get input [" + mName + "]");
 		    }
 		    return res;
 		}
@@ -54,6 +54,9 @@ class SdoBase : public CpStateOutp, public MDVarGet, public MObserver
 	virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override;
 	virtual void onObsContentChanged(MObservable* aObl, const MContent* aCont) override;
 	virtual void onObsChanged(MObservable* aObl) override;
+    protected:
+	void UpdateMag();
+	void NotifyInpsUpdated();
     protected:
 	TObserverCp mObrCp;               /*!< Observer connpoint */
 	MNode* mSue; /*!< System under exploring */
@@ -85,6 +88,34 @@ template <typename T> MIface* Sdo<T>::DoGetDObj(const char *aName)
     return res;
 }
 
+/** @brief SDO providing generic data
+ * */
+template <typename T> class Sdog : public SdoBase, public MDtGet<T>
+{
+    public:
+	using Stype = T;
+    public:
+	Sdog(const string &aType, const string& aName = string(), MEnv* aEnv = NULL): SdoBase(aType, aName, aEnv) {}
+	// From MDVarGet
+	virtual MIface* DoGetDObj(const char *aName) override;
+    	virtual string VarGetIfid() const override {return MDtGet<Stype>::Type();}
+	// From MDtGet
+	virtual void MDtGet_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+    protected:
+	T mRes;
+};
+
+template <typename T> MIface* Sdog<T>::DoGetDObj(const char *aName)
+{
+    MIface* res = NULL;
+    if (strcmp(aName, MDtGet<Stype>::Type()) == 0) {
+	res = dynamic_cast<MDtGet<Stype>*>(this);
+    }
+    return res;
+}
+
+
+
 /** @brief SDO "Component exists"
  * */
 class SdoComp : public Sdo<bool>
@@ -98,6 +129,32 @@ class SdoComp : public Sdo<bool>
     protected:
 	Inp<string> mInpName;
 };
+
+/** @brief SDO "Component count"
+ * */
+class SdoCompsCount : public Sdo<int>
+{
+    public:
+	static const char* Type() { return "SdoCompsCount";};
+	SdoCompsCount(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+    public:
+	// From MDtGet
+	virtual void DtGet(Stype& aData) override;
+};
+
+/** @brief SDO "Component count"
+ * */
+class SdoCompsNames : public Sdog<Vector<string>>
+{
+    public:
+	static const char* Type() { return "SdoCompsNames";};
+	SdoCompsNames(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+    public:
+	// From MDtGet
+	virtual void DtGet(Stype& aData) override;
+};
+
+
 
 /** @brief SDO "Vertexes are connected"
  * */

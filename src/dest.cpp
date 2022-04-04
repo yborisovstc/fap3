@@ -84,7 +84,7 @@ template<typename T> bool TrBase::GetInpSdata(int aId, T& aRes)
     if (inp) {
 	res =  GetSData(inp, aRes);
     } else {
-	Logger()->Write(EErr, this, "Cannot get input [%s]", GetInpUri(aId).c_str());
+	Logger()->Write(EDbg, this, "Cannot get input [%s]", GetInpUri(aId).c_str());
     }
     return res;
 }
@@ -96,7 +96,7 @@ template<typename T> bool TrBase::GetInpData(int aId, T& aRes)
     if (inp) {
 	res =  GetGData(inp, aRes);
     } else {
-	Logger()->Write(EErr, this, "Cannot get input [%s]", GetInpUri(aId).c_str());
+	Logger()->Write(EDbg, this, "Cannot get input [%s]", GetInpUri(aId).c_str());
     }
     return res;
 }
@@ -160,7 +160,7 @@ MIfProv::TIfaces* TrVar::GetInps(int aId, const string& aIfName, bool aOpt)
 	MIfProv* ifp = inpu ? inpu->defaultIfProv(aIfName) : nullptr;
 	res = ifp ? ifp->ifaces() : nullptr;
     } else if (!aOpt) {
-	Log(TLog(EErr, this) + "Cannot get input  [" + GetInpUri(aId) + "]");
+	Log(TLog(EDbg, this) + "Cannot get input  [" + GetInpUri(aId) + "]");
     }
     return res;
 }
@@ -969,7 +969,7 @@ void TrChr::DtGet(DChr2& aData)
 	    aData.mValid = false;
 	}
     } else {
-	Log(TLog(EErr, this) + "Cannot get input  [" + GetInpUri(EInpMut) + "]");
+	Log(TLog(EDbg, this) + "Cannot get input  [" + GetInpUri(EInpMut) + "]");
 	aData.mValid = false;
     }
     mRes = aData;
@@ -1046,7 +1046,7 @@ void TrChrc::DtGet(DChr2& aData)
 	    aData.mValid = false;
 	}
     } else {
-	Log(TLog(EErr, this) + "Cannot get input  [" + GetInpUri(EInp) + "]");
+	Log(TLog(EDbg, this) + "Cannot get input  [" + GetInpUri(EInp) + "]");
 	aData.mValid = false;
     }
     mRes = aData;

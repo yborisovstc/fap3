@@ -13,19 +13,23 @@ class Ut_adp : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_adp);
 
-    CPPUNIT_TEST(test_MnodeAdp_1);
+    //CPPUNIT_TEST(test_MnodeAdp_1);
     //CPPUNIT_TEST(test_MnodeAdp_2);
     //CPPUNIT_TEST(test_MnodeAdp_3);
     //CPPUNIT_TEST(test_AdpDcs_1);
+    CPPUNIT_TEST(test_Dadp_1);
     CPPUNIT_TEST_SUITE_END();
     public:
     virtual void setUp();
     virtual void tearDown();
     private:
+    MNode* constructSystem(const string& aFname);
+    private:
     void test_MnodeAdp_1();
     void test_MnodeAdp_2();
     void test_MnodeAdp_3();
     void test_AdpDcs_1();
+    void test_Dadp_1();
     private:
     Env* mEnv;
 };
@@ -33,6 +37,22 @@ class Ut_adp : public CPPUNIT_NS::TestFixture
 CPPUNIT_TEST_SUITE_REGISTRATION( Ut_adp );
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(Ut_adp, "Ut_adp");
 
+
+MNode* Ut_adp::constructSystem(const string& aSpecn)
+{
+    string ext = "chs";
+    string spec = aSpecn + string(".") + "chs";
+    string log = aSpecn + "_" + ext + ".log";
+    mEnv = new Env(spec, log);
+    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv != 0);
+    mEnv->ImpsMgr()->ResetImportsPaths();
+    mEnv->ImpsMgr()->AddImportsPaths("../modules");
+    mEnv->constructSystem();
+    MNode* root = mEnv->Root();
+    MElem* eroot = root ? root->lIf(eroot) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get root", root && eroot);
+    return root;
+}
 
 void Ut_adp::setUp()
 {
@@ -213,6 +233,17 @@ void Ut_adp::test_AdpDcs_1()
 
     bool res = mEnv->RunSystem(9, 5);
 
+
+    delete mEnv;
+}
+
+/** @brief MNode SDO test - existence of component
+ * */
+void Ut_adp::test_Dadp_1()
+{
+    printf("\n === Test of Adp: base\n");
+    MNode* root = constructSystem("ut_adp_dadp_1");
+    bool res = mEnv->RunSystem(10, 2);
 
     delete mEnv;
 }

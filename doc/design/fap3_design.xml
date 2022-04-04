@@ -653,7 +653,7 @@
 	    <sect3><title>Using implicit namespace for getting parent</title>
 		<sect4><title>Intro</title>
 		    <simpara>For getting the parent specific version of getNode() is used. This version gets implicit namespaces. We can utilize
-			implicit namespace line "all owners" plus _Imports plus all owners _Modules etc. "All owners" namespace should be for name only whereas
+			implicit namespace like "all owners" plus _Imports plus all owners _Modules etc. "All owners" namespace should be for name only whereas
 			special names can resolve uri also.</simpara>
 		</sect4>
 	    </sect3>
@@ -1459,6 +1459,13 @@
     <sect1 id="ds_imp"><title>Redesign import</title>
 	<sect2><title>Intro</title>
 	</sect2>
+	<sect2><title>Parent's resolution mechanism.</title>
+	    <sect3><title>Intro</title>
+		<simpara>It is very important to simplify specifying parent in system chromo. The best way is to specify just parent's name. But in that case
+		    we need to specific mechanism to resolve parent by its name.</simpara>
+		<simpara>Refer issue <xref linkend="iss_008"/> for the related issue.</simpara>
+	    </sect3>
+	</sect2>
     </sect1>
 
     <sect1 id="ds_asr"><title>State activation on input provided ifaces change - Activation on System Reconfiguration (<xref linkend="gls_asr"/>)</title>
@@ -1799,6 +1806,14 @@
 		</sect4>
 	    </sect3>
 	</sect2>
+	<sect2 id="ds_dcs_cda"><title>Composite DES adapter as the context for controllers and observers.</title>
+	    <sect3><title>Intro</title>
+		<simpara>Currently [5734b4e935a0, 20220403] the initial desing of DES adapter is in usage - tha adapter is monolitic and iface specific
+		    (MNode, MElem etc). This design has the number of cons: it makes overhead (not all CPs are used etc. So we consider another desing - 
+		    comopsite adapter. With this desing the adapter itself provides the context for owning controllers and observers. The main part of the context
+		    is the link to managed agent.</simpara>
+	    </sect3>
+	</sect2>
 	<sect2 id="ds_dcs_ord"><title>DCS example/test - ordering of agents.</title>
 	    <sect3><title>Intro</title>
 		<simpara>We need to create numberer of examples to discover the weaknesses of the current DCS approach and find the proper solutions. The first
@@ -1866,6 +1881,46 @@
 		we don't want to set the value that can cause system movement, so currently we use something like "SS nil" assuming that the value "nil" has to be specifically handled
 		(but actually it is not). It would be good if we have support setting of kind of "invalid" or "value-is-not-set" value. Current State desing doesn't allow doing that. </simpara>
 	    <simpara>Not sure that currently supported by data "invalid" indication is suitable for such puproses. This indication currently interpreted as error.</simpara>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_dee"><title>DES elements embedded</title>
+	<sect2><title>Intro</title>
+	    <simpara>Often it is required to create monolitic native DES specialized for the given usage. Such solution allows
+		significantly inclrease the overall system desing effectiveness. There were already many local solutions for that, ref
+		ASdc, AAdp etc. for instance. Having this local solution causes the code duplication and problems with support.
+		So it is time to provide the proper framework for this solutions.  </simpara>
+	    <simpara></simpara>
+	</sect2>
+	<sect2 id="ds_dee_ssi"><title>Double buffered input</title>
+	    <sect3><title>Intro</title>
+		<simpara>The base DES desing states that we need to update the state value on Update phase and then actualize (confirm) it
+		    on Confirm phase. But sometimes we can use another way for embedded solution. Let's consider tipical DES adapter (ref desadp.cpp):
+		    the adapter embeds "Managed agent" (MAG) state. With standard desing we need to have adapter input "MagUri" that value points
+		    to MAG relatively to MAG base and dedication state "MAG". Adaprer gets activated thru "MagUri" input notification (confirm phase)
+		    and set "MAG" state as activated, then on Update phase form preliminary MAG value and then on next confirm phase actualize
+		    the "MAG" value</simpara>
+		<simpara>This scheme assumes two embedded entities (input and state) and native connections between them.</simpara>
+		<simpara>Alternative option is to have double buffered input. In that case the "MagUri" input is fixed on confirmation phase.
+		    On confirmation phase the adapter can just check if new MagUri is confirmed and apply it to MAG. The pros of this variant
+		    is that state transition can be implemented in host that simplify the code.</simpara>
+	    </sect3>
+	    <sect3 id="ds_dee_ssi_vgd"><title>Solution as the variant of DES generic desing</title>
+		<simpara>Let's look at "Dedicated states ..." solution from DES generic desing point of view. Currently the DES cycle is based on
+		    calculate new states values in Update phase (states freezed), confirm states and notify deps on Confirm phase - states are double-buffered,
+		    states are freezed on Update.</simpara>
+		<simpara>But there was alternative desing, that we considered on earlier fap2 (or even fap1) projects. This desing is to freeze transitions
+		    inputs instead of states: calculate new states values in Update phase (inputs freezed), confirm inputs and notify deps on Confirm phase - inputs are
+		    double buffered, states are freezed on conirm phase.</simpara>
+		<simpara>This "Double buffered input" solution follows exactly such approach. The problem here is that for double buff inp solution DES cycle is
+		    inverted the question is of how to align the parts working with contradicted phases. This problem can be simply solved in case of 
+		    "embedded" states - DES just can control Confirmation phase: update the double buff inputs on early stage of confirm phase (so freeze them) and
+		    then do the standart Confirm processing.</simpara>
+	    </sect3>
+	    <sect3><title>Solution as embedded state connected to host input</title>
+		<simpara>The double buffered input above can be also intepreted as the embedded state connected to host input. Probably this intepretation is
+		    simpler that <xref linken="ds_dee_ssi_vgd"/></simpara>
+	    </sect3>
 	</sect2>
     </sect1>
 
@@ -2004,6 +2059,93 @@
 		<simpara> The idea is to force owned active when attaching it to owner. There are variations of this solution.  </simpara>
 		<simpara> The Var#1 is rather "brutal" - just to activate the owner unconditionally.  </simpara>
 		<simpara> The Var#2 is to activate only if the owned was already activated. We need to add methods "isActivated" and "isUpdated" to MDesSyncable in this case.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_iss_008"><title>[<glossterm id="iss_008">DS_ISS_008</glossterm>] Parent located in second level module cannot be found.</title>
+	    <sect3><title>Intro</title>
+		<simpara>
+		    The problem reproduced in [fap3-vis:5734b4e935a] [fap3:8228680d62a] in test fap3-vis/test/ut_avr_node_drp.chs with the change AvrMdl to AvrMdl2:
+		    <programlisting> ERR;;.testroot.Test.Window.Scene.Drp;Creating [Slot_Model_comp1] - parent [FHLayoutSlot] not found </programlisting>
+		</simpara>
+	    </sect3>
+	    <sect3><title>Analysis</title>
+		<simpara>System topology is as</simpara>
+		<programlisting>
+		    root
+		    |
+		    |---Modules
+		    |       |
+		    |       |---AvrMdl
+		    |             |
+		    |             |---Modules
+		    |                     |
+		    |                     |---ContainerMod
+		    |                               |
+		    ...                             ...
+		    |                               |--- FHLayoutSlot
+		    |                            
+		    |  
+		    |--- Slot (parent FHLayoutSlot)
+		</programlisting>
+		<simpara>
+		    Current parent resolution mechanism doesn't work here. The mutation is as:
+		    <programlisting>
+			364		parent = getParent(prnturi);
+			(gdb) p Uid()
+			$12 = ".testroot.Test.Window.Scene.Drp%MOwned"
+			(gdb) p mContext->Uid()
+			$13 = ".testroot.Modules.AvrMdl2%MOwner"
+		    </programlisting>
+			The mechanism is pritty simple (func getParent):
+		    <programlisting>
+			- look up in local scope (mutation scope) using getNode()
+			- redirect to owner's getParent()
+			- look up in modules using modules->getNode()
+		    </programlisting>
+			note that mContext of ".testroot.Modules.AvrMdl2%MOwner" ecuals 0. So the look up trace is as:
+		    <programlisting>
+			.testroot.Test.Window.Scene.Drp
+			  .testroot.Modules.AvrMdl2
+			    .testroot.Modules (owenr of AvrMdl2 as AvrMdl2 doesn't have a context).
+			.testroot.Test.Window.Scene
+			...
+			fail
+		    </programlisting>
+		</simpara>
+		<simpara>Hmm, but such resolution works in modnav2. Right, in modnav2 the slot is created from </simpara>
+		<programlisting>.testroot.Launcher.Window.Scene.VBox.ModelView.Drp</programlisting>
+		<simpara>
+			So the look up trace is as:
+		    <programlisting>
+			.testroot.Launcher.Window.Scene.VBox.ModelView.Drp
+			  .testroot.Modules.AvrMdl2
+			   .testroot.Modules (owner of AvrMdl2 as AvrMdl2 doesn't have a context).
+			.testroot.Launcher.Window.Scene.VBox.ModelView
+			  (context) Modules.ContainerMod
+			   ...
+			   ok
+		    </programlisting>
+		    The resolution is ok, but this result is just "accidental", because the "right" owner of Drp.
+		</simpara>
+		<simpara>
+		    Real root-cause is that the ContainerMod module desing is wrong:
+		    <programlisting>
+			317     DHLayout : DLinearLayout
+			318     {
+			...
+			325         SlotParent &lt; = "SS FHLayoutSlot";
+		    </programlisting>
+			SlotParent paremeter is set here incorrectly. It should be set from the real context where it is used, i.e. from the test system
+			(fap3-vis/test/ut_avr_node_drp.chs):
+		    <programlisting>
+			39                 Drp : AvrMdl2.NodeDrp {
+			40                     SlotParent &lt; = "SS ContainerMod.FHLayoutSlot";
+			41                 }
+		    </programlisting>
+		</simpara>
+	    </sect3>
+	    <sect3><title>Solution</title>
+		<simpara>To set SlotParent parameter from the real context where it is used.</simpara>
 	    </sect3>
 	</sect2>
     </sect1>
