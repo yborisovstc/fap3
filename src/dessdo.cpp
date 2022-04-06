@@ -101,6 +101,21 @@ void SdoBase::NotifyInpsUpdated()
 }
 
 
+///  SDO "Name"
+
+SdoName::SdoName(const string &aType, const string& aName, MEnv* aEnv): Sdo<string>(aType, aName, aEnv) { }
+
+void SdoName::DtGet(Stype& aData)
+{
+    if (!mSue)  {
+	Log(TLog(EErr, this) + "Owner is not explorable");
+    } else {
+	aData.mData = mSue->name();
+	aData.mValid = true;
+    }
+}
+
+
 
 ///  SDO "Component exists"
 

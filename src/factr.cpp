@@ -36,11 +36,11 @@ MNode* Factory::createNode(const string& aType, const string& aName, MEnv* aEnv)
     return res;
 }
 
-MNode* Factory::getNode(const string& aUri)
+MNode* Factory::provGetNode(const string& aUri)
 {
     MNode* res = NULL;
     for (TProviders::iterator it = iProviders.begin(); it != iProviders.end() && res == NULL; it++) {
-	res = it->second->getNode(aUri);
+	res = it->second->provGetNode(aUri);
     }
     return res;
 }
@@ -124,9 +124,9 @@ bool Factory::AddProvider(MProvider* aProv)
 {
     bool res = true;
     // TODO To support name
-    TProviders::const_iterator found = iProviders.find(aProv->name());
+    TProviders::const_iterator found = iProviders.find(aProv->providerName());
     if(found == iProviders.end()) {
-	iProviders.insert(TProvidersElem(aProv->name(), aProv));
+	iProviders.insert(TProvidersElem(aProv->providerName(), aProv));
     } else {
 	res = false;
     }
@@ -135,8 +135,8 @@ bool Factory::AddProvider(MProvider* aProv)
 
 void Factory::RemoveProvider(MProvider* aProv)
 {
-    assert(iProviders.count(aProv->name()) > 0);
-    iProviders.erase(aProv->name());
+    assert(iProviders.count(aProv->providerName()) > 0);
+    iProviders.erase(aProv->providerName());
 }
 
 void Factory::getNodesInfo(vector<string>& aInfo)

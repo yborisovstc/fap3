@@ -104,7 +104,7 @@ const MNode* Node::getNode(const GUri& aUri) const
 	    if (!res && aUri.size() == 1) {
 		// Try native
 		if (mEnv && mEnv->provider()) {
-		    res = mEnv->provider()->getNode(aUri.at(0));
+		    res = mEnv->provider()->provGetNode(aUri.at(0));
 		}
 	    }
 	}

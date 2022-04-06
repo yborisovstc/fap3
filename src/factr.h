@@ -26,9 +26,9 @@ class Factory: public MProvider
 	virtual MIface* MProvider_getLif(const char *aType) override { return nullptr;}
 	virtual void MProvider_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
 	// From MProvider
-	virtual const string& name() const { return iName;};
+	virtual const string& providerName() const { return iName;};
 	virtual MNode* createNode(const string& aType, const string& aName, MEnv* aEnv);
-	virtual MNode* getNode(const string& aUri);
+	virtual MNode* provGetNode(const string& aUri);
 	virtual bool isProvided(const MNode* aElem) const;
 	virtual void setChromoRslArgs(const string& aRargs);
 	virtual void getChromoRslArgs(string& aRargs);

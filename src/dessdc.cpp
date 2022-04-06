@@ -399,7 +399,7 @@ void ASdc::UpdateMag()
 	if (mag != mMag) {
 	    mMag = mag;
 	    notifyOutp();
-	    Log(TLog(EInfo, this) + "Controllable is attached [" + mMag->Uid() + "]");
+	    Log(TLog(EDbg, this) + "Controllable is attached [" + mMag->Uid() + "]");
 	}
     }
 }

@@ -30,7 +30,7 @@ MNode* Provider::createNode(const string& aType, const string& aName, MEnv* aEnv
     return NULL;
 }
 
-MNode* Provider::getNode(const string& aUri)
+MNode* Provider::provGetNode(const string& aUri)
 {
     return NULL;
 }
@@ -85,7 +85,7 @@ MNode* ProvBase::createNode(const string& aType, const string& aName, MEnv* aEnv
     MNode* res = NULL;
     res = CreateAgent(aType, aName, mEnv);
     if (res) {
-	MNode* parent = getNode(aType);
+	MNode* parent = provGetNode(aType);
 	if (parent) {
 	    MElem* eparent = parent->lIf(eparent);
 	    if (eparent) {
@@ -96,7 +96,7 @@ MNode* ProvBase::createNode(const string& aType, const string& aName, MEnv* aEnv
     return res;
 }
 
-MNode* ProvBase::getNode(const string& aUri)
+MNode* ProvBase::provGetNode(const string& aUri)
 {
     MNode* res = NULL;
     if (mReg.count(aUri) > 0) {

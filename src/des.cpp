@@ -629,10 +629,13 @@ void ADes::confirm()
 MDesObserver* ADes::getDesObs()
 {
     // Get access to owners owner via MAhost iface
+    MDesObserver* obs = nullptr;
     MNode* ahn = ahostNode();
-    MOwner* ahno = ahn->owned()->pairAt(0) ? ahn->owned()->pairAt(0)->provided() : nullptr;
-    MUnit* ahnou = ahno ? ahno->lIf(ahnou) : nullptr;
-    MDesObserver* obs = ahnou ? ahnou->getSif(obs) : nullptr;
+    if (ahn) {
+	MOwner* ahno = ahn->owned()->pairAt(0) ? ahn->owned()->pairAt(0)->provided() : nullptr;
+	MUnit* ahnou = ahno ? ahno->lIf(ahnou) : nullptr;
+	obs = ahnou ? ahnou->getSif(obs) : nullptr;
+    }
     return obs;
 }
 

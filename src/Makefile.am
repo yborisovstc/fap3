@@ -132,6 +132,11 @@ include_HEADERS = \
 		  desadp.h \
 		  dbg.h \
 		  mdadp.h \
+		  log.h \
+		  rmutdata.h \
+		  rdatauri.h \
+		  func.h \
+		  dest.h \
 		  miface.h
 
 

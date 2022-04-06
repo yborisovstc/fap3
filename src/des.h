@@ -225,8 +225,6 @@ class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver
 	virtual MIface* MNode_getLif(const char *aType) override;
 	// From Node
 	virtual MIface* MOwned_getLif(const char *aType);
-	// From Node.MContentOwner
-	virtual void onContentChanged(const MContent* aCont) override {}
 	// From MDesSyncable
 	virtual string MDesSyncable_Uid() const override {return getUid<MDesSyncable>();}
 	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override;

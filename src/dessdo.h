@@ -115,6 +115,18 @@ template <typename T> MIface* Sdog<T>::DoGetDObj(const char *aName)
 }
 
 
+/** @brief SDO "Name"
+ * */
+class SdoName : public Sdo<string>
+{
+    public:
+	static const char* Type() { return "SdoName";};
+	SdoName(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+    public:
+	// From MDtGet
+	virtual void DtGet(Stype& aData) override;
+};
+
 
 /** @brief SDO "Component exists"
  * */

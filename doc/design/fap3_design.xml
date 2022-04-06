@@ -1890,7 +1890,7 @@
 		significantly inclrease the overall system desing effectiveness. There were already many local solutions for that, ref
 		ASdc, AAdp etc. for instance. Having this local solution causes the code duplication and problems with support.
 		So it is time to provide the proper framework for this solutions.  </simpara>
-	    <simpara></simpara>
+	    <simpara>The main idea of having DES embedded elements is to interfit native DES with DES agent's internal desing.</simpara>
 	</sect2>
 	<sect2 id="ds_dee_ssi"><title>Double buffered input</title>
 	    <sect3><title>Intro</title>
@@ -1904,6 +1904,8 @@
 		<simpara>Alternative option is to have double buffered input. In that case the "MagUri" input is fixed on confirmation phase.
 		    On confirmation phase the adapter can just check if new MagUri is confirmed and apply it to MAG. The pros of this variant
 		    is that state transition can be implemented in host that simplify the code.</simpara>
+		<simpara>Note that local transition (ref <xref linkend="ds_dee_sac"/> is the alternative solution, probably more elegant (this
+		    is questionable).</simpara>
 	    </sect3>
 	    <sect3 id="ds_dee_ssi_vgd"><title>Solution as the variant of DES generic desing</title>
 		<simpara>Let's look at "Dedicated states ..." solution from DES generic desing point of view. Currently the DES cycle is based on
@@ -1921,6 +1923,51 @@
 		<simpara>The double buffered input above can be also intepreted as the embedded state connected to host input. Probably this intepretation is
 		    simpler that <xref linken="ds_dee_ssi_vgd"/></simpara>
 	    </sect3>
+	</sect2>
+	<sect2 id="ds_dee_sac"><title>Sharing DES agent context to transitions.</title>
+	    <sect3><title>Intro</title>
+		<simpara>It is common case when we decide to move some part of DES functionality into "internal" native desing because the transitions depends on
+		    internal agent context. The example is fap3-vis widget: requisition states depends of font size but the transition depends on C++ font instance created
+		    in the scope of the agent. The idea of how to solve this is to keep fap3 DES style topology but give the agent context to the transition.</simpara>
+	    </sect3>
+	    <sect3 id="ds_dee_sac_ait"><title>Solution: Exposing agent interface to transition.</title>
+		<simpara>This solution is base of IFR. Currently owner in fap3 native hier provides local MUnit iface. This allows a transition to request
+		    some iface from the owner (actually in case of DES agent the owned system will route the request to the agent). So we can introduce the generic
+		    MDestContext interface that a transition can use for access to agent's resources. This iface IFR can provide access to the agent specifically
+		    defined iface, in case of fap3-vis widget example is can be MWidgetContext that resolves all the dependencies from the agent for the transition.</simpara>
+	    </sect3>
+	    <sect3 id="ds_dee_sac_asp"><title>Solution: creating binded transition via agent's specific provider.</title>
+		<simpara>The idea is to pass the context to the transition on transition contstruction phase. This can be done with using agent specific provider.
+		    Currently it is possible for the agent to register it's own provider via env addProvider(). Such provider can create the transition and pass the context
+		    pointer to transition instance on creation phase. It that case the agent just implements MProvider interface.</simpara>
+		<simpara>The potential problem here is that adding the provider affects global behaviour. Can we improve Env providers mechanism to have "local" provider?
+		    Yes, ref <xref linkend="ds_lps"/> for the design. </simpara>
+	    </sect3>
+	    <sect3 id="ds_dee_sac_taee"><title>Node: Embedded transition as the alternative of other DES embedded elements.</title>
+		<simpara>
+		    Let's again consider the use-case: fap3-vis widget (widget.h) needs to update embedded font instance depending on font path state. Initial
+		    solution was to utilize Buffered input DES embedded element, ref
+		    <xref linkend="ds_dee_ssi"/>. With this solution we need to add embedded elements
+			support to widget agent (this is quite a lot of code). Alternative solution would be using local scope transition: we have state FontPath, state
+			FontApplied and local scope transition "ApplyFont" that containts the agent content and updates (re-creates) the embedded font instance.
+		</simpara>
+		<simpara>The question here if this scheme provides better understanding of the system. From my view embedded elems still makes system better undertstanding.
+		    this is because the transistion "hides" the actual context so it is hard to see that the transition changes the context of agent.</simpara>
+	    </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_lps"><title>Improving provider iface to limit the provider's scope</title>
+	<sect2><title>Intro</title>
+	    <simpara>Curently MEnv iface allows any agent in native hier to register provider, ref MEnv::addProvider(). This creates the vulnarability: local agent can
+		affect the whole system by creatng improper node. We need to close this hole.</simpara>
+	    <simpara>Ref <xref linkend="ds_dee_sac_asp"/> for the use-case.</simpara>
+	</sect2>
+	<sect2><title>Solution: add the context indication to provider iface.</title>
+	    <simpara>The idea is to extend MProvider API by adding getContext() method. This method will return the node of native hier in which scope the provider is actual.
+		If the context is root then the provider is "global" for the system. Note that currently root is available from env but this needs to be disabled.
+		Node mutation methods shall check this context when creating node. If the method see that provider tries to create node in the upper scope the method
+		needs to deny the creation.</simpara>
 	</sect2>
     </sect1>
 
@@ -1945,6 +1992,9 @@
 	</sect2>
 	<sect2><title>Intitial invalid status of State</title>
 	    <simpara>Ref <xref linkend="ds_iis"/></simpara>
+	</sect2>
+	<sect2><title>Localize provider's scope</title>
+	    <simpara>Ref <xref linkend="ds_lps"/></simpara>
 	</sect2>
     </sect1>
 

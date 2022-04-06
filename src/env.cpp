@@ -245,7 +245,7 @@ void Env::constructSystem()
 
 	    /**/
 	    string sparent = root.Attr(ENa_Parent);
-	    MNode* parent = mProvider->getNode(sparent);
+	    MNode* parent = mProvider->provGetNode(sparent);
 	    mRoot = mProvider->createNode(sparent, root.Name(), this);
 	    /**/
 	    MElem* eroot = mRoot ? mRoot->lIf(eroot) : nullptr;

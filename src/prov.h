@@ -26,9 +26,9 @@ class Provider: public MProvider
 	virtual MIface* MProvider_getLif(const char *aType) override;
 	virtual void MProvider_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	// From MProvider
-	virtual const string& name() const override { return mName;}
+	virtual const string& providerName() const override { return mName;}
 	virtual MNode* createNode(const string& aType, const string& aName, MEnv* aEnv) override;
-	virtual MNode* getNode(const string& aUri) override;
+	virtual MNode* provGetNode(const string& aUri) override;
 	virtual bool isProvided(const MNode* aElem) const override;
 	virtual MChromo* createChromo(const string& aRargs = string()) override;
 	virtual void getNodesInfo(vector<string>& aInfo) override;
@@ -56,7 +56,7 @@ class ProvBase: public Provider
 	virtual const TFReg& FReg() const = 0;
 	// From MProvider
 	virtual MNode* createNode(const string& aType, const string& aName, MEnv* aEnv);
-	virtual MNode* getNode(const string& aUri);
+	virtual MNode* provGetNode(const string& aUri);
 	virtual MChromo* createChromo();
     protected:
 	/** Creates native agent */
