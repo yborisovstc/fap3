@@ -908,5 +908,9 @@ void DesEOstb::NotifyInpsUpdated()
     }
 }
 
+//// DES affecting Parameter
 
+void DesEParb::updatePar(const MContent* aCont)
+{
+}
 

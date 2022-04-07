@@ -326,122 +326,11 @@ template <typename T> bool GetGData(MNode* aDvget, T& aData)
 }
 
 
-#if 0
-// Embedded DES elements support
-
-/** @brief Double buffering Input base, ref ds_dee_ssi
- * This is lightweight solution for embedding states into some DES syncable 
- * Another option of embedding the state would be separate simple input access point and pseudo state
- * but this option is more complicated.
- * Note: this embedding approach "erodes" strong DES design, so needs to be used carefully
- *
- * @parem Th  type of host
- * */
-class DesEIbb: public MDesInpObserver, public MDesSyncable
-{
-    public:
-	DesEIbb(const string& aInpUri): mUri(aInpUri), mUpdated(false), mActivated(true), mChanged(false) {}
-	string getUri() const { return mUri;}
-	// From MDesInpObserver
-	virtual void onInpUpdated() override { setActivated();}
-	virtual string MDesInpObserver_Uid() const override {return MDesInpObserver::Type();}
-	virtual void MDesInpObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
-	// From MDesSyncable
-	virtual string MDesSyncable_Uid() const override {return MDesSyncable::Type();} 
-	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
-    public:
-	template <typename S> string toStr(const S& aData) { return to_string(aData); }
-	string toStr(const string& aData) { return aData; }
-    public:
-	string mUri;  /*!< Input URI */
-	bool mActivated; /*!< Indication of data is active (to be updated) */
-	bool mUpdated; /*!< Indication of data is updated */
-	bool mChanged; /*!< Indication of data is changed */
-};
-
-/** @brief Input buffered hosted
- * @param  Th  host type 
- * */
-template <typename Th>
-class DesEIbh: public DesEIbb
-{
-    public:
-	DesEIbh(Th* aHost, const string& aInpUri): DesEIbb(aInpUri), mHost(aHost) { mHost->registerIb(this);}
-	// From MDesSyncable
-	virtual void setUpdated() override { mUpdated = true; mHost->setUpdated();}
-	virtual void setActivated() override { mActivated = true; mHost->setUpdated();}
-    public:
-	Th* mHost;
-};
-
-#if 0
-/** @brief Input state Sdata based
- * @param  T  Sdata type 
- * */
-template <typename Th, typename T>
-class DesEIbs: public DesEIbb
-{
-    public:
-	DesEIbs(Th* aHost, const string& aInpUri): DesEIbb(aInpUri), mHost(aHost) {}
-	// From MDesSyncable
-	virtual void setUpdated() override { mUpdated = true; mHost->setUpdated();}
-	virtual void setActivated() override { mActivated = true; mHost->setUpdated();}
-	virtual void update() override;
-	virtual void confirm() override;
-	// Local
-	T& data() {return mCdt;}
-    public:
-	Th* mHost;
-	T mUdt;  /*!< Updated data */
-	T mCdt;  /*!< Confirmed data */
-};
-#endif
-
-/** @brief Input buffered Sdata based
- * @param  Th  host type 
- * @param  T  Sdata type 
- * */
-template <typename Th, typename T>
-class DesEIbs: public DesEIbh<Th>
-{
-    public:
-	using TP = DesEIbh<Th>;
-    public:
-	DesEIbs(Th* aHost, const string& aInpUri): TP(aHost, aInpUri) {}
-	// From MDesSyncable
-	virtual void update() override;
-	virtual void confirm() override;
-	// Local
-	T& data() {return mCdt;}
-    public:
-	T mUdt;  /*!< Updated data */
-	T mCdt;  /*!< Confirmed data */
-};
-
-template <typename Th, typename T>
-void DesEIbs<Th, T>::update()
-{
-    bool res = false;
-    MNode* inp = TP::mHost->getNode(TP::mUri);
-    if (inp) res = GetSData(inp, mUdt);
-    if (!res)  TP::mHost->Log(TLog(TLogRecCtg::EDbg, TP::mHost) + "Cannot get input [" + TP::mUri + "]");
-    else { TP::mActivated = false; TP::setUpdated(); }
-}
-
-template <typename Th, typename T>
-void DesEIbs<Th, T>::confirm()
-{
-    if (mUdt != mCdt) {
-	TP::mHost->Log(TLog(TLogRecCtg::EDbg, TP::mHost) + "[" + TP::mUri + "] Updated: [" + toStr(mUdt) + "] -> [" + toStr(mCdt) + "]");
-	mCdt = mUdt; TP::mChanged = true;
-    } else TP::mChanged = false;
-    TP::mUpdated = false;
-}
-
-#endif
+///// Embedded DES elements support
 
 class DesEIbb;
 class DesEOstb;
+class DesEParb;
 
 /** @brief Local iface of the host of DES embedded elements
  * */
@@ -450,6 +339,7 @@ class IDesEmbHost
     public:
 	virtual void registerIb(DesEIbb* aIap) = 0;
 	virtual void registerOst(DesEOstb* aOst) = 0;
+	virtual void registerPar(DesEParb* aPar) { assert(false);}
 	virtual void logEmb(const TLog& aRec) =0;
 };
 
@@ -613,6 +503,19 @@ void DesEOsts<T>::updateData(const T& aData)
     }
 }
 
+/** @brief DES affecting Parameter base (not completed)
+ * */
+class DesEParb
+{
+    public:
+	DesEParb(MNode* aHost, const string& aUri): mHost(aHost), mUri(aUri) { eHost()->registerPar(this);}
+    protected:
+	IDesEmbHost* eHost() { return dynamic_cast<IDesEmbHost*>(mHost);}
+	void updatePar(const MContent* aCont);
+    protected:
+	MNode* mHost;
+	const string mUri;  //!< Paremeter's URI
+};
 
 
 

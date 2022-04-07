@@ -44,7 +44,7 @@ const ProvDef::TFReg ProvDef::mReg ( {
 	Item<TrMaxVar>(), Item<TrSwitchBool>(), Item<TrCmpVar>(), Item<TrApndVar>(),
 	Item<TrAndVar>(), Item<TrOrVar>(), Item<TrNegVar>(), Item<TrUri>(), Item<TrTostrVar>(),
 	Item<TrMutNode>(), Item<TrMutConn>(), Item<TrMutDisconn>(), Item<TrMutCont>(),
-	Item<TrSizeVar>(), Item<TrAtVar>(),
+	Item<TrSizeVar>(), Item<TrAtVar>(), Item<TrMplVar>(),
 	Item<TrTuple>(), Item<TrChr>(), Item<TrChrc>(),
 	/* Des adapters */
 	Item<AMnodeAdp>(), Item<AMelemAdp>(), Item<AMntp>(), Item<DAdp>(),

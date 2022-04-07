@@ -78,6 +78,22 @@ class TrAddVar: public TrVar
 	virtual int GetInpCpsCount() const override {return 2;}
 };
 
+
+/** @brief Transition "Multiplication of Var data"
+ * */
+class TrMplVar: public TrVar
+{
+    public:
+	static const char* Type() { return "TrMplVar";};
+	TrMplVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From TrVar
+	virtual void Init(const string& aIfaceName) override;
+	virtual string GetInpUri(int aId) const override;
+	virtual int GetInpCpsCount() const override {return 2;}
+};
+
+
+
 /** @brief Agent function "Max of Var data"
  * */
 class TrMaxVar: public TrVar

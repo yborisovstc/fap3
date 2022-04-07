@@ -109,6 +109,94 @@ void FAddDt<T>::MDtGet_doDump(int aLevel, int aIdt, ostream& aOs) const
     aOs << "Data: " << str << endl;
 }
 
+
+///// FMplDt
+
+template<class T> Func* FMplDt<T>::Create(Host* aHost, const string& aString)
+{
+    Func* res = NULL;
+    if (aString.empty()) {
+	// Weak negotiation, basing on inputs only
+	bool inpok = true;
+	MIfProv::TIfaces* inps = aHost->GetInps(EInp, MDVarGet::Type(), false);
+	for (auto dgeti : *inps) {
+	    MDVarGet* dget = dynamic_cast<MDVarGet*>(dgeti);
+	    MDtGet<T>* dfget = dget->GetDObj(dfget);
+	    if (!dfget) { inpok = false; break; }
+	}
+	if (inpok) {
+	    res = new FMplDt<T>(*aHost);
+	}
+    } else if (aString == MDtGet<T>::Type()) {
+	    res = new FMplDt<T>(*aHost);
+	}
+    return res;
+}
+
+template<class T> MIface *FMplDt<T>::getLif(const char *aName)
+{
+    MIface* res = NULL;
+    if (strcmp(aName, MDtGet<T>::Type()) == 0) res = dynamic_cast<MDtGet<T>*>(this);
+    return res;
+}
+
+template<class T> void FMplDt<T>::DtGet(T& aData)
+{
+    bool res = true;
+    MIfProv::TIfaces* inps = mHost.GetInps(EInp, MDVarGet::Type(), false);
+    bool first = true;
+    if (inps) for (auto dgeti : *inps) {
+	MDVarGet* dget = dynamic_cast<MDVarGet*>(dgeti);
+	MDtGet<T>* dfget = dget->GetDObj(dfget);
+	if (dfget) {
+	    T arg = aData;
+	    dfget->DtGet(arg);
+	    if (arg.mValid) {
+		if (first) { aData = arg; first = false;
+		} else { aData *= arg; }
+	    } else {
+		mHost.log(EErr, "Incorrect argument [" + mHost.GetInpUri(EInp) + "]");
+		res = false; break;
+	    }
+	} else {
+	    mHost.log(EErr, "Incorrect argument [" + mHost.GetInpUri(EInp) + "]");
+	    res = false; break;
+	}
+    }
+    aData.mValid = res;
+    if (mRes != aData) {
+	mRes = aData;
+	mHost.OnFuncContentChanged();
+	mHost.log(EDbg, string("Result: ") + (mRes.mValid ? to_string(aData.mData) : "err"));
+    }
+}
+
+template<class T> void FMplDt<T>::GetResult(string& aResult) const
+{
+    mRes.ToString(aResult);
+}
+
+template <class T> string FMplDt<T>::GetInpExpType(int aId) const
+{
+    string res;
+    if (aId == EInp) {
+	res = MDtGet<T>::Type();
+    }
+    return res;
+}
+
+template <class T>
+void FMplDt<T>::MDtGet_doDump(int aLevel, int aIdt, ostream& aOs) const
+{
+    auto self = const_cast<FMplDt<T>*>(this);
+    T data;
+    self->DtGet(data);
+    string str;
+    data.ToString(str);
+    aOs << "Data: " << str << endl;
+}
+
+
 /// Boolean AND
 
 Func* FBAndDt::Create(Host* aHost, const string& aString)
@@ -845,6 +933,7 @@ void Init()
 {
     Fhost* host = nullptr;
     FAddDt<Sdata<int>>::Create(host, "");
+    FMplDt<Sdata<int>>::Create(host, "");
     FMaxDt<Sdata<int>>::Create(host, "");
     FCmp<Sdata<int> >::Create(host, "", "", FCmpBase::ELt);
     FCmp<Sdata<string> >::Create(host, "", "", FCmpBase::ELt);

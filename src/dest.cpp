@@ -248,6 +248,29 @@ string TrAddVar::GetInpUri(int aId) const
 }
 
 
+///// TrMplVar
+
+TrMplVar::TrMplVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+{
+    AddInput("Inp");
+}
+
+void TrMplVar::Init(const string& aIfaceName)
+{
+    if (mFunc) {
+	delete mFunc;
+	mFunc = NULL;
+    }
+    if ((mFunc = FMplDt<Sdata<int>>::Create(this, aIfaceName)) != NULL);
+}
+
+string TrMplVar::GetInpUri(int aId) const 
+{
+    if (aId == FMplBase::EInp) return "Inp"; else return string();
+}
+
+
+
 ///// TrMaxVar
 
 TrMaxVar::TrMaxVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)

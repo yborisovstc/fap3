@@ -789,7 +789,7 @@
 		</sect4>
 		<sect4><title>Initial</title>
 		    <programlisting>
-			model_spec = mutation_create_chromo;
+			model_spec = segment | mutation_create_chromo;
 			chromo = chromo_node { node_separator, chromo_node };
 			chromo_node = ctx_mutation | segment_target | segment_namespace | ctx_mutation_create_chromo;
 			ctx_mutation = [context, separator ]  mutation;
@@ -1137,6 +1137,18 @@
 	    <sect3><title>Status</title>
 		<simpara>20210417 Decided to postpone the feature. The reason is that the problem with generated chromo output in pure
 		<xref linkend="gls_osm"/> flat format is still not solved, ref <xref linkend="ds_eosm"/>.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_cli_nseg"><title>Named segment</title>
+	    <sect3><title>Intro</title>
+		<simpara>Use-case_1: some system used <xref linkend="gls_sdc"/> controller to update itself with some chromo segment. The controller
+		    forms its status (Outp output) by checking system's if the segment is applied (check if there is this serment in the chromo). This checking
+		    operation is simple because serments name is supported.</simpara>
+		<simpara>Use-case_2: widget system (ref fap3-vis widget.chs); there is base widget system WidgetBase that is just default "template"; specialized
+		    widget (for instance VLabel) is based on WidgetBase, includes specialized agent (native agent inherited from some base) and adjusts the topology including connections to the agent.
+		    The agent base already has some connpoints that needs to be connected to the compoments of WidgetBase, but this connection cannot be done in the scope of WidgetBase becaues
+		    it doesn't include agent. So currently we need add agent and do these connections for any widget in widget system - i.e. the spec is duplicated many time. The solution can be to
+		    combine all that connections within single chromo named segment and then apply it in any particular widget.</simpara>
 	    </sect3>
 	</sect2>
     </sect1>
@@ -1971,7 +1983,17 @@
 	</sect2>
     </sect1>
 
-    <sect1 id="ds_ibc"><title>Desing items to be considered</title>
+    <sect1 id="ds_mtc"><title>Mutation as a transaction</title>
+	<sect2><title>Intro</title>
+	    <simpara>Curently the mutation is implemented very primitive: node try to apply the mutation, if mutation fails then the node just record this event into the log.
+		The fact of mutation failure doesn't affect the overall mutation process - the node then tries to apply next mutation. This approach ever simple is wrong: 
+		in result the inconsistent system can be created.</simpara>
+	    <simpara>This problem significantly affects sysetems DES controlling (<xref linkend="gls_sdc"/>). Ref for instance the use-case described in <xref linkend="ds_mtc"/>:
+		the controller cannot be sure that the required mutation segment is applied so the controller status is not fully deterministic here.</simpara>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_ibc"><title>Tracking: Desing items handing</title>
 	<sect2><title>Intro</title>
 	    <simpara>Ref <xref linkend="ds_itr_sp"/> for the initial list of the problems need to be addressed in FAP3.</simpara>
 	</sect2>
@@ -1995,6 +2017,12 @@
 	</sect2>
 	<sect2><title>Localize provider's scope</title>
 	    <simpara>Ref <xref linkend="ds_lps"/></simpara>
+	</sect2>
+	<sect2><title>Chromo named segments</title>
+	    <simpara>Ref <xref linkend="ds_cli_nseg"/></simpara>
+	</sect2>
+	<sect2><title>Mutation as transaction</title>
+	    <simpara>Ref <xref linkend="ds_mtc"/></simpara>
 	</sect2>
     </sect1>
 

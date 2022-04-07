@@ -51,7 +51,7 @@ class FAddBase: public Func {
 };
 
 
-/** @brief Addintion, generic data
+/** @brief Addition, generic data
  * */
 template <class T> class FAddDt: public FAddBase, public MDtGet<T> {
     public:
@@ -66,6 +66,33 @@ template <class T> class FAddDt: public FAddBase, public MDtGet<T> {
 	virtual void MDtGet_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	T mRes;
 };
+
+
+/** @brief Multiplication, base
+ * */
+class FMplBase: public Func {
+    public:
+	enum { EInp = EInp1 };
+	FMplBase(Host& aHost): Func(aHost) {};
+};
+
+/** @brief Multiplication, generic data
+ * */
+template <class T> class FMplDt: public FMplBase, public MDtGet<T> {
+    public:
+	static Func* Create(Host* aHost, const string& aString);
+	FMplDt(Host& aHost): FMplBase(aHost) {};
+	virtual MIface* getLif(const char *aName) override;
+	virtual string IfaceGetId() const { return MDtGet<T>::Type();};
+	virtual void DtGet(T& aData);
+	virtual void GetResult(string& aResult) const;
+	virtual string GetInpExpType(int aId) const;
+	// From MDtGet
+	virtual void MDtGet_doDump(int aLevel, int aIdt, ostream& aOs) const override;
+	T mRes;
+};
+
+
 
 
 /** @brief Boolean func base, generic data
