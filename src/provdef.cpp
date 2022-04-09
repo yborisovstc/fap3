@@ -52,7 +52,7 @@ const ProvDef::TFReg ProvDef::mReg ( {
 	Item<ASdcMut>(), Item<ASdcComp>(), Item<ASdcRm>(), Item<ASdcConn>(), Item<ASdcInsert>(), Item<ASdcInsert2>(),
 	Item<ASdcExtract>(), 
 	/* SDOs */
-        Item<SdoName>(), Item<SdoComp>(), Item<SdoConn>(), Item<SdoCompsCount>(), Item<SdoCompsNames>(), 
+        Item<SdoName>(), Item<SdoParent>(), Item<SdoComp>(), Item<SdoConn>(), Item<SdoCompsCount>(), Item<SdoCompsNames>(), 
 	});
 
 

@@ -1993,6 +1993,38 @@
 	</sect2>
     </sect1>
 
+    <sect1 id="ds_dctx"><title>DES context for components</title>
+	<sect2><title>Intro</title>
+	    <simpara>It is abundant use-case where some DES needs to share some context for its components. The example is fap3-vis Detail Representation (DRP). DRP
+		creates a number of compact representations (CRP) to visualize represented agent's components. Each CRP needs info of the component it is representing: link to the whole
+		model and component's URI related to this model. This info can be provided to CRP via connections but it creates significant overhead.</simpara>
+	    <simpara>So the idea is to create the mechanism that can be used to establish such connection "automatically" OR even allow (in our example) CRP to get access to DRPs 
+		states containing this info (this creates actually "virtual" connection that does't require such resources as explicit connection.</simpara>
+	    <simpara>This feature requirements can vary. At the moment we can limit them by just sharing a socket. So the feature in that case looks like as:
+		DRP has "shared" socket, CRP creates compatible socket in it's scope. Crp can use this interal socket as if the socket is connected to DRP socket via
+		"virtual" connection.</simpara>
+	    <simpara>Actually there is two approaches of creating such "virtual" connection. Approach#1 is to esablish native connection (via native conn).
+		Approach#2 is to not establish explicit native connection but use some intermediate ifaces to get access to Provided and Required ifaces, ifaces in that case
+		are not persistent but accessible via intermediate ifaces. Actually the intermediate "helper" ifaces are needed even for Approach#1 to establish persistent
+		native conn.</simpara>
+	</sect2>
+	<sect2 id="ds_dctx_dic"><title>Solution#1: dedicated interface for DES context</title>
+	    <sect3><title>Intro</title>
+		<simpara>This solution follows Approach#2. We need to introduce the interfaces MDesContextProvider/MDesContextConsumer. Provider iface is resolved by DES in the following manner:
+		    look at local scope first, if not found redirect to owner.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_dctx_cvai"><title>Context vs access infrastructure.</title>
+	    <simpara>Turning back to our DRP-CRP example. Actually there is another way to allow CRP access to common states - access infrastructure. This approach is already
+		successfull applied in VIS container desing: the container deals with it's widget components via the sockets that are combined in some structure. For linear layout 
+		container such structure is the linked list.</simpara>
+	    <simpara>So we just can extend containers socket to distribure "model base" to all the CRPs.</simpara>
+	    <simpara>Node_1: Even CRP "personal" state like "model component's URI related" can be
+		distributed via sockets as "current CompName", CRP just needs to have the subsystem that "catches" this data on CRP creation phase.</simpara>
+	    <simpara>The cons of this approach is rather big overhead: for instance the number of connpoints is increased significantly.</simpara>
+	</sect2>
+    </sect1>
+
     <sect1 id="ds_ibc"><title>Tracking: Desing items handing</title>
 	<sect2><title>Intro</title>
 	    <simpara>Ref <xref linkend="ds_itr_sp"/> for the initial list of the problems need to be addressed in FAP3.</simpara>
@@ -2023,6 +2055,9 @@
 	</sect2>
 	<sect2><title>Mutation as transaction</title>
 	    <simpara>Ref <xref linkend="ds_mtc"/></simpara>
+	</sect2>
+	<sect2><title>DES context for components.</title>
+	    <simpara>Ref <xref linkend="ds_dctx"/></simpara>
 	</sect2>
     </sect1>
 

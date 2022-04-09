@@ -127,6 +127,19 @@ class SdoName : public Sdo<string>
 	virtual void DtGet(Stype& aData) override;
 };
 
+/** @brief SDO "Parent"
+ * */
+class SdoParent : public Sdo<string>
+{
+    public:
+	static const char* Type() { return "SdoParent";};
+	SdoParent(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+    public:
+	// From MDtGet
+	virtual void DtGet(Stype& aData) override;
+};
+
+
 
 /** @brief SDO "Component exists"
  * */

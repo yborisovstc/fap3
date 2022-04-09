@@ -134,9 +134,7 @@ class FBOrDt: public FBBase {
 };
 
 
-
 /** @brief Converting to GUri
- * @tparam T type of vector element
  * */
 class FUri: public Func, public MDtGet<DGuri> {
     public:
@@ -326,12 +324,14 @@ class FAtVect: public FAtBase, public MDtGet<Sdata<T>> {
 class FToStrBase: public Func, public MDtGet<Sdata<string>>
 {
     public:
+	using TData = Sdata<string>;
+    public:
 	enum { EInp = EInp1 };
 	FToStrBase(Host& aHost): Func(aHost) {}
 	virtual MIface* getLif(const char *aName) override;
-	virtual string IfaceGetId() const override { return MDtGet<Sdata<string>>::Type();}
+	virtual string IfaceGetId() const override { return MDtGet<TData>::Type();}
 	virtual void GetResult(string& aResult) const override;
-	Sdata<string> mRes;
+	TData mRes;
 };
 
 
@@ -342,10 +342,22 @@ template <class T>
 class FSToStr: public FToStrBase
 {
     public:
-	enum { EInp = EInp1 };
 	static Func* Create(Host* aHost, const string& aIface, const string& aInpTSig);
 	FSToStr(Host& aHost): FToStrBase(aHost) {}
 	virtual void DtGet(Sdata<string>& aData) override;
+};
+
+
+/** @brief Converting to Sdata<string>
+ * */
+class FUriToStr: public FToStrBase
+{
+    public:
+	using TInpData = DGuri;
+	static Func* Create(Host* aHost, const string& aOutIid, const string& aInp1Id);
+	FUriToStr(Host& aHost): FToStrBase(aHost) {}
+	virtual void DtGet(TData& aData);
+	virtual string GetInpExpType(int aId) const;
 };
 
 

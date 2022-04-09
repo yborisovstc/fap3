@@ -489,7 +489,6 @@ string TrNegVar::GetInpUri(int aId) const
 
 
 
-
 ///// TrUri
 
 TrUri::TrUri(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
@@ -720,6 +719,7 @@ void TrTostrVar::Init(const string& aIfaceName)
     if (inp) {
 	string t_inp = inp->VarGetIfid();
 	if ((mFunc = FSToStr<int>::Create(this, aIfaceName, t_inp)));
+	else if ((mFunc = FUriToStr::Create(this, aIfaceName, t_inp)));
 	else {
 	    Logger()->Write(EErr, this, "Failed init function");
 	}
@@ -849,12 +849,14 @@ TrMutCont::TrMutCont(const string& aType, const string& aName, MEnv* aEnv): TrMu
 {
     AddInput(GetInpUri(EInpName));
     AddInput(GetInpUri(EInpValue));
+    AddInput(GetInpUri(EInpTarget));
 }
 
 string TrMutCont::GetInpUri(int aId) const
 {
     if (aId == EInpName) return "Name";
     else if (aId == EInpValue) return "Value";
+    else if (aId == EInpTarget) return "Target";
     else return string();
 }
 
@@ -867,7 +869,13 @@ void TrMutCont::DtGet(DMut& aData)
 	string value;
 	res = GetInpSdata(EInpValue, value);
 	if (res) {
-	    aData.mData = TMut(ENt_Cont, ENa_Id, name, ENa_MutVal, value);
+	    string targ;
+	    res = GetInpSdata(EInpTarget, targ);
+	    if (res) {
+		aData.mData = TMut(ENt_Cont, ENa_Targ, targ, ENa_Id, name, ENa_MutVal, value);
+	    } else {
+		aData.mData = TMut(ENt_Cont, ENa_Id, name, ENa_MutVal, value);
+	    }
 	    aData.mValid = true;
 	} else {
 	    aData.mValid = false;

@@ -44,6 +44,7 @@ class DChr2: public DtBase
 	static bool IsSrepFit(const string& aString);
 	static bool IsDataFit(const DChr2& aData);
     public:
+	DChr2& operator=(const DChr2& b) { this->DtBase::operator=(b); mData = b.mData; return *this;};
 	// From DtBase
 	virtual string GetTypeSig() const override { return TypeSig();};
 	virtual bool DataFromString(istringstream& aStream, bool& aRes) override;

@@ -115,6 +115,21 @@ void SdoName::DtGet(Stype& aData)
     }
 }
 
+///  SDO "Parent"
+
+SdoParent::SdoParent(const string &aType, const string& aName, MEnv* aEnv): Sdo<string>(aType, aName, aEnv) { }
+
+void SdoParent::DtGet(Stype& aData)
+{
+    if (!mSue)  {
+	Log(TLog(EErr, this) + "Owner is not explorable");
+    } else {
+	aData.mData = mSue->parentName();
+	aData.mValid = true;
+    }
+}
+
+
 
 
 ///  SDO "Component exists"

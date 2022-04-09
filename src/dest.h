@@ -175,7 +175,6 @@ class TrNegVar: public TrVar
 };
 
 
-
 /** @brief Transition agent "Convert to URI"
  * */
 class TrUri: public TrVar
@@ -328,7 +327,7 @@ class TrMutConn: public TrMut
 class TrMutCont: public TrMut
 {
     public:
-	enum { EInpName, EInpValue };
+	enum { EInpTarget, EInpName, EInpValue };
     public:
 	static const char* Type() { return "TrMutCont";};
 	TrMutCont(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);

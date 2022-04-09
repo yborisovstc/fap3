@@ -402,6 +402,11 @@ Func* FApnd<T>::Create(Host* aHost, const string& aOutIid, const string& aInpIid
 	if (aOutIid == MDtGet<TData>::Type() && aInpIid == MDtGet<TInpData>::Type()) {
 	    res = new FApnd<T>(*aHost);
 	}
+    } else if (!aInpIid.empty()) {
+	// TODO Resolution basing only on input type. Is this acceptable?
+	if (aInpIid == MDtGet<TInpData>::Type()) {
+	    res = new FApnd<T>(*aHost);
+	}
     } else {
 	// Weak negotiation - wrong case here
 	//mHost.log(EErr, "Creating instance, wrong outp [" + aOutIid + "] or inp [" + aInpIid + "] types");
@@ -915,6 +920,60 @@ void FSToStr<T>::DtGet(Sdata<string>& aData)
 	mRes = aData;
 	mHost.OnFuncContentChanged();
     }
+}
+
+
+/// Converting Uri to Sdata<string>
+
+Func* FUriToStr::Create(Host* aHost, const string& aOutIid, const string& aInpIid)
+{
+    Func* res = NULL;
+    if (!aOutIid.empty()) {
+	if (aOutIid == MDtGet<TData>::Type() && aInpIid == MDtGet<TInpData>::Type()) {
+	    res = new FUriToStr(*aHost);
+	}
+    } else {
+	// Weak negotiation - wrong case here
+	//mHost.log(EErr, "Creating instance, wrong outp [" + aOutIid + "] or inp [" + aInpIid + "] types");
+    }
+    return res;
+}
+
+void FUriToStr::DtGet(TData& aData)
+{
+    bool res = true;
+    MDVarGet* dget = mHost.GetInp(EInp);
+    MDtGet<TInpData>* dfget = dget ? dget->GetDObj(dfget) : nullptr;
+    if (dfget) {
+	TInpData arg;
+	dfget->DtGet(arg);
+	if (arg.mValid) {
+	    aData.mData = arg.ToString(false);
+	    aData.mValid = true;
+	} else {
+	    mHost.log(EErr, "Incorrect input data");
+	    TInpData arg;
+	    dfget->DtGet(arg);
+	    res = false;
+	}
+    } else {
+	mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp) + "]");
+	res = false;
+    }
+    aData.mValid = res;
+    if (mRes != aData) {
+	mRes = aData;
+	mHost.OnFuncContentChanged();
+    }
+}
+
+string FUriToStr::GetInpExpType(int aId) const
+{
+    string res;
+    if (aId == EInp) {
+	res = MDtGet<TInpData>::Type();
+    }
+    return res;
 }
 
 

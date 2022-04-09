@@ -63,6 +63,7 @@ class MNode: public MIface
 	virtual void MNode_doDump(int aLevel, int aIdt, ostream& aOs) const = 0;
 	// Local
 	virtual string name() const = 0;
+	virtual string parentName() const = 0;
 	virtual const MNode* getComp(const string& aId) const = 0;
 	virtual MNode* getComp(const string& aId) = 0;
 	virtual const MNode* getNode(const GUri& aUri) const = 0;

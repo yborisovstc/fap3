@@ -894,7 +894,10 @@ bool DAdp::UpdateMagBase()
     bool res = false;
     // TODO to implement all use-cases
     // Handle mount point specifically
-    MNode* mbase = mIbMagBase.data();
+    MNode* mbaseo = mIbMagBase.data();
+    // Handle mount point specifically
+    MMntp* mbasemp = mbaseo->lIf(mbasemp);
+    MNode* mbase = mbasemp ? mbasemp->root() : mbaseo;
     if (mbase) {
 	if (mMagBase != mbase) {
 	    mMagBase = mbase;

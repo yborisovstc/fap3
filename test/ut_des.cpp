@@ -26,6 +26,8 @@ class Ut_des : public CPPUNIT_NS::TestFixture
     virtual void setUp();
     virtual void tearDown();
     private:
+    MNode* constructSystem(const string& aFname);
+    private:
     void test_des_1();
     void test_des_ades_1();
     void test_des_dmc_1();
@@ -40,6 +42,23 @@ class Ut_des : public CPPUNIT_NS::TestFixture
 
 CPPUNIT_TEST_SUITE_REGISTRATION( Ut_des );
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(Ut_des, "Ut_des");
+
+MNode* Ut_des::constructSystem(const string& aSpecn)
+{
+    string ext = "chs";
+    string spec = aSpecn + string(".") + "chs";
+    string log = aSpecn + "_" + ext + ".log";
+    mEnv = new Env(spec, log);
+    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv != 0);
+    mEnv->ImpsMgr()->ResetImportsPaths();
+    mEnv->ImpsMgr()->AddImportsPaths("../modules");
+    mEnv->constructSystem();
+    MNode* root = mEnv->Root();
+    MElem* eroot = root ? root->lIf(eroot) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get root", root && eroot);
+    return root;
+}
+
 
 
 void Ut_des::setUp()
@@ -151,16 +170,8 @@ void Ut_des::test_des_tr_1()
 {
     cout << endl << "=== Test of DES transisions ===" << endl;
 
-    const string specn("ut_des_tr_1");
-    string ext = "chs";
-    string spec = specn + string(".") + ext;
-    string log = specn + "_" + ext + ".log";
-    mEnv = new Env(spec, log);
-    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv);
-    mEnv->constructSystem();
-    MNode* root = mEnv->Root();
+    MNode* root = constructSystem("ut_des_tr_1");
     MElem* eroot = root ? root->lIf(eroot) : nullptr;
-    CPPUNIT_ASSERT_MESSAGE("Fail to get root", eroot);
 
     // Verifiy chromo2 data
     cout << "Verifiy chromo2 data" << endl;

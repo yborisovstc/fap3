@@ -109,9 +109,9 @@ void ASdc::SdcIapEnb::update()
     template <class T>
 void ASdc::SdcIapg<T>::update()
 {
-    bool res = mHost->GetInpData<T>(mInpUri, mCdt);
+    bool res = mHost->GetInpData<T>(mInpUri, mUdt);
     mActivated = false;
-    //setUpdated();
+    setUpdated();
 }
 
 template <class T>
@@ -422,7 +422,11 @@ template<typename T> bool ASdc::GetInpData(const string aInpUri, T& aRes)
     bool res = false;
     MNode* inp = getNode(aInpUri);
     if (inp) {
-	res =  GetGData(inp, aRes);
+	T data;
+	res =  GetGData(inp, data);
+	if (res) {
+	    aRes = data;
+	}
     } else {
 	Log(TLog(EDbg, this) + "Cannot get input [" + aInpUri + "]");
     }

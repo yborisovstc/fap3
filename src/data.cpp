@@ -136,7 +136,8 @@ template<class T> bool HDt<T>::Set(MDVarGet* aInp)
     bool res = false;
     MDtGet<T>* dget = aInp->GetDObj(dget);
     if (dget != NULL) {
-	T data = mData;
+	T data;
+        data = mData;
 	dget->DtGet(data);
 	if (mData != data) {
 	    mData = data;

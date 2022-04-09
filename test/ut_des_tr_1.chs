@@ -104,7 +104,7 @@ MyRoot : Elem {
                     Inp2 ~ : State  { = "URI Node3"; };
                 };
             }
-            # "Conversion to string";
+            # "Conversion int to string";
             IntToStr : State @ {
                 _@ < {
                     = "SS 0";
@@ -112,6 +112,34 @@ MyRoot : Elem {
                 }
                 Inp ~ : TrTostrVar @ {
                     Inp ~ : State  { = "SI 34"; };
+                };
+            }
+            # "Conversion URI to string";
+            SUriToStr : State @ {
+                _@ < { = "SS 0"; Debug.LogLevel = "Dbg"; }
+                Inp ~ : TrTostrVar @ {
+                    Inp ~ : State  { = "URI bla1.bla2.bla3"; };
+                };
+            }
+            # "Conversion URI to string";
+            SUriToStr2 : State @ {
+                _@ < { = "SS 0"; Debug.LogLevel = "Dbg"; }
+                Inp ~ UriToStr2 : TrTostrVar @ {
+                    Inp ~ : TrApndVar @ {
+                        Inp1 ~ : State { = "URI part1"; };
+                        Inp2 ~ : State { = "URI part2"; };
+                    };
+                };
+            }
+            # "Mutation Content";
+            SMutCont2 : State @ {
+                _@ < { Debug.LogLevel = "Dbg"; = "CHR2 { }"; }
+                Inp ~ : TrChr @ {
+                    Mut ~ : TrMutCont @ {
+                        Target ~ : State { = "SS SModelUri"; };
+                        Name ~ : State { = "SS "; }; 
+                        Value ~ : State { = "SS test.elem1"; }; 
+                    };
                 };
             }
         }
