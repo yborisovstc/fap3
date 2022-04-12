@@ -170,6 +170,25 @@ class FApnd: public Func, public MDtGet<T> {
 	TData mRes;
 };
 
+/** @brief Selec valid data
+ * */
+template <class T>
+class FSvld: public Func, public MDtGet<T> {
+    public:
+	using TData = T;
+	using TInpData = T;
+    public:
+	static Func* Create(Host* aHost, const string& aOutIid, const string& aInp1Id);
+	FSvld(Host& aHost): Func(aHost) {}
+	virtual MIface* getLif(const char *aName) override;
+	virtual string IfaceGetId() const { return MDtGet<TData>::Type();}
+	virtual void DtGet(TData& aData);
+	virtual void GetResult(string& aResult) const {mRes.ToString(aResult);}
+	virtual string GetInpExpType(int aId) const;
+	TData mRes;
+};
+
+
 
 
 
@@ -358,6 +377,32 @@ class FUriToStr: public FToStrBase
 	FUriToStr(Host& aHost): FToStrBase(aHost) {}
 	virtual void DtGet(TData& aData);
 	virtual string GetInpExpType(int aId) const;
+};
+
+
+/** @brief Indication that data is valid
+ * */
+class FIsValidBase: public Func, public MDtGet<Sdata<bool> >
+{
+    public:
+	using TOData = Sdata<bool>;
+	using TOGetData = MDtGet<TOData>;
+	FIsValidBase(Host& aHost): Func(aHost) {};
+	// From Func
+	virtual string IfaceGetId() const override { return TOGetData::Type(); }
+	virtual void GetResult(string& aResult) const override;
+	virtual MIface* getLif(const char *aName) override;
+    protected:
+	TOData mRes;
+};
+
+
+template <class T> class FIsValid: public FIsValidBase
+{
+    public:
+	static Func* Create(Host* aHost, const string& aInp1Iid);
+	FIsValid(Host& aHost): FIsValidBase(aHost) {};
+	virtual void DtGet(TOData& aData);
 };
 
 

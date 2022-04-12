@@ -449,7 +449,7 @@ class DesEIbMnode: public DesEIbt<MNode*>
 class DesEOstb: public MDVarGet {
     public:
 	DesEOstb(MNode* aHost, const string& aCpUri, const string& aCpType = CpStateOutp::Type()):
-	    mHost(aHost), mCpUri(aCpUri), mCpType(aCpType), mValid(false) { eHost()->registerOst(this);}
+	    mHost(aHost), mCpUri(aCpUri), mCpType(aCpType) { eHost()->registerOst(this);}
 	string getCpUri() const { return mCpUri;}
 	// From MDVarGet
 	virtual string MDVarGet_Uid() const override {return MDVarGet::Type();}
@@ -462,7 +462,6 @@ class DesEOstb: public MDVarGet {
 	MNode* mHost;
 	string mCpUri;  /*!< Output URI */
 	string mCpType; /*!< Type of input connpoint */
-	bool mValid;  /*!< Indication of data validity */
 };
 
 
@@ -470,26 +469,27 @@ class DesEOstb: public MDVarGet {
  * */
 template <typename T> class DesEOsts: public DesEOstb, public MDtGet<Sdata<T>> {
     public:
+	using Tdata = Sdata<T>;
 	DesEOsts(MNode* aHost, const string& aCpUri): DesEOstb(aHost, aCpUri) {}
 	// From MDVarGet
-	virtual string VarGetIfid() const override {return MDtGet<Sdata<T>>::Type();}
+	virtual string VarGetIfid() const override {return MDtGet<Tdata>::Type();}
 	virtual MIface* DoGetDObj(const char *aName) override;
 	// From MDtGet
-	virtual string MDtGet_Uid() const {return MDtGet<Sdata<T>>::Type();}
-	virtual void DtGet(Sdata<T>& aData) override { aData.mData = mData; aData.mValid = true;}
+	virtual string MDtGet_Uid() const {return MDtGet<Tdata>::Type();}
+	virtual void DtGet(Sdata<T>& aData) override { aData.mData = mData.mData; aData.mValid = true;}
 	// Local
 	void updateData(const T& aData);
     public:
-	T mData;
+	Tdata mData;
 };
 
 template <typename T>
 MIface* DesEOsts<T>::DoGetDObj(const char *aName)
 {
     MIface* res = NULL;
-    string tt = MDtGet<Sdata<T> >::Type();
+    string tt = MDtGet<Tdata>::Type();
     if (tt.compare(aName) == 0) {
-	res = dynamic_cast<MDtGet<Sdata<T> >*>(this);
+	res = dynamic_cast<MDtGet<Tdata>*>(this);
     }
     return res;
 }
@@ -497,11 +497,58 @@ MIface* DesEOsts<T>::DoGetDObj(const char *aName)
 template <typename T>
 void DesEOsts<T>::updateData(const T& aData)
 {
+    if (aData != mData.mData) {
+	Tdata newData(aData);
+	eHost()->logEmb(TLog(TLogRecCtg::EDbg, mHost) + "[" + mCpUri + "] Updated: [" + mData.ToString() + "] -> [" + newData.ToString() + "]");
+	mData.mData = aData; mData.mValid = true;
+	NotifyInpsUpdated();
+    }
+}
+
+/** @brief Output state with generic data
+ * */
+template <typename T> class DesEOst: public DesEOstb, public MDtGet<T> {
+    public:
+	using Tdata = T;
+	using TDget = MDtGet<Tdata>;
+	DesEOst(MNode* aHost, const string& aCpUri): DesEOstb(aHost, aCpUri) {}
+	// From MDVarGet
+	virtual string VarGetIfid() const override {return TDget::Type();}
+	virtual MIface* DoGetDObj(const char *aName) override {
+	    return (string(TDget::Type()).compare(aName) == 0) ? dynamic_cast<TDget*>(this) : nullptr; }
+	// From MDtGet
+	virtual string MDtGet_Uid() const {return TDget::Type();}
+	virtual void DtGet(Tdata& aData) override { aData = mData; }
+	// Local
+	void updateData(const T& aData);
+	void updateInvalid();
+    public:
+	Tdata mData;
+};
+
+template <typename T>
+void DesEOst<T>::updateData(const T& aData)
+{
     if (aData != mData) {
+	eHost()->logEmb(TLog(TLogRecCtg::EDbg, mHost) + "[" + mCpUri + "] Updated: [" + mData.ToString() + "] -> [" + aData.ToString() + "]");
 	mData = aData;
 	NotifyInpsUpdated();
     }
 }
+
+template <typename T>
+void DesEOst<T>::updateInvalid()
+{
+    if (mData.IsValid()) {
+	T prevData = mData;
+	mData.mValid = false;
+	eHost()->logEmb(TLog(TLogRecCtg::EDbg, mHost) + "[" + mCpUri + "] Updated: [" + prevData.ToString() + "] -> [" + mData.ToString() + "]");
+	NotifyInpsUpdated();
+    }
+}
+
+
+
 
 /** @brief DES affecting Parameter base (not completed)
  * */

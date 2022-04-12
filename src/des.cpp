@@ -380,7 +380,7 @@ bool State::SContValue::setData(const string& aData)
 	    mHost.NotifyInpsUpdated();
 	}
     }  else {
-	mHost.Log(TLog(EErr, &mHost) + "Error on applying content [" + mName + "] value [" + aData + "]");
+	mHost.Log(TLog(EDbg2, &mHost) + "Error on applying content [" + mName + "] value [" + aData + "]");
 	res = mHost.mPdata->FromString(aData);
     }
     return res;

@@ -478,6 +478,81 @@ string FApnd<T>::GetInpExpType(int aId) const
 }
 
 
+/// Select valid data
+
+template<class T>
+Func* FSvld<T>::Create(Host* aHost, const string& aOutIid, const string& aInpIid)
+{
+    Func* res = NULL;
+    if (!aOutIid.empty()) {
+	if (aOutIid == MDtGet<TData>::Type() && aInpIid == MDtGet<TInpData>::Type()) {
+	    res = new FSvld<T>(*aHost);
+	}
+    } else if (!aInpIid.empty()) {
+	// TODO Resolution basing only on input type. Is this acceptable?
+	if (aInpIid == MDtGet<TInpData>::Type()) {
+	    res = new FSvld<T>(*aHost);
+	}
+    } else {
+	// Weak negotiation - wrong case here
+	//mHost.log(EErr, "Creating instance, wrong outp [" + aOutIid + "] or inp [" + aInpIid + "] types");
+    }
+    return res;
+}
+
+template<class T>
+MIface* FSvld<T>::getLif(const char *aName)
+{
+    MIface* res = NULL;
+    if (res = checkLif<MDtGet<TData>>(aName));
+    return res;
+}
+
+template<class T>
+void FSvld<T>::DtGet(TData& aData)
+{
+    bool res = true;
+    // Inp1
+    MDVarGet* dget1 = mHost.GetInp(EInp1);
+    MDtGet<TInpData>* dfget1 = dget1 ? dget1->GetDObj(dfget1) : nullptr;
+    MDVarGet* dget2 = mHost.GetInp(EInp2);
+    MDtGet<TInpData>* dfget2 = dget2 ? dget2->GetDObj(dfget2) : nullptr;
+    if (dfget1 && dfget2) {
+	TInpData arg1;
+	dfget1->DtGet(arg1);
+	TInpData arg2;
+	dfget2->DtGet(arg2);
+	if (!arg1.mValid && !arg2.mValid) {
+	    res = false;
+	} else if (arg1.mValid && arg2.mValid) {
+	    aData = arg1;
+	} else if (arg1.mValid) {
+	    aData = arg1;
+	} else if (arg2.mValid) {
+	    aData = arg2;
+	}
+    } else {
+	mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(dfget1 ? EInp2 : EInp1) + "]");
+	res = false;
+    }
+    aData.mValid = res;
+    if (mRes != aData) {
+	mRes = aData;
+	mHost.OnFuncContentChanged();
+    }
+}
+
+template<class T>
+string FSvld<T>::GetInpExpType(int aId) const
+{
+    string res;
+    if (aId == EInp1 || aId == EInp2) {
+	res = MDtGet<TInpData>::Type();
+    }
+    return res;
+}
+
+
 
 
 
@@ -638,7 +713,7 @@ MIface *FSwitchBool::getLif(const char *aName)
     // that switcher result is this iface of selected case. The second is that switcher 
     // implements MDVarGet by itselt and does commutation in this iface methods.
     // The first approach requires iface cache refresh any time the swithcher ctrl is changed.
-    // This is not what the cache is intended to and makes overhead. So let's select approach#2 for now.
+    // This is not what the cache is intended for and makes overhead. So let's select approach#2 for now.
     if (strcmp(aName, MDVarGet::Type()) == 0) res = (MDVarGet*) this;
     // if (strcmp(aName, MDVarGet::Type()) == 0) res = GetCase();
     return res;
@@ -978,6 +1053,51 @@ string FUriToStr::GetInpExpType(int aId) const
 
 
 
+/// Indication that data is valid
+
+void FIsValidBase::GetResult(string& aResult) const
+{
+    mRes.ToString(aResult);
+}
+
+MIface *FIsValidBase::getLif(const char *aName)
+{
+    MIface* res = NULL;
+    if (strcmp(aName, TOGetData::Type()) == 0) res = (TOGetData*) this;
+    return res;
+}
+
+
+template <class T> Func* FIsValid<T>::Create(Host* aHost, const string& aInp1Iid)
+{
+    Func* res = NULL;
+    if (aInp1Iid == MDtGet<T>::Type()) {
+	res = new FIsValid<T>(*aHost);
+    }
+    return res;
+}
+
+template <class T> void FIsValid<T>::DtGet(Sdata<bool>& aData)
+{
+    bool res = true;
+    MDVarGet* av1 = mHost.GetInp(EInp1);
+    if (av1) {
+	MDtGet<T>* a = av1->GetDObj(a);
+	if (a) {
+	    T data;
+	    a->DtGet(data);
+	    aData.mData = data.IsValid();
+	    aData.mValid = true;
+	}
+    }
+    aData.mValid = res;
+    if (mRes != aData) {
+	mRes = aData;
+	mHost.log(EDbg, string("Result: ") +  (res ? (aData.mData ? "true" : "false") : "err"));
+	mHost.OnFuncContentChanged();
+    }
+}
+
 
 
 
@@ -1003,6 +1123,9 @@ void Init()
     FApnd<Sdata<string>>::Create(host, string(), string());
     FApnd<DGuri>::Create(host, string(), string());
     FSToStr<int>::Create(host, string(), string());
+    FIsValid<DGuri>::Create(host, "");
+    FSvld<DGuri>::Create(host, "", "");
+    FSvld<Sdata<string>>::Create(host, "", "");
 }
 
 

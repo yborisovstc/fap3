@@ -21,9 +21,9 @@ class DMut: public DtBase
 	virtual string GetTypeSig() const override { return TypeSig();};
 	virtual bool DataFromString(istringstream& aStream, bool& aRes) override;
 	virtual void DataToString(stringstream& aStream) const override;
-	virtual bool operator==(const MDtBase& b) override {
+	virtual bool operator==(const MDtBase& b) const override {
 	    return this->DtBase::operator==(b) && (mData == dynamic_cast<const DMut&>(b).mData);}
-	virtual bool operator!=(const MDtBase& b) override { return !DMut::operator==(b);}
+	virtual bool operator!=(const MDtBase& b) const override { return !DMut::operator==(b);}
 	//virtual bool IsCompatible(const DtBase& aSrc) override;
     public:
 	TMut mData;
@@ -49,9 +49,9 @@ class DChr2: public DtBase
 	virtual string GetTypeSig() const override { return TypeSig();};
 	virtual bool DataFromString(istringstream& aStream, bool& aRes) override;
 	virtual void DataToString(stringstream& aStream) const override;
-	virtual bool operator==(const MDtBase& b) override {
+	virtual bool operator==(const MDtBase& b) const override {
 	    return this->DtBase::operator==(b) && (mData == dynamic_cast<const DChr2&>(b).mData);}
-	virtual bool operator!=(const MDtBase& b) override { return !DChr2::operator==(b);}
+	virtual bool operator!=(const MDtBase& b) const override { return !DChr2::operator==(b);}
     public:
 	Chromo2 mData;
 };

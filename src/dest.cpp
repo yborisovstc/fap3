@@ -374,7 +374,6 @@ void TrSwitchBool::Init(const string& aIfaceName)
 	else if (!inp3) inp = GetInpUri(FSwithcBase::EInp_1 + 1);
 	Logger()->Write(EErr, this, "Cannot get input [%s]", inp.c_str());
     }
-
 }
 
 string TrSwitchBool::GetInpUri(int aId) const 
@@ -552,6 +551,39 @@ void TrApndVar::Init(const string& aIfaceName)
 }
 
 string TrApndVar::GetInpUri(int aId) const
+{
+    if (aId == Func::EInp1) return "Inp1";
+    else if (aId == Func::EInp2) return "Inp2";
+    else return string();
+}
+
+
+///// Select valid
+
+TrSvldVar::TrSvldVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+{
+    AddInput(GetInpUri(Func::EInp1));
+    AddInput(GetInpUri(Func::EInp2));
+}
+
+void TrSvldVar::Init(const string& aIfaceName)
+{
+    if (mFunc) {
+	delete mFunc;
+	mFunc = NULL;
+    }
+    MDVarGet* inp = GetInp(Func::EInp1);
+    if (inp) {
+	string t_inp = inp->VarGetIfid();
+	if ((mFunc = FSvld<Sdata<string>>::Create(this, aIfaceName, t_inp)));
+	else if ((mFunc = FSvld<DGuri>::Create(this, aIfaceName, t_inp)));
+	else {
+	    Logger()->Write(EErr, this, "Failed init function");
+	}
+    }
+}
+
+string TrSvldVar::GetInpUri(int aId) const
 {
     if (aId == Func::EInp1) return "Inp1";
     else if (aId == Func::EInp2) return "Inp2";
@@ -1082,3 +1114,65 @@ void TrChrc::DtGet(DChr2& aData)
     }
     mRes = aData;
 }
+
+
+#if 0 // Attemtp to created solution that doesn't use paremetrized data iface.
+/// Agent function "Data is valid"
+
+TrIsValid::TrIsValid(const string& aType, const string& aName, MEnv* aEnv): TrBase(aType, aName, aEnv)
+{
+    AddInput(GetInpUri(EInp));
+}
+string TrIsValid::GetInpUri(int aId) const
+{
+    if (aId == EInp) return "Inp";
+    else return string();
+}
+
+void TrIsValid::DtGet(TSdata& aData)
+{
+    MNode* inp = getNode(GetInpUri(EInp));
+    if (inp) {
+	MUnit* vgetu = inp->lIf(vgetu);
+	MDVarGet* vget = vgetu ? vgetu->getSif<MDVarGet>(vget) : nullptr;
+	if (vget) {
+	    string difid = vget->VarGetIfid();
+	    if (!difid.empty()) {
+		MIface* dget = vget->DoGetDObj(difid.c_str());
+		//MDtBase* data = dget ? dget->
+	    }
+	}
+    } else {
+	Log(TLog(EDbg, this) + "Cannot get input  [" + GetInpUri(EInp) + "]");
+	aData.mValid = false;
+    }
+}
+#endif 
+
+///// TrIsValid
+
+TrIsValid::TrIsValid(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+{
+    AddInput(GetInpUri(Func::EInp1));
+}
+
+void TrIsValid::Init(const string& aIfaceName)
+{
+    TrVar::Init(aIfaceName);
+    MDVarGet* inp1 = GetInp(Func::EInp1);
+    if (aIfaceName == TOGetData::Type() && inp1) {
+	string t1 = inp1->VarGetIfid();
+	if (mFunc = FIsValid<DGuri>::Create(this, t1));
+	else {
+	    Log(TLog(EErr, this) + "Failed init, input [" + t1 + "]");
+	}
+    }
+}
+
+string TrIsValid::GetInpUri(int aId) const 
+{
+    if (aId == Func::EInp1) return "Inp";
+    else return string();
+}
+
+

@@ -24,14 +24,14 @@ class MDtBase
 	virtual void ToString(string& aString, bool aSig = true) const = 0;
 	virtual bool FromString(const string& aString) = 0;
 	virtual bool IsValid() const { return false;}
-	virtual bool operator==(const MDtBase& b) = 0;
-	virtual bool operator!=(const MDtBase& b) = 0;
+	virtual bool operator==(const MDtBase& b) const = 0;
+	virtual bool operator!=(const MDtBase& b) const = 0;
     public:
 	virtual string GetTypeSig() const { return "?";}
 	virtual void DataToString(stringstream& aStream) const {aStream << "?";}
 	// TODO to swap aRes and return data (sign of change)
 	virtual bool DataFromString(istringstream& aStream, bool& aRes) { return false;}
-	virtual bool IsCompatible(const MDtBase& b) {return true;}
+	virtual bool IsCompatible(const MDtBase& b) const {return true;}
     public:
 	static const char mKTypeToDataSep;
 };
@@ -51,8 +51,8 @@ class DtBase : public MDtBase
 	static bool IsDataFit(const DtBase& aData, const string& aTypeSig);
 	virtual void ToString(string& aString, bool aSig = true) const override;
 	virtual bool FromString(const string& aString) override;
-	virtual bool operator==(const MDtBase& b) override { return mValid == b.IsValid();}
-	virtual bool operator!=(const MDtBase& b) override { return !DtBase::operator==(b);}
+	virtual bool operator==(const MDtBase& b) const override { return mValid == b.IsValid();}
+	virtual bool operator!=(const MDtBase& b) const override { return !DtBase::operator==(b);}
 	virtual bool IsValid() const override { return mValid;}
     public:
 	virtual DtBase* Clone() {return NULL;}
@@ -80,9 +80,9 @@ template<class T> class Sdata: public DtBase
 	virtual void DataToString(stringstream& aStream) const override { aStream << std::boolalpha << mData;};
 	virtual bool DataFromString(istringstream& aStream, bool& aRes) override;
 	virtual DtBase* Clone() {return new Sdata<T>(*this);};
-	virtual bool operator==(const MDtBase& sb) override { const Sdata<T>& b = dynamic_cast<const Sdata<T>& >(sb);
+	virtual bool operator==(const MDtBase& sb) const override { const Sdata<T>& b = dynamic_cast<const Sdata<T>& >(sb);
 	    return &b != NULL && DtBase::operator==(b) && mData == b.mData;};
-	virtual bool operator!=(const MDtBase& b) override { return !Sdata<T>::operator==(b);}
+	virtual bool operator!=(const MDtBase& b) const  override { return !Sdata<T>::operator==(b);}
 	bool operator>(const Sdata<T>& b) const { return mData > b.mData;};
 	bool operator>=(const Sdata<T>& b) const { return mData >= b.mData;};
 	bool operator<(const Sdata<T>& b) const { return mData < b.mData;};
@@ -176,10 +176,10 @@ template<class T> class Mtr: public MtrBase
 	static bool IsDataFit(const Mtr<T>& aData) { return MtrBase::IsDataFit(aData, TypeSig());};
 	T GetElem(int r, int c) const { int i = Ind(r,c); return (i == -1) ? T(0) : mData.at(i);};
 	T& Elem(int r, int c) { int i = Ind(r,c); assert(i >= 0 && i < mData.size()); return mData.at(i);};
-	virtual bool operator==(const MDtBase& sb) override { 
+	virtual bool operator==(const MDtBase& sb) const override { 
 	    const Mtr<T>& b = dynamic_cast<const Mtr<T>& >(sb); return &b != NULL && DtBase::operator==(b) &&
 		this->mType == b.mType && this->mDim == b.mDim && this->mData == b.mData;};
-	virtual bool operator!=(const MDtBase& b) override { return !Mtr<T>::operator==(b);}
+	virtual bool operator!=(const MDtBase& b) const override { return !Mtr<T>::operator==(b);}
 	Mtr<T>& operator=(const Mtr<T>& b) { this->MtrBase::operator=(b); mData = b.mData; return *this;};
 	template <class TA> void CastDown(const Mtr<TA>& a);
 	virtual string GetTypeSig() const { return TypeSig();};
@@ -286,8 +286,8 @@ class NTuple: public DtBase
 	virtual void ToString(string& aString, bool aSig = true) const override;
 	bool FromString(const string& aString);
 	DtBase* GetElem(const string& aName);
-	virtual bool operator==(const MDtBase& sb) override;
-	virtual bool operator!=(const MDtBase& b) override { return !NTuple::operator==(b);}
+	virtual bool operator==(const MDtBase& sb) const override;
+	virtual bool operator!=(const MDtBase& b) const override { return !NTuple::operator==(b);}
 	NTuple& operator=(const NTuple& b);
 	virtual string GetTypeSig() const { return TypeSig();};
 	virtual void DataToString(stringstream& aStream) const;
@@ -321,10 +321,10 @@ class Enum: public DtBase
 	virtual string GetTypeSig() const { return TypeSig();};
 	virtual bool DataFromString(istringstream& aStream, bool& aRes);
 	virtual void DataToString(stringstream& aStream) const;
-	virtual bool IsCompatible(const DtBase& b);
+	virtual bool IsCompatible(const DtBase& b) const;
     public:
-	virtual bool operator==(const MDtBase& sb) override;
-	virtual bool operator!=(const MDtBase& b) override { return !Enum::operator==(b);}
+	virtual bool operator==(const MDtBase& sb) const override;
+	virtual bool operator!=(const MDtBase& b) const override { return !Enum::operator==(b);}
 	bool operator>(const Enum& b) const { return mData > b.mData;};
 	bool operator>=(const Enum& b) const { return mData >= b.mData;};
 	bool operator<(const Enum& b) const { return mData < b.mData;};
@@ -352,7 +352,7 @@ class VectorBase : public DtBase
 	// From DtBase
 	virtual void DataToString(stringstream& aStream) const override;
 	virtual bool DataFromString(istringstream& aStream, bool& aRes);
-	virtual bool IsCompatible(const MDtBase& b) override;
+	virtual bool IsCompatible(const MDtBase& b) const override;
 };
 
 /** @brief Typed vector
@@ -380,12 +380,12 @@ class Vector : public VectorBase
 	    aRes = true;
 	    return true; // TODO YB get non trivial ret val
 	}
-	virtual bool operator==(const MDtBase& b) override {
+	virtual bool operator==(const MDtBase& b) const override {
 	    if (!IsCompatible(b)) return false;
 	    const Vector<T>* vb = dynamic_cast<const Vector<T>*>(&b);
 	    if (!vb) return false;
     	    return this->mData == vb->mData; }
-	virtual bool operator!=(const MDtBase& b) override { return !Vector::operator==(b);}
+	virtual bool operator!=(const MDtBase& b) const override { return !Vector::operator==(b);}
 	// From MDtBase
 	virtual string GetTypeSig() const { return TypeSig();};
 	virtual DtBase* Clone() {return new Vector<T>(*this);};

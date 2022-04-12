@@ -24,6 +24,9 @@ template<> void Sdata<float>::InpFromString(istringstream& aStream, float& aRes)
 template<> void Sdata<bool>::InpFromString(istringstream& aStream, bool& aRes) { aStream >> std::boolalpha >> aRes; }
 template<> void Sdata<string>::InpFromString(istringstream& aStream, string& aRes) { aRes = aStream.str(); }
 
+// Special values
+const string KSv_Inv = "_INV"; //!< Invalid
+
 
 DtBase::~DtBase()
 {
@@ -73,7 +76,7 @@ void DtBase::ToString(string& aString, bool aSig) const
 
 bool DtBase::FromString(const string& aString)
 {
-    bool res = true;
+    bool res = true, inv = false;
     bool changed = false;
     string sig;
     int end = ParseSigPars(aString, sig);
@@ -87,8 +90,12 @@ bool DtBase::FromString(const string& aString)
 	    ss = aString.substr(beg);
 	}
 	if (!ss.empty()) {
-	    istringstream sstr(ss);
-	    changed |= DataFromString(sstr, res);
+	    if (ss == KSv_Inv) {
+		res = false;
+	    } else {
+		istringstream sstr(ss);
+		changed |= DataFromString(sstr, res);
+	    }
 	}
 	/* YB Let's enable default data
 	else {
@@ -627,7 +634,7 @@ DtBase* NTuple::GetElem(const string& aName)
     return res;
 }
 
-bool NTuple::operator==(const MDtBase& sb)
+bool NTuple::operator==(const MDtBase& sb) const
 { 
     const NTuple& b = dynamic_cast<const NTuple&>(sb);
     bool res = true;
@@ -838,7 +845,7 @@ void Enum::DataToString(stringstream& aStream) const
     }
 }
 
-bool Enum::IsCompatible(const DtBase& sb)
+bool Enum::IsCompatible(const DtBase& sb) const
 {
     const Enum& b = dynamic_cast<const Enum& >(sb); 
     bool res = b.mValid && b.GetTypeSig() == TypeSig() && mSet.size() == b.mSet.size();
@@ -851,7 +858,7 @@ bool Enum::IsCompatible(const DtBase& sb)
     return res;
 }
 
-bool Enum::operator==(const MDtBase& sb)
+bool Enum::operator==(const MDtBase& sb) const
 { 
     const Enum& b = dynamic_cast<const Enum& >(sb); 
     return &b != NULL && DtBase::operator==(b)  && mData == b.mData;
@@ -888,7 +895,7 @@ bool VectorBase::DataFromString(istringstream& aStream, bool& aRes)
     return changed;
 }
 
-bool VectorBase::IsCompatible(const MDtBase& sb)
+bool VectorBase::IsCompatible(const MDtBase& sb) const
 {
     const VectorBase& b = dynamic_cast<const VectorBase& >(sb); 
     bool res = b.mValid && b.GetTypeSig() == GetTypeSig();

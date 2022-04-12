@@ -142,6 +142,35 @@ MyRoot : Elem {
                     };
                 };
             }
+            # "Validity indication";
+            SIsValid1 : State @ {
+                _@ < { Debug.LogLevel = "Dbg"; = "SB _INV"; }
+                Inp ~ : TrIsValid @ {
+                    Inp ~ : State { = "URI _INV"; };
+                };
+            }
+            SIsValid2 : State @ {
+                _@ < { Debug.LogLevel = "Dbg"; = "SB _INV"; }
+                Inp ~ : TrIsValid @ {
+                    Inp ~ : State { = "URI hello"; };
+                };
+            }
+            # "Select valid data";
+            SSelValid1 : State @ {
+                _@ < { Debug.LogLevel = "Dbg"; = "URI _INV"; }
+                Inp ~ : TrSvldVar @ {
+                    Inp1 ~ : State { = "URI _INV"; };
+                    Inp2 ~ : State { = "URI Hello"; };
+                };
+            }
+            SSelValid2 : State @ {
+                _@ < { Debug.LogLevel = "Dbg"; = "URI Valid"; }
+                Inp ~ : TrSvldVar @ {
+                    Inp1 ~ : State { = "URI Hello"; };
+                    Inp2 ~ : State { = "URI World"; };
+                };
+            }
+
         }
     }
 }

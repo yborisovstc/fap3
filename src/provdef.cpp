@@ -44,12 +44,12 @@ const ProvDef::TFReg ProvDef::mReg ( {
 	Item<TrMaxVar>(), Item<TrSwitchBool>(), Item<TrCmpVar>(), Item<TrApndVar>(),
 	Item<TrAndVar>(), Item<TrOrVar>(), Item<TrNegVar>(), Item<TrUri>(), Item<TrTostrVar>(),
 	Item<TrMutNode>(), Item<TrMutConn>(), Item<TrMutDisconn>(), Item<TrMutCont>(),
-	Item<TrSizeVar>(), Item<TrAtVar>(), Item<TrMplVar>(),
-	Item<TrTuple>(), Item<TrChr>(), Item<TrChrc>(),
+	Item<TrSizeVar>(), Item<TrAtVar>(), Item<TrMplVar>(), Item<TrSvldVar>(),
+	Item<TrTuple>(), Item<TrChr>(), Item<TrChrc>(), Item<TrIsValid>(),
 	/* Des adapters */
 	Item<AMnodeAdp>(), Item<AMelemAdp>(), Item<AMntp>(), Item<DAdp>(),
 	/* SDCs */
-	Item<ASdcMut>(), Item<ASdcComp>(), Item<ASdcRm>(), Item<ASdcConn>(), Item<ASdcInsert>(), Item<ASdcInsert2>(),
+	Item<ASdcMut>(), Item<ASdcComp>(), Item<ASdcRm>(), Item<ASdcConn>(), Item<ASdcDisconn>(), Item<ASdcInsert>(), Item<ASdcInsert2>(),
 	Item<ASdcExtract>(), 
 	/* SDOs */
         Item<SdoName>(), Item<SdoParent>(), Item<SdoComp>(), Item<SdoConn>(), Item<SdoCompsCount>(), Item<SdoCompsNames>(), 

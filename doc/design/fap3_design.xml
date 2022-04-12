@@ -258,7 +258,7 @@
 
 	<glossentry id="gls_slc"><glossterm>SLC</glossterm> <acronym>SCC</acronym>
 	    <glossdef> <para>
-		ockets Loopback Connections. Socket design approach when loopback connections are supported
+		Sockets Loopback Connections. Socket design approach when loopback connections are supported
 		    <xref linkend="ds_ifcache_slc"/>. </para></glossdef>
 	</glossentry>
 
@@ -288,7 +288,8 @@
     <sect1 id="ds_itr"><title>Intro</title>
 	<sect2 id="ds_itr_sp"><title>The scope of the project</title>
 	    <simpara>This project is focusing on re-desing of DES framework fap2, aka grayb, ref <ulink url="../../../grayb/doc/design/index.html"/> for
-		the desing. Ref also <xref linkend="ds_ibc"/> for tracked list of the items to be addressed in FAP3. The main areas of improvement are:</simpara>
+		the desing. Ref also <xref linkend="ds_ibc"/> and <xref linkend="ds_ic"/> for tracked list of the items to be addressed and completed items in FAP3.
+		    The main areas of improvement are:</simpara>
 	    <itemizedlist>
 		<listitem>
 		    Unify of native level relations (connections), like owner-component, observer-observable, etc. Create common desing for the
@@ -2025,7 +2026,65 @@
 	</sect2>
     </sect1>
 
-    <sect1 id="ds_ibc"><title>Tracking: Desing items handing</title>
+    <sect1 id="ds_dsv"><title>Data special values</title>
+	<sect2><title>Intro</title>
+	    <simpara>It is common use-case when we need to analyze if the data is erroneous or the data isn't set yet. Data erroneous (validity) indication (mValid) is already supported in
+		DtBase (ref rdata.h). "Isn't set" indicator is not supported yet, not sure we need it, probably validity indicator is enough even these indicators has different meaning
+		actually.</simpara>
+	    <simpara>But it is not possible to set this special value via mutation and the special values don't have text representation.</simpara>
+	</sect2>
+	<sect2><title>Special values text representation, option#1.</title>
+	    <simpara>We can use for instance the syntax of special values text representatio as: </simpara>
+	    <programlisting>
+		representation = SIGNATURE " " "&lt;" special_value "&gt;"
+		special_value = special_value_invalid | special_value_unset
+		special_value_invalid = "ERR"
+		special_value_unset = "NIL"
+	    </programlisting>
+	</sect2>
+	<sect2><title>Special values text representation, option#2.</title>
+	    <simpara>We can use for instance the syntax of special values text representatio as: </simpara>
+	    <programlisting>
+		representation = SIGNATURE " " special_value
+		special_value = special_value_invalid | special_value_unset
+		special_value_invalid = "_err"
+		special_value_unset = "_nil"
+	    </programlisting>
+	    <simpara>We can introduce also escaping such special values</simpara>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_rdi"><title>Redesign data intarfaces.</title>
+	<sect2><title>Intro</title>
+	    <simpara>Current desing weakness is exposed by the use-case: how to simple check MDtBase IsValid() paremeter. This paremeter is base one, i.e. not
+		specific for type of data. It happens that it is not possible to get data base paremeter in simply manner. Ref dest.h TrIsValid.</simpara>
+	    <simpara>Currently the data ifaces are MDVarGet and parametrized MDtGet plus similar ifaces for setting data. All data related features are based on this
+		paremetrized data ifaces. This data parametrized iface approach causes a lot of related solutions. For instance there are paremetrized functions so 
+		transitions just dynamically creates the function that matches output and input data types.</simpara>
+	    <simpara>This approach was originated on earlier FAP design where is was assumed that any data types are allowed in the model. But then the
+		idea of universal data was introduced, ref MDataBase iface. This approach allows to get rid of parametrized data at least for the model parts relation.
+		But parametrized data was remain. We need to redesign the data ifaces to support universal data iface. This can vastly simplify DES framework.</simpara>
+	</sect2>
+	<sect2><title>Solution_1: Keep MDVarGet but use non-paremetrized MDget iface instead of paremetrized MDtGet. </title>
+	    <simpara>Pros: This solution allows smooth migration from templated iface. We just can redesing DES framework part by part.</simpara>
+	    <simpara>Cons: MDVarGet actually is not needed in our case - it aims exactly to support different type of data instead of generic one.</simpara>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_sor"><title>Redesing transtions to simplify MDesInpObserver routing.</title>
+	<sect2><title>Intro</title>
+	    <simpara>Ref <xref linkend="iss_009"/> for the problem description. The exact root-cause is that the routing of MDesInpObserver can
+		be very complex depending on tansition topology. This is because the transitions just routes the IRM request to pairs.</simpara>
+	</sect2>
+	<sect2><title>Solution#1 Disable transition MDesInpObserver IRM redirecting.</title>
+	    <sect3><title>Intro</title>
+		<simpara>The idea is to restrict this routing complexity by implementing MDesInpObserver in transition and rederecting the iface methods to
+		    pairs. This will drastically reduce the model scope of MDesInpObserver resolution so simplifies the IRM pahtes.</simpara>
+	    </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_ibc"><title>Tracking: Desing items to be handed</title>
 	<sect2><title>Intro</title>
 	    <simpara>Ref <xref linkend="ds_itr_sp"/> for the initial list of the problems need to be addressed in FAP3.</simpara>
 	</sect2>
@@ -2059,6 +2118,15 @@
 	<sect2><title>DES context for components.</title>
 	    <simpara>Ref <xref linkend="ds_dctx"/></simpara>
 	</sect2>
+	<sect2><title>Data special values.</title>
+	    <simpara>Ref <xref linkend="ds_dsv"/></simpara>
+	</sect2>
+	<sect2><title>Redesing data interfaces.</title>
+	    <simpara>Ref <xref linkend="ds_rdi"/></simpara>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_ic"><title>Tracking: Desing items completed</title>
     </sect1>
 
     <sect1 id="ds_iss"><title>Issues</title>
@@ -2261,9 +2329,25 @@
 		<simpara>To set SlotParent parameter from the real context where it is used.</simpara>
 	    </sect3>
 	</sect2>
+	<sect2 id="ds_iss_009"><title>[<glossterm id="iss_009">DS_ISS_009</glossterm>] 20220412 modnav2 stucks on creation phase.</title>
+	    <sect2><title>Intro</title>
+		<simpara>The app stucks on creation phase, just toolbar is layouted, but model view is not.</simpara>
+	    </sect2>
+	    <sect2><title>Analysis</title>
+		<simpara>The problem's root-cause is that IRM creates a massive amount of routing pathes for MDesInpObserver iface. This makes the IRM data update very slow,
+		    especially when the nodes invalidate its IRM nodes. Additional mechamisms like <xref linkend="gls_asr"/> exacerbates the problem.</simpara>
+		<simpara>The trigger of emerging of this problem is the VIS container update to handle button press event. This update assumes adding
+		    to the socket the transitions that sequentially (this is container socket phylosofy) forms the right URI of pressed widget. But this new transition
+		    creates very complex structure for IRM because the transition are not just chain but each node of the chain creates the nomber of IRM pathes. To
+		    the overall number of IRM pathes grows dramatically (some thousands for instance).</simpara>
+		<simpara>Simplifying of the new transitions and reducing the number of IRM pathes partially helps, but the app creating is still slow.</simpara>
+	    </sect2>
+	    <sect2><title>Solution</title>
+		<simpara>We need to redesing IRM rouing for MDesInpObserver iface. Ref <xref linkend="ds_sor"/> for the desing change details.</simpara>
+	    </sect2>
+	</sect2>
     </sect1>
 
-    <sect1></sect1>
 
 
 </article>

@@ -202,6 +202,19 @@ class TrApndVar: public TrVar
 	virtual string GetInpUri(int aId) const override;
 };
 
+/** @brief Transition agent "Select valid"
+ * */
+class TrSvldVar: public TrVar
+{
+    public:
+	static const char* Type() { return "TrSvldVar";}
+	TrSvldVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From ATrVar
+	virtual void Init(const string& aIfaceName) override;
+	virtual string GetInpUri(int aId) const override;
+};
+
+
 
 
 /** @brief Transition "Getting container size"
@@ -401,6 +414,53 @@ class TrChrc: public TrBase, public MDVarGet, public MDtGet<DChr2>
 	virtual string GetInpUri(int aId) const override;
     protected:
 	DChr2 mRes;  /*<! Cached result */
+};
+
+
+#if 0
+/** @brief Agent function "Data is valid"
+ * */
+class TrIsValid: public TrBase, public MDVarGet, public MDtGet<Sdata<bool>>
+{
+    public:
+	enum { EInp };
+	using TSdata = Sdata<bool>;
+	using TDget = MDtGet<TSdata>;
+    public:
+	static const char* Type() { return "TrIsValid";};
+	TrIsValid(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From MNode
+	virtual MIface* MNode_getLif(const char *aType) override;
+	// From MDVarGet
+	virtual string MDVarGet_Uid() const override { return getUid<MDVarGet>();}
+	virtual MIface* DoGetDObj(const char *aName) override {
+	    return (string(TDget::Type()).compare(aName) == 0) ? dynamic_cast<TDget*>(this) : nullptr; }
+	virtual string VarGetIfid() const override { return TDget::Type(); }
+	// From MDtGet
+	virtual void DtGet(TSdata& aData) override;
+    protected:
+	// From TrBase
+	virtual string GetInpUri(int aId) const override;
+    protected:
+	TSdata mRes;  /*<! Cached result */
+};
+
+#endif
+
+/** @brief Agent function "Is data valid"
+ * */
+class TrIsValid: public TrVar
+{
+    public:
+	using TOData = Sdata<bool>;
+	using TOGetData = MDtGet<TOData>;
+	static const char* Type() { return "TrIsValid";};
+	TrIsValid(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From ATrVar
+	virtual void Init(const string& aIfaceName) override;
+	virtual string GetInpUri(int aId) const override;
+	// From Func::Host
+	virtual int GetInpCpsCount() const override {return 1;}
 };
 
 

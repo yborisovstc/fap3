@@ -39,6 +39,7 @@ map<TNodeType, string> KNodeTypesNames_Init()
     res[ENt_Import] = "import";
     res[ENt_Seg] = "seg";
     res[ENt_Conn] = "conn";
+    res[ENt_Disconn] = "disconn";
     return res;
 }
 

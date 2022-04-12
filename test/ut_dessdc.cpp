@@ -14,8 +14,9 @@ class Ut_sdc : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST_SUITE(Ut_sdc);
 
     //CPPUNIT_TEST(test_Sdc_1);
-    CPPUNIT_TEST(test_Sdc_2);
+    //CPPUNIT_TEST(test_Sdc_2);
     //CPPUNIT_TEST(test_Sdc_3);
+    CPPUNIT_TEST(test_Sdc_4);
     //CPPUNIT_TEST(test_Sdo_1);
     CPPUNIT_TEST_SUITE_END();
     public:
@@ -27,6 +28,7 @@ class Ut_sdc : public CPPUNIT_NS::TestFixture
     void test_Sdc_1();
     void test_Sdc_2();
     void test_Sdc_3();
+    void test_Sdc_4();
     void test_Sdo_1();
     private:
     Env* mEnv;
@@ -142,6 +144,18 @@ void Ut_sdc::test_Sdc_3()
     // Verify the comp created
     MNode* comp = root->getNode("Launcher.Comp");
     CPPUNIT_ASSERT_MESSAGE("Comp hasn't been created", comp);
+
+    delete mEnv;
+}
+
+/** @brief SDC test - connect/disconnect
+ * */
+void Ut_sdc::test_Sdc_4()
+{
+    printf("\n === Test of SDC: connect-disconnect\n");
+    MNode* root = constructSystem("ut_sdc_4");
+
+    bool res = mEnv->RunSystem(12, 2);
 
     delete mEnv;
 }

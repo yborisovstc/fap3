@@ -12,6 +12,7 @@ class DGuri: public DtBase
 {
     public:
 	DGuri(): DtBase() {}
+	DGuri(const GUri& aSrc): DGuri() {  mData = aSrc; mValid = true; }
 	DGuri(const DGuri& aSrc): DtBase(aSrc), mData(aSrc.mData) {}
 	static const char* TypeSig();
 	static bool IsSrepFit(const string& aString);
@@ -22,9 +23,9 @@ class DGuri: public DtBase
 	virtual bool DataFromString(istringstream& aStream, bool& aRes) override;
 	virtual void DataToString(stringstream& aStream) const override;
 	DGuri& operator+=(const DGuri& b) { mData.append(b.mData); return *this;}
-	virtual bool operator==(const MDtBase& b) override {
+	virtual bool operator==(const MDtBase& b) const override {
 	    return this->DtBase::operator==(b) && (mData == dynamic_cast<const DGuri&>(b).mData);}
-	virtual bool operator!=(const MDtBase& b) override { return !DGuri::operator==(b);}
+	virtual bool operator!=(const MDtBase& b) const override { return !DGuri::operator==(b);}
 	bool operator>(const DGuri& b) const { return mData > b.mData;};
 	bool operator>=(const DGuri& b) const { return mData >= b.mData;};
 	bool operator<(const DGuri& b) const { return mData < b.mData;};
