@@ -5,6 +5,7 @@ Root : Elem {
     } 
     # "Runner";
     Launcher :  DesLauncher {
+        Controllable = "y";
         # "Creation";
         Dc_Create : ASdcComp @ {
             _@ < Debug.LogLevel = "Dbg";

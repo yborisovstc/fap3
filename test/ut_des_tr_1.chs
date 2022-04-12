@@ -10,9 +10,6 @@ MyRoot : Elem {
             Neg.Inp ~ St1;
             # "URI";
             Const_1 : State { = "URI State1"; }
-            St1 : State {
-                = "URI Node1";
-            }
             # "Size of vector";
             St2 : State {
                 = "VS Item_1 Item_2 Item_3";
@@ -155,19 +152,54 @@ MyRoot : Elem {
                     Inp ~ : State { = "URI hello"; };
                 };
             }
-            # "Select valid data";
+            # "Select valid URI";
             SSelValid1 : State @ {
                 _@ < { Debug.LogLevel = "Dbg"; = "URI _INV"; }
-                Inp ~ : TrSvldVar @ {
+                Inp ~ TSv1 : TrSvldVar @ {
                     Inp1 ~ : State { = "URI _INV"; };
                     Inp2 ~ : State { = "URI Hello"; };
                 };
+            }
+            SSelValid1d : State @ {
+                _@ < { Debug.LogLevel = "Dbg"; = "URI _INV"; }
+                 Inp ~ TSv1;
             }
             SSelValid2 : State @ {
                 _@ < { Debug.LogLevel = "Dbg"; = "URI Valid"; }
                 Inp ~ : TrSvldVar @ {
                     Inp1 ~ : State { = "URI Hello"; };
                     Inp2 ~ : State { = "URI World"; };
+                };
+            }
+            # "Select valid string";
+            SSelValidS1 : State @ {
+                _@ < { Debug.LogLevel = "Dbg"; = "SS _INV"; }
+                Inp ~ : TrSvldVar @ {
+                    Inp1 ~ : State { = "SS _INV"; };
+                    Inp2 ~ : State { = "SS Hello"; };
+                };
+            }
+            SSelValidS2 : State @ {
+                _@ < { Debug.LogLevel = "Dbg"; = "SS Valid"; }
+                Inp ~ : TrSvldVar @ {
+                    Inp1 ~ : State { = "SS Hello"; };
+                    Inp2 ~ : State { = "SS World"; };
+                };
+            }
+            # "URI tail";
+            SUriTail : State @ {
+                _@ < { Debug.LogLevel = "Dbg"; = "URI _INV"; }
+                Inp ~ : TrTailVar @ {
+                    Inp ~ : State { = "URI elem1.elem2.elem3"; };
+                    Head ~ : State { = "URI elem1"; };
+                };
+            }
+            # "URI head";
+            SUriHead : State @ {
+                _@ < { Debug.LogLevel = "Dbg"; = "URI _INV"; }
+                Inp ~ : TrHeadVar @ {
+                    Inp ~ : State { = "URI elem1.elem2.elem3"; };
+                    Tail ~ : State { = "URI elem3"; };
                 };
             }
 

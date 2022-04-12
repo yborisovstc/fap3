@@ -55,7 +55,7 @@ class FAddBase: public Func {
  * */
 template <class T> class FAddDt: public FAddBase, public MDtGet<T> {
     public:
-	static Func* Create(Host* aHost, const string& aString);
+	static Func* Create(Host* aHost, const string& aOutId);
 	FAddDt(Host& aHost): FAddBase(aHost) {};
 	virtual MIface* getLif(const char *aName) override;
 	virtual string IfaceGetId() const { return MDtGet<T>::Type();};
@@ -404,6 +404,95 @@ template <class T> class FIsValid: public FIsValidBase
 	FIsValid(Host& aHost): FIsValidBase(aHost) {};
 	virtual void DtGet(TOData& aData);
 };
+
+
+
+
+/** @brief Gettng tail base
+ * */
+class FTailBase: public Func {
+    public:
+	enum { EInp = EInp1, EHead = EInp2 };
+	FTailBase(Host& aHost): Func(aHost) {};
+};
+
+/** @brief Gettng tail base
+ * */
+template <typename T>
+class FTail: public FTailBase, public MDtGet<T>  {
+    public:
+	using TData = T;
+	using TDget = MDtGet<T>;
+    public:
+	FTail(Host& aHost): FTailBase(aHost) {};
+	virtual MIface* getLif(const char *aName) override;
+	virtual void GetResult(string& aResult) const override { }
+	virtual string GetInpExpType(int aId) const override { return TDget::Type(); }
+	virtual string IfaceGetId() const { return TDget::Type();};
+    public:
+	TData mRes;
+};
+
+template<typename T> MIface *FTail<T>::getLif(const char *aName)
+{
+    MIface* res = NULL;
+    if (strcmp(aName, TDget::Type()) == 0) res = dynamic_cast<TDget*>(this);
+    return res;
+}
+
+
+/** @brief Getting tail, URI
+ * */
+class FTailUri: public FTail<DGuri> {
+    public:
+	static Func* Create(Host* aHost, const string& aString);
+	FTailUri(Host& aHost): FTail<DGuri>(aHost) {};
+	virtual void DtGet(TData& aData);
+};
+
+
+/** @brief Gettng head base
+ * */
+class FHeadBase: public Func {
+    public:
+	enum { EInp = EInp1, ETail = EInp2 };
+	FHeadBase(Host& aHost): Func(aHost) {};
+};
+
+/** @brief Gettng head
+ * */
+template <typename T>
+class FHead: public FHeadBase, public MDtGet<T>  {
+    public:
+	using TData = T;
+	using TDget = MDtGet<T>;
+    public:
+	FHead(Host& aHost): FHeadBase(aHost) {};
+	virtual MIface* getLif(const char *aName) override;
+	virtual void GetResult(string& aResult) const override { }
+	virtual string GetInpExpType(int aId) const override { return TDget::Type(); }
+	virtual string IfaceGetId() const { return TDget::Type();};
+    public:
+	TData mRes;
+};
+
+template<typename T> MIface *FHead<T>::getLif(const char *aName)
+{
+    MIface* res = NULL;
+    if (strcmp(aName, TDget::Type()) == 0) res = dynamic_cast<TDget*>(this);
+    return res;
+}
+
+
+/** @brief Getting tail, URI
+ * */
+class FHeadUri: public FHead<DGuri> {
+    public:
+	static Func* Create(Host* aHost, const string& aString);
+	FHeadUri(Host& aHost): FHead<DGuri>(aHost) {};
+	virtual void DtGet(TData& aData);
+};
+
 
 
 

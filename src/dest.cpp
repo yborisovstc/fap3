@@ -101,6 +101,43 @@ template<typename T> bool TrBase::GetInpData(int aId, T& aRes)
     return res;
 }
 
+void TrBase::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+{
+    MIface* ifr = MNode_getLif(aName.c_str()); // Local
+    if (ifr) {
+	addIfpLeaf(ifr, aReq);
+    } else if (aName == MDesInpObserver::Type()) {
+	// Enable MDesInpObserver resolution for inputs only
+	// We cannot resolve inputs atm (it requires inputs registry)
+	// So checking components instead of inputs
+	MIfReq::TIfReqCp* req = aReq->binded()->firstPair();
+	if (req) {
+	    const MIfProvOwner* reqo = req->provided()->rqOwner();
+	    MNode* reqn = const_cast<MNode*>(reqo ? reqo->lIf(reqn) : nullptr); // Current requestor as node
+	    if (isOwned(reqn)) {
+		ifr = dynamic_cast<MDesInpObserver*>(this);
+		addIfpLeaf(ifr, aReq);
+	    }
+	}
+    } else {
+	CpStateOutp::resolveIfc(aName, aReq);
+    }
+}
+
+void TrBase::onInpUpdated()
+{
+    // Just rederect to call to pairs
+    for (auto pair : mPairs) {
+	MUnit* pe = pair->lIf(pe);
+	auto ifcs = pe ? pe->getIfs<MDesInpObserver>() : nullptr;
+	if (ifcs) for (auto ifc : *ifcs) {
+	    MDesInpObserver* obs = dynamic_cast<MDesInpObserver*>(ifc);
+	    // assert(obs);
+	    if (obs) obs->onInpUpdated();
+	}
+    }
+}
+
 
 
 
@@ -589,6 +626,63 @@ string TrSvldVar::GetInpUri(int aId) const
     else if (aId == Func::EInp2) return "Inp2";
     else return string();
 }
+
+
+///// Tail
+
+TrTailVar::TrTailVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+{
+    AddInput(GetInpUri(FTailBase::EInp));
+    AddInput(GetInpUri(FTailBase::EHead));
+}
+
+void TrTailVar::Init(const string& aIfaceName)
+{
+    if (mFunc) {
+	delete mFunc;
+	mFunc = NULL;
+    }
+    if ((mFunc = FTailUri::Create(this, aIfaceName)));
+    else {
+	Logger()->Write(EErr, this, "Failed init function");
+    }
+}
+
+string TrTailVar::GetInpUri(int aId) const
+{
+    if (aId == FTailBase::EInp) return "Inp";
+    else if (aId == FTailBase::EHead) return "Head";
+    else return string();
+}
+
+
+///// Head
+
+TrHeadVar::TrHeadVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+{
+    AddInput(GetInpUri(FHeadBase::EInp));
+    AddInput(GetInpUri(FHeadBase::ETail));
+}
+
+void TrHeadVar::Init(const string& aIfaceName)
+{
+    if (mFunc) {
+	delete mFunc;
+	mFunc = NULL;
+    }
+    if ((mFunc = FHeadUri::Create(this, aIfaceName)));
+    else {
+	Logger()->Write(EErr, this, "Failed init function");
+    }
+}
+
+string TrHeadVar::GetInpUri(int aId) const
+{
+    if (aId == FHeadBase::EInp) return "Inp";
+    else if (aId == FHeadBase::ETail) return "Tail";
+    else return string();
+}
+
 
 
 

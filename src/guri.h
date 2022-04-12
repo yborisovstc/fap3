@@ -23,6 +23,10 @@ class GUri
 	const string& at(int aIdx) const { return mElems.at(aIdx);}
 	GUri tail(int aIdx) const;
 	void tail(const GUri& aHead, GUri& aTail) const;
+	bool isHead(const GUri& aHead) const;
+	bool isTail(const GUri& aTail) const;
+	bool getHead(const GUri& aTail, GUri& aHead) const;
+	bool getTail(const GUri& aHead, GUri& aTail) const;
 	GUri head(int aIdx) const;
 	const vector<TElem>& elems() const {return mElems;};
 	void append(const GUri& aUri);

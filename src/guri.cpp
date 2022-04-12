@@ -70,6 +70,46 @@ void GUri::tail(const GUri& aHead, GUri& aTail) const
     }
 }
 
+bool GUri::isHead(const GUri& aHead) const
+{
+    bool res = (aHead.size() < size());
+    for (int i = 0; i < aHead.size() && res; i++) {
+	res = (aHead.at(i) == at(i));
+    }
+    return res;
+}
+
+bool GUri::isTail(const GUri& aTail) const
+{
+    bool res = (aTail.size() < size());
+    for (int i = 0; i < aTail.size() && res; i++) {
+	res = (aTail.at(i) == at(size() - aTail.size() + i));
+    }
+    return res;
+}
+
+bool GUri::getTail(const GUri& aHead, GUri& aTail) const
+{
+    bool res = isHead(aHead);
+    if (res) {
+	for (int i = aHead.size(); i < size(); i++) {
+	    aTail.appendElem(at(i));
+	}
+    }
+    return res;
+}
+
+bool GUri::getHead(const GUri& aTail, GUri& aHead) const
+{
+    bool res = isTail(aHead);
+    if (res) {
+	for (int i = 0; i < (size() - aTail.size()); i++) {
+	    aHead.appendElem(at(i));
+	}
+    }
+    return res;
+}
+
 GUri GUri::head(int aIdx) const
 {
     GUri res;

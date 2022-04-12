@@ -476,7 +476,7 @@ template <typename T> class DesEOsts: public DesEOstb, public MDtGet<Sdata<T>> {
 	virtual MIface* DoGetDObj(const char *aName) override;
 	// From MDtGet
 	virtual string MDtGet_Uid() const {return MDtGet<Tdata>::Type();}
-	virtual void DtGet(Sdata<T>& aData) override { aData.mData = mData.mData; aData.mValid = true;}
+	virtual void DtGet(Sdata<T>& aData) override { aData = mData;}
 	// Local
 	void updateData(const T& aData);
     public:

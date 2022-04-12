@@ -13,7 +13,7 @@
 
 /** @brief Transition function base 
  * */ 
-class TrBase: public CpStateOutp
+class TrBase: public CpStateOutp, protected MDesInpObserver
 {
     public:
 	static const char* Type() { return "TrBase";}
@@ -27,6 +27,13 @@ class TrBase: public CpStateOutp
 	virtual string MConnPoint_Uid() const override {return getUid<MConnPoint>();}
 	//virtual string provName() const override;
 	//virtual string reqName() const override;
+	// From MDesInpObserver
+	virtual string MDesInpObserver_Uid() const {return getUid<MDesInpObserver>();}
+	virtual void MDesInpObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+	virtual void onInpUpdated() override;
+    protected:
+	// From Unit.MIfProvOwner
+	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
     protected:
 	void AddInput(const string& aName);
 	virtual string GetInpUri(int aId) const = 0;
@@ -202,6 +209,7 @@ class TrApndVar: public TrVar
 	virtual string GetInpUri(int aId) const override;
 };
 
+
 /** @brief Transition agent "Select valid"
  * */
 class TrSvldVar: public TrVar
@@ -213,6 +221,32 @@ class TrSvldVar: public TrVar
 	virtual void Init(const string& aIfaceName) override;
 	virtual string GetInpUri(int aId) const override;
 };
+
+/** @brief Transition agent "Tail"
+ * */
+class TrTailVar: public TrVar
+{
+    public:
+	static const char* Type() { return "TrTailVar";}
+	TrTailVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From ATrVar
+	virtual void Init(const string& aIfaceName) override;
+	virtual string GetInpUri(int aId) const override;
+};
+
+/** @brief Transition agent "Head"
+ * */
+class TrHeadVar: public TrVar
+{
+    public:
+	static const char* Type() { return "TrHeadVar";}
+	TrHeadVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From ATrVar
+	virtual void Init(const string& aIfaceName) override;
+	virtual string GetInpUri(int aId) const override;
+};
+
+
 
 
 

@@ -964,16 +964,23 @@ void FToStrBase::GetResult(string& aResult) const
 /// Conversion to string
 
 template <class T>
-Func* FSToStr<T>::Create(Host* aHost, const string& aIface, const string& aInpTSig)
+Func* FSToStr<T>::Create(Host* aHost, const string& aOutIid, const string& aInpTSig)
 {
     Func* res = nullptr;
-    if (aIface == MDtGet<Sdata<string>>::Type() && aInpTSig == MDtGet<Sdata<T>>::Type()) {
-	res = new FSToStr<T>(*aHost);
+    if (!aOutIid.empty()) {
+	if (aOutIid == MDtGet<Sdata<string>>::Type() && aInpTSig == MDtGet<Sdata<T>>::Type()) {
+	    res = new FSToStr<T>(*aHost);
+	}
+    } else {
+	// Weak negotiation
+	if (aInpTSig == MDtGet<Sdata<T>>::Type()) {
+	    res = new FSToStr<T>(*aHost);
+	}
     }
     return res;
 }
 
-template <class T>
+    template <class T>
 void FSToStr<T>::DtGet(Sdata<string>& aData)
 {
     bool res = true;
@@ -1008,7 +1015,10 @@ Func* FUriToStr::Create(Host* aHost, const string& aOutIid, const string& aInpIi
 	    res = new FUriToStr(*aHost);
 	}
     } else {
-	// Weak negotiation - wrong case here
+	// Weak negotiation
+	if (aInpIid == MDtGet<TInpData>::Type()) {
+	    res = new FUriToStr(*aHost);
+	}
 	//mHost.log(EErr, "Creating instance, wrong outp [" + aOutIid + "] or inp [" + aInpIid + "] types");
     }
     return res;
@@ -1099,8 +1109,106 @@ template <class T> void FIsValid<T>::DtGet(Sdata<bool>& aData)
 }
 
 
+/// Getting tail, URI
+
+Func* FTailUri::Create(Host* aHost, const string& aOutId)
+{
+    Func* res = NULL;
+    if (aOutId == TDget::Type()) {
+	res = new FTailUri(*aHost);
+    }
+    return res;
+}
+
+void FTailUri::DtGet(TData& aData)
+{
+    bool res = true;
+    MDVarGet* dget = mHost.GetInp(EInp);
+    TDget* dfget = dget ? dget->GetDObj(dfget) : nullptr;
+    if (dfget) {
+	TData arg;
+	dfget->DtGet(arg);
+	if (arg.mValid) {
+	    dget = mHost.GetInp(EHead);
+	    dfget = dget ? dget->GetDObj(dfget) : nullptr;
+	    if (dfget) {
+		TData head;
+		dfget->DtGet(head);
+		if (head.mValid) {
+		    res = arg.mData.getTail(head.mData, aData.mData);
+		} else {
+		    mHost.log(EErr, "Incorrect input data [" + mHost.GetInpUri(EHead) + "]");
+		    res = false;
+		}
+	    } else {
+		mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EHead) + "]");
+		res = false;
+	    }
+	} else {
+	    mHost.log(EErr, "Incorrect input data");
+	    res = false;
+	}
+    } else {
+	mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp) + "]");
+	res = false;
+    }
+    aData.mValid = res;
+    if (mRes != aData) {
+	mRes = aData;
+	mHost.OnFuncContentChanged();
+    }
+}
 
 
+/// Getting Head, URI
+
+Func* FHeadUri::Create(Host* aHost, const string& aOutId)
+{
+    Func* res = NULL;
+    if (aOutId == TDget::Type()) {
+	res = new FHeadUri(*aHost);
+    }
+    return res;
+}
+
+void FHeadUri::DtGet(TData& aData)
+{
+    bool res = true;
+    MDVarGet* dget = mHost.GetInp(EInp);
+    TDget* dfget = dget ? dget->GetDObj(dfget) : nullptr;
+    if (dfget) {
+	TData arg;
+	dfget->DtGet(arg);
+	if (arg.mValid) {
+	    dget = mHost.GetInp(ETail);
+	    dfget = dget ? dget->GetDObj(dfget) : nullptr;
+	    if (dfget) {
+		TData tail;
+		dfget->DtGet(tail);
+		if (tail.mValid) {
+		    res = arg.mData.getHead(tail.mData, aData.mData);
+		} else {
+		    mHost.log(EErr, "Incorrect input data [" + mHost.GetInpUri(ETail) + "]");
+		    res = false;
+		}
+	    } else {
+		mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(ETail) + "]");
+		res = false;
+	    }
+	} else {
+	    mHost.log(EErr, "Incorrect input data");
+	    res = false;
+	}
+    } else {
+	mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp) + "]");
+	res = false;
+    }
+    aData.mValid = res;
+    if (mRes != aData) {
+	mRes = aData;
+	mHost.OnFuncContentChanged();
+    }
+}
 
 
 
