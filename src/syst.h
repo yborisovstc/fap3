@@ -66,6 +66,8 @@ class Extd: public Vertu
 	virtual TDir getDir() const override;
 	// From Unit.MIfProvOwner
 	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+    public:
+	static const string KUriInt;  /*!< Internal connpoint */
 };
 
 

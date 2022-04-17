@@ -97,8 +97,9 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 		virtual void update() override;
 		virtual void confirm() override;
 		// Local
-		T& data() {return mCdt;}
+		T& data(bool aConf = true);
 	    public:
+		T mIdt;  /*!< Current data */
 		T mUdt;  /*!< Updated data */
 		T mCdt;  /*!< Confirmed data */
 	};
@@ -293,7 +294,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 	// Local
 	virtual bool doCtl() { return false;}
 	/** @brief Gets status of the query */
-	virtual bool getState() {return false;}
+	virtual bool getState(bool aConf = false) {return false;}
 	void notifyMaps();
 	void notifyOutp() { mOapOut.NotifyInpsUpdated(); }
 	void UpdateMag();
@@ -353,7 +354,7 @@ class ASdcMut : public ASdc
 	ASdcMut(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
     protected:
 	// From ASdc
-	virtual bool getState() override;
+	virtual bool getState(bool aConf = false) override;
 	bool doCtl() override;
     protected:
 	ASdc::SdcIap<string> mIapTarg; /*!< "Target" input access point, URI */
@@ -371,7 +372,7 @@ class ASdcComp : public ASdc
 	ASdcComp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
     protected:
 	// From ASdc
-	virtual bool getState() override;
+	virtual bool getState(bool aConf = false) override;
 	bool doCtl() override;
 	// From MObserver
 	virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override;
@@ -391,7 +392,7 @@ class ASdcRm : public ASdc
 	ASdcRm(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
     protected:
 	// From ASdc
-	virtual bool getState() override;
+	virtual bool getState(bool aConf = false) override;
 	bool doCtl() override;
 	// From MObserver
 	virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override;
@@ -412,7 +413,7 @@ class ASdcConn : public ASdc
 	ASdcConn(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
     protected:
 	// From ASdc
-	virtual bool getState() override;
+	virtual bool getState(bool aConf = false) override;
 	bool doCtl() override;
 	virtual void getCcd(bool& aData) override;
     protected:
@@ -429,7 +430,7 @@ class ASdcDisconn : public ASdc
 	ASdcDisconn(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
     protected:
 	// From ASdc
-	virtual bool getState() override;
+	virtual bool getState(bool aConf = false) override;
 	bool doCtl() override;
     protected:
 	ASdc::SdcIap<string> mIapV1; /*!< "V1" input access point */
@@ -451,7 +452,7 @@ class ASdcInsert : public ASdc
 	// From MObserver
 	virtual void onObsChanged(MObservable* aObl) override;
 	// From ASdc
-	virtual bool getState() override;
+	virtual bool getState(bool aConf = false) override;
 	bool doCtl() override;
 	virtual void getCcd(bool& aData) override;
     protected:
@@ -474,7 +475,7 @@ class ASdcInsert2 : public ASdc
 	// From MObserver
 	virtual void onObsChanged(MObservable* aObl) override;
 	// From ASdc
-	virtual bool getState() override;
+	virtual bool getState(bool aConf = false) override;
 	bool doCtl() override;
     protected:
 	ASdc::SdcIap<string> mIapName; /*!< "Link name" input access point */
@@ -496,7 +497,7 @@ class ASdcExtract : public ASdc
 	ASdcExtract(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
     protected:
 	// From ASdc
-	virtual bool getState() override;
+	virtual bool getState(bool aConf = false) override;
 	bool doCtl() override;
     protected:
 	ASdc::SdcIap<string> mIapName; /*!< "Link name" input access point */

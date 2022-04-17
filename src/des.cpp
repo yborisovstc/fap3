@@ -78,7 +78,25 @@ CpStateMnodeOutp::CpStateMnodeOutp(const string &aType, const string& aName, MEn
 }
 
 
+/// CpStateOutp direct extender 
 
+ExtdStateOutp::ExtdStateOutp(const string &aType, const string& aName, MEnv* aEnv): Extd(aType, aName, aEnv)
+{
+    MNode* cp = Provider()->createNode(CpStateInp::Type(), Extd::KUriInt , mEnv);
+    assert(cp);
+    bool res = attachOwned(cp);
+    assert(res);
+}
+
+/// CpStateMnodeOutp direct extender 
+
+ExtdStateMnodeOutp::ExtdStateMnodeOutp(const string &aType, const string& aName, MEnv* aEnv): Extd(aType, aName, aEnv)
+{
+    MNode* cp = Provider()->createNode(CpStateMnodeInp::Type(), Extd::KUriInt , mEnv);
+    assert(cp);
+    bool res = attachOwned(cp);
+    assert(res);
+}
 
 
 
@@ -431,6 +449,50 @@ MIface* Des::MNode_getLif(const char *aType)
     return res;
 }
 
+void Des::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+{
+    if (aName == MDesCtxSpl::Type()) {
+	// If requestor isn't comp then get local supplier
+	// and propagate request to it, ref ds_dctx_dic_cs Solution_2
+	MIfReq* ireq = aReq->provided()->tail(); // Initial requestor
+	if (ireq) {
+	    bool redirectedToSpl = false;
+	    auto owdCp = owner()->firstPair();
+	    while (owdCp) {
+		MDesCtxSpl* spl = owdCp->provided()->lIf(spl);
+		if (spl) {
+		    MUnit* splu = spl->lIf(splu);
+		    MIfProvOwner* splPo = splu ? splu->lIf(splPo) : nullptr;
+		    bool isReq = splPo && aReq->provided()->isRequestor(splPo);
+		    if (!isReq) {
+			addIfpLeaf(spl, aReq);
+			MUnit* splu = spl->lIf(splu);
+			if (splu) {
+			    splu->resolveIface(aName, aReq);
+			    redirectedToSpl = true;
+			}
+		    }
+		}
+		owdCp = owner()->nextPair(owdCp);
+	    }
+	    if (!redirectedToSpl) {
+		// Propagate request to owner
+		MUnit* ownu = Owner()->lIf(ownu);
+		if (ownu) {
+		    ownu->resolveIface(aName, aReq);
+		}
+	    }
+	} else { // Propagate request to owner
+	    MUnit* ownu = Owner()->lIf(ownu);
+	    if (ownu) {
+		ownu->resolveIface(aName, aReq);
+	    }
+	}
+    } else {
+	Syst::resolveIfc(aName, aReq);
+    }
+}
+
 void Des::update()
 {
     mActNotified = false;
@@ -600,6 +662,57 @@ MIface* ADes::MAgent_getLif(const char *aType)
     else if (res = checkLif<MUnit>(aType)); // To allow client to request IFR
     else if (res = checkLif<MDesObserver>(aType));
     return res;
+}
+
+void ADes::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+{
+    if (aName == MDesCtxSpl::Type()) {
+	MOwner* mmo = ahostNode()->owned()->pcount() > 0 ? ahostNode()->owned()->pairAt(0)->provided() : nullptr; // Owner of owner
+	// If requestor isn't comp then get local supplier
+	// and propagate request to it, ref ds_dctx_dic_cs Solution_2
+	MIfReq* ireq = aReq->provided()->tail(); // Initial requestor
+	const MIfProvOwner* ireqPo = ireq ? ireq->rqOwner() : nullptr;
+	const MNode* ireqn = ireqPo ? ireqPo->lIf(ireqn) : nullptr; 
+	const MOwned* ireqOwd = ireqn ? ireqn->lIf(ireqOwd) : nullptr;
+	MOwner* ahostOwr = ahostNode()->lIf(ahostOwr);
+	//bool isRqLocal = ireqn == ahostNode() || ahostOwr->isOwned(ireqOwd); // Is init requestor local
+	bool isRqLocal = ireqn == ahostNode();
+	if (ireqn && !isRqLocal) {
+	    bool redirectedToSpl = false;
+	    auto owdCp = ahostNode()->owner()->firstPair();
+	    while (owdCp) {
+		MDesCtxSpl* spl = owdCp->provided()->lIf(spl);
+		if (spl) {
+		    MUnit* splu = spl->lIf(splu);
+		    MIfProvOwner* splPo = splu ? splu->lIf(splPo) : nullptr;
+		    bool isReq = splPo && aReq->provided()->isRequestor(splPo);
+		    if (!isReq) {
+			addIfpLeaf(spl, aReq);
+			MUnit* splu = spl->lIf(splu);
+			if (splu) {
+			    splu->resolveIface(aName, aReq);
+			    redirectedToSpl = true;
+			}
+		    }
+		}
+		owdCp = ahostNode()->owner()->nextPair(owdCp);
+	    }
+	    if (!redirectedToSpl) {
+		// Propagate request to owner
+		MUnit* ownu = mmo ? mmo->lIf(ownu) : nullptr;
+		if (ownu) {
+		    ownu->resolveIface(aName, aReq);
+		}
+	    }
+	} else { // Propagate request to owner
+	    MUnit* ownu = mmo ? mmo->lIf(ownu) : nullptr;
+	    if (ownu) {
+		ownu->resolveIface(aName, aReq);
+	    }
+	}
+    } else {
+	Unit::resolveIfc(aName, aReq);
+    }
 }
 
 void ADes::update()
@@ -913,4 +1026,236 @@ void DesEOstb::NotifyInpsUpdated()
 void DesEParb::updatePar(const MContent* aCont)
 {
 }
+
+
+/// DES context supplier
+
+DesCtxSpl::DesCtxSpl(const string &aType, const string& aName, MEnv* aEnv): Des(aType, aName, aEnv),
+    mSplCp(this)
+{}
+
+MIface* DesCtxSpl::MNode_getLif(const char *aType)
+{
+    MIface* res = NULL;
+    if (res = checkLif<MDesCtxSpl>(aType));
+    else res = Des::MNode_getLif(aType);
+    return res;
+}
+
+MIface* DesCtxSpl::MOwned_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MDesCtxSpl>(aType));
+    else res = Des::MOwned_getLif(aType);
+    return res;
+}
+
+MIface* DesCtxSpl::MDesCtxSpl_getLif(const char *aType)
+{
+    return checkLif<MUnit>(aType); // To enable IFR
+}
+
+void DesCtxSpl::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+{
+    if (aName == MDesCtxSpl::Type()) {
+	MIfReq* ireq = aReq->provided()->tail(); // Initial requestor
+	if (ireq) {
+	    MUnit* ownu = Owner()->lIf(ownu);
+	    if (ownu) {
+		auto ifaces = ownu->getIfs<MDesCtxSpl>();
+		// Filter out same id suppliers, ref ds_dctx_dic_cs Solution_2
+		if (ifaces) for (auto ifc : *ifaces) {
+		    MDesCtxSpl* spl = dynamic_cast<MDesCtxSpl*>(ifc);
+		    if (spl->getSplId() != getSplId()) {
+			addIfpLeaf(spl, aReq);
+		    }
+		}
+	    }
+	} else { // Propagate request to owner
+	    MUnit* ownu = Owner()->lIf(ownu);
+	    if (ownu) {
+		ownu->resolveIface(aName, aReq);
+	    }
+	}
+    } else {
+	Des::resolveIfc(aName, aReq);
+    }
+}
+
+
+MDesCtxSpl* DesCtxSpl::getSplsHead()
+{
+    MDesCtxSpl* res = nullptr;
+    return res;
+}
+
+bool DesCtxSpl::registerCsm(MDesCtxCsm::TCp* aCsm)
+{
+    bool res = mSplCp.connect(aCsm);
+    return res;
+}
+
+bool DesCtxSpl::bindCtx(const string& aCtxId, MVert* aCtx)
+{
+    bool res = false;
+    MNode* ctxn =  getComp(aCtxId);
+    MVert* ctxv = ctxn ? ctxn->lIf(ctxv) : nullptr;
+    if (ctxv) {
+	res = MVert::connect(ctxv, aCtx);
+    } else {
+	// Redirect to next supplier in the stack
+	// To use dedicated iface provider instead of finding supplier here
+	MUnit* ownu = Owner()->lIf(ownu);
+	if (ownu) {
+	    auto ifaces = ownu->getIfs<MDesCtxSpl>();
+	    // Find same id supplier
+	    if (ifaces) for (auto ifc : *ifaces) {
+		MDesCtxSpl* spl = dynamic_cast<MDesCtxSpl*>(ifc);
+		if (spl->getSplId() == getSplId()) {
+		    res = spl->bindCtx(aCtxId, aCtx);
+		}
+	    }
+	}
+    }
+    return res;
+}
+
+bool DesCtxSpl::unbindCtx(const string& aCtxId)
+{
+    bool res = false;
+    return res;
+}
+
+
+
+
+/// DES context consumer
+
+
+const string KCnt_ID = "Id"; // Consumer Id
+
+DesCtxCsm::DesCtxCsm(const string &aType, const string& aName, MEnv* aEnv): Des(aType, aName, aEnv),
+    mInitialized(false), mInitFailed(false), mCsmCp(this)
+{}
+
+MIface* DesCtxCsm::MNode_getLif(const char *aType)
+{
+    MIface* res = NULL;
+    if (res = checkLif<MDesCtxCsm>(aType));
+    else res = Des::MNode_getLif(aType);
+    return res;
+}
+
+string DesCtxCsm::getCsmId() const
+{
+    string cont;
+    bool res = getContent(KCnt_ID, cont);
+    if (res) return cont;
+    else return name();
+
+}
+
+void DesCtxCsm::onCtxAdded(const string& aCtxId)
+{
+}
+
+void DesCtxCsm::onCtxRemoved(const string& aCtxId)
+{
+}
+
+void DesCtxCsm::update()
+{
+    Des::update();
+    if (!mInitialized) {
+	mInitFailed = !init();
+	if (mInitFailed) {
+	    Log(TLog(EErr, this) + "Init failed");
+	}
+	mInitialized = true;
+    }
+}
+
+#ifndef SELF_IFR
+bool DesCtxCsm::init()
+{
+    bool res = false;
+    MUnit* ownu = Owner()->lIf(ownu);
+    if (ownu) {
+	auto ifaces = ownu->getIfs<MDesCtxSpl>();
+	if (ifaces) for (auto ifc : *ifaces) {
+	    MDesCtxSpl* spl = dynamic_cast<MDesCtxSpl*>(ifc);
+	    if (spl->getSplId() == getCsmId()) {
+		res = spl->registerCsm(&mCsmCp);
+		if (res) {
+		    res = bindCtxs();
+		}
+		break;
+	    }
+	}
+    }
+    return res;
+}
+#else
+
+bool DesCtxCsm::init()
+{
+    bool res = false;
+    MDesCtxSpl* spl = getSif<MDesCtxSpl>(spl);
+    if (spl) {
+	res = spl->registerCsm(&mCsmCp);
+	if (res) {
+	    res = bindCtxs();
+	}
+    }
+    return res;
+}
+#endif
+
+bool DesCtxCsm::registerSpl(MDesCtxSpl::TCp* aSpl)
+{
+    assert(!mCsmCp.firstPair());
+    bool res = mCsmCp.connect(aSpl);
+    return res;
+}
+
+bool DesCtxCsm::bindCtxs()
+{
+    bool res = false;
+    auto owdCp = owner()->firstPair();
+    while (owdCp) {
+	MNode* compn = owdCp->provided()->lIf(compn);
+	MVert* compv = compn ? compn->lIf(compv) : nullptr;
+	if (compv) {
+	    MVert* extd = compv->getExtd();
+	    if (extd) {
+		res = mCsmCp.firstPair()->provided()->bindCtx(compn->name(), extd);
+		if (!res) break;
+	    }
+	}
+	owdCp = owner()->nextPair(owdCp);
+    }
+    return res;
+}
+
+#ifdef SELF_IFR
+void DesCtxCsm::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+{
+    if (aName == MDesCtxSpl::Type()) {
+	// Propagate request to owner
+	MUnit* ownu = Owner()->lIf(ownu);
+	if (ownu) {
+	    auto ifaces = ownu->getIfs<MDesCtxSpl>();
+	    if (ifaces) for (auto ifc : *ifaces) {
+		MDesCtxSpl* spl = dynamic_cast<MDesCtxSpl*>(ifc);
+		if (spl->getSplId() == getCsmId()) {
+		    addIfpLeaf(spl, aReq);
+		}
+	    }
+	}
+    } else {
+	Syst::resolveIfc(aName, aReq);
+    }
+}
+#endif
+
 

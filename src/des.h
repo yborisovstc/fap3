@@ -6,6 +6,8 @@
 #include "mdata.h"
 #include "mdes.h"
 #include "mlauncher.h"
+
+#include "nconn.h"
 #include "vert.h"
 #include "syst.h"
 #include "content.h"
@@ -58,6 +60,25 @@ class CpStateMnodeInp: public CpState
 	static const char* Type() { return "CpStateMnodeInp";};
 	CpStateMnodeInp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 };
+
+/** @brief CpStateOutp direct extender (extd as outp)
+ * */
+class ExtdStateOutp : public Extd
+{
+    public:
+	static const char* Type() { return "ExtdStateOutp";};
+	ExtdStateOutp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+};
+
+/** @brief CpStateOutp direct extender (extd as outp)
+ * */
+class ExtdStateMnodeOutp : public Extd
+{
+    public:
+	static const char* Type() { return "ExtdStateMnodeOutp";};
+	ExtdStateMnodeOutp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+};
+
 
 /** @brief Connection point - output of state provided MNode iface
  * Just ConnPointu with pre-configured prepared/required
@@ -200,6 +221,8 @@ class Des: public Syst, public MDesSyncable, public MDesObserver
 	virtual void MDesObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	virtual void onActivated(MDesSyncable* aComp) override;
 	virtual void onUpdated(MDesSyncable* aComp) override;
+	// From Unit.MIfProvOwner
+	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
     protected:
 	list<MDesSyncable*> mActive;     /*!< Active compoments */
 	list<MDesSyncable*> mUpdated;     /*!< Updated compoments */
@@ -225,6 +248,8 @@ class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver
 	virtual MIface* MNode_getLif(const char *aType) override;
 	// From Node
 	virtual MIface* MOwned_getLif(const char *aType);
+	// From Unit.MIfProvOwner
+	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
 	// From MDesSyncable
 	virtual string MDesSyncable_Uid() const override {return getUid<MDesSyncable>();}
 	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override;
@@ -562,6 +587,73 @@ class DesEParb
     protected:
 	MNode* mHost;
 	const string mUri;  //!< Paremeter's URI
+};
+
+
+/* @brief DES context supplier
+ * */
+class DesCtxSpl : public Des, public MDesCtxSpl
+{
+    public:
+	using TSplCp = NCpOmnp<MDesCtxSpl, MDesCtxCsm>;  /*!< Supplier connpoint */
+    public:
+	static const char* Type() { return "DesCtxSpl";};
+	DesCtxSpl(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From Node.MIface
+	virtual MIface* MNode_getLif(const char *aType) override;
+	// From MNode.MOwned
+	virtual MIface* MOwned_getLif(const char *aType) override;
+	// From Unit.MIfProvOwner
+	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	// From MDesCtxSpl
+	virtual string MDesCtxSpl_Uid() const override {return getUid<MDesCtxSpl>();}
+	virtual void MDesCtxSpl_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+	virtual MIface* MDesCtxSpl_getLif(const char *aType) override;
+	// Local
+	virtual string getSplId() const { return name(); }
+	virtual MDesCtxSpl* getSplsHead() override;
+	virtual bool registerCsm(MDesCtxCsm::TCp* aCsm) override;
+	virtual bool bindCtx(const string& aCtxId, MVert* aCtx) override;
+	virtual bool unbindCtx(const string& aCtxId) override;
+	virtual MDesCtxSpl::TCp* splCp() override { return &mSplCp; }
+    protected:
+	TSplCp mSplCp;  /*!< Ctx supplier CP */
+};
+
+
+/* @brief DES context consumer
+ * */
+// TODO is DES inheritance reasonable?
+class DesCtxCsm : public Des, public MDesCtxCsm
+{
+    public:
+	using TCsmCp = NCpOnp<MDesCtxCsm, MDesCtxSpl>;
+    public:
+	static const char* Type() { return "DesCtxCsm";};
+	DesCtxCsm(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From Node.MIface
+	virtual MIface* MNode_getLif(const char *aType) override;
+#ifdef SELF_IFR
+	// From Unit.MIfProvOwner
+	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+#endif
+	// From MDesCtxCsm
+	virtual string MDesCtxCsm_Uid() const override {return getUid<MDesCtxCsm>();}
+	virtual void MDesCtxCsm_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+	virtual string getCsmId() const override;
+	virtual void onCtxAdded(const string& aCtxId) override;
+	virtual void onCtxRemoved(const string& aCtxId) override;
+	// From MDesSyncable
+	virtual void update() override;
+    protected:
+	bool init();
+	// TODO not used, to delete?
+	bool registerSpl(MDesCtxSpl::TCp* aSpl);
+	bool bindCtxs();
+    protected:
+	bool mInitialized;
+	bool mInitFailed;
+	TCsmCp mCsmCp;  /*!< Consumer Cp */
 };
 
 

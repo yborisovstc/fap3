@@ -158,6 +158,7 @@ MIface* Vert::MVert_getLif(const char *aType)
     MIface* res = nullptr;
     if (res = checkLif<MVert>(aType));
     else if (res = checkLif<MUnit>(aType));
+    // TODO Wrong redirection, vulnerability, to fix
     else res = MNode_getLif(aType);
     return res;
 }

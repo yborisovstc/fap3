@@ -4,6 +4,8 @@
 
 #include "miface.h"
 
+#include "nconn.h"
+
 using namespace std;
 
 class MDesSyncable;
@@ -62,6 +64,61 @@ class MDesSyncable: public MIface
 	virtual void confirm() = 0;
 	virtual void setUpdated() = 0;
 	virtual void setActivated() = 0;
+};
+
+class MDesCtxCsm;
+class MVert;
+
+/* @brief DES context supplier, ref ds_dctx
+ * Gets access to common states for components
+ * */
+class MDesCtxSpl : public MIface
+{
+    public:
+	using TCp = MNcpp<MDesCtxSpl, MDesCtxCsm>;
+    public:
+	static const char* Type() { return "MDesCtxSpl";};
+	// From MIface
+	virtual string Uid() const override { return MDesCtxSpl_Uid();}
+	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { return MDesCtxSpl_doDump(aLevel, aIdt, std::cout);}
+	virtual MIface* getLif(const char *aType) { return MDesCtxSpl_getLif(aType); }
+	virtual string MDesCtxSpl_Uid() const = 0;
+	virtual void MDesCtxSpl_doDump(int aLevel, int aIdt, ostream& aOs) const = 0;
+	virtual MIface* MDesCtxSpl_getLif(const char *aType) = 0;
+	// Local
+	virtual string getSplId() const = 0;
+	/* @brief Gets head of suppliers stack, ref ds_dctx_dic_cs
+	 * */
+	virtual MDesCtxSpl* getSplsHead() = 0;
+	virtual bool registerCsm(MNcpp<MDesCtxCsm, MDesCtxSpl>* aCsm) = 0;
+	/* @brief binds context with given ID
+	 * @param aCtxId  ID of the context
+	 * @param aCtx    the context
+	 * */
+	virtual bool bindCtx(const string& aCtxId, MVert* aCtx) = 0;
+	virtual bool unbindCtx(const string& aCtxId) = 0;
+	virtual TCp* splCp() = 0;
+};
+
+/* @brief DES context consumer
+ * */
+class MDesCtxCsm : public MIface
+{
+    public:
+	using TCp = MNcpp<MDesCtxCsm, MDesCtxSpl>;
+    public:
+	static const char* Type() { return "MDesCtxCsm";};
+	// From MIface
+	virtual string Uid() const override { return MDesCtxCsm_Uid();}
+	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { return MDesCtxCsm_doDump(aLevel, aIdt, std::cout);}
+	virtual string MDesCtxCsm_Uid() const = 0;
+	virtual void MDesCtxCsm_doDump(int aLevel, int aIdt, ostream& aOs) const = 0;
+	// Local
+	virtual string getCsmId() const = 0;
+	/* @brief Handles context addition */
+	virtual void onCtxAdded(const string& aCtxId) = 0;
+	// TODO Is it needed. Spl can simply disconnect the ctx
+	virtual void onCtxRemoved(const string& aCtxId) = 0;
 };
 
 

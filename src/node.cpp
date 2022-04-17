@@ -40,6 +40,8 @@ MIface* Node::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
     if (res = checkLif<MNode>(aType));
+    else if (res = checkLif<MOwned>(aType));
+    else if (res = checkLif<MOwner>(aType));
     else if (res = checkLif<MContentOwner>(aType));
     else if (res = checkLif<MObservable>(aType));
     return res;
@@ -624,6 +626,12 @@ MIface* Node::MOwned_getLif(const char *aType)
     return res;
 }
 
+bool Node::isOwner(const MOwner* mOwned) const
+{
+    assert(false);
+    return false;
+}
+
 
 const MContentOwner* Node::cntOw() const
 {
@@ -678,6 +686,14 @@ MNode* Node::getParent(const GUri& aUri)
     return res;
 }
 
+bool Node::isOwned(const MOwned* mOwned) const
+{
+    bool res = false;
+    const MNode*  owndn = mOwned->lIf(owndn);
+    res = owner()->isConnected(const_cast<MNode*>(owndn)->owned());
+    return res;
+}
+
 MIface* Node::MOwner_getLif(const char *aType)
 {
     MIface* res = nullptr;
@@ -690,7 +706,7 @@ MIface* Node::MOwner_getLif(const char *aType)
     return res;
 }
 
-bool Node::isOwned(const MNode* aNode) const
+bool Node::isNodeOwned(const MNode* aNode) const
 {
     bool res = false;
     for (int i = 0; i < owner()->pcount() && !res; i++) {

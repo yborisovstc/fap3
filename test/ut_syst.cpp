@@ -129,6 +129,7 @@ class Ut_syst : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(test_syst_sock_1);
     CPPUNIT_TEST(test_syst_sock_2);
     CPPUNIT_TEST(test_syst_sock_3);
+    CPPUNIT_TEST(test_syst_sock_4);
     //CPPUNIT_TEST(test_syst_cpe_1);
     CPPUNIT_TEST_SUITE_END();
     public:
@@ -144,7 +145,10 @@ class Ut_syst : public CPPUNIT_NS::TestFixture
     void test_syst_sock_1();
     void test_syst_sock_2();
     void test_syst_sock_3();
+    void test_syst_sock_4();
     void test_syst_cpe_1();
+    private:
+    MNode* constructSystem(const string& aFname);
     private:
     Env* mEnv;
     TstProv* mProv;
@@ -153,6 +157,21 @@ class Ut_syst : public CPPUNIT_NS::TestFixture
 CPPUNIT_TEST_SUITE_REGISTRATION( Ut_syst );
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(Ut_syst, "Ut_syst");
 
+MNode* Ut_syst::constructSystem(const string& aSpecn)
+{
+    string ext = "chs";
+    string spec = aSpecn + string(".") + "chs";
+    string log = aSpecn + "_" + ext + ".log";
+    mEnv = new Env(spec, log);
+    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv != 0);
+    mEnv->ImpsMgr()->ResetImportsPaths();
+    mEnv->ImpsMgr()->AddImportsPaths("../modules");
+    mEnv->constructSystem();
+    MNode* root = mEnv->Root();
+    MElem* eroot = root ? root->lIf(eroot) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get root", root && eroot);
+    return root;
+}
 
 void Ut_syst::setUp()
 {
@@ -586,6 +605,39 @@ void Ut_syst::test_syst_sock_3()
     MNode* root = mEnv->Root();
     MElem* eroot = root ? root->lIf(eroot) : nullptr;
     CPPUNIT_ASSERT_MESSAGE("Fail to get root", eroot);
+
+    // Verify if the sockets are connected
+    MNode* s1n = root->getNode("S1.Sock1");
+    MVert* s1v = s1n->lIf(s1v);
+    CPPUNIT_ASSERT_MESSAGE("Fail to get s1v", s1v);
+    MNode* s2n = root->getNode("S1.Sock2");
+    MVert* s2v = s2n->lIf(s2v);
+    CPPUNIT_ASSERT_MESSAGE("Fail to get s2v", s2v);
+    bool conn = s2v->isPair(s1v);
+    CPPUNIT_ASSERT_MESSAGE("Fail: sockets are not connected", conn);
+
+    // Verify IFR for MTIf1
+    MNode* s1p1n = root->getNode("S1.Sock1.PinS1.Pin1");
+    MUnit* s1p1u = s1p1n ? s1p1n->lIf(s1p1u) : nullptr;
+    MTIf1* ifc1 = s1p1u ? s1p1u->getSif(ifc1) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get ifc1", ifc1);
+
+    // Verify IFR for MTIf2
+    MNode* s12cpn = root->getNode("S1.S1_2.Cp");
+    MUnit* s12cpu = s12cpn ? s12cpn->lIf(s12cpu) : nullptr;
+    MTIf2* ifc2 = s12cpu ? s12cpu->getSif(ifc2) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get ifc2", ifc2);
+
+    delete mEnv;
+}
+
+
+/** @brief Test 4 of socket: complex loopback
+ * */
+void Ut_syst::test_syst_sock_4()
+{
+    cout << endl << endl << "=== Socket test 4: complex loopback ===" << endl;
+    MNode* root = constructSystem("ut_syst_sock_4");
 
     // Verify if the sockets are connected
     MNode* s1n = root->getNode("S1.Sock1");

@@ -65,6 +65,7 @@ GUri GUri::tail(int aIdx) const
 void GUri::tail(const GUri& aHead, GUri& aTail) const
 {
     assert(aHead <= *this);
+    aTail.clear();
     for (int i = aHead.mElems.size(); i < mElems.size(); i++) {
 	aTail.mElems.push_back(mElems.at(i));
     }
@@ -91,6 +92,7 @@ bool GUri::isTail(const GUri& aTail) const
 bool GUri::getTail(const GUri& aHead, GUri& aTail) const
 {
     bool res = isHead(aHead);
+    aTail.clear();
     if (res) {
 	for (int i = aHead.size(); i < size(); i++) {
 	    aTail.appendElem(at(i));
@@ -102,6 +104,7 @@ bool GUri::getTail(const GUri& aHead, GUri& aTail) const
 bool GUri::getHead(const GUri& aTail, GUri& aHead) const
 {
     bool res = isTail(aHead);
+    aHead.clear();
     if (res) {
 	for (int i = 0; i < (size() - aTail.size()); i++) {
 	    aHead.appendElem(at(i));

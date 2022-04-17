@@ -114,7 +114,7 @@ void TrBase::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	if (req) {
 	    const MIfProvOwner* reqo = req->provided()->rqOwner();
 	    MNode* reqn = const_cast<MNode*>(reqo ? reqo->lIf(reqn) : nullptr); // Current requestor as node
-	    if (isOwned(reqn)) {
+	    if (isNodeOwned(reqn)) {
 		ifr = dynamic_cast<MDesInpObserver*>(this);
 		addIfpLeaf(ifr, aReq);
 	    }

@@ -88,12 +88,14 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	virtual void onOwnedDetached(MOwned* aOwned) override;
 	virtual void getModules(vector<MNode*>& aModules) override;
 	virtual MNode* getParent(const GUri& aUri) override;
+	virtual bool isOwned(const MOwned* mOwned) const override;
 	// From MOwned
 	virtual string MOwned_Uid() const {return getUid<MOwned>();}
 	virtual MIface* MOwned_getLif(const char *aType) override;
 	virtual string ownedId() const override { return name();}
 	virtual void deleteOwned() override { delete this;}
 	virtual void onOwnerAttached() override {}
+	virtual bool isOwner(const MOwner* mOwner) const override;
     public:
 	inline void Log(const TLog& aRec) const { if (aRec.Ctg() <= mLogLevel)  Logger()->Write(aRec);}
     protected:
@@ -105,7 +107,7 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	inline MLogRec* Logger() const {return mEnv ? mEnv->Logger(): nullptr; }
 	inline MProvider* Provider() const {return mEnv ? mEnv->provider(): nullptr; }
 	void updateNs(TNs& aNs, const ChromoNode& aCnode);
-	bool isOwned(const MNode* aComp) const;
+	bool isNodeOwned(const MNode* aComp) const;
 	MNode* addComp(const string& aType, const string& aName);
 	void notifyChanged();
 	inline bool isLogLevel(int aLevel) const { return mLogLevel >= aLevel;}

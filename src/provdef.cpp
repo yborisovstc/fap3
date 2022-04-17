@@ -38,7 +38,8 @@ const string KChromRarg_Chs = "chs";
 const ProvDef::TFReg ProvDef::mReg ( {
 	Item<Node>(), Item<Unit>(), Item<Elem>(), Item<Content>(), Item<Vertu>(), Item<Vert>(), Item<Link>(),
 	Item<Syst>(), Item<ConnPointu>(), Item<CpMnodeOutp>(), Item<CpMnodeInp>(),
-	Item<Extd>(), Item<State>(), Item<Des>(), Item<TrAddVar>(), Item<CpStateInp>(),  Item<CpStateOutp>(),
+	Item<Extd>(), Item<State>(), Item<Des>(), Item<TrAddVar>(),
+	Item<CpStateInp>(), Item<CpStateOutp>(), Item<ExtdStateOutp>(), Item<ExtdStateMnodeOutp>(),
 	Item<CpStateMnodeInp>(),  Item<CpStateMnodeOutp>(),
 	Item<DesLauncher>(), Item<Sout>(), Item<ADes>(), Item<Socket>(),
 	Item<TrMaxVar>(), Item<TrSwitchBool>(), Item<TrCmpVar>(), Item<TrApndVar>(),
@@ -53,6 +54,8 @@ const ProvDef::TFReg ProvDef::mReg ( {
 	Item<ASdcExtract>(), 
 	/* SDOs */
         Item<SdoName>(), Item<SdoParent>(), Item<SdoComp>(), Item<SdoConn>(), Item<SdoCompsCount>(), Item<SdoCompsNames>(), 
+	/* DES context */
+	Item<DesCtxSpl>(), Item<DesCtxCsm>(), 
 	});
 
 

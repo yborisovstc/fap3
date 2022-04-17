@@ -20,6 +20,7 @@ class GUri
 	GUri(const string& aSrc) { parse(aSrc);}
 	GUri(const char* aSrc): GUri(string(aSrc)) {}
 	int size() const { return mElems.size();}
+	void clear() { mElems.clear();}
 	const string& at(int aIdx) const { return mElems.at(aIdx);}
 	GUri tail(int aIdx) const;
 	void tail(const GUri& aHead, GUri& aTail) const;

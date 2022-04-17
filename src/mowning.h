@@ -35,6 +35,7 @@ class MOwner : public MIface
 	 * the variation of getNode with using parent access rule
 	 * */
 	virtual MNode* getParent(const GUri& aUri) = 0;
+	virtual bool isOwned(const MOwned* mOwned) const = 0;
 };
 
 
@@ -55,6 +56,7 @@ class MOwned : public MIface
 	virtual string ownedId() const = 0;
 	virtual void deleteOwned() = 0;
 	virtual void onOwnerAttached() = 0;
+	virtual bool isOwner(const MOwner* mOwner) const = 0;
 };
 
 

@@ -57,6 +57,15 @@ template <typename T> string toStr(const T& aData) { return to_string(aData); }
 
 string toStr(const string& aData) { return aData;}
 
+template <class T>
+T& ASdc::SdcIap<T>::data(bool aConf)
+{ 
+    if (aConf) return mCdt;
+    else {
+	mHost->GetInpSdata<T>(mInpUri, mIdt);
+	return mIdt;
+    }
+}
 
 template <class T>
 void ASdc::SdcIap<T>::update()
@@ -273,8 +282,8 @@ void ASdc::confirm()
 	}
     }
     */
-    if (/*changed &&*/ mMag && mIapEnb.data()) { // Ref ds_dcs_sdc_dsgn_oin Solution#1
-	if (!getState()) { // Ref ds_dcs_sdc_dsgn_cc Solution#2
+    if (/*changed &&*/ mMag && mIapEnb.data(true)) { // Ref ds_dcs_sdc_dsgn_oin Solution#1
+	if (!getState(true)) { // Ref ds_dcs_sdc_dsgn_cc Solution#2
 	    bool res = doCtl();
 	    if (!res) {
 		Log(TLog(EErr, this) + "Failed controlling managed agent");
@@ -296,6 +305,10 @@ void ASdc::setActivated()
 	    obs->onActivated(this);
 	    mActNotified = true;
 	}
+	// System is activated, this means some inputs is notified of change
+	// Status transition potentially depends on any inputs so we need to
+	// propagate notification to output
+	notifyOutp();
     }
 }
 
@@ -486,7 +499,7 @@ ASdcMut::ASdcMut(const string &aType, const string& aName, MEnv* aEnv): ASdc(aTy
 {
 }
 
-bool ASdcMut::getState()
+bool ASdcMut::getState(bool aConf)
 {
     return mMutApplied;
 }
@@ -522,7 +535,7 @@ ASdcComp::ASdcComp(const string &aType, const string& aName, MEnv* aEnv): ASdc(a
     mOapName("OutName", this, K_CpUri_OutpName)
 { }
 
-bool ASdcComp::getState()
+bool ASdcComp::getState(bool aConf)
 {
     bool res = false;
     string name;
@@ -569,7 +582,7 @@ ASdcRm::ASdcRm(const string &aType, const string& aName, MEnv* aEnv): ASdc(aType
     mIapName("Name", this, K_CpUri_Name), mOapName("OutName", this, K_CpUri_OutpName)
 { }
 
-bool ASdcRm::getState()
+bool ASdcRm::getState(bool aConf)
 {
     bool res = false;
     string name;
@@ -633,7 +646,7 @@ void ASdcConn::getCcd(bool& aData)
     aData = res;
 }
 
-bool ASdcConn::getState()
+bool ASdcConn::getState(bool aConf)
 {
     bool res = false;
     string v1s, v2s;
@@ -692,7 +705,7 @@ ASdcDisconn::ASdcDisconn(const string &aType, const string& aName, MEnv* aEnv): 
     mIapV1("V1", this, K_CpUri_V1), mIapV2("V2", this, K_CpUri_V2)
 { }
 
-bool ASdcDisconn::getState()
+bool ASdcDisconn::getState(bool aConf)
 {
     bool res = false;
     string v1s, v2s;
@@ -763,7 +776,7 @@ void ASdcInsert::getCcd(bool& aData)
 
 }
 
-bool ASdcInsert::getState()
+bool ASdcInsert::getState(bool aConf)
 {
     bool res = false;
     string cp, icp, icpp;
@@ -849,23 +862,23 @@ ASdcInsert2::ASdcInsert2(const string &aType, const string& aName, MEnv* aEnv): 
     mDobsNprev(this, MagDobs::EO_CHG)
 { }
 
-bool ASdcInsert2::getState()
+bool ASdcInsert2::getState(bool aConf)
 {
     bool res = false;
     do {
 	if (!mMag) break;
-	MNode* comp = mMag->getNode(mIapName.mCdt);
+	MNode* comp = mMag->getNode(mIapName.data(aConf));
 	if (!comp) {
-	    Log(TLog(EErr, this) + "Cannot find comp [" + mIapName.mCdt + "]");
+	    Log(TLog(EErr, this) + "Cannot find comp [" + mIapName.data(aConf) + "]");
 	    break;
 	}
-	GUri prev_uri(mIapName.data()); prev_uri += GUri(mIapPrev.data());
+	GUri prev_uri(mIapName.data(aConf)); prev_uri += GUri(mIapPrev.data(aConf));
 	MNode* prev = mMag->getNode(prev_uri);
 	if (!prev) {
 	    Log(TLog(EErr, this) + "Cannot find Prev Cp [" + prev_uri.toString() + "]");
 	    break;
 	}
-	GUri next_uri(mIapName.data()); next_uri += GUri(mIapNext.data());
+	GUri next_uri(mIapName.data(aConf)); next_uri += GUri(mIapNext.data(aConf));
 	MNode* next = mMag->getNode(next_uri);
 	if (!next) {
 	    Log(TLog(EErr, this) + "Cannot find Next Cp [" + next_uri.toString() + "]");
@@ -881,12 +894,12 @@ bool ASdcInsert2::getState()
 	    Log(TLog(EErr, this) + "Next is not connectable [" + next_uri.toString() + "]");
 	    break;
 	}
-	MNode* pnode = mMag->getNode(mIapPname.data());
+	MNode* pnode = mMag->getNode(mIapPname.data(aConf));
 	if (!pnode) {
-	    Log(TLog(EErr, this) + "Cannot find position node [" + mIapPname.data() + "]");
+	    Log(TLog(EErr, this) + "Cannot find position node [" + mIapPname.data(aConf) + "]");
 	    break;
 	}
-	GUri pnode_next_uri(mIapPname.data()); pnode_next_uri += GUri(mIapNext.data());
+	GUri pnode_next_uri(mIapPname.data(aConf)); pnode_next_uri += GUri(mIapNext.data(aConf));
 	MNode* pnode_next = mMag->getNode(pnode_next_uri);
 	if (!pnode_next) {
 	    Log(TLog(EErr, this) + "Cannot find position node next cp [" + pnode_next_uri.toString() + "]");
@@ -992,23 +1005,23 @@ ASdcExtract::ASdcExtract(const string &aType, const string& aName, MEnv* aEnv): 
     mIapName("Name", this, K_CpUri_Extr_Name), mIapPrev("Prev", this, K_CpUri_Extr_Prev), mIapNext("Next", this, K_CpUri_Extr_Next)
 { }
 
-bool ASdcExtract::getState()
+bool ASdcExtract::getState(bool aConf)
 {
     bool res = false;
     do {
 	if (!mMag) break;
-	MNode* comp = mMag->getNode(mIapName.data());
+	MNode* comp = mMag->getNode(mIapName.data(aConf));
 	if (!comp) {
 	    Log(TLog(EErr, this) + "Cannot find comp [" + mIapName.mCdt + "]");
 	    break;
 	}
-	GUri prev_uri(mIapName.data()); prev_uri += GUri(mIapPrev.data());
+	GUri prev_uri(mIapName.data(aConf)); prev_uri += GUri(mIapPrev.data(aConf));
 	MNode* prev = mMag->getNode(prev_uri);
 	if (!prev) {
 	    Log(TLog(EErr, this) + "Cannot find Prev Cp [" + prev_uri.toString() + "]");
 	    break;
 	}
-	GUri next_uri(mIapName.data()); next_uri += GUri(mIapNext.data());
+	GUri next_uri(mIapName.data(aConf)); next_uri += GUri(mIapNext.data(aConf));
 	MNode* next = mMag->getNode(next_uri);
 	if (!next) {
 	    Log(TLog(EErr, this) + "Cannot find Next Cp [" + next_uri.toString() + "]");

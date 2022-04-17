@@ -161,7 +161,7 @@ void ConnPointu::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 // Extender agent, monolitic, multicontent, unit
 
 
-const string KUriInt = "Int";  /*!< Internal connpoint */
+const string Extd::KUriInt = "Int";  /*!< Internal connpoint */
 const string KContDir = "Direction";
 const string KContDir_Val_Regular = "Regular";
 const string KContDir_Val_Inp = "Inp";
@@ -257,7 +257,7 @@ void Socket::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	    // There is the context
 	    const MIfProvOwner* reqo = req ? req->provided()->rqOwner() : nullptr;
 	    MNode* reqn = const_cast<MNode*>(reqo ? reqo->lIf(reqn) : nullptr); // Current requestor as node
-	    if (isOwned(reqn)) {
+	    if (isNodeOwned(reqn)) {
 		// Request from internal CP.
 		if (!mPairs.empty()) {
 		    // There are pairs. Redirect to piars. 
@@ -344,7 +344,9 @@ void Socket::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 		    MUnit* owu = Owner()->lIf(owu);
 		    MIfProvOwner* owo = owu ? owu->lIf(owo) : nullptr;
 		    if (owo) {
-			bool isReq = aReq->provided()->isRequestor(owo);
+			// Disable routing to direct requestor only. Redirecting to non-direct
+			// requestor is enabled to support loop-back IRM path. !! Att, isn't tested deep
+			bool isReq = aReq->provided()->isRequestor(owo,1);
 			if (!isReq) {
 			    owu->resolveIface(aName, aReq);
 			}
@@ -391,6 +393,7 @@ bool Socket::isCompatible(MVert* aPair, bool aExt)
 	cp = ecp;
     }
     if (cp) {
+	// TODO MNode shall not be resolved thru MVert. This is MVert resolution issue
 	MNode* cpn = cp->lIf(cpn);
 	for (int ci = 0; ci < owner()->pcount() && res; ci++) {
 	    auto comp = owner()->pairAt(ci)->provided();
@@ -450,7 +453,7 @@ MNode* Socket::GetPin(MIfReq::TIfReqCp* aReq)
     MIfReq::TIfReqCp* req = aReq->binded()->firstPair();
     const MIfProvOwner* reqo = req ? req->provided()->rqOwner() : nullptr;
     const MNode* reqn = reqo ? reqo->lIf(reqn) : nullptr; // Current requestor as node
-    if (isOwned(reqn)) {
+    if (isNodeOwned(reqn)) {
 	res = const_cast<MNode*>(reqn);
     }
     return res;

@@ -1994,7 +1994,7 @@
 	</sect2>
     </sect1>
 
-    <sect1 id="ds_dctx"><title>DES context for components</title>
+    <sect1 id="ds_dctx"><title>[DS_DCTX] DES context for components</title>
 	<sect2><title>Intro</title>
 	    <simpara>It is abundant use-case where some DES needs to share some context for its components. The example is fap3-vis Detail Representation (DRP). DRP
 		creates a number of compact representations (CRP) to visualize represented agent's components. Each CRP needs info of the component it is representing: link to the whole
@@ -2009,20 +2009,98 @@
 		are not persistent but accessible via intermediate ifaces. Actually the intermediate "helper" ifaces are needed even for Approach#1 to establish persistent
 		native conn.</simpara>
 	</sect2>
-	<sect2 id="ds_dctx_dic"><title>Solution#1: dedicated interface for DES context</title>
+	<sect2 id="ds_dctx_dic"><title>Solution#1: dedicated supplier-consumer interface for DES context resolution, explicit connection</title>
 	    <sect3><title>Intro</title>
-		<simpara>This solution follows Approach#2. We need to introduce the interfaces MDesContextProvider/MDesContextConsumer. Provider iface is resolved by DES in the following manner:
-		    look at local scope first, if not found redirect to owner.</simpara>
+		<simpara>This solution follows Approach#1. We need to introduce the interfaces MDesContextSupplier/MDesContextConsumer for consumer and supplier negotiation and
+		    establishing connection. Consumer shall initiate supplier iface resolution. Then as soon as provider iface is resolver the consumer requests
+		    binding it's parameters (StateCPs) to correspoinding CPs of supplier.</simpara>
+		<simpara>The supplier posseses the number of output CPs and consumer - the number of input CPs. Consumer requests the supplier to connect it's input CPs
+		    to the corresponding output CP of supplier.</simpara>
+		<simpara>Having both supplier and consumer ifaces assumes that there will be persistent connections between them. The connection is one (supplier) to many
+		    (providers).</simpara>
+	    </sect3>
+	    <sect3 id="ds_dctx_dic_rs"><title>How to resolve supplier?</title>
+		<sect4><title>Intro</title>
+		    <simpara>There can be a number of suppliers in consumer owning model part. The supplier resolution mechanism depends on the use-cases of context.
+			Let's at the moment keep the simplest use-case: consumer resolves the supplier basing on single paremeter. The paremeter can be supplier ID, or given
+			property etc. The problem here is that currently IRM doesn't support resolution by name + parameter but by name only. So we need to use two-stager 
+			resolution: first we resolve supplier iface by iface name, then select the iface with given paremeter from them. This approach has a number of disadvantages.
+			One of them is that the supplier iface resolution tree includes the paths to all suppliers even not matched the parementer. So the number of IRM interactions like
+			invalidation grows. </simpara>
+		</sect4>
+	    </sect3>
+	    <sect3><title>How to handle the changes in both parts?</title>
+		<simpara>Both supplier and consumer can be changed. One use-case is that supplier adds new CPs that was expected by consumer but messed earlier. </simpara>
+	    </sect3>
+	    <sect3><title>Supplying restrictions</title>
+		<simpara>Do we need to allow any consumer connect to any supplier? Is there use-case where supplier shall provide an access to some specific consumers?
+		    We can imagine such use-cases, but is it realistic to implement them? Actually binding by ID is also kind of such restrictions. The massive case is that
+		    some system inluceds components from module, this component requires some context with given ID, so it is up to the system to provide the compoment with
+		    such context. The component doesn't know ID of other possible contexts.</simpara>
+	    </sect3>
+	    <sect3 id="ds_dctx_dic_bnd"><title>Context Binding scheme</title>
+		<simpara>We assume that there should be automatic binding. This means that we need to specify the rule assosiating supplier ouput an consumer input. </simpara>
+		<simpara>Soution_1 is that consumer has components (ctx) as CPs (actually extenders) which the names corresponding to supplier ctx names.
+		    Then consumer requests supplier to bind ctx extender.</simpara>
+	    </sect3>
+	    <sect3 id="ds_dctx_dic_cs"><title>How to resolve same ID suppliers. Dependent context stack.</title>
+		<sect4><title>Intro</title>
+		    <simpara>It is possible that consumer owners provide more that one ctx suppliers with same ID. How to resolve them? What should be the policies of handling
+			this. There is the concrete use-case: fap3-vis widget styles. The owner style can be considered as the context for owned widget. Most often case that
+			there is top-level style that can be overriden. </simpara>
+		    <simpara>For widget style we can consider the context with same ID  dependent one from another from bottom to top creating context stack.
+			Lower level context in the stack (stack head) can override the owner context by implementing specific transition structure. With this approach we need to
+			implement contex access policy to resolve lower level supplier. How this resolution policy can be desinged?</simpara>
+		    <simpara>Solution_1 is to have supplier iface specific method to get head supplier like getHeadSpl(). With such supplier API the resolution sequence will be as:</simpara>
+		    <simpara>Solution_2 is to involve supplier itself in the supplier iface resolution. Supplier shall request owner for ifaces and filter out the upper suppliers
+			with same ID.</simpara>
+		    <programlisting>
+			consumer request owner to resolve suppliers
+			owner gives consumer the set of suppliers ifaces (owner resolves it from bottom to top)
+			consumer finds the first supplier with given ID and ask it for head supplier
+			supplier finds head suppler using getHeadSpl() and gives it to consumer
+			consumer registers itself to supplier
+			consumer binds context
+		    </programlisting>
+		    <simpara>As for widgets style the scheme can be as follow (binding Solution_1):</simpara>
+		    <programlisting>
+			|   OwningWdg : Widget {
+			|       Style : CtxSpl {
+			|           Color : State;
+			|       }
+			|       OwnedWdg : Widget {
+			|           ColorOverride : State;
+			|           Style : CtxSpl {
+			|               Style : CtxCsm {
+			|                   Color : ExtdStateOutp;
+			|               }
+			|               Color : TrSvld @ {
+			|                   Inp1 ~ ColorOverride;
+			|                   Inp2 ~ Style.Color;
+			|               }
+			|           }
+			|       }
+			|   }
+		    </programlisting>
+		    <simpara>Here OwningWdg and OwnedWdg has the context supplier with same ID. OwnedWdg ctx suppiler includes ctx consumer to get overrided ctx (Color) and then
+			overrides Color ctx with ColorOverride.</simpara>
+		</sect4>
+		<sect4><title>Binding in ctx stack.</title>
+		    <simpara>What if head supplier does't override the context? In that case it should redirect binding request to upper layer.</simpara>
+		    <simpara>What if after that head supplier overrides the context? In that case it should notiry consumer so that it can re-bind the context.</simpara>
+		</sect4>
 	    </sect3>
 	</sect2>
 	<sect2 id="ds_dctx_cvai"><title>Context vs access infrastructure.</title>
 	    <simpara>Turning back to our DRP-CRP example. Actually there is another way to allow CRP access to common states - access infrastructure. This approach is already
 		successfull applied in VIS container desing: the container deals with it's widget components via the sockets that are combined in some structure. For linear layout 
 		container such structure is the linked list.</simpara>
-	    <simpara>So we just can extend containers socket to distribure "model base" to all the CRPs.</simpara>
+	    <simpara>So we just can extend containers socket to distribute "model base" to all the CRPs.</simpara>
 	    <simpara>Node_1: Even CRP "personal" state like "model component's URI related" can be
 		distributed via sockets as "current CompName", CRP just needs to have the subsystem that "catches" this data on CRP creation phase.</simpara>
 	    <simpara>The cons of this approach is rather big overhead: for instance the number of connpoints is increased significantly.</simpara>
+	</sect2>
+	<sect2><title>Status [IN_PROGRESS]</title>
 	</sect2>
     </sect1>
 
@@ -2082,6 +2160,16 @@
 		    pairs. This will drastically reduce the model scope of MDesInpObserver resolution so simplifies the IRM pahtes.</simpara>
 	    </sect3>
 	</sect2>
+	<sect2><title>Status: [DONE]</title>
+	    <simpara>20220412 e015e4e41</simpara>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_cist"><title>Constant instead of State</title>
+	<sect2><title>Intro</title>
+	    <simpara>Currently there are a lot of usages States in constant roles. Using States that are not changed creates
+		an overhead. This needs to be optimized.</simpara>
+	</sect2>
     </sect1>
 
     <sect1 id="ds_ibc"><title>Tracking: Desing items to be handed</title>
@@ -2115,7 +2203,7 @@
 	<sect2><title>Mutation as transaction</title>
 	    <simpara>Ref <xref linkend="ds_mtc"/></simpara>
 	</sect2>
-	<sect2><title>DES context for components.</title>
+	<sect2><title>DES context</title>
 	    <simpara>Ref <xref linkend="ds_dctx"/></simpara>
 	</sect2>
 	<sect2><title>Data special values.</title>
@@ -2123,6 +2211,9 @@
 	</sect2>
 	<sect2><title>Redesing data interfaces.</title>
 	    <simpara>Ref <xref linkend="ds_rdi"/></simpara>
+	</sect2>
+	<sect2><title>Introduce constant data instead of State</title>
+	    <simpara>Ref <xref linkend="ds_cist"/></simpara>
 	</sect2>
     </sect1>
 
