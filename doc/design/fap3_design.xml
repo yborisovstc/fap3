@@ -1541,10 +1541,10 @@
 		   avoid the possible conflicts when some controlling subsustems try to control same controlled subsystem.</simpara>
 	    </sect3>
 	</sect2>
-	<sect2><title>DES controlling phiylosophy: objsect as data</title>
+	<sect2><title>DES controlling phiylosophy: object as data</title>
 	    <sect3><title>Intro</title>
 		<simpara>DES controlling needs to be considered in the scope of DES nature: updating the states data via transormation of the data of
-		    dependencies. The only sepcific of DES controlling is that the data to be updating is the controlled object.</simpara>
+		    dependencies. The only specific of DES controlling is that the data to be updating is the controlled object.</simpara>
 	    </sect3>
 	</sect2>
 	<sect2 id="ds_dcs_ucs"><title>How to support update-confirm scheme when controlling system</title>
@@ -1581,7 +1581,7 @@
 		    apply the buffered mut on confirm phase.</simpara>
 	    </sect4>
 	</sect2>
-	<sect2><title>Using special layer for controlling systems.</title>
+	<sect2 id="ds_dcs_sl"><title>Using special layer for controlling systems.</title>
 	    <sect3><title>Intro</title>
 		<simpara>On initial times of DES desing there was the idea of how such systems can be controlled. The idea was that specific layer needs to be used.
 		    This layer represent underlying layer (controlled) as data. This means that controlling layer defines controlled layer via some data
@@ -1596,6 +1596,10 @@
 		    data to it controlled model (i.e. changes the model). In DES adapter there is no explicit transition. Instead, the adapter performs "the transition" via
 		    direct changing (mutating) of the controlled system. The only diff is <xref linkend="ds_dcs_itr_sna"/> - this causes the different behaviour.
 		</simpara>
+	    </sect3>
+	    <sect3 id="ds_dcs_sl_dbo"><title>DES base objects</title>
+		<simpara>This phylosophy can be interpreted by another manner - we can create object which chromo (or some another exquivalend of structure representation) parts
+		    are states. Obviously this will be "higher" level objects, that can be called "DES based" objects.</simpara>
 	    </sect3>
 	</sect2>
 	<sect2 id="ds_dcs_cssd"><title>System update: chromo vs system structure data.</title>
@@ -2214,6 +2218,12 @@
 	</sect2>
 	<sect2><title>Introduce constant data instead of State</title>
 	    <simpara>Ref <xref linkend="ds_cist"/></simpara>
+	</sect2>
+	<sect2><title>DES based objects</title>
+	    <simpara>Ref <xref linkend="ds_dcs_sl_dbo"/></simpara>
+	</sect2>
+	<sect2><title>DCS transactions</title>
+	    <simpara>Ref <xref linkend="ds_dcs_trs"/></simpara>
 	</sect2>
     </sect1>
 

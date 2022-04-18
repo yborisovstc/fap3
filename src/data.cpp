@@ -230,7 +230,7 @@ bool BdVar::Init(const string& aString, MDVarGet* aInpv)
     bool res = false;
     if (mData != NULL) {
 	delete mData;
-	mData == NULL;
+	mData = nullptr;
     }
     else if ((mData = HDt<Sdata <int> >::Create(this, aString, aInpv)) != NULL);
     else if ((mData = HDt<Sdata <float> >::Create(this, aString, aInpv)) != NULL);

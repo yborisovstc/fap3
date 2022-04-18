@@ -407,17 +407,21 @@ void Node::mutRemove(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 {
     string snode, sname;
     sname = aMut.Attr(ENa_Id);
-    MOwned* owned = owner()->pairAt(sname)->provided();
-    onOwnedDetached(owned); // TODO to rename to onOwnedTobeDetached
-    bool res = owner()->disconnect(owner()->pairAt(sname));
-    if (res) {
-	owned->deleteOwned();
-	Log(TLog(EInfo, this) + "Removed node [" + sname + "]");
-	if (!aUpdOnly) {
-	    notifyNodeMutated(aMut, aCtx);
+    if (owner()->pairAt(sname)) {
+	MOwned* owned = owner()->pairAt(sname)->provided();
+	onOwnedDetached(owned); // TODO to rename to onOwnedTobeDetached
+	bool res = owner()->disconnect(owner()->pairAt(sname));
+	if (res) {
+	    owned->deleteOwned();
+	    Log(TLog(EInfo, this) + "Removed node [" + sname + "]");
+	    if (!aUpdOnly) {
+		notifyNodeMutated(aMut, aCtx);
+	    }
+	} else {
+	    Log(TLog(EErr, this) + "Failed detached owned [" + sname + "]");
 	}
     } else {
-	Log(TLog(EErr, this) + "Failed detached owned [" + sname + "]");
+	Log(TLog(EErr, this) + "Failed removing [" + sname + "] - not found");
     }
 }
 

@@ -95,18 +95,26 @@ void ASdc::SdcIapEnb::update()
 {
     bool old_data = mUdt;
     MNode* inp = mHost->getNode(mInpUri);
+    MVert* inpv = inp ? inp->lIf(inpv) : nullptr;
     MUnit* vgetu = inp->lIf(vgetu);
     auto ifaces = vgetu->getIfs<MDVarGet>();
-    bool first = true;
-    if (ifaces) for (auto ifc : *ifaces) {
-	MDVarGet* vget = dynamic_cast<MDVarGet*>(ifc);
-	MDtGet<Sdata<bool>>* gsd = vget->GetDObj(gsd);
-	if (gsd) {
-	    Sdata<bool> st;
-	    gsd->DtGet(st);
-	    if (first) mUdt = st.mData; else mUdt &= st.mData;
-	    first = false;
+    // We need to interpret not-connecting "enable" in favor of "disable"
+    // So using workaround here
+    if (ifaces && ifaces->size() >= inpv->pairsCount()) {
+	bool first = true;
+	if (ifaces) for (auto ifc : *ifaces) {
+	    MDVarGet* vget = dynamic_cast<MDVarGet*>(ifc);
+	    MDtGet<Sdata<bool>>* gsd = vget->GetDObj(gsd);
+	    if (gsd) {
+		Sdata<bool> st;
+		gsd->DtGet(st);
+		if (first) mUdt = st.mData && st.mValid; else mUdt &= (st.mData && st.mValid);
+		first = false;
+	    }
 	}
+    } else {
+	// Disconnected "enable"
+	mUdt = false;
     }
     if (mHost->isLogLevel(EDbg)) {
 	mHost->Log(TLog(EDbg, mHost) + "[" + mName + "] Updated: [" + toStr(old_data) + "] -> [" + toStr(mUdt) + "]");
@@ -1007,7 +1015,7 @@ ASdcExtract::ASdcExtract(const string &aType, const string& aName, MEnv* aEnv): 
 
 bool ASdcExtract::getState(bool aConf)
 {
-    bool res = false;
+    bool res = true; // Note, errors are interpreted in favor of "extracted" state
     do {
 	if (!mMag) break;
 	MNode* comp = mMag->getNode(mIapName.data(aConf));

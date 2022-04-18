@@ -202,7 +202,6 @@ MyRoot : Elem {
                     Tail ~ : State { = "URI elem3"; };
                 };
             }
-
         }
     }
 }

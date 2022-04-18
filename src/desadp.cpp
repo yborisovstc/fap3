@@ -2,6 +2,7 @@
 #include "des.h"
 #include "desadp.h"
 #include "rmutdata.h"
+#include "rdatauri.h"
 #include "mlink.h"
 #include "mmntp.h"
 
@@ -277,9 +278,22 @@ void AAdp::UpdateMag()
     bool res = false;
     MNode* inp = ahostGetNode(K_CpUriInpMagUri);
     if (inp) {
+	bool valid = false;
 	string magUri;
-	res = GetSData(inp, magUri);
+	Sdata<string> magUriS;
+	res = GetGData(inp, magUriS);
 	if (res) {
+	    magUri = magUriS.mData;
+	    valid = magUriS.mValid;
+	} else {
+	    DGuri magUriU;
+	    res = GetGData(inp, magUriU);
+	    if (res) {
+		magUri = magUriU.mData.toString();
+		valid = magUriU.mValid;
+	    }
+	}
+	if (res && valid) {
 	    UpdateMag(magUri);
 	    MNode* outp = ahostGetNode(K_CpUri_OutpMagUri);
 	    NotifyInpUpdated(outp);

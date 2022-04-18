@@ -37,7 +37,7 @@ DesUtils : Elem {
         Outp.Int ~ Cnt;
     }
     SetTg : Des {
-    # "Set trigger";
+        # "Set trigger";
         InpSet : Extd { Int : CpStateOutp; }
         Outp : Extd { Int : CpStateInp; }
         Outp.Int ~ Value : State @ {
@@ -47,9 +47,9 @@ DesUtils : Elem {
                 Inp ~ Value;
             };
        };
-   }
-   RSTg : Des {
-    # "R/S trigger, positive inputs";
+    }
+    RSTg : Des {
+        # "R/S trigger, positive inputs";
         InpS : Extd { Int : CpStateOutp; }
         InpR : Extd { Int : CpStateOutp; }
         Outp : Extd { Int : CpStateInp; }
@@ -63,6 +63,22 @@ DesUtils : Elem {
                 };
             };
        };
-   }
+    }
+    DPulse : Des {
+        # "Data pulse";
+        # "Set delay and const type before usage";
+        # "InpD - data input, InpE - data to pass when no changes happen";
+        InpD : Extd { Int : CpStateOutp; }
+        InpE : Extd { Int : CpStateOutp; }
+        Outp : Extd { Int : CpStateInp; }
+        Outp.Int ~ : TrSwitchBool @ {
+            Sel ~ Cmp_Neq : TrCmpVar @ {
+                Inp ~ InpD.Int;
+                Inp2 ~ Delay : State @ { Inp ~ InpD.Int; };
+            }; 
+            Inp1 ~ InpE.Int;
+            Inp2 ~ InpD.Int;
+        };
+    }
 
 }

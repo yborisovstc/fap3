@@ -525,9 +525,9 @@ string TrNegVar::GetInpUri(int aId) const
 
 
 
-///// TrUri
+///// TrToUriVar
 
-TrUri::TrUri(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+TrToUriVar::TrToUriVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
 {
     MNode* cp = Provider()->createNode(CpStateInp::Type(), "Inp", mEnv);
     assert(cp);
@@ -535,7 +535,7 @@ TrUri::TrUri(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType,
     assert(res);
 }
 
-void TrUri::Init(const string& aIfaceName)
+void TrToUriVar::Init(const string& aIfaceName)
 {
     if (mFunc) {
 	delete mFunc;
@@ -551,13 +551,13 @@ void TrUri::Init(const string& aIfaceName)
     }
 }
 
-string TrUri::GetInpUri(int aId) const 
+string TrToUriVar::GetInpUri(int aId) const 
 {
     if (aId == FUri::EInp) return "Inp";
     else return string();
 }
 
-string TrUri::VarGetIfid() const
+string TrToUriVar::VarGetIfid() const
 {
     return MDtGet<DGuri>::Type();
 }
@@ -1257,6 +1257,7 @@ void TrIsValid::Init(const string& aIfaceName)
     if (aIfaceName == TOGetData::Type() && inp1) {
 	string t1 = inp1->VarGetIfid();
 	if (mFunc = FIsValid<DGuri>::Create(this, t1));
+	else if (mFunc = FIsValid<Sdata<string>>::Create(this, t1));
 	else {
 	    Log(TLog(EErr, this) + "Failed init, input [" + t1 + "]");
 	}

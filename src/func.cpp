@@ -220,7 +220,7 @@ void FBAndDt::DtGet(Sdata<bool>& aData)
     if (inps) for (auto dgeti : *inps) {
 	MDVarGet* dget = dynamic_cast<MDVarGet*>(dgeti);
 	MDtGet<Sdata<bool>>* dfget = dget->GetDObj(dfget);
-	if (dfget != NULL) {
+	if (dfget) {
 	    Sdata<bool> arg = aData;
 	    dfget->DtGet(arg);
 	    if (arg.mValid) {
@@ -230,12 +230,13 @@ void FBAndDt::DtGet(Sdata<bool>& aData)
 		} else {
 		    aData.mData = aData.mData && arg.mData;
 		}
+		mHost.log(EDbg, "Arg [" + mHost.GetInpUri(EInp) + " (" + dget->Uid() + ")]: " + arg.ToString());
 	    } else {
-		mHost.log(EErr, "Incorrect argument [" + mHost.GetInpUri(EInp) + "]");
+		mHost.log(EErr, "Invalid arg [" + mHost.GetInpUri(EInp) + " (" + dget->Uid() + ")]");
 		res = false; break;
 	    }
 	} else {
-	    mHost.log(EErr, "Incompatible argument [" + mHost.GetInpUri(EInp) + "]");
+	    mHost.log(EErr, "Incompatible arg [" + mHost.GetInpUri(EInp) + " (" + dget->Uid() + ")]");
 	    dfget = dget->GetDObj(dfget);
 	    res = false; break;
 	}
@@ -664,17 +665,22 @@ template <class T> void FCmp<T>::DtGet(Sdata<bool>& aData)
 	    T arg1, arg2;
 	    a1->DtGet(arg1);
 	    a2->DtGet(arg2);
-	    if (arg1.mValid && arg2.mValid && arg1.IsCompatible(arg2)) {
-		bool res;
-		if (mFType == ELt) res = arg1 < arg2;
-		else if (mFType == ELe) res = arg1 <= arg2;
-		else if (mFType == EEq) res = arg1 == arg2;
-		else if (mFType == ENeq) res = arg1 != arg2;
-		else if (mFType == EGt) res = arg1 > arg2;
-		else if (mFType == EGe) res = arg1 >= arg2;
-		aData.Set(res);
-	    }
-	    else {
+	    if (arg1.IsCompatible(arg2)) {
+		if (arg1.mValid && arg2.mValid) {
+		    bool sres;
+		    if (mFType == ELt) sres = arg1 < arg2;
+		    else if (mFType == ELe) sres = arg1 <= arg2;
+		    else if (mFType == EEq) sres = arg1 == arg2;
+		    else if (mFType == ENeq) sres = arg1 != arg2;
+		    else if (mFType == EGt) sres = arg1 > arg2;
+		    else if (mFType == EGe) sres = arg1 >= arg2;
+		    aData.Set(sres);
+		} else if (mFType == ENeq) { // Enable comparing invalid data
+		    aData.Set(arg1 != arg2);
+		} else {
+		    res = false;
+		}
+	    } else {
 		res = false;
 	    }
 	}
@@ -1232,6 +1238,7 @@ void Init()
     FApnd<DGuri>::Create(host, string(), string());
     FSToStr<int>::Create(host, string(), string());
     FIsValid<DGuri>::Create(host, "");
+    FIsValid<Sdata<string>>::Create(host, "");
     FSvld<DGuri>::Create(host, "", "");
     FSvld<Sdata<string>>::Create(host, "", "");
 }

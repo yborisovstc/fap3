@@ -19,5 +19,15 @@ MyRoot : Elem {
         BChange_Cnt : DesUtils.BChangeCnt @ {
             SInp ~ StInp;
         }
+        # "Data pulse";
+        SDPulse : State @ {
+            _@ < { Debug.LogLevel = "Dbg"; = "URI _INV"; }
+            Dp : DesUtils.DPulse @ {
+                InpD ~ : State { = "URI Hello.World"; };
+                InpE ~ : State { = "URI _INV"; };
+            }
+            Dp.Delay < = "URI";
+            Inp ~ Dp.Outp;
+        }
     }
 }
