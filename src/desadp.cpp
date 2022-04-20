@@ -582,7 +582,7 @@ void AMnodeAdp::confirm() {
 	    mNameUpdated = false;
 	}
     } else {
-	Logger()->Write(EErr, this, "Managed agent is not attached");
+	Logger()->Write(EWarn, this, "Managed agent is not attached");
     }
     AAdp::confirm();
 }

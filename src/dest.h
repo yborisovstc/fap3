@@ -60,6 +60,7 @@ class TrVar: public TrBase, public MDVarGet, public Func::Host
 	virtual int GetInpCpsCount() const {return 0;}
 	virtual void log(int aCtg, const string& aMsg);
 	virtual MIfProv::TIfaces* GetInps(int aId, const string& aIfName, bool aOpt) override;
+	virtual string getHostUri() const { return getUriS(nullptr);}
     protected:
 	virtual void Init(const string& aIfaceName);
 	virtual string GetInpUri(int aId) const override;

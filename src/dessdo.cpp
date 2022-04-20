@@ -108,7 +108,7 @@ SdoName::SdoName(const string &aType, const string& aName, MEnv* aEnv): Sdo<stri
 void SdoName::DtGet(Stype& aData)
 {
     if (!mSue)  {
-	Log(TLog(EErr, this) + "Owner is not explorable");
+	Log(TLog(EWarn, this) + "Owner is not explorable");
     } else {
 	aData.mData = mSue->name();
 	aData.mValid = true;
@@ -122,7 +122,7 @@ SdoParent::SdoParent(const string &aType, const string& aName, MEnv* aEnv): Sdo<
 void SdoParent::DtGet(Stype& aData)
 {
     if (!mSue)  {
-	Log(TLog(EErr, this) + "Owner is not explorable");
+	Log(TLog(EWarn, this) + "Owner is not explorable");
     } else {
 	aData.mData = mSue->parentName();
 	aData.mValid = true;
@@ -146,7 +146,7 @@ void SdoComp::DtGet(Stype& aData)
     if (!res) {
 	Log(TLog(EErr, this) + "Failed getting input [" + mInpName.mName + "] data");
     } else if (!mSue)  {
-	Log(TLog(EErr, this) + "Owner is not explorable");
+	Log(TLog(EWarn, this) + "Owner is not explorable");
     } else {
 	aData.mData = mSue->getNode(name);
 	aData.mValid = true;
@@ -162,7 +162,7 @@ void SdoCompsCount::DtGet(Stype& aData)
 {
     string name;
     if (!mSue)  {
-	Log(TLog(EErr, this) + "Owner is not explorable");
+	Log(TLog(EWarn, this) + "Owner is not explorable");
     } else {
 	int count = 0;
 	auto owdCp = mSue->owner()->firstPair();
@@ -184,7 +184,7 @@ void SdoCompsNames::DtGet(Stype& aData)
 {
     string name;
     if (!mSue)  {
-	Log(TLog(EErr, this) + "Owner is not explorable");
+	Log(TLog(EWarn, this) + "Owner is not explorable");
     } else {
 	Stype cnames;
 	auto owdCp = mSue->owner()->firstPair();
@@ -215,7 +215,7 @@ void SdoConn::DtGet(Stype& aData)
     if (!res || !resq) {
 	Log(TLog(EErr, this) + "Failed getting input [" + (res ? mInpVp.mName : mInpVq.mName) + "] data");
     } else if (!mSue)  {
-	Log(TLog(EErr, this) + "Owner is not explorable");
+	Log(TLog(EWarn, this) + "Owner is not explorable");
     } else {
 	MNode* vpn = mSue->getNode(vps);
 	MNode* vqn = mSue->getNode(vqs);

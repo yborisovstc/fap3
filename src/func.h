@@ -28,6 +28,7 @@ class Func
 	    virtual void OnFuncContentChanged() = 0;
 	    virtual string GetInpUri(int aId) const = 0;
 	    virtual void log(int aCtg, const string& aMsg) = 0;
+	    virtual string getHostUri() const = 0;
 	};
     public:
 	Func(Host& aHost): mHost(aHost) {};
@@ -101,6 +102,7 @@ class FBBase: public Func, public MDtGet<Sdata<bool>> {
     public:
 	FBBase(Host& aHost): Func(aHost) {};
 	virtual MIface* getLif(const char *aName) override;
+	virtual string Uid() const override { return mHost.getHostUri() + Ifu::KUidSepIc + "func" + Ifu::KUidSep + MDtGet<Sdata<bool>>::Type();}
 	virtual string IfaceGetId() const { return MDtGet<Sdata<bool>>::Type();};
 	virtual void GetResult(string& aResult) const;
 	virtual string GetInpExpType(int aId) const;
@@ -145,6 +147,7 @@ class FUri: public Func, public MDtGet<DGuri> {
 	static Func* Create(Host* aHost, const string& aOutIid, const string& aInp1Id);
 	FUri(Host& aHost): Func(aHost) {}
 	virtual MIface* getLif(const char *aName) override;
+	virtual string Uid() const override { return mHost.getHostUri() + Ifu::KUidSepIc + "func" + Ifu::KUidSep + MDtGet<DGuri>::Type();}
 	virtual string IfaceGetId() const { return MDtGet<TData>::Type();}
 	virtual void DtGet(TData& aData);
 	virtual void GetResult(string& aResult) const {mRes.ToString(aResult);}
@@ -163,6 +166,7 @@ class FApnd: public Func, public MDtGet<T> {
 	static Func* Create(Host* aHost, const string& aOutIid, const string& aInp1Id);
 	FApnd(Host& aHost): Func(aHost) {}
 	virtual MIface* getLif(const char *aName) override;
+	virtual string Uid() const override { return mHost.getHostUri() + Ifu::KUidSepIc + "func" + Ifu::KUidSep + MDtGet<T>::Type();}
 	virtual string IfaceGetId() const { return MDtGet<TData>::Type();}
 	virtual void DtGet(TData& aData);
 	virtual void GetResult(string& aResult) const {mRes.ToString(aResult);}
@@ -181,6 +185,7 @@ class FSvld: public Func, public MDtGet<T> {
 	static Func* Create(Host* aHost, const string& aOutIid, const string& aInp1Id);
 	FSvld(Host& aHost): Func(aHost) {}
 	virtual MIface* getLif(const char *aName) override;
+	virtual string Uid() const override { return mHost.getHostUri() + Ifu::KUidSepIc + "func" + Ifu::KUidSep + MDtGet<T>::Type();}
 	virtual string IfaceGetId() const { return MDtGet<TData>::Type();}
 	virtual void DtGet(TData& aData);
 	virtual void GetResult(string& aResult) const {mRes.ToString(aResult);}
@@ -207,6 +212,7 @@ template <class T> class FMaxDt: public FMaxBase, public MDtGet<T> {
 	static Func* Create(Host* aHost, const string& aString);
 	FMaxDt(Host& aHost): FMaxBase(aHost) {};
 	virtual MIface* getLif(const char *aName) override;
+	virtual string Uid() const override { return mHost.getHostUri() + Ifu::KUidSepIc + "func" + Ifu::KUidSep + MDtGet<T>::Type();}
 	virtual string IfaceGetId() const { return MDtGet<T>::Type();};
 	virtual void DtGet(T& aData);
 	virtual void GetResult(string& aResult) const;
@@ -228,6 +234,7 @@ class FCmpBase: public Func, public MDtGet<Sdata<bool> >
 	virtual string IfaceGetId() const override;
 	virtual void GetResult(string& aResult) const override;
 	virtual MIface* getLif(const char *aName) override;
+	virtual string Uid() const override { return mHost.getHostUri() + Ifu::KUidSepIc + "func" + Ifu::KUidSep + MDtGet<Sdata<bool>>::Type();}
 	// From MDtGet
 	virtual void DtGet(Sdata<bool>& aData) override;
     protected:
@@ -261,11 +268,12 @@ class FSwitchBool: public FSwithcBase, public MDVarGet
 	static Func* Create(Func::Host* aHost, const string& aOutIid, const string& aInp1Id);
 	FSwitchBool(Func::Host& aHost): FSwithcBase(aHost) {};
 	// From Func
-	virtual string IfaceGetId() const override { return MDVarGet::Type();};
+	//virtual string IfaceGetId() const override { return MDVarGet::Type();}
+	virtual string IfaceGetId() const override { return VarGetIfid();}
 	virtual string GetInpExpType(int aId) const override;
 	virtual MIface* getLif(const char *aName) override;
 	// From MDVarGet
-	virtual string MDVarGet_Uid() const override { return string();}
+	virtual string MDVarGet_Uid() const override { return mHost.getHostUri() + Ifu::KUidSepIc + "func" + Ifu::KUidSep + MDVarGet::Type();}
 	virtual string VarGetIfid() const override;
 	virtual MIface* DoGetDObj(const char *aName) override;
 	// Local
@@ -283,6 +291,7 @@ class FBnegDt: public Func, public MDtGet<Sdata<bool>> {
 	static Func* Create(Host* aHost, const string& aString);
 	FBnegDt(Host& aHost): Func(aHost) {}
 	virtual MIface* getLif(const char *aName) override;
+	virtual string Uid() const override { return mHost.getHostUri() + Ifu::KUidSepIc + "func" + Ifu::KUidSep + MDtGet<Sdata<bool>>::Type();}
 	virtual string IfaceGetId() const override { return MDtGet<Sdata<bool>>::Type();}
 	virtual void DtGet(Sdata<bool>& aData) override;
 	virtual void GetResult(string& aResult) const override;
@@ -304,6 +313,7 @@ class FSizeVect: public Func, public MDtGet<Sdata<int>> {
 	static Func* Create(Host* aHost, const string& aOutIid, const string& aInp1Id);
 	FSizeVect(Host& aHost): Func(aHost) {};
 	virtual MIface* getLif(const char *aName) override;
+	virtual string Uid() const override { return mHost.getHostUri() + Ifu::KUidSepIc + "func" + Ifu::KUidSep + MDtGet<TOutp>::Type();}
 	virtual string IfaceGetId() const override { return MDtGet<TOutp>::Type();}
 	virtual void DtGet(TOutp& aData) override;
 	virtual void GetResult(string& aResult) const override {mRes.ToString(aResult);}
@@ -329,6 +339,7 @@ class FAtVect: public FAtBase, public MDtGet<Sdata<T>> {
 	static Func* Create(Host* aHost, const string& aOutIid, const string& aInp1Id);
 	FAtVect(Host& aHost): FAtBase(aHost) {};
 	virtual MIface* getLif(const char *aName) override;
+	virtual string Uid() const override { return mHost.getHostUri() + Ifu::KUidSepIc + "func" + Ifu::KUidSep + MDtGet<Sdata<T>>::Type();}
 	virtual string IfaceGetId() const override { return MDtGet<Sdata<T>>::Type();}
 	virtual void DtGet(Sdata<T>& aData) override;
 	virtual void GetResult(string& aResult) const override {mRes.ToString(aResult);}
@@ -348,6 +359,7 @@ class FToStrBase: public Func, public MDtGet<Sdata<string>>
 	enum { EInp = EInp1 };
 	FToStrBase(Host& aHost): Func(aHost) {}
 	virtual MIface* getLif(const char *aName) override;
+	virtual string Uid() const override { return mHost.getHostUri() + Ifu::KUidSepIc + "func" + Ifu::KUidSep + MDtGet<Sdata<string>>::Type();}
 	virtual string IfaceGetId() const override { return MDtGet<TData>::Type();}
 	virtual void GetResult(string& aResult) const override;
 	TData mRes;
@@ -392,6 +404,7 @@ class FIsValidBase: public Func, public MDtGet<Sdata<bool> >
 	virtual string IfaceGetId() const override { return TOGetData::Type(); }
 	virtual void GetResult(string& aResult) const override;
 	virtual MIface* getLif(const char *aName) override;
+	virtual string Uid() const override { return mHost.getHostUri() + Ifu::KUidSepIc + "func" + Ifu::KUidSep + MDtGet<Sdata<bool>>::Type();}
     protected:
 	TOData mRes;
 };
@@ -429,6 +442,7 @@ class FTail: public FTailBase, public MDtGet<T>  {
 	virtual void GetResult(string& aResult) const override { }
 	virtual string GetInpExpType(int aId) const override { return TDget::Type(); }
 	virtual string IfaceGetId() const { return TDget::Type();};
+	virtual string Uid() const override { return mHost.getHostUri() + Ifu::KUidSepIc + "func" + Ifu::KUidSep + MDtGet<TData>::Type();}
     public:
 	TData mRes;
 };
@@ -469,6 +483,7 @@ class FHead: public FHeadBase, public MDtGet<T>  {
     public:
 	FHead(Host& aHost): FHeadBase(aHost) {};
 	virtual MIface* getLif(const char *aName) override;
+	virtual string Uid() const override { return mHost.getHostUri() + Ifu::KUidSepIc + "func" + Ifu::KUidSep + MDtGet<T>::Type();}
 	virtual void GetResult(string& aResult) const override { }
 	virtual string GetInpExpType(int aId) const override { return TDget::Type(); }
 	virtual string IfaceGetId() const { return TDget::Type();};

@@ -53,6 +53,7 @@ MIface* Node::MObservable_getLif(const char *aType)
     return res;
 }
 
+#if 0
 void Node::MNode_doDump(int aLevel, int aIdt, ostream& aOs) const
 {
     if (aLevel & Ifu::EDM_Base) {
@@ -60,15 +61,51 @@ void Node::MNode_doDump(int aLevel, int aIdt, ostream& aOs) const
     }
     if (aLevel & Ifu::EDM_Comps) {
 	for (int i = 0; i < owner()->pcount(); i++) {
-	    const MOwned* comp = owner()->pairAt(i)->provided();
-	    const MNode* compn = comp->lIf(compn);
-	    Ifu::offset(aIdt, aOs); aOs << "- "  << compn->name() << endl;
-	    if (aLevel & Ifu::EDM_Recursive) {
-		compn->doDump(Ifu::EDM_Comps | Ifu::EDM_Recursive, aIdt + Ifu::KDumpIndent, aOs);
+	    if (owner()->pairAt(i)) {
+		const MOwned* comp = owner()->pairAt(i)->provided();
+		const MNode* compn = comp->lIf(compn);
+		if (compn) {
+		    Ifu::offset(aIdt, aOs);
+		    aOs << "- "  << compn->name() << endl;
+		    if (aLevel & Ifu::EDM_Recursive) {
+			compn->doDump(Ifu::EDM_Comps | Ifu::EDM_Recursive, aIdt + Ifu::KDumpIndent, aOs);
+		    }
+		} else {
+		    aOs << "=== ERROR on getting component [" << i << "] MNode" << endl;
+		}
+	    } else {
+		aOs << "=== ERROR on getting comp [" << i << "]" << endl;
 	    }
 	}
     }
 }
+#else
+void Node::MNode_doDump(int aLevel, int aIdt, ostream& aOs) const
+{
+    if (aLevel & Ifu::EDM_Base) {
+	Ifu::offset(aIdt, cout); cout << "Name: " << mName << endl;
+    }
+    if (aLevel & Ifu::EDM_Comps) {
+	for (int i = 0; i < owner()->pcount(); i++) {
+	    if (owner()->pairAt(i)) {
+		const MOwned* comp = owner()->pairAt(i)->provided();
+		const MNode* compn = comp->lIf(compn);
+		if (compn) {
+		    Ifu::offset(aIdt, cout);
+		    cout << "- "  << compn->name() << endl;
+		    if (aLevel & Ifu::EDM_Recursive) {
+			compn->doDump(Ifu::EDM_Comps | Ifu::EDM_Recursive, aIdt + Ifu::KDumpIndent, cout);
+		    }
+		} else {
+		    cout << "=== ERROR on getting component [" << i << "] MNode" << endl;
+		}
+	    } else {
+		cout << "=== ERROR on getting comp [" << i << "]" << endl;
+	    }
+	}
+    }
+}
+#endif
 
 const MNode* Node::getComp(const string& aId) const
 {

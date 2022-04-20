@@ -50,7 +50,7 @@ template<class T> void FAddDt<T>::DtGet(T& aData)
 		if (first) { aData = arg; first = false;
 		} else { aData += arg; }
 	    } else {
-		mHost.log(EErr, "Incorrect argument [" + mHost.GetInpUri(EInp) + "]");
+		mHost.log(EDbg, "Invalid argument [" + mHost.GetInpUri(EInp) + "]");
 		res = false; break;
 	    }
 	} else {
@@ -68,7 +68,7 @@ template<class T> void FAddDt<T>::DtGet(T& aData)
 	    if (arg.mValid) {
 		aData -= arg;
 	    } else {
-		mHost.log(EErr, "Incorrect argument [" + mHost.GetInpUri(EInp) + "]");
+		mHost.log(EDbg, "Invalid argument [" + mHost.GetInpUri(EInp) + "]");
 		res = false; break;
 	    }
 	} else {
@@ -155,7 +155,7 @@ template<class T> void FMplDt<T>::DtGet(T& aData)
 		if (first) { aData = arg; first = false;
 		} else { aData *= arg; }
 	    } else {
-		mHost.log(EErr, "Incorrect argument [" + mHost.GetInpUri(EInp) + "]");
+		mHost.log(EDbg, "Invalid argument [" + mHost.GetInpUri(EInp) + "]");
 		res = false; break;
 	    }
 	} else {
@@ -232,7 +232,7 @@ void FBAndDt::DtGet(Sdata<bool>& aData)
 		}
 		mHost.log(EDbg, "Arg [" + mHost.GetInpUri(EInp) + " (" + dget->Uid() + ")]: " + arg.ToString());
 	    } else {
-		mHost.log(EErr, "Invalid arg [" + mHost.GetInpUri(EInp) + " (" + dget->Uid() + ")]");
+		mHost.log(EDbg, "Invalid arg [" + mHost.GetInpUri(EInp) + " (" + dget->Uid() + ")]");
 		res = false; break;
 	    }
 	} else {
@@ -446,7 +446,8 @@ void FApnd<T>::DtGet(TData& aData)
 		    aData += arg2;
 		    aData.mValid = true;
 		} else {
-		    mHost.log(EErr, "Incorrect Inp2 data");
+		    mHost.log(EDbg, "Invalid Inp2 data");
+		    dfget2->DtGet(arg2);
 		    res = false;
 		}
 	    } else {
@@ -454,11 +455,11 @@ void FApnd<T>::DtGet(TData& aData)
 		res = false;
 	    }
 	} else {
-	    mHost.log(EErr, "Incorrect Inp2 data");
+	    mHost.log(EDbg, "Invalid Inp1 data");
 	    res = false;
 	}
     } else {
-	mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp1) + "]");
+	mHost.log(EWarn, "Cannot get input [" + mHost.GetInpUri(EInp1) + "]");
 	res = false;
     }
     aData.mValid = res;
@@ -597,7 +598,7 @@ template<class T> void FMaxDt<T>::DtGet(T& aData)
 		    }
 		}
 	    } else {
-		mHost.log(EErr, "Incorrect argument [" + mHost.GetInpUri(EInp) + "]");
+		mHost.log(EDbg, "Invalid argument [" + mHost.GetInpUri(EInp) + "]");
 		res = false; break;
 	    }
 	} else {
@@ -852,7 +853,7 @@ template <class T> void FSizeVect<T>::DtGet(TOutp& aData)
 	    aData.mData = arg.Size();
 	    aData.mValid = true;
 	} else {
-	    mHost.log(EErr, "Incorrect input data");
+	    mHost.log(EDbg, "Invalid input data");
 	    res = false;
 	}
     } else {
@@ -923,10 +924,10 @@ void FAtVect<T>::DtGet(Sdata<T>& aData)
 	    } else {
 		string inds;
 		ind.ToString(inds, false);
-		mHost.log(EErr, "Index is exceeded: " + inds);
+		mHost.log(EWarn, "Index is exceeded: " + inds);
 	    }
 	} else {
-	    mHost.log(EErr, "Incorrect argument");
+	    mHost.log(EDbg, "Invalid argument");
 	}
     } else if (!dfget) {
 	mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp1) + "]");
@@ -1042,7 +1043,7 @@ void FUriToStr::DtGet(TData& aData)
 	    aData.mData = arg.ToString(false);
 	    aData.mValid = true;
 	} else {
-	    mHost.log(EErr, "Incorrect input data");
+	    mHost.log(EDbg, "Invalid input data");
 	    TInpData arg;
 	    dfget->DtGet(arg);
 	    res = false;
@@ -1143,7 +1144,7 @@ void FTailUri::DtGet(TData& aData)
 		if (head.mValid) {
 		    res = arg.mData.getTail(head.mData, aData.mData);
 		} else {
-		    mHost.log(EErr, "Incorrect input data [" + mHost.GetInpUri(EHead) + "]");
+		    mHost.log(EDbg, "Invalid input data [" + mHost.GetInpUri(EHead) + "]");
 		    res = false;
 		}
 	    } else {
@@ -1151,11 +1152,11 @@ void FTailUri::DtGet(TData& aData)
 		res = false;
 	    }
 	} else {
-	    mHost.log(EErr, "Incorrect input data");
+	    mHost.log(EDbg, "Invalid input data");
 	    res = false;
 	}
     } else {
-	mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp) + "]");
+	mHost.log(EWarn, "Cannot get input [" + mHost.GetInpUri(EInp) + "]");
 	res = false;
     }
     aData.mValid = res;
@@ -1194,7 +1195,7 @@ void FHeadUri::DtGet(TData& aData)
 		if (tail.mValid) {
 		    res = arg.mData.getHead(tail.mData, aData.mData);
 		} else {
-		    mHost.log(EErr, "Incorrect input data [" + mHost.GetInpUri(ETail) + "]");
+		    mHost.log(EDbg, "Invalid input data [" + mHost.GetInpUri(ETail) + "]");
 		    res = false;
 		}
 	    } else {
@@ -1202,11 +1203,11 @@ void FHeadUri::DtGet(TData& aData)
 		res = false;
 	    }
 	} else {
-	    mHost.log(EErr, "Incorrect input data");
+	    mHost.log(EDbg, "Invalid input data");
 	    res = false;
 	}
     } else {
-	mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp) + "]");
+	mHost.log(EWarn, "Cannot get input [" + mHost.GetInpUri(EInp) + "]");
 	res = false;
     }
     aData.mValid = res;

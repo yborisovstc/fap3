@@ -97,9 +97,9 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 		virtual void update() override;
 		virtual void confirm() override;
 		// Local
+		virtual bool updateData();
 		T& data(bool aConf = true);
 	    public:
-		T mIdt;  /*!< Current data */
 		T mUdt;  /*!< Updated data */
 		T mCdt;  /*!< Confirmed data */
 	};
@@ -110,8 +110,8 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 	class SdcIapEnb: public SdcIap<bool> {
 	    public:
 		SdcIapEnb(const string& aName, ASdc* aHost, const string& aInpUri): SdcIap<bool>(aName, aHost, aInpUri) {}
-		// From MDesSyncable
-		virtual void update() override;
+		// Local
+		virtual bool updateData();
 	};
 
 
@@ -125,6 +125,8 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 		// From MDesSyncable
 		virtual void update() override;
 		virtual void confirm() override;
+		// Local
+		virtual bool updateData();
 	    public:
 		T mUdt;  /*!< Updated data */
 		T mCdt;  /*!< Confirmed data */
@@ -437,6 +439,7 @@ class ASdcDisconn : public ASdc
 	ASdc::SdcIap<string> mIapV2; /*!< "V2" input access point */
 };
 
+#if 0
 /** @brief SDC agent "Insert"
  * Inserts system between given CP and its pair
  * There are improved version 2.
@@ -463,6 +466,7 @@ class ASdcInsert : public ASdc
 	ASdc::MagDobs mDobsIcp; /*!< "Inserted system CP conn to given CP" observation */
 	MVert* mCpPair;
 };
+#endif
 
 /** @brief SDC agent "Insert node into list, ver. 2"
  * */

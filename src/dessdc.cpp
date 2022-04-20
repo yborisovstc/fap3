@@ -62,16 +62,22 @@ T& ASdc::SdcIap<T>::data(bool aConf)
 { 
     if (aConf) return mCdt;
     else {
-	mHost->GetInpSdata<T>(mInpUri, mIdt);
-	return mIdt;
+	updateData();
+	return mUdt;
     }
+}
+
+template <class T>
+bool ASdc::SdcIap<T>::updateData()
+{
+    return mHost->GetInpSdata<T>(mInpUri, mUdt);
 }
 
 template <class T>
 void ASdc::SdcIap<T>::update()
 {
     T old_data = mUdt;
-    bool res = mHost->GetInpSdata<T>(mInpUri, mUdt);
+    bool res = updateData();
     if (mHost->isLogLevel(EDbg)/* && mUdt != mCdt*/) {
 	mHost->Log(TLog(EDbg, mHost) + "[" + mName + "] Updated: [" + toStr(old_data) + "] -> [" + toStr(mUdt) + "]");
     }
@@ -91,9 +97,9 @@ void ASdc::SdcIap<T>::confirm()
     mUpdated = false;
 }
 
-void ASdc::SdcIapEnb::update()
+bool ASdc::SdcIapEnb::updateData()
 {
-    bool old_data = mUdt;
+    bool res = false;
     MNode* inp = mHost->getNode(mInpUri);
     MVert* inpv = inp ? inp->lIf(inpv) : nullptr;
     MUnit* vgetu = inp->lIf(vgetu);
@@ -108,25 +114,29 @@ void ASdc::SdcIapEnb::update()
 	    if (gsd) {
 		Sdata<bool> st;
 		gsd->DtGet(st);
-		if (first) mUdt = st.mData && st.mValid; else mUdt &= (st.mData && st.mValid);
+		if (first) mUdt = st.mData && st.mValid;
+		else mUdt &= (st.mData && st.mValid);
 		first = false;
+		res = true;
 	    }
 	}
     } else {
 	// Disconnected "enable"
 	mUdt = false;
     }
-    if (mHost->isLogLevel(EDbg)) {
-	mHost->Log(TLog(EDbg, mHost) + "[" + mName + "] Updated: [" + toStr(old_data) + "] -> [" + toStr(mUdt) + "]");
-    }
-    mActivated = false;
-    setUpdated();
+    return res;
 }
 
-    template <class T>
+template <class T>
+bool ASdc::SdcIapg<T>::updateData()
+{
+    return mHost->GetInpData<T>(mInpUri, mUdt);
+}
+
+template <class T>
 void ASdc::SdcIapg<T>::update()
 {
-    bool res = mHost->GetInpData<T>(mInpUri, mUdt);
+    bool res = updateData();
     mActivated = false;
     setUpdated();
 }
@@ -252,29 +262,24 @@ void ASdc::addOutput(const string& aName)
 
 void ASdc::update()
 {
-    for (auto iap : mIaps) {
-	if (iap->mActivated) {
-	    iap->update();
+    if (/*mIapEnb.data(false)*/ true) {
+	for (auto iap : mIaps) {
+	    if (iap->mActivated) {
+		iap->update();
+	    }
 	}
+	mActNotified = false;
+	setUpdated();
     }
-    /*
-    for (auto map : mMaps) {
-	if (map->mActivated) {
-	    map->update();
-	}
-    }
-    */
-    mActNotified = false;
-    setUpdated();
 }
 
 void ASdc::confirm()
 {
     /*
-    if (mIapEnb.mUpdated) {
-	mIapEnb.confirm();
-    }
-    */
+       if (mIapEnb.mUpdated) {
+       mIapEnb.confirm();
+       }
+       */
     bool changed = false;
     for (auto iap : mIaps) {
 	if (iap->mUpdated) {
@@ -282,14 +287,6 @@ void ASdc::confirm()
 	    changed |= iap->mChanged;
 	}
     }
-    /*
-    for (auto map : mMaps) {
-	if (map->mUpdated) {
-	    map->confirm();
-	    changed |= map->mChanged;
-	}
-    }
-    */
     if (/*changed &&*/ mMag && mIapEnb.data(true)) { // Ref ds_dcs_sdc_dsgn_oin Solution#1
 	if (!getState(true)) { // Ref ds_dcs_sdc_dsgn_cc Solution#2
 	    bool res = doCtl();
@@ -546,10 +543,12 @@ ASdcComp::ASdcComp(const string &aType, const string& aName, MEnv* aEnv): ASdc(a
 bool ASdcComp::getState(bool aConf)
 {
     bool res = false;
-    string name;
-    bool rr = GetInpSdata(K_CpUri_Name, name);
-    if (rr && mMag) {
+    if (mMag) {
+	// TODO FIXME We need also to get validity of the data
+	string name = mIapName.data(aConf);
 	res = mMag->getComp(name);
+    } else {
+	Log(TLog(EDbg, this) + "Managed agent is not set");
     }
     return res;
 }
@@ -593,10 +592,11 @@ ASdcRm::ASdcRm(const string &aType, const string& aName, MEnv* aEnv): ASdc(aType
 bool ASdcRm::getState(bool aConf)
 {
     bool res = false;
-    string name;
-    bool rr = GetInpSdata(K_CpUri_Rm_Name, name);
-    if (rr && mMag) {
+    if (mMag) {
+	string name = mIapName.data(aConf);
 	res = !mMag->getComp(name);
+    } else {
+	Log(TLog(EDbg, this) + "Managed agent is not set");
     }
     return res;
 }
@@ -657,10 +657,9 @@ void ASdcConn::getCcd(bool& aData)
 bool ASdcConn::getState(bool aConf)
 {
     bool res = false;
-    string v1s, v2s;
-    bool rr = GetInpSdata(K_CpUri_V1, v1s);
-    rr = rr && GetInpSdata(K_CpUri_V2, v2s);
-    if (rr && mMag) {
+    if (mMag) {
+	string v1s = mIapV1.data(aConf);
+	string v2s = mIapV2.data(aConf);
 	MNode* v1n = mMag->getNode(v1s);
 	MNode* v2n = mMag->getNode(v2s);
 	if (v1n && v2n) {
@@ -668,8 +667,14 @@ bool ASdcConn::getState(bool aConf)
 	    MVert* v2v = v2n->lIf(v2v);
 	    if (v1v && v2v) {
 		res = v1v->isConnected(v2v);
+	    } else {
+		Log(TLog(EDbg, this) + "CP is not connectable [" + (v1v ? v2s : v1s) + "]");
 	    }
+	} else {
+	    Log(TLog(EDbg, this) + "Cannot find CP [" + (v1n ? v2s : v1s) + "]");
 	}
+    } else {
+	Log(TLog(EDbg, this) + "Managed agent is not set");
     }
     return res;
 }
@@ -716,10 +721,9 @@ ASdcDisconn::ASdcDisconn(const string &aType, const string& aName, MEnv* aEnv): 
 bool ASdcDisconn::getState(bool aConf)
 {
     bool res = false;
-    string v1s, v2s;
-    bool rr = GetInpSdata(K_CpUri_V1, v1s);
-    rr = rr && GetInpSdata(K_CpUri_V2, v2s);
-    if (rr && mMag) {
+    if (mMag) {
+	string v1s = mIapV1.data(aConf);
+	string v2s = mIapV2.data(aConf);
 	MNode* v1n = mMag->getNode(v1s);
 	MNode* v2n = mMag->getNode(v2s);
 	if (v1n && v2n) {
@@ -727,6 +731,8 @@ bool ASdcDisconn::getState(bool aConf)
 	    MVert* v2v = v2n->lIf(v2v);
 	    res = !v1v->isConnected(v2v);
 	}
+    } else {
+	Log(TLog(EDbg, this) + "Managed agent is not set");
     }
     return res;
 }
@@ -747,6 +753,7 @@ bool ASdcDisconn::doCtl()
 }
 
 
+#if 0
 // SDC agent "Insert"
 
 const string K_CpUri_Cp = "TCp";
@@ -856,6 +863,9 @@ void ASdcInsert::onObsChanged(MObservable* aObl)
 {
     mOapOut.NotifyInpsUpdated();
 }
+#endif
+
+
 
 // SDC agent "Insert node into the list, ver. 2"
 
@@ -877,19 +887,19 @@ bool ASdcInsert2::getState(bool aConf)
 	if (!mMag) break;
 	MNode* comp = mMag->getNode(mIapName.data(aConf));
 	if (!comp) {
-	    Log(TLog(EErr, this) + "Cannot find comp [" + mIapName.data(aConf) + "]");
+	    Log(TLog(EDbg, this) + "Cannot find comp [" + mIapName.data(aConf) + "]");
 	    break;
 	}
 	GUri prev_uri(mIapName.data(aConf)); prev_uri += GUri(mIapPrev.data(aConf));
 	MNode* prev = mMag->getNode(prev_uri);
 	if (!prev) {
-	    Log(TLog(EErr, this) + "Cannot find Prev Cp [" + prev_uri.toString() + "]");
+	    Log(TLog(EDbg, this) + "Cannot find Prev Cp [" + prev_uri.toString() + "]");
 	    break;
 	}
 	GUri next_uri(mIapName.data(aConf)); next_uri += GUri(mIapNext.data(aConf));
 	MNode* next = mMag->getNode(next_uri);
 	if (!next) {
-	    Log(TLog(EErr, this) + "Cannot find Next Cp [" + next_uri.toString() + "]");
+	    Log(TLog(EDbg, this) + "Cannot find Next Cp [" + next_uri.toString() + "]");
 	    break;
 	}
 	MVert* prevv = prev->lIf(prevv);
@@ -1020,29 +1030,29 @@ bool ASdcExtract::getState(bool aConf)
 	if (!mMag) break;
 	MNode* comp = mMag->getNode(mIapName.data(aConf));
 	if (!comp) {
-	    Log(TLog(EErr, this) + "Cannot find comp [" + mIapName.mCdt + "]");
+	    Log(TLog(EDbg, this) + "Cannot find comp [" + mIapName.mCdt + "]");
 	    break;
 	}
 	GUri prev_uri(mIapName.data(aConf)); prev_uri += GUri(mIapPrev.data(aConf));
 	MNode* prev = mMag->getNode(prev_uri);
 	if (!prev) {
-	    Log(TLog(EErr, this) + "Cannot find Prev Cp [" + prev_uri.toString() + "]");
+	    Log(TLog(EDbg, this) + "Cannot find Prev Cp [" + prev_uri.toString() + "]");
 	    break;
 	}
 	GUri next_uri(mIapName.data(aConf)); next_uri += GUri(mIapNext.data(aConf));
 	MNode* next = mMag->getNode(next_uri);
 	if (!next) {
-	    Log(TLog(EErr, this) + "Cannot find Next Cp [" + next_uri.toString() + "]");
+	    Log(TLog(EDbg, this) + "Cannot find Next Cp [" + next_uri.toString() + "]");
 	    break;
 	}
 	MVert* prevv = prev->lIf(prevv);
 	if (!prevv) {
-	    Log(TLog(EErr, this) + "Prev is not connectable [" + prev_uri.toString() + "]");
+	    Log(TLog(EDbg, this) + "Prev is not connectable [" + prev_uri.toString() + "]");
 	    break;
 	}
 	MVert* nextv = next->lIf(nextv);
 	if (!nextv) {
-	    Log(TLog(EErr, this) + "Next is not connectable [" + next_uri.toString() + "]");
+	    Log(TLog(EDbg, this) + "Next is not connectable [" + next_uri.toString() + "]");
 	    break;
 	}
 	res = (prevv->pairsCount() == 0) && (nextv->pairsCount() == 0);
