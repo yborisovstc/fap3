@@ -199,5 +199,3 @@ bool Unit::isRequestor(MIfReq::TIfReqCp* aReq, MNode* aOwner) const
     MIfProvOwner* oo = ou ? ou->lIf(oo) : nullptr;
     return aReq->provided()->isRequestor(oo);
 }
-
-

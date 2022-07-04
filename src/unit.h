@@ -13,6 +13,8 @@
 using namespace std;
 
 	
+/** @brief Native hier unit - note supporting IRM
+ * */
 class Unit : public Node, public MUnit, public MIfProvOwner
 {
     public:
@@ -47,6 +49,7 @@ class Unit : public Node, public MUnit, public MIfProvOwner
 	map<string, IfrNode*> mLocalIrn; /*!< Local IFR node */
 	list<IfrNode*> mIrns;  /*! IFR nodes */
 };
+	
 
 #endif // __FAP3_UNIT_H
 

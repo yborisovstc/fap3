@@ -34,6 +34,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 		// From MDesSyncable
 		virtual string MDesSyncable_Uid() const override {return MDesSyncable::Type();} 
 		virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+		virtual MIface* MDesSyncable_getLif(const char *aType) override { return nullptr; }
 		virtual void setUpdated() override { mUpdated = true; mHost->setUpdated();}
 		virtual void setActivated() override { mActivated = true; mHost->setActivated();}
 	    public:
@@ -70,10 +71,11 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 		string getInpUri() const { return mInpUri;}
 		// From MDesInpObserver
 		virtual void onInpUpdated() override { setActivated(); }
-		virtual string MDesInpObserver_Uid() const override {return MDesInpObserver::Type();}
+		virtual string MDesInpObserver_Uid() const override {return mHost->getUidC<MDesInpObserver>(mName); }
 		virtual void MDesInpObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+		virtual MIface* MDesSyncable_getLif(const char *aType) override { return nullptr; }
 		// From MDesSyncable
-		virtual string MDesSyncable_Uid() const override {return MDesSyncable::Type();} 
+		virtual string MDesSyncable_Uid() const override {return mHost->getUidC<MDesSyncable>(mName);} 
 		virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
 		virtual void setUpdated() override { mUpdated = true; mHost->setUpdated();}
 		virtual void setActivated() override { mActivated = true; mHost->setActivated();}
@@ -140,11 +142,11 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 		SdcPapb(const string& aName, ASdc* aHost, const string& aCpUri);
 		string getCpUri() const { return mCpUri;}
 		// From MDVarGet
-		virtual string MDVarGet_Uid() const override {return MDVarGet::Type();}
+		virtual string MDVarGet_Uid() const override {return mHost->getUidC<MDVarGet>(mName);}
 	    public:
 		void NotifyInpsUpdated();
 	    public:
-		const string& mName;
+		string mName;
 		ASdc* mHost;
 		string mCpUri;  /*!< Output URI */
 	};
@@ -262,6 +264,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 	// From MDesSyncable
 	virtual string MDesSyncable_Uid() const override {return getUid<MDesSyncable>();}
 	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+	virtual MIface* MDesSyncable_getLif(const char *aType) override { return nullptr; }
 	virtual void update() override;
 	virtual void confirm() override;
 	virtual void setUpdated() override;

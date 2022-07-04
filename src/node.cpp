@@ -447,6 +447,7 @@ void Node::mutRemove(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
     if (owner()->pairAt(sname)) {
 	MOwned* owned = owner()->pairAt(sname)->provided();
 	onOwnedDetached(owned); // TODO to rename to onOwnedTobeDetached
+	owned->onOwnerDetached();
 	bool res = owner()->disconnect(owner()->pairAt(sname));
 	if (res) {
 	    owned->deleteOwned();

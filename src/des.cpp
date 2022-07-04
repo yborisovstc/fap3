@@ -5,6 +5,8 @@
 #include "des.h"
 #include "data.h"
 
+#define DES_RGS_VERIFY
+
 const string KCont_Provided = "Provided";
 const string KCont_Required = "Required";
 
@@ -110,8 +112,30 @@ static const int KStatecDlog_ObsIfr = 7;  // Observers ifaces routing
 
 const string State::KCont_Value = "";
 
+#ifdef STATE_DIOR
+void State::SDior::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+{
+    if (aName == MDesInpObserver::Type()) {
+	for (auto pair : mHost->mPairs) {
+	    MUnit* pe = pair->lIf(pe);
+	    pe->resolveIface(aName, aReq);
+	}
+    }
+}
 
-State::State(const string &aType, const string& aName, MEnv* aEnv): Vertu(aType, aName, aEnv), mPdata(NULL), mCdata(NULL), mUpdNotified(false), mActNotified(false)
+void State::SDior::onIfpInvalidated(MIfProv* aProv)
+{
+    Unit::onIfpInvalidated(aProv);
+    mHost->setActivated();
+    mHost->NotifyInpsUpdated();
+}
+#endif
+
+State::State(const string &aType, const string& aName, MEnv* aEnv): Vertu(aType, aName, aEnv),
+    mPdata(NULL), mCdata(NULL), mUpdNotified(false), mActNotified(false)
+#ifdef STATE_DIOR
+								    , mDior(nullptr)
+#endif
 {
     mPdata = new BdVar(this);
     mCdata = new BdVar(this);
@@ -119,6 +143,12 @@ State::State(const string &aType, const string& aName, MEnv* aEnv): Vertu(aType,
     assert(cp);
     bool res = attachOwned(cp);
     assert(res);
+#ifdef STATE_DIOR
+    mDior = new SDior(SDior::Type(), "Dior", mEnv, this);
+    assert(mDior);
+    res = attachOwned(mDior);
+    assert(res);
+#endif
 }
 
 MIface* State::MNode_getLif(const char *aType)
@@ -149,12 +179,9 @@ void State::setActivated()
 void State::update()
 {
     mActNotified = false;
-    MUpdatable* upd = mPdata;
-    if (upd) {
+    if (mPdata) {
 	try {
-	    if (upd->update()) {
-	//	setUpdated(); // already set in HOnDataChanged
-	    }
+	    mPdata->update(); // set updated in HOnDataChanged
 	} catch (std::exception e) {
 	    Logger()->Write(EErr, this, "Unspecified error on update");
 	}
@@ -163,6 +190,7 @@ void State::update()
 
 void State::NotifyInpsUpdated()
 {
+#ifndef STATE_DIOR 
     // It would be better to request MDesInpObserver interface from self. But there is the problem
     // with using this approach because self implements this iface. So accoriding to iface resolution
     // rules UpdateIfi has to try local ifaces first, so self will be selected. Solution here could be
@@ -170,26 +198,34 @@ void State::NotifyInpsUpdated()
     // to request pairs directly.
     for (auto pair : mPairs) {
 	MUnit* pe = pair->lIf(pe);
-	// Don't add self to if request context to enable routing back to self
-	MIfProv* ifp = pe->defaultIfProv(MDesInpObserver::Type());
-	MIfProv* prov = ifp->first();
-	while (prov) {
-	    MDesInpObserver* obs = dynamic_cast<MDesInpObserver*>(prov->iface());
+	auto ifcs = pe->getIfs<MDesInpObserver>();
+	if (ifcs) for (auto ifc : *ifcs) {
+	    MDesInpObserver* obs = static_cast<MDesInpObserver*>(ifc);
 	    obs->onInpUpdated();
-	    prov = prov->next();
+	}
+
+    }
+#else
+    auto ifcs = mDior->getIfs<MDesInpObserver>();
+    if (ifcs) for (auto ifc : *ifcs) {
+	MDesInpObserver* obs = static_cast<MDesInpObserver*>(ifc);
+	if (obs) obs->onInpUpdated();
+	else {
+	    obs = ifc->lIf(obs);
 	}
     }
+#endif
 }
-
 
 void State::confirm()
 {
     mUpdNotified = false;
-    MUpdatable* upd = mCdata;
-    if (upd != NULL) {
+    if (mCdata) {
 	string old_value;
-	mCdata->ToString(old_value);
-	if (upd->update()) {
+	if (isLogLevel(EDbg)) {
+	    mCdata->ToString(old_value);
+	}
+	if (mCdata->update()) {
 	    NotifyInpsUpdated();
 	    if (isLogLevel(EDbg)) {
 		string new_value;
@@ -199,6 +235,7 @@ void State::confirm()
 	} else {
 	    // State is not changed. No need to notify connected inps. But we still need to make IFR paths to inps
 	    // actual. Ref ds_asr.
+	    // TODO PERF
 	    refreshInpObsIfr();
 	}
     }
@@ -424,12 +461,18 @@ void State::refreshInpObsIfr()
 void State::onConnected()
 {
     Vertu::onConnected();
+#ifdef STATE_DIOR
+    mDior->onHostConnectionChange();
+#endif
     NotifyInpsUpdated();
 }
 
 void State::onDisconnected()
 {
     Vertu::onDisconnected();
+#ifdef STATE_DIOR
+    mDior->onHostConnectionChange();
+#endif
     NotifyInpsUpdated();
 }
 
@@ -495,7 +538,6 @@ void Des::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 
 void Des::update()
 {
-    mActNotified = false;
     while (!mActive.empty()) {
 	auto comp = mActive.front();
 	try {
@@ -505,16 +547,17 @@ void Des::update()
 	}
 	mActive.pop_front();
     }
+    mActNotified = false;
 }
 
 void Des::confirm()
 {
-    mUpdNotified = false;
     while (!mUpdated.empty()) {
 	auto comp = mUpdated.front();
 	comp->confirm();
 	mUpdated.pop_front();
     }
+    mUpdNotified = false;
 }
 
 void Des::setUpdated()
@@ -546,6 +589,11 @@ void Des::onActivated(MDesSyncable* aComp)
 {
     setActivated();
     if (aComp) {
+#ifdef DES_RGS_VERIFY
+	for (auto it = mActive.begin(); it !=  mActive.end(); it++) {
+	    assert(aComp != *it);
+	}
+#endif
 	mActive.push_back(aComp);
     }
 }
@@ -554,6 +602,11 @@ void Des::onUpdated(MDesSyncable* aComp)
 {
     setUpdated();
     if (aComp) {
+#ifdef DES_RGS_VERIFY
+	for (auto it = mUpdated.begin(); it !=  mUpdated.end(); it++) {
+	    assert(aComp != *it);
+	}
+#endif
 	mUpdated.push_back(aComp);
     }
 }
@@ -717,7 +770,6 @@ void ADes::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 
 void ADes::update()
 {
-    mActNotified = false;
     while (!mActive.empty()) {
 	auto comp = mActive.front();
 	try {
@@ -727,16 +779,17 @@ void ADes::update()
 	}
 	mActive.pop_front();
     }
+    mActNotified = false;
 }
 
 void ADes::confirm()
 {
-    mUpdNotified = false;
     while (!mUpdated.empty()) {
 	auto comp = mUpdated.front();
 	comp->confirm();
 	mUpdated.pop_front();
     }
+    mUpdNotified = false;
 }
 
 MDesObserver* ADes::getDesObs()

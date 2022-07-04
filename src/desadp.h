@@ -127,6 +127,7 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 	// From MDesSyncable
 	virtual string MDesSyncable_Uid() const override {return getUid<MDesSyncable>();}
 	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+	virtual MIface* MDesSyncable_getLif(const char *aType) override { return nullptr; }
 	virtual void update() override;
 	virtual void confirm() override;
 	// From MDesObserver

@@ -95,6 +95,7 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	virtual string ownedId() const override { return name();}
 	virtual void deleteOwned() override { delete this;}
 	virtual void onOwnerAttached() override {}
+	virtual void onOwnerDetached() override {}
 	virtual bool isOwner(const MOwner* mOwner) const override;
     public:
 	inline void Log(const TLog& aRec) const { if (aRec.Ctg() <= mLogLevel)  Logger()->Write(aRec);}
@@ -103,6 +104,7 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	MOwner* Owner();
 	const MOwner* Owner() const;
 	template<class T> string getUid() const {return getUriS() + Ifu::KUidSep + T::Type();}
+	template<class T> string getUidC(const string& aCname) const {return getUriS() + Ifu::KUidSepIc + aCname + Ifu::KUidSep + T::Type();}
 	string getUid(const string& aCompName, const string& aIfName) const {return getUriS() + Ifu::KUidSepIc + aCompName + Ifu::KUidSep + aIfName;}
 	inline MLogRec* Logger() const {return mEnv ? mEnv->Logger(): nullptr; }
 	inline MProvider* Provider() const {return mEnv ? mEnv->provider(): nullptr; }

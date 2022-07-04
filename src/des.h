@@ -8,9 +8,14 @@
 #include "mlauncher.h"
 
 #include "nconn.h"
+#include "unit.h"
 #include "vert.h"
 #include "syst.h"
 #include "content.h"
+
+// Enables State Dior feature. It still has the problem on state destruction
+// TODO to debug the problem or remove the feature
+//#define STATE_DIOR
 
 class BdVar;
 
@@ -100,6 +105,23 @@ class CpStateMnodeOutp: public CpState
 class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesInpObserver, public MBdVarHost, public MDVarSet,
       public Cnt::Host
 {
+#ifdef STATE_DIOR
+    public:
+	/** @brief Pairs DesInpOblserver ifaces resolver */
+	class SDior : public Unit {
+	    friend State;
+	    public:
+		static const char* Type() { return "SDior";};
+		SDior(const string &aType, const string& aName, MEnv* aEnv, State* aHost): Unit(aType, aName, aEnv), mHost(aHost) {}
+		void onHostConnectionChange() { invalidateIrm(); }
+		// From MIfProvOwner
+		virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+		// From MUnit
+		virtual void onIfpInvalidated(MIfProv* aProv) override;
+	    private:
+		State* mHost;
+	};
+#endif
     public:
 	/** @brief Pseudo content */
 	class SCont : public MContent {
@@ -143,6 +165,7 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 	// From MDesSyncable
 	virtual string MDesSyncable_Uid() const override {return getUid<MDesSyncable>();}
 	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+	virtual MIface* MDesSyncable_getLif(const char *aType) override { return nullptr; }
 	virtual void update() override;
 	virtual void confirm() override;
 	virtual void setUpdated() override;
@@ -192,6 +215,9 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 	SContValue mValue = SContValue(*this, KCont_Value);
 	bool mUpdNotified;  //<! Sign of that State notified observers on Update
 	bool mActNotified;  //<! Sign of that State notified observers on Activation
+#ifdef STATE_DIOR
+	SDior* mDior;       //<! MDesInpObserver resolver
+#endif
 };
 
 
@@ -212,6 +238,7 @@ class Des: public Syst, public MDesSyncable, public MDesObserver
 	// From MDesSyncable
 	virtual string MDesSyncable_Uid() const override {return getUid<MDesSyncable>();}
 	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override;
+	virtual MIface* MDesSyncable_getLif(const char *aType) override { return nullptr; }
 	virtual void update() override;
 	virtual void confirm() override;
 	virtual void setUpdated() override;
@@ -253,6 +280,7 @@ class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver
 	// From MDesSyncable
 	virtual string MDesSyncable_Uid() const override {return getUid<MDesSyncable>();}
 	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override;
+	virtual MIface* MDesSyncable_getLif(const char *aType) override { return nullptr; }
 	virtual void update() override;
 	virtual void confirm() override;
 	virtual void setUpdated() override;
@@ -390,6 +418,7 @@ class DesEIbb: public MDesInpObserver, public MDesSyncable
 	// From MDesSyncable
 	virtual string MDesSyncable_Uid() const override {return MDesSyncable::Type();} 
 	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+	virtual MIface* MDesSyncable_getLif(const char *aType) override { return nullptr; }
 	virtual void update() override { mChanged = false;}
 	virtual void setUpdated() override { mUpdated = true; sHost()->setUpdated();}
 	virtual void setActivated() override { mActivated = true; sHost()->setActivated();}
