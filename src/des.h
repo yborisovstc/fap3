@@ -66,6 +66,15 @@ class CpStateMnodeInp: public CpState
 	CpStateMnodeInp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 };
 
+/** @brief CpStateInp direct extender (extd as inp)
+ * */
+class ExtdStateInp : public Extd
+{
+    public:
+	static const char* Type() { return "ExtdStateInp";};
+	ExtdStateInp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+};
+
 /** @brief CpStateOutp direct extender (extd as outp)
  * */
 class ExtdStateOutp : public Extd
@@ -342,6 +351,26 @@ class DesLauncher: public Des, public MLauncher
 	int mCounter = 0;
 	bool mStop;
 };
+
+/** @brief Active subsystem of DES
+ * Runs on master DES update
+ * */
+class DesAs: public DesLauncher
+{
+    public:
+	static const char* Type() { return "DesAs";};
+	DesAs(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From MLauncher
+	virtual bool Run(int aCount = 0, int aIdleCount = 0) override;
+	// From MDesSyncable
+	virtual void update() override;
+	virtual void confirm() override {}
+	virtual void setUpdated() override {}
+	virtual void setActivated() override;
+    protected:
+	bool mRunning;
+};
+
 
 
 

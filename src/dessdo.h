@@ -34,8 +34,24 @@ class SdoBase : public CpStateOutp, public MDVarGet, public MObserver
 		    }
 		    return res;
 		}
-
 	};
+	template <typename T> class Inpg : public InpBase {
+	    public:
+		using Stype = T;
+	    public:
+		Inpg(SdoBase* aHost, const string& aName): InpBase(aHost, aName) {}
+		bool getData(T& aData) {
+		    bool res = false;
+		    MNode* inp = mHost->getNode(mName);
+		    if (inp) {
+			res = GetGData(inp, aData);
+		    } else {
+			mHost->Log(TLog(EDbg, mHost) + "Cannot get input [" + mName + "]");
+		    }
+		    return res;
+		}
+	};
+
     public:
 	static const char* Type() { return "SdoBase";};
 	SdoBase(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
@@ -139,6 +155,33 @@ class SdoParent : public Sdo<string>
 	virtual void DtGet(Stype& aData) override;
 };
 
+/** @brief SDO "Comp Owner"
+ * */
+class SdoCompOwner : public Sdog<DGuri>
+{
+    public:
+	static const char* Type() { return "SdoCompOwner";};
+	SdoCompOwner(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	virtual void DtGet(Stype& aData) override;
+    protected:
+	Inpg<DGuri> mInpCompUri;  //<! Comp URI
+};
+
+/** @brief SDO "Comp Comp"
+ * */
+class SdoCompComp : public Sdog<DGuri>
+{
+    public:
+	static const char* Type() { return "SdoCompComp";};
+	SdoCompComp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	virtual void DtGet(Stype& aData) override;
+    protected:
+	Inpg<DGuri> mInpCompUri;  //<! Comp URI
+	Inpg<DGuri> mInpCompCompUri;  //<! Comp comp URI
+};
+
+
+
 
 
 /** @brief SDO "Component exists"
@@ -195,6 +238,80 @@ class SdoConn : public Sdo<bool>
 	Inp<string> mInpVp;
 	Inp<string> mInpVq;
 };
+
+/** @brief SDO "Vertex pairs count"
+ * */
+class SdoPairsCount : public Sdo<int>
+{
+    public:
+	static const char* Type() { return "SdoPairsCount";};
+	SdoPairsCount(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+    public:
+	// From MDtGet
+	virtual void DtGet(Stype& aData) override;
+    protected:
+	Inp<string> mInpVert;  //<! Vertex URI
+};
+
+/** @brief SDO "Vertex pair URI"
+ * Invalid if the vertex is not connected
+ * */
+class SdoPair : public Sdog<DGuri>
+{
+    public:
+	static const char* Type() { return "SdoPair";};
+	SdoPair(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	virtual void DtGet(Stype& aData) override;
+    protected:
+	Inp<string> mInpTarg;  //<! Target Vertex URI
+};
+
+/** @brief SDO "Single pair of targets comp"
+ * Invalid if the vertex is not connected
+ * It is usefull to explore subsystems connpoints pair
+ * */
+class SdoTcPair : public Sdog<DGuri>
+{
+    public:
+	static const char* Type() { return "SdoTcPair";};
+	SdoTcPair(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	virtual void DtGet(Stype& aData) override;
+    protected:
+	Inpg<DGuri> mInpTarg;  //<! Target URI
+	Inpg<DGuri> mInpTargComp;  //<! Target comp vertex URI relative to target
+};
+
+
+/** @brief SDO "Pairs"
+ * */
+class SdoPairs : public Sdog<Vector<DGuri>>
+{
+    public:
+	static const char* Type() { return "SdoPairs";};
+	SdoPairs(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+    public:
+	// From MDtGet
+	virtual void DtGet(Stype& aData) override;
+};
+
+/** @brief SDO "Target Pairs"
+ * */
+class SdoTPairs : public Sdog<Vector<DGuri>>
+{
+    public:
+	static const char* Type() { return "SdoTPairs";};
+	SdoTPairs(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+    public:
+	// From MDtGet
+	virtual void DtGet(Stype& aData) override;
+    protected:
+	Inpg<DGuri> mInpTarg;  //<! Target URI
+};
+
+
+
+
+
 
 
 #endif  // __FAP3_DESSDO_H

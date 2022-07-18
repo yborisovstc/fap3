@@ -198,6 +198,78 @@ void SdoCompsNames::DtGet(Stype& aData)
     }
 }
 
+///  SDO "Component owner"
+
+SdoCompOwner::SdoCompOwner(const string &aType, const string& aName, MEnv* aEnv): Sdog<DGuri>(aType, aName, aEnv),
+    mInpCompUri(this, "Comp")
+{
+}
+
+void SdoCompOwner::DtGet(Stype& aData)
+{
+    DGuri curi;
+    bool res = mInpCompUri.getData(curi);
+    if (!res) {
+	Log(TLog(EErr, this) + "Failed getting input [" + mInpCompUri.mName + "] data");
+    } else if (!mSue)  {
+	Log(TLog(EWarn, this) + "Owner is not explorable");
+    } else {
+	MNode* comp = mSue->getNode(curi.mData);
+	if (comp) {
+	    // TODO Comp URI reduction is used instead of comp MNode API. This is because
+	    // of MNode not allowing to access owner. To re-design.
+	    GUri ownerUri = curi.mData.head(curi.mData.size() - 1);
+	    MNode* owner = mSue->getNode(ownerUri);
+	    if (owner) {
+		aData.mData = ownerUri;
+		aData.mValid = true;
+	    } else {
+		Log(TLog(EErr, this) + "Couldn't get component [" + mInpCompUri.mName + "] owner");
+	    }
+	} else {
+	    Log(TLog(EErr, this) + "Couldn't get component [" + mInpCompUri.mName + "]");
+	}
+    }
+}
+
+
+///  SDO "Component comp"
+
+SdoCompComp::SdoCompComp(const string &aType, const string& aName, MEnv* aEnv): Sdog<DGuri>(aType, aName, aEnv),
+    mInpCompUri(this, "Comp"), mInpCompCompUri(this, "CompComp")
+{
+}
+
+void SdoCompComp::DtGet(Stype& aData)
+{
+    DGuri curi, ccuri;
+    bool res = mInpCompUri.getData(curi);
+    if (!res) {
+	Log(TLog(EErr, this) + "Failed getting input [" + mInpCompUri.mName + "] data");
+    } else if (!mSue)  {
+	Log(TLog(EWarn, this) + "Owner is not explorable");
+    } else {
+	res = mInpCompCompUri.getData(ccuri);
+	if (!res) {
+	    Log(TLog(EErr, this) + "Failed getting input [" + mInpCompCompUri.mName + "] data");
+	} else {
+	    MNode* comp = mSue->getNode(curi.mData);
+	    if (comp) {
+		MNode* ccomp = comp->getNode(ccuri.mData);
+		if (ccomp) {
+		    ccomp->getUri(aData.mData, mSue);
+		    aData.mValid = true;
+		} else {
+		    Log(TLog(EErr, this) + "Couldn't get component [" + mInpCompCompUri.mName + "] owner");
+		}
+	    } else {
+		Log(TLog(EErr, this) + "Couldn't get component [" + mInpCompUri.mName + "]");
+	    }
+	}
+    }
+}
+
+
 
 
 ///  SDO "Vertexes are connected"
@@ -225,6 +297,199 @@ void SdoConn::DtGet(Stype& aData)
 	    if (vpv && vqv) {
 		aData.mData = vpv->isConnected(vqv);
 		aData.mValid = true;
+	    }
+	}
+    }
+}
+
+///  SDO "Vertex pairs count"
+
+SdoPairsCount::SdoPairsCount(const string &aType, const string& aName, MEnv* aEnv): Sdo<int>(aType, aName, aEnv),
+    mInpVert(this, "Vp")
+{
+}
+
+void SdoPairsCount::DtGet(Stype& aData)
+{
+    string verts;
+    bool res = mInpVert.getData(verts);
+    if (!res) {
+	Log(TLog(EErr, this) + "Failed getting input [" + mInpVert.mName + "] data");
+    } else if (!mSue)  {
+	Log(TLog(EWarn, this) + "Owner is not explorable");
+    } else {
+	MNode* vertn = mSue->getNode(verts);
+	if (vertn) {
+	    MVert* vertv = vertn->lIf(vertv);
+	    if (vertv) {
+		aData.mData = vertv->pairsCount();
+		aData.mValid = true;
+	    }
+	}
+    }
+}
+
+///  SDO "Vertex pair URI"
+
+SdoPair::SdoPair(const string &aType, const string& aName, MEnv* aEnv): Sdog<DGuri>(aType, aName, aEnv),
+    mInpTarg(this, "Vp")
+{
+}
+
+void SdoPair::DtGet(Stype& aData)
+{
+    string verts;
+    bool res = mInpTarg.getData(verts);
+    if (!res) {
+	Log(TLog(EErr, this) + "Failed getting input [" + mInpTarg.mName + "] data");
+    } else if (!mSue)  {
+	Log(TLog(EWarn, this) + "Owner is not explorable");
+    } else {
+	MNode* vertn = mSue->getNode(verts);
+	if (vertn) {
+	    MVert* vertv = vertn->lIf(vertv);
+	    if (vertv) {
+		if (vertv->pairsCount() == 1) {
+		    MVert* pair = vertv->getPair(0);
+		    // TODO Workaround used, ref ds_dcs_sdo_gmn. Create solid solution.
+		    MUnit* pairu = pair->lIf(pairu);
+		    MNode* pairn = pairu ? pairu->getSif(pairn) : nullptr;
+		    if (pairn) {
+			pairn->getUri(aData.mData, mSue);
+			aData.mValid = true;
+		    }
+		}
+	    } else {
+		Log(TLog(EErr, this) + "Target [" + verts + "] is not vertex");
+	    }
+	}
+    }
+}
+
+///  SDO "Single pair of targets comp"
+
+SdoTcPair::SdoTcPair(const string &aType, const string& aName, MEnv* aEnv): Sdog<DGuri>(aType, aName, aEnv),
+    mInpTarg(this, "Targ"), mInpTargComp(this, "TargComp")
+{
+}
+
+void SdoTcPair::DtGet(Stype& aData)
+{
+    DGuri targUri;
+    bool res = mInpTarg.getData(targUri);
+    if (!res) {
+	Log(TLog(EErr, this) + "Failed getting input [" + mInpTarg.mName + "] data");
+    } else {
+	DGuri targCompUri;
+	res = mInpTargComp.getData(targCompUri);
+	if (!res) {
+	    Log(TLog(EErr, this) + "Failed getting input [" + mInpTargComp.mName + "] data");
+	} else if (!mSue)  {
+	    Log(TLog(EWarn, this) + "Owner is not explorable");
+	} else {
+	    targUri += targCompUri;
+	    MNode* vertn = mSue->getNode(targUri.mData);
+	    if (vertn) {
+		MVert* vertv = vertn->lIf(vertv);
+		if (vertv) {
+		    if (vertv->pairsCount() == 1) {
+			MVert* pair = vertv->getPair(0);
+			// TODO Workaround used, ref ds_dcs_sdo_gmn. Create solid solution.
+			MUnit* pairu = pair->lIf(pairu);
+			MNode* pairn = pairu ? pairu->getSif(pairn) : nullptr;
+			if (pairn) {
+			    GUri uri;
+			    pairn->getUri(uri, mSue);
+			    aData.mData = uri;
+			    aData.mValid = true;
+			}
+		    }
+		} else {
+		    Log(TLog(EErr, this) + "Target [" + targUri.mData + "] is not vertex");
+		}
+	    }
+	}
+    }
+}
+
+
+///  SDO "Pairs"
+
+SdoPairs::SdoPairs(const string &aType, const string& aName, MEnv* aEnv): Sdog<Vector<DGuri>>(aType, aName, aEnv) { }
+
+void SdoPairs::DtGet(Stype& aData)
+{
+    if (!mSue)  {
+	Log(TLog(EErr, this) + "Owner is not explorable");
+    } else {
+	MVert* suev = mSue->lIf(suev);
+	if (!suev) {
+	    Log(TLog(EErr, this) + "Explorable isn't vertex");
+	} else {
+	    aData.mValid = true;
+	    aData.mData.clear();
+	    for (int ind = 0; ind < suev->pairsCount(); ind++) {
+		MVert* pair = suev->getPair(ind);
+		// TODO Workaround used, ref ds_dcs_sdo_gmn. Create solid solution.
+		MUnit* pairu = pair->lIf(pairu);
+		MNode* pairn = pairu ? pairu->getSif(pairn) : nullptr;
+		if (!pairn) {
+		    Log(TLog(EErr, this) + "Couldnt get URI for pair [" + pair->Uid() + "]");
+		    aData.mValid = false;
+		    break;
+		} else {
+		    aData.mValid = true;
+		    GUri puri;
+		    pairn->getUri(puri, mSue);
+		    DGuri purid(puri);
+		    aData.mData.push_back(purid);
+		}
+	    }
+	}
+    }
+}
+
+
+///  SDO "Target pairs"
+
+SdoTPairs::SdoTPairs(const string &aType, const string& aName, MEnv* aEnv): Sdog<Vector<DGuri>>(aType, aName, aEnv),
+    mInpTarg(this, "Targ") {}
+
+void SdoTPairs::DtGet(Stype& aData)
+{
+    DGuri turi;
+    bool res = mInpTarg.getData(turi);
+    if (!res) {
+	Log(TLog(EErr, this) + "Failed getting input [" + mInpTarg.mName + "] data");
+    } else if (!mSue)  {
+	Log(TLog(EErr, this) + "Owner is not explorable");
+    } else {
+	MNode* targn = mSue->getNode(turi.mData);
+	if (!targn) {
+	    Log(TLog(EErr, this) + "Couldn't find target [" + mInpTarg.mName + "]");
+	} else {
+	    MVert* targv = targn->lIf(targv);
+	    if (!targv) {
+		Log(TLog(EErr, this) + "Target [" + mInpTarg.mName + "] isn't a vertex");
+	    } else {
+		aData.mValid = true;
+		for (int ind = 0; ind < targv->pairsCount(); ind++) {
+		    MVert* pair = targv->getPair(ind);
+		    // TODO Workaround used, ref ds_dcs_sdo_gmn. Create solid solution.
+		    MUnit* pairu = pair->lIf(pairu);
+		    MNode* pairn = pairu ? pairu->getSif(pairn) : nullptr;
+		    if (!pairn) {
+			Log(TLog(EErr, this) + "Couldnt get URI for pair [" + pair->Uid() + "]");
+			aData.mValid = false;
+			break;
+		    } else {
+			aData.mValid = true;
+			GUri puri;
+			pairn->getUri(puri, mSue);
+			DGuri purid(puri);
+			aData.mData.push_back(purid);
+		    }
+		}
 	    }
 	}
     }

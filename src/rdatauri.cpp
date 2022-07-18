@@ -1,6 +1,7 @@
 #include "rdatauri.h"
 
 
+template<> const char* Vector<DGuri>::TypeSig() { return  "VDG";};
 
 const char* DGuri::TypeSig() { return  "URI";};
 
@@ -33,6 +34,19 @@ bool DGuri::DataFromString(istringstream& aStream, bool& aRes)
 void DGuri::DataToString(stringstream& aStream) const
 {
     aStream << mData.operator string();
+}
+
+
+std::ostream& operator<<(std::ostream& os, const DGuri& aDuri) {
+    os << aDuri.mData.toString();
+    return os;
+}
+
+std::istream& operator>>(std::istream& is, DGuri& aDuri) {
+    string str; is >> str;
+    aDuri.mData = GUri(str);
+    aDuri.mValid = aDuri.mData.isValid();
+    return is;
 }
 
 

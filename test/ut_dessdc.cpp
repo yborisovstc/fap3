@@ -3,6 +3,7 @@
 #include "des.h"
 #include "env.h"
 #include "prov.h"
+#include "rdatauri.h"
 
 #include <cppunit/extensions/HelperMacros.h>
 
@@ -15,9 +16,9 @@ class Ut_sdc : public CPPUNIT_NS::TestFixture
 
     //CPPUNIT_TEST(test_Sdc_1);
     //CPPUNIT_TEST(test_Sdc_2);
-    CPPUNIT_TEST(test_Sdc_3);
+    //CPPUNIT_TEST(test_Sdc_3);
     //CPPUNIT_TEST(test_Sdc_4);
-    //CPPUNIT_TEST(test_Sdo_1);
+    CPPUNIT_TEST(test_Sdo_1);
     CPPUNIT_TEST_SUITE_END();
     public:
     virtual void setUp();
@@ -164,7 +165,7 @@ void Ut_sdc::test_Sdc_4()
  * */
 void Ut_sdc::test_Sdo_1()
 {
-    printf("\n === Test of SDO: comps, connection\n");
+    printf("\n === Test of SDOs: comps, connections, etc.\n");
     MNode* root = constructSystem("ut_sdo_1");
 
     bool res = mEnv->RunSystem(5, 2);
@@ -187,6 +188,30 @@ void Ut_sdc::test_Sdo_1()
     dres = true;
     GetSData(conndbg, dres);
     CPPUNIT_ASSERT_MESSAGE("Wrong DCO V1~V3 result", !dres);
+    // Verify V1 pairs count
+    conndbg = root->getNode("Launcher.Dbg_DcoPairsCount");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get Launcher.Dbg_DcoPairsCount", conndbg);
+    int dresi = -1;
+    GetSData(conndbg, dresi);
+    CPPUNIT_ASSERT_MESSAGE("Wrong DCO V1 pairs count result", dresi == 2);
+    // Verify V2 pair
+    conndbg = root->getNode("Launcher.Dbg_DcoPair");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get Launcher.Dbg_DcoPair", conndbg);
+    DGuri dresu;
+    GetGData(conndbg, dresu);
+    CPPUNIT_ASSERT_MESSAGE("Wrong DCO V1 pairs count result", dresu.mData == "V1");
+    // Verify V4_1 owner
+    conndbg = root->getNode("Launcher.Dbg_DcoCompOwner");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get Launcher.Dbg_DcoCompOwner", conndbg);
+    dresu;
+    GetGData(conndbg, dresu);
+    CPPUNIT_ASSERT_MESSAGE("Wrong DCO V1 pairs count result", dresu.mData == "V4");
+    // Verify V4 comp V4_1
+    conndbg = root->getNode("Launcher.Dbg_DcoCompComp");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get Launcher.Dbg_DcoCompComp", conndbg);
+    dresu;
+    GetGData(conndbg, dresu);
+    CPPUNIT_ASSERT_MESSAGE("Wrong DCO V1 pairs count result", dresu.mData == "V4.V4_1");
 
 
     delete mEnv;

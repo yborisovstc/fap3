@@ -394,9 +394,9 @@ TrSwitchBool::TrSwitchBool(const string &aType, const string& aName, MEnv* aEnv)
 void TrSwitchBool::Init(const string& aIfaceName)
 {
     TrVar::Init(aIfaceName);
-    MDVarGet* inpCase = GetInp(FSwithcBase::EInp_Sel);
-    MDVarGet* inp2 = GetInp(FSwithcBase::EInp_1);
-    MDVarGet* inp3 = GetInp(FSwithcBase::EInp_1 + 1);
+    MDVarGet* inpCase = GetInp(FSwitchBase::EInp_Sel);
+    MDVarGet* inp2 = GetInp(FSwitchBase::EInp_1);
+    MDVarGet* inp3 = GetInp(FSwitchBase::EInp_1 + 1);
     if (inpCase && inp2 && inp3) {
 	MDtGet<Sdata<bool>>* inpCaseD = inpCase->GetDObj(inpCaseD);
 	void* inp2d = inp2->DoGetDObj(aIfaceName.c_str());
@@ -406,19 +406,19 @@ void TrSwitchBool::Init(const string& aIfaceName)
 	    mFunc = FSwitchBool::Create(this, aIfaceName, t_case);
 	}
     } else {
-	string inp = GetInpUri(FSwithcBase::EInp_Sel);
-	if (!inp2) inp = GetInpUri(FSwithcBase::EInp_1);
-	else if (!inp3) inp = GetInpUri(FSwithcBase::EInp_1 + 1);
+	string inp = GetInpUri(FSwitchBase::EInp_Sel);
+	if (!inp2) inp = GetInpUri(FSwitchBase::EInp_1);
+	else if (!inp3) inp = GetInpUri(FSwitchBase::EInp_1 + 1);
 	Logger()->Write(EErr, this, "Cannot get input [%s]", inp.c_str());
     }
 }
 
 string TrSwitchBool::GetInpUri(int aId) const 
 {
-    if (aId == FSwithcBase::EInp_Sel) return "Sel";
-    else if (aId > FSwithcBase::EInp_Sel) {
+    if (aId == FSwitchBase::EInp_Sel) return "Sel";
+    else if (aId > FSwitchBase::EInp_Sel) {
 	stringstream ss;
-	ss <<  "Inp" << (aId - FSwithcBase::EInp_Sel);
+	ss <<  "Inp" << (aId - FSwitchBase::EInp_Sel);
 	return ss.str();
     }
     else return string();

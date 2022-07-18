@@ -253,20 +253,20 @@ template <class T> class FCmp: public FCmpBase
 
 /** @brief Switcher, generic data base
  * */
-class FSwithcBase: public Func 
+class FSwitchBase: public Func
 {
     public:
 	enum { EInp_Sel = Func::EInp1, EInp_1 };
-	FSwithcBase(Host& aHost): Func(aHost) {};
+	FSwitchBase(Host& aHost): Func(aHost) {};
 };
 
 /** @brief Boolean switcher, selector should be of MDBoolGet or MDtGet<Sdata<bool> >
  * */
-class FSwitchBool: public FSwithcBase, public MDVarGet
+class FSwitchBool: public FSwitchBase, public MDVarGet
 {
     public:
 	static Func* Create(Func::Host* aHost, const string& aOutIid, const string& aInp1Id);
-	FSwitchBool(Func::Host& aHost): FSwithcBase(aHost) {};
+	FSwitchBool(Func::Host& aHost): FSwitchBase(aHost) {};
 	// From Func
 	//virtual string IfaceGetId() const override { return MDVarGet::Type();}
 	virtual string IfaceGetId() const override { return VarGetIfid();}

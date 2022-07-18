@@ -34,5 +34,10 @@ class DGuri: public DtBase
 	GUri mData;
 };
 
+std::ostream& operator<<(std::ostream& os, const DGuri& aDuri);
+
+std::istream& operator>>(std::istream& is, DGuri& aDuri);
+
+
 #endif
 

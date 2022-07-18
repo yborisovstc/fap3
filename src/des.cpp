@@ -80,6 +80,16 @@ CpStateMnodeOutp::CpStateMnodeOutp(const string &aType, const string& aName, MEn
 }
 
 
+/// CpStateInp direct extender
+
+ExtdStateInp::ExtdStateInp(const string &aType, const string& aName, MEnv* aEnv): Extd(aType, aName, aEnv)
+{
+    MNode* cp = Provider()->createNode(CpStateOutp::Type(), Extd::KUriInt , mEnv);
+    assert(cp);
+    bool res = attachOwned(cp);
+    assert(res);
+}
+
 /// CpStateOutp direct extender 
 
 ExtdStateOutp::ExtdStateOutp(const string &aType, const string& aName, MEnv* aEnv): Extd(aType, aName, aEnv)
@@ -1036,6 +1046,84 @@ void DesLauncher::outputCounter(int aCnt)
 }
 
 
+static const string K_SsInitUri = "Init";
+
+/// Active subsystem of DES
+
+DesAs::DesAs(const string &aType, const string& aName, MEnv* aEnv): DesLauncher(aType, aName, aEnv),
+    mRunning(false)
+{
+}
+
+bool DesAs::Run(int aCount, int aIdleCount)
+{
+    bool res = true;
+    int cnt = 0;
+    int idlecnt = 0;
+    do {
+	if (owner()->pcount() != 1) {
+	    Log(TLog(EErr, this) + "Subsystems number != 1");
+	    res = false; break;
+	}
+	// Initiate subsystem, ref ds_desas_sis_iph
+	MNode* ss = owner()->firstPair()->provided()->lIf(ss);
+	MNode* ssinit = ss->getNode(K_SsInitUri);
+	if (!ssinit) {
+	    Log(TLog(EErr, this) + "Couldn't find Init state");
+	    res = false; break;
+	}
+	MContentOwner* cntInit = ssinit->lIf(cntInit);
+	if (!cntInit) {
+	    Log(TLog(EErr, this) + "Couldn't find Init state content");
+	    res = false; break;
+	}
+	cntInit->setContent("", "SB true");
+	if (!mActive.empty()) {
+	    Log(TLog(EInfo, this) + ">>> Init update");
+	    Des::update();
+	    if (!mUpdated.empty()) {
+		Log(TLog(EInfo, this) + ">>> Init confirm]");
+		Des::confirm();
+	    }
+	}
+	cntInit->setContent("", "SB false");
+	// Run subsystem
+	while (!mStop && (aCount == 0 || cnt < aCount) && (aIdleCount == 0 || idlecnt < aIdleCount)) {
+	    if (!mActive.empty()) {
+		updateCounter(cnt);
+		Log(TLog(EInfo, this) + ">>> Update [" + to_string(cnt) + "]");
+		Des::update();
+		if (!mUpdated.empty()) {
+		    Log(TLog(EInfo, this) + ">>> Confirm [" + to_string(cnt) + "]");
+		    outputCounter(cnt);
+		    Des::confirm();
+		}
+		cnt++;
+	    } else {
+		OnIdle();
+		idlecnt++;
+	    }
+	}
+    } while (false);
+    return res;
+}
+
+void DesAs::update()
+{
+    mRunning = true;
+    bool res = Run(0, 1);
+    mRunning = false;
+    if (!res) {
+	Log(TLog(EErr, this) + "Failed run");
+    }
+}
+
+void DesAs::setActivated()
+{
+    if (!mRunning) {
+	DesLauncher::setActivated();
+    }
+}
 
 // Embedded elements support
 

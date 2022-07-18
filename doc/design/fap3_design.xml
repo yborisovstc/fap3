@@ -116,8 +116,16 @@
 	<glossentry id="gls_des"><glossterm>DES</glossterm> <acronym>DES</acronym>
 	    <glossdef> <para>
 		Discrete-Event Simulation - model of the operation of a system as a discrete sequence of events in time.
-			Each event occurs at a particular instant in time and marks a change of state in the system. Ref
-		    <ulink url="https://en.wikipedia.org/wiki/Discrete-event_simulation"/></para> <glossseealso otherterm="gls_deds"/> </glossdef>
+		Each event occurs at a particular instant in time and marks a change of state in the system. Ref
+		    <ulink url="https://en.wikipedia.org/wiki/Discrete-event_simulation"/></para> <glossseealso otherterm="gls_deds"/>
+		<para>Also this abbreviation is designates Discrete Event System, the implementation of discrete-event simulation.</para>
+	    </glossdef>
+	</glossentry>
+
+	<glossentry id="gls_desas"><glossterm>DESAS</glossterm> <acronym>DESAS</acronym>
+	    <glossdef> <para>
+		Discrete Event System Active Subsystem, the part of discrete-event system that is implemented as
+		autonomous sub-system. Ref <xref linkend="ds_desas"/></para> for design.</glossdef>
 	</glossentry>
 
 	<glossentry id="gls_dhc"><glossterm>DHC</glossterm> <acronym>DHC</acronym>
@@ -1822,6 +1830,35 @@
 			request some iface (kimd of MExploring) from the requestor.</simpara>
 		</sect4>
 	    </sect3>
+	    <sect3 id="ds_dcs_sdo_owi"><title><xref linkend="gls_sdo"/> operating with ifaces. Ifaces identifying in <xref linkend="gls_sdo"/></title>
+		<sect4><title>Intro</title>
+		    <simpara> It is required to represent iface in systems DES controlling (<xref linkend="gls_sdc"/>) and observing (<xref linkend="gls_sdo"/>).
+			Such DES operate with ifaces as if they are data. To support this, ifaces are represented by identificator. Currently (20220705) URI is used for that. But URI doesn't indentify the iface but
+			just MNode underlying. Operating with MNode in SDO is not secure, more correct is to operate with ifaces. In that case we also need to use iface identification (UID) for 
+			idenffying ifaces.</simpara>
+		</sect4>
+	    </sect3>
+	    <sect3 id="ds_dcs_sdo_gmn"><title>Use-case: getting MNode by MVert in SDO </title>
+		<sect4><title>Intro</title>
+		    <simpara>The use-case is as: DES controlling fap3-vis columns layout checks if columns exist. For that it uses first SdoPair to get the pair of the 
+			layout "End" connpooint. SdoPair needs to get URI of its pair (note currently URI is used as iface identificator in SDO) but it's not possible to get URI from pair (MVert).
+			To do that we need to get MNode first that is prohibited. Controlling DES then needs to get name of the pair, but this required getting MNode from
+			MVert that is prohibited.</simpara>
+		    <simpara>The noce solution here would be to enable the owner (i.e. SDO system under exploring (SUE)) to get MNode from MVert. Potentially we could extend
+			MIface::getLif() method passing owner as the argument. But this solution looks ugly.</simpara>
+		    <simpara>Currently there is a workaround: MVert gets MUnit - for ConnPoint iface resolution allows getting MNode:</simpara>
+		    <programlisting>
+			void ConnPointu::resolveIfc(const string&amp; aName, MIfReq::TIfReqCp* aReq)
+			-   {
+			|       MIface* ifr = MNode_getLif(aName.c_str()); // Local
+			|-      if (ifr) {
+			||          addIfpLeaf(ifr, aReq);
+			||      }
+		    </programlisting>
+		    <simpara>Actually this workaround can be improved - resolveIfc() can check context and enable MVert in case if context is MNode owner. But the problem here that
+			MUnit iface resolution doesn't know from what iitial iface (MVert from instance) was the request.</simpara>
+		</sect4>
+	    </sect3>
 	</sect2>
 	<sect2 id="ds_dcs_cda"><title>Composite DES adapter as the context for controllers and observers.</title>
 	    <sect3><title>Intro</title>
@@ -2176,6 +2213,65 @@
 	</sect2>
     </sect1>
 
+    <sect1 id="ds_gibu"><title>Getting interface by its UID</title>
+	<sect2><title>Intro</title>
+	    <simpara>Currently the utilization of UID looks very weak - UID just indentifies the iface. But what is the sense of identifying withiout
+		possibility to get the iface by UID.</simpara>
+	    <simpara>We need the feature of environmnet (and possible even owner) getting access to iface by UID.</simpara>
+	    <simpara>There is the feeling that current implementation is not consistent regarding "atomic" object of the system. The idea was that iface is
+		such atomic entity. If so then we need more instruments to operate with ifaces (and identify them).</simpara>
+	    <simpara>Ref <xref linkend="ds_dcs_sdo_owi"/> for <xref linkend="gls_sdo"/> operating with ifaces.</simpara>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_egio"><title>Enable getting ifaces for owner.</title>
+	<sect2><title>Intro</title>
+	    <simpara>It is common case that we request iface to get another iface (ref MIface::getLif()). Many ifaces restrict such ifaces resolution. For instance
+		MVert disables getting MNode to allow access to MNode from pair (the pair can be part of separate system. </simpara>
+	    <simpara>The idea is to enable local iface resolution for owner. Such solution already was implemented in earlier FAP versions where the context was passed
+		to the resoltuion method.</simpara>
+	    <simpara>Ref <xref linkend="ds_dcs_sdo_gmn"/> for use-case related to  <xref linkend="gls_sdo"/>.</simpara>
+	</sect2>
+	<sect2><title>Solution#1 MNode new method getIface(const Uid&amp;)</title>
+	    <simpara>The idea to add new MNode method that utilizes getting iface by UID, ref <ulink url="ds_gibu"/>. It is assumed that UID identifies not only iface itself but
+		also iface MNode "bearer" (current version of UID = URI + iface_name allows it). So the owner will be able to get the iface MNode bearer.</simpara>
+	</sect2>
+	<sect2><title>Solution#2 Pass owner as the context via getLif new argument. </title>
+	    <simpara>The context should be another MIface.</simpara>
+	    <simpara>Looks complicated. We expect to have simplistic operation when resolving ifaces locally.</simpara>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_desas"><title>DES active subsystem (<xref linkend="gls_desas"/>)</title>
+	<sect2><title>Intro</title>
+	    <simpara>In many cases it seems effective to desing the part of DES as subsystem that also is DES but in contrary to normal "monolitic" subsystem runs in it's own loop.
+		The example can be subsystem that do iterative updates. This can be searching front of list etc.
+		The idea of using such subsystem is that the subsystem runs "inside" main system update step and
+		completes running "in a moment" from main system point of view. Thus the main system loop gets shorter and DES signalling is reduced.</simpara>
+	    <simpara>This subsytem having completed trajectory "in a moment" also allows to awoid special indication of completeness in case of "monolitic" subsystem.</simpara>
+	    <simpara>Even the main idea is clear the use-case model is not established yet.</simpara>
+	</sect2>
+	<sect2 id="ds_desas_sis"><title>Design issue: setting initial states.</title>
+	    <sect3><title>Intro</title>
+		<simpara>The autonomous subsystem in fact performs its trajectory from some initial states that are set by owning system. The question is how to set these
+		    initial states. The best option would be to use standard state input desing. The initial idea is to use switch that switches from work topology to initial value inputs
+		    after subsystem stops. But this idea is not working because update of switch selector notifies the state of update so subsytem starts new movement.</simpara>
+		<simpara>What would be the solutions?  </simpara>
+	    </sect3>
+	    <sect3><title>Solution#1 Create special switcher that doesn't resolve MDesInpObserver for selector input.</title>
+		<para>The idea isn't perfect, having this "special" switcher breaks the transitions common desing.</para>
+	    </sect3>
+	    <sect3 id="ds_desas_sis_iph"><title>Solution#2 Implements special "init" phase in DESAS agent.</title>
+		<simpara>Each subsystem should have special boolean state "Init" that indicates special "init" phase. This state can be connected to the selector of the switchers
+		    connecting internal states to the initial states value inputs. DESAS agent sets this state on the initial step of subsystem and then resets it.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2><title>Status</title>
+	    <simpara>20220710 Initial design is implemented, ref des.h:DesAs. The desing is a bit weird. The subsystem "isolation" desing is not perfect. </simpara>
+	    <simpara>20220714 Applied solution#2 for setting initial states (ref <xref linkend="ds_desas_sis"/>), UT  ut_desas_2.chs.</simpara>
+	</sect2>
+    </sect1>
+
     <sect1 id="ds_ibc"><title>Tracking: Desing items to be handed</title>
 	<sect2><title>Intro</title>
 	    <simpara>Ref <xref linkend="ds_itr_sp"/> for the initial list of the problems need to be addressed in FAP3.</simpara>
@@ -2225,6 +2321,8 @@
 	<sect2><title>DCS transactions</title>
 	    <simpara>Ref <xref linkend="ds_dcs_trs"/></simpara>
 	</sect2>
+	<sect2><title><xref linkend="ds_gibu"/></title> </sect2>
+	<sect2><title><xref linkend="ds_egio"/></title> </sect2>
     </sect1>
 
     <sect1 id="ds_ic"><title>Tracking: Desing items completed</title>
