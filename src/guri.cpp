@@ -122,6 +122,15 @@ GUri GUri::head(int aIdx) const
     return res;
 }
 
+GUri GUri::tailn(int aNum) const
+{
+    GUri res;
+    for (int i = 0; i < aNum; i++) {
+	res.mElems.push_back(at(size() - 1 - i));
+    }
+    return res;
+}
+
 void GUri::append(const GUri& aUri)
 {
     for (auto it = aUri.mElems.begin(); it != aUri.mElems.end(); it++) {

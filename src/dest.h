@@ -247,6 +247,19 @@ class TrHeadVar: public TrVar
 	virtual string GetInpUri(int aId) const override;
 };
 
+/** @brief Transition agent "Tail as num of elems"
+ * */
+class TrTailnVar: public TrVar
+{
+    public:
+	static const char* Type() { return "TrTailnVar";}
+	TrTailnVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From ATrVar
+	virtual void Init(const string& aIfaceName) override;
+	virtual string GetInpUri(int aId) const override;
+};
+
+
 
 
 

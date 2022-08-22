@@ -679,7 +679,7 @@ class DesCtxSpl : public Des, public MDesCtxSpl
 };
 
 
-/* @brief DES context consumer
+/** @brief DES context consumer
  * */
 // TODO is DES inheritance reasonable?
 class DesCtxCsm : public Des, public MDesCtxCsm
@@ -714,6 +714,25 @@ class DesCtxCsm : public Des, public MDesCtxCsm
 	TCsmCp mCsmCp;  /*!< Consumer Cp */
 };
 
+/** @brief DES Input demultiplexor, ref ds_des_idmux
+ * */
+class DesInpDemux : public Des
+{
+    public:
+	static const char* Type() { return "DesInpDemux";};
+	DesInpDemux(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From Unit.MIfProvOwner
+	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	// From MDesSyncable
+	virtual void confirm() override;
+    protected:
+	void AddInput(const string& aName);
+	void AddOutput(const string& aName);
+	int getIfcCount();
+    protected:
+	int mIfcCount; //!< Ifaces count
+	int mIdx; //!< Index of input iface
+};
 
 
 #endif

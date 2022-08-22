@@ -1218,6 +1218,57 @@ void FHeadUri::DtGet(TData& aData)
 }
 
 
+/// Getting tail as num of elems, URI
+
+Func* FTailnUri::Create(Host* aHost, const string& aOutId)
+{
+    Func* res = NULL;
+    if (aOutId == TDget::Type()) {
+	res = new FTailnUri(*aHost);
+    }
+    return res;
+}
+
+void FTailnUri::DtGet(TData& aData)
+{
+    bool res = true;
+    MDVarGet* dget = mHost.GetInp(EInp);
+    TDget* dfget = dget ? dget->GetDObj(dfget) : nullptr;
+    if (dfget) {
+	TData arg;
+	dfget->DtGet(arg);
+	if (arg.mValid) {
+	    dget = mHost.GetInp(ENum);
+	    TNumGet* dnget = dget ? dget->GetDObj(dnget) : nullptr;
+	    if (dnget) {
+		TNum num;
+		dnget->DtGet(num);
+		if (num.mValid) {
+		    aData.mData = arg.mData.tailn(num.mData);
+		} else {
+		    mHost.log(EDbg, "Invalid input data [" + mHost.GetInpUri(ENum) + "]");
+		    res = false;
+		}
+	    } else {
+		mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(ENum) + "]");
+		res = false;
+	    }
+	} else {
+	    mHost.log(EDbg, "Invalid input data");
+	    res = false;
+	}
+    } else {
+	mHost.log(EWarn, "Cannot get input [" + mHost.GetInpUri(EInp) + "]");
+	res = false;
+    }
+    aData.mValid = res;
+    if (mRes != aData) {
+	mRes = aData;
+	mHost.OnFuncContentChanged();
+    }
+}
+
+
 
 
 // Just to keep templated methods in cpp

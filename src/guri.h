@@ -22,13 +22,16 @@ class GUri
 	int size() const { return mElems.size();}
 	void clear() { mElems.clear();}
 	const string& at(int aIdx) const { return mElems.at(aIdx);}
+	GUri head(int aIdx) const;
+	/** @brief Tail formed by elems from aIdx */
 	GUri tail(int aIdx) const;
+	/** @brief Tail formed by aNum tail elemement */
+	GUri tailn(int aNum) const;
 	void tail(const GUri& aHead, GUri& aTail) const;
 	bool isHead(const GUri& aHead) const;
 	bool isTail(const GUri& aTail) const;
 	bool getHead(const GUri& aTail, GUri& aHead) const;
 	bool getTail(const GUri& aHead, GUri& aTail) const;
-	GUri head(int aIdx) const;
 	const vector<TElem>& elems() const {return mElems;};
 	void append(const GUri& aUri);
 	void prepend(const GUri& aUri);

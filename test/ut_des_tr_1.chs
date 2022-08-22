@@ -202,6 +202,14 @@ MyRoot : Elem {
                     Tail ~ : State { = "URI elem3"; };
                 };
             }
+            # "URI tail as num of elems";
+            SUriTailn : State @ {
+                _@ < { Debug.LogLevel = "Dbg"; = "URI _INV"; }
+                Inp ~ : TrTailnVar @ {
+                    Inp ~ : State { = "URI elem1.elem2.elem3"; };
+                    Num ~ : State { = "SI 1"; };
+                };
+            }
         }
     }
 }

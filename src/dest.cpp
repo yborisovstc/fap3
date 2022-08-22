@@ -683,6 +683,41 @@ string TrHeadVar::GetInpUri(int aId) const
     else return string();
 }
 
+///// Tail as num of elems
+
+TrTailnVar::TrTailnVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+{
+    AddInput(GetInpUri(FTailnBase::EInp));
+    AddInput(GetInpUri(FTailnBase::ENum));
+}
+
+void TrTailnVar::Init(const string& aIfaceName)
+{
+    if (mFunc) {
+	delete mFunc;
+	mFunc = NULL;
+    }
+    string ifaceName(aIfaceName);
+    if (ifaceName.empty()) {
+	MDVarGet* inp = GetInp(FTailnBase::EInp);
+	if (inp) {
+	    ifaceName = inp->VarGetIfid();
+	}
+    }
+    if ((mFunc = FTailnUri::Create(this, ifaceName)));
+    else {
+	Logger()->Write(EErr, this, "Failed init function");
+    }
+}
+
+string TrTailnVar::GetInpUri(int aId) const
+{
+    if (aId == FTailnBase::EInp) return "Inp";
+    else if (aId == FTailnBase::ENum) return "Num";
+    else return string();
+}
+
+
 
 
 

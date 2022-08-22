@@ -367,7 +367,7 @@
 	    <sect3 id="ds_itr_dp_grayb"><title>DES framework fap3, aka grayb, ref <ulink url="../../../grayb/doc/design/index.html"/></title>
 	    </sect3>
 	</sect2>
-	<sect2><title>The philosophy of structured systems.</title>
+	<sect2 id="ds_itr_pss"><title>The philosophy of structured systems.</title>
 	    <simpara>All FAP projects are about using structured system as the means of creating big models. Structured system philosophy is very simple:
 		there are a number of agents that can be combined according to the topology. The topology connects the agents according to that required for the created model.</simpara>
 	    <simpara>The structured sytem creates topology basing on system principles: the big model is separated to smaller parts,
@@ -1606,7 +1606,7 @@
 		</simpara>
 	    </sect3>
 	    <sect3 id="ds_dcs_sl_dbo"><title>DES base objects</title>
-		<simpara>This phylosophy can be interpreted by another manner - we can create object which chromo (or some another exquivalend of structure representation) parts
+		<simpara>This philosophy can be interpreted by another manner - we can create object which chromo (or some another exquivalend of structure representation) parts
 		    are states. Obviously this will be "higher" level objects, that can be called "DES based" objects.</simpara>
 	    </sect3>
 	</sect2>
@@ -2242,6 +2242,45 @@
 	</sect2>
     </sect1>
 
+    <sect1 id="ds_des_idmux"><title>DES inputs demultiplexor</title>
+	<sect2><title>Intro</title>
+	    <simpara>It is common case where a number of same subsystems react on similar data. Ofter it is designed as one connpoint to what many "supplying" subsystem output
+		are connected. The example is FAP3-VIS vertex DRP where DRP has context connpoint to what all CRPs are connected. DRP needs to react (create ordering) on all CRPs
+		data - DRP has ordering subsystem that needs to order all CRPs connected. The naive "direct" solution would be to have separate ordering DRP subsystem for
+		each CRP but it is too expensive. Another solution is to have just one ordering subsystem and react on each input one-by-one implementing kind of inputs
+		demultiplexor.</simpara>
+	    <simpara>The demultiplexor has input resolving the number of ifaces and output that connects to "demultiplexed" subsystem input.
+		Multiplexor "connects" output the input first interface, thus update demultiplexed subsystem input. Then mutliplexor waits till demultiplexed subsystem reaction
+		gets completed (it needs special indication from subsystem) and switches to next iface.</simpara>
+	    <simpara>We need to consider at least two cases:</simpara>
+	    <itemizedlist>
+		<listitem>Multiplexer input is state input. Multiple MDVarGet ifaces are resolved on the input.</listitem>
+		<listitem>
+		    Multiplexer input is generic input. It even can be a socket.
+		    <para>This is exaclty the case of Vertex DRP where the input is socket {CRP uri, vector of pairs}</para>
+		</listitem>
+	    </itemizedlist>
+	</sect2>
+	<sect2><title>Design: demux is similar to multi-input transition.</title>
+	    <simpara>Demux can be considered as multi-input transition. Indeed, the controlled system shouldn't have "unique" states bacause the system is one for
+		all inputs. For instance for Vertex DRP the controlled system just updates the common pseudo states, DRP structure, via <xref linkend="gls_sdc"/>.</simpara>
+	    <simpara>Using this analogy we can say that use-case <xref linkend="ds_des_idmux_uc_ginu"/> is not really suitable for our case - in multi-input transition all
+		inputs are important, even those that are not updated.
+	</simpara>
+	</sect2>
+	<sect2 id="ds_des_idmux_uc"><title>Use-cases</title>
+	    <sect3 id="ds_des_idmux_uc_ginu"><title>Demux given input notifies of update - Demux updates controlled system for this input</title>
+		<sect4><title>Clarification</title>
+		    <simpara>On Vertex DRP example: given vertex is updated (got new connection for instance) - demux updates controlled system (i.e. CRPs orderer) so that 
+			corresponding CRP is reordered.</simpara>
+		</sect4>
+		<sect4><title>Status</title>
+		    <simpara>This use-case is not covered in the current design. This is because demux cannot understand what input notifies of update.</simpara>
+		</sect4>
+	    </sect3>
+	</sect2>
+    </sect1>
+
     <sect1 id="ds_desas"><title>DES active subsystem (<xref linkend="gls_desas"/>)</title>
 	<sect2><title>Intro</title>
 	    <simpara>In many cases it seems effective to desing the part of DES as subsystem that also is DES but in contrary to normal "monolitic" subsystem runs in it's own loop.
@@ -2269,6 +2308,27 @@
 	<sect2><title>Status</title>
 	    <simpara>20220710 Initial design is implemented, ref des.h:DesAs. The desing is a bit weird. The subsystem "isolation" desing is not perfect. </simpara>
 	    <simpara>20220714 Applied solution#2 for setting initial states (ref <xref linkend="ds_desas_sis"/>), UT  ut_desas_2.chs.</simpara>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_ums"><title>Using move semantic in DES update/confirm data transition.</title>
+	<sect2><title>Intro</title>
+	    <simpara>Currently a lot of not optimized data copying happens on DES two-phase model update/confirm. This create significant overhead and
+		decrease the system performance. We already considered the possible desings to implement DES without using two-phase approach, but failed getting
+		valuable solution.</simpara>
+	    <simpara>There is another way to optimize it - we can keep proved 2-phases approach but apply move semantic to data transferring. For instance
+		we can avoid copying data on confirm phase but swap update and confirm data.</simpara>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_ndes"><title>Native DES as the base of designing DES framework.</title>
+	<sect2><title>Intro</title>
+	    <simpara>The DES framework core approach is changeable and structured agents, ref <xref linkend="ds_itr_pss"/>. This "changeable and structured agents" framework is
+		created using generic OOP (C++). However the base agent (node) and it's heirs contains wide context, so are DES. For instance node context includes references to owned nodes,
+		content. Moreover nodes in the system depens on the context of other nodes. To support these dependencies specific mechanism of observation is designed. So the native agents
+		theyself seem can be effectivelly implemented basing on low-level DES framework.</simpara>
+	    <simpara>Using low-level DES can optimize the resolving of native dependencies. This low-level framework can alse be used as generic DES framework in 
+		OOP applications.</simpara>
 	</sect2>
     </sect1>
 
@@ -2323,6 +2383,8 @@
 	</sect2>
 	<sect2><title><xref linkend="ds_gibu"/></title> </sect2>
 	<sect2><title><xref linkend="ds_egio"/></title> </sect2>
+	<sect2><title><xref linkend="ds_ums"/></title> </sect2>
+	<sect2><title><xref linkend="ds_ndes"/></title> </sect2>
     </sect1>
 
     <sect1 id="ds_ic"><title>Tracking: Desing items completed</title>
@@ -2536,7 +2598,7 @@
 		<simpara>The problem's root-cause is that IRM creates a massive amount of routing pathes for MDesInpObserver iface. This makes the IRM data update very slow,
 		    especially when the nodes invalidate its IRM nodes. Additional mechamisms like <xref linkend="gls_asr"/> exacerbates the problem.</simpara>
 		<simpara>The trigger of emerging of this problem is the VIS container update to handle button press event. This update assumes adding
-		    to the socket the transitions that sequentially (this is container socket phylosofy) forms the right URI of pressed widget. But this new transition
+		    to the socket the transitions that sequentially (this is container socket philosophy) forms the right URI of pressed widget. But this new transition
 		    creates very complex structure for IRM because the transition are not just chain but each node of the chain creates the nomber of IRM pathes. To
 		    the overall number of IRM pathes grows dramatically (some thousands for instance).</simpara>
 		<simpara>Simplifying of the new transitions and reducing the number of IRM pathes partially helps, but the app creating is still slow.</simpara>

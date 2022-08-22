@@ -1400,3 +1400,86 @@ void DesCtxCsm::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 #endif
 
 
+// DES Input demultiplexor
+
+static const string K_Cp_Inp = "Inp";
+static const string K_Cp_Outp = "Outp";
+
+DesInpDemux::DesInpDemux(const string &aType, const string& aName, MEnv* aEnv): Des(aType, aName, aEnv)
+{
+    AddInput(K_Cp_Inp);
+    AddInput("Done");
+    AddOutput(K_Cp_Outp);
+}
+
+void DesInpDemux::AddInput(const string& aName)
+{
+    MNode* cp = Provider()->createNode(CpStateInp::Type(), aName, mEnv);
+    assert(cp);
+    bool res = attachOwned(cp);
+    assert(res);
+}
+
+void DesInpDemux::AddOutput(const string& aName)
+{
+    MNode* cp = Provider()->createNode(CpStateOutp::Type(), aName, mEnv);
+    assert(cp);
+    bool res = attachOwned(cp);
+    assert(res);
+}
+
+int DesInpDemux::getIfcCount()
+{
+    int res = 0;
+    MNode* inp = getNode(K_Cp_Inp);
+    MUnit* inpu = inp ? inp->lIf(inpu) : nullptr;
+    auto ifaces = inpu->getIfs<MDVarGet>();
+    if (ifaces && !ifaces->empty()) {
+	res = ifaces->size();
+    }
+    return res;
+}
+
+void DesInpDemux::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+{
+    if (aName == MDVarGet::Type()) {
+	MNode* outp = getNode(K_Cp_Outp);
+	MUnit* outpu = outp ? outp->lIf(outpu) : nullptr;
+	MIfProvOwner* outppo = outpu ? outpu->lIf(outppo) : nullptr;
+	if (outppo && aReq->provided()->isRequestor(outppo)) {
+	    // Request from output
+	    MNode* inp = getNode(K_Cp_Inp);
+	    MUnit* inpu = inp ? inp->lIf(inpu) : nullptr;
+	    auto ifaces = inpu->getIfs<MDVarGet>();
+	    if (!ifaces || ifaces->empty() || ifaces->size() <= mIdx) {
+		Logger()->Write(EErr, this, "Ifaces idx overflow");
+	    } else {
+		auto* ifc = dynamic_cast<MDVarGet*>(ifaces->at(mIdx));
+		addIfpLeaf(ifc, aReq);
+	    }
+	}
+    } else if (aName == MDesObserver::Type()) {
+	MNode* inp = getNode(K_Cp_Inp);
+	MUnit* inpu = inp ? inp->lIf(inpu) : nullptr;
+	MIfProvOwner* inppo = inpu ? inpu->lIf(inppo) : nullptr;
+	if (inppo && aReq->provided()->isRequestor(inppo)) {
+	    // Request from input, redirect to output
+	    MNode* outp = getNode(K_Cp_Outp);
+	    MUnit* outpu = outp ? outp->lIf(outpu) : nullptr;
+	    outpu->resolveIface(aName, aReq);
+	}
+    } else {
+	Des::resolveIfc(aName, aReq);
+    }
+}
+
+
+void DesInpDemux::confirm()
+{
+    Des::confirm();
+    int ifcnt = getIfcCount();
+    if (mIdx < (ifcnt - 1)) {
+	mIdx++;
+    }
+
+}

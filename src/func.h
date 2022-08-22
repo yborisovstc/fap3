@@ -509,6 +509,53 @@ class FHeadUri: public FHead<DGuri> {
 };
 
 
+/** @brief Gettng tail as num of elems base
+ * */
+class FTailnBase: public Func {
+    public:
+	enum { EInp = EInp1, ENum = EInp2 };
+	FTailnBase(Host& aHost): Func(aHost) {};
+};
+
+
+/** @brief Gettng tail as num of elems base
+ * */
+template <typename T>
+class FTailn: public FTailnBase, public MDtGet<T>  {
+    public:
+	using TData = T;
+	using TDget = MDtGet<T>;
+	using TNum = Sdata<int>;
+	using TNumGet = MDtGet<TNum>;
+    public:
+	FTailn(Host& aHost): FTailnBase(aHost) {};
+	virtual MIface* getLif(const char *aName) override;
+	virtual void GetResult(string& aResult) const override { }
+	virtual string GetInpExpType(int aId) const override { return TDget::Type(); }
+	virtual string IfaceGetId() const { return TDget::Type();};
+	virtual string Uid() const override { return mHost.getHostUri() + Ifu::KUidSepIc + "func" + Ifu::KUidSep + MDtGet<TData>::Type();}
+    public:
+	TData mRes;
+};
+
+template<typename T> MIface *FTailn<T>::getLif(const char *aName)
+{
+    MIface* res = NULL;
+    if (strcmp(aName, TDget::Type()) == 0) res = dynamic_cast<TDget*>(this);
+    return res;
+}
+
+
+/** @brief Getting tail as num of elems, URI
+ * */
+class FTailnUri: public FTailn<DGuri> {
+    public:
+	static Func* Create(Host* aHost, const string& aString);
+	FTailnUri(Host& aHost): FTailn<DGuri>(aHost) {};
+	virtual void DtGet(TData& aData);
+};
+
+
 
 
 
