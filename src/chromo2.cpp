@@ -802,6 +802,7 @@ THandle Chromo2Mdl::SetFromFile(const string& aFileName)
 {
     ifstream is(aFileName, std::ifstream::in);
     if ( (is.rdstate() & ifstream::failbit ) == 0 ) {
+	Reset();
 	is.seekg(0, is.beg);
 	streampos beg = is.tellg();
 	is.seekg(0, is.end);

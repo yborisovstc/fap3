@@ -5,7 +5,7 @@ MyRoot : Elem {
         Ds1 : Des {
             St1 : State {
                 = "SI 0";
-                Debug : Content { Update : Content { = "y"; } }
+                Debug.LogLevel = "Dbg";
             }
             St1.Inp ~ : TrAddVar @ {
                 _@ < Debug.LogLevel = "Dbg";

@@ -873,7 +873,7 @@
 		</sect4>
 	    </sect3>
 	</sect2>
-	<sect2 id="ds_cli_dsa"><title>Design of chromo language syntax analyzed and compiler.</title>
+	<sect2 id="ds_cli_dsa"><title>Design of chromo language syntax analyzer and compiler.</title>
 	    <sect3><title>Intro</title>
 		<simpara>Ref <xref linkend="ref_ss_cof"/> for studying of basics of syntactic analysis and compiling.</simpara>
 		<simpara>Ref <ulink url="https://en.wikipedia.org/wiki/LL_parser"/> for LL(k) parser wiki.</simpara>
@@ -1576,18 +1576,35 @@
 		<sect4><title>Intro</title>
 		    <simpara>
 			How the problem with system structure update is solved at the moment (239ba130a63)? Node adapter is used for updating system structure - the update
-			performs via system mutation. Adapter performs the mutation on confirmation phase. It is assumes that the mutation formed by DES depens on system data only
+			performs via system mutation. Adapter performs the mutation ON CONFIRMATION PHASE. It is assumes that the mutation formed by DES depens on system data only
 			but not system structure date. So on update phase the system structure is unchanged. But the problem is (!!) with system structure update on confirmation
 			phase: the system data on what the mut depends can change during confirmation phase (it depends on the sequence of system states confirmation).
 		    </simpara>
+		    <simpara>In other words: if there are a number of system structures are dependent one on another and being updated simultaneously
+			they also need to follow current-new scheme. Doing system structure modification on confirmation phase works only in case if the system structure
+			is independent!</simpara>
 		    <simpara>The previous NodeAdp implementation perfored the system mutation on update phase. But is also was wrong because the change of system structure
 			affects the system states so affects the process of update depending states.</simpara>
+		    <simpara>Another problem is that system data depends on system structure so it needs to be studied if slystem structure change affect system data confirmation.</simpara>
+		</sect4>
+		<sect4><title>Solution : to buffer the mutation</title>
+		    <simpara>We can avoid the system mut dependency from system data by buffering the mut. With that approach NodeAdp updates and save mut on update phase and
+			apply the buffered mut on confirm phase.</simpara>
+		</sect4>
+		<sect4><title>Solution: using inputs buffering instead of state data buffering.</title>
+		    <simpara>Let's consider two dependent system that needs to be changed: S1 and S2 and let's try to change them.
+			Actually the dependencies can be interpreted as dependencies on some parameters of system, but not on whole system. For instance S2 depends on P1(S1), ... Pn(S1)
+			and vice versa. These parameters (i.e. data) are the inputs of transition S2_T performing S2 change. We can freeze these inputs on confirmation phase.
+			In this case S2_T inputs will be stable during S2 update. </simpara>
+		    <simpara>This inputs freeze scheme was considered earlier (fapws?) also for data but that time state data freeze was choose because it is more effective -
+			if some state is connected to N inputs then inputs freeze approach needs N double buffering instead of just one for data freeze.</simpara>
+		    <simpara>Actually this solution aleady attempted to be applied in the current DES controller implementation, ref dessdc.h::SdcIapb and dessdc.cpp::ASdc::confirm() -
+			inputs are freezed (confirmed) before controller controlling action. However this implementation is wrong - if we consider two dependent systems S1 and S2 then
+			the confirmation is performed one to another. This means that for instance S1 handle confirmation first then S2. S1 params (i.e. S2 inps) are freezed on
+			S2 confirmation. So S2 will be updated with NEW (not current) S1 params. The result will be affected (in common cases) by confirmation order (S2, S1 vs S1, S2)
+		</simpara>
 		</sect4>
 	    </sect3>
-	    <sect4><title>Solution : to buffer the mutation</title>
-		<simpara>We can avoid the system mut dependency from system data by buffering the mut. With that approach NodeAdp updates and save mut on update phase and
-		    apply the buffered mut on confirm phase.</simpara>
-	    </sect4>
 	</sect2>
 	<sect2 id="ds_dcs_sl"><title>Using special layer for controlling systems.</title>
 	    <sect3><title>Intro</title>
@@ -1599,8 +1616,8 @@
 		    branch in sytem hierarchy etc.</simpara>
 	    </sect3>
 	    <sect3><title>This is just another form of the current solution</title>
-		<simpara>At the first look this seems same as <xref linkend="ds_dcs_itr_cs"/> but different form. With special layer the controlling subsytem
-		    updata is DES standard: the data (controlled system definition) is modifyed in the proper transition that the controlled system "apply" this
+		<simpara>At the first look this seems same as <xref linkend="ds_dcs_itr_cs"/> but different form. With special layer the controlling subsystem
+		    update is DES standard: the data (controlled system definition) is modifyed in the proper transition that the controlled system "apply" this
 		    data to it controlled model (i.e. changes the model). In DES adapter there is no explicit transition. Instead, the adapter performs "the transition" via
 		    direct changing (mutating) of the controlled system. The only diff is <xref linkend="ds_dcs_itr_sna"/> - this causes the different behaviour.
 		</simpara>
@@ -2311,16 +2328,6 @@
 	</sect2>
     </sect1>
 
-    <sect1 id="ds_ums"><title>Using move semantic in DES update/confirm data transition.</title>
-	<sect2><title>Intro</title>
-	    <simpara>Currently a lot of not optimized data copying happens on DES two-phase model update/confirm. This create significant overhead and
-		decrease the system performance. We already considered the possible desings to implement DES without using two-phase approach, but failed getting
-		valuable solution.</simpara>
-	    <simpara>There is another way to optimize it - we can keep proved 2-phases approach but apply move semantic to data transferring. For instance
-		we can avoid copying data on confirm phase but swap update and confirm data.</simpara>
-	</sect2>
-    </sect1>
-
     <sect1 id="ds_ndes"><title>Native DES as the base of designing DES framework.</title>
 	<sect2><title>Intro</title>
 	    <simpara>The DES framework core approach is changeable and structured agents, ref <xref linkend="ds_itr_pss"/>. This "changeable and structured agents" framework is
@@ -2329,6 +2336,26 @@
 		theyself seem can be effectivelly implemented basing on low-level DES framework.</simpara>
 	    <simpara>Using low-level DES can optimize the resolving of native dependencies. This low-level framework can alse be used as generic DES framework in 
 		OOP applications.</simpara>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_desopt"><title>DES optimization</title>
+	<sect2 id="ds_desopt_ums"><title>Using move semantic in DES update/confirm data transition.</title>
+	    <sect3><title>Intro</title>
+		<simpara>Currently a lot of not optimized data copying happens on DES two-phase model update/confirm. This create significant overhead and
+		    decrease the system performance. We already considered the possible desings to implement DES without using two-phase approach, but failed getting
+		    valuable solution.</simpara>
+		<simpara>There is another way to optimize it - we can keep proved 2-phases approach but apply move semantic to data transferring. For instance
+		    we can avoid copying data on confirm phase but swap update and confirm data.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_desopt_asdc"><title>Avoid state update/confirm data comparition on confirmation step</title>
+	    <sect3><title>Intro</title>
+		<simpara>Currently [20220826] state data updation is checked on update state. If the data is not updated then the state is not "marked" as updated and
+		    confirmation step of this state is omitted. This means update/confirm data comparition on confirmation step is not necessary -
+		    if state goes to comparition step this means that the data was changed.</simpara>
+		<simpara>This optimization was applied in fap4 primary deds layer.</simpara>
+	    </sect3>
 	</sect2>
     </sect1>
 
@@ -2383,7 +2410,8 @@
 	</sect2>
 	<sect2><title><xref linkend="ds_gibu"/></title> </sect2>
 	<sect2><title><xref linkend="ds_egio"/></title> </sect2>
-	<sect2><title><xref linkend="ds_ums"/></title> </sect2>
+	<sect2><title><xref linkend="ds_desopt_ums"/></title> </sect2>
+	<sect2><title><xref linkend="ds_desopt_asdc"/></title> </sect2>
 	<sect2><title><xref linkend="ds_ndes"/></title> </sect2>
     </sect1>
 

@@ -15,7 +15,7 @@ class Ut_des : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST_SUITE(Ut_des);
 //    CPPUNIT_TEST(test_des_1);
 //    CPPUNIT_TEST(test_des_ades_1);
-//    CPPUNIT_TEST(test_des_dmc_1);
+    CPPUNIT_TEST(test_des_dmc_1);
 //    CPPUNIT_TEST(test_des_ifr_inval_1);
     CPPUNIT_TEST(test_des_tr_1);
 //    CPPUNIT_TEST(test_des_asr_1);
@@ -235,8 +235,10 @@ void Ut_des::test_des_dmc_1()
     MNode* ds1n = root->getNode("Launcher.Ds1");
     MElem* ds1e = ds1n ? ds1n->lIf(ds1e) : nullptr;
     CPPUNIT_ASSERT_MESSAGE("Fail to get Ds1", ds1e);
+    // Save ds1e chromo
+    ds1e->Chromos().Save(specn + "ds1n_chromo_saved." + ext);
 
-    // Save root chromoe
+    // Save root chromo
     eroot->Chromos().Save(specn + "_saved." + ext);
     // Run 
     bool res = mEnv->RunSystem(4);

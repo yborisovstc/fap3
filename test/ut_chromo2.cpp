@@ -17,7 +17,8 @@ class Ut_chromo2 : public CPPUNIT_NS::TestFixture
 //    CPPUNIT_TEST(test_Chr2);
 //    CPPUNIT_TEST(test_Chr3);
 //    CPPUNIT_TEST(test_Chr4);
-    CPPUNIT_TEST(test_Chr5);
+//    CPPUNIT_TEST(test_Chr5);
+    CPPUNIT_TEST(test_Chr_Err_1);
     CPPUNIT_TEST_SUITE_END();
 public:
     virtual void setUp();
@@ -28,6 +29,7 @@ private:
     void test_Chr3();
     void test_Chr4();
     void test_Chr5();
+    void test_Chr_Err_1();
 private:
     //Env* iEnv;
 };
@@ -51,7 +53,7 @@ void Ut_chromo2::test_Chr1()
     Chromo2 chr;
     // Chromo as segment or mutation_create_chromo
     chr.SetFromSpec("{ }");
-    printf("\n Empty chromo: %s\n", chr.Root().operator string().c_str());
+    cout << "Empty chromo: " << chr.Root().operator string() << endl;
     chr.Root().AddChild(TMut(ENt_Node, ENa_Id, "MyNode", ENa_Parent, "Node"));
     Chromo2 chr2;
     chr2 = chr;
@@ -70,10 +72,9 @@ void Ut_chromo2::test_Chr1()
     ChromoNode cmp1 = *beg;
     CPPUNIT_ASSERT_MESSAGE("Chromo root comp1 is empty", cmp1 != ChromoNode());
     TNodeType cmp1t = cmp1.Type();
-    CPPUNIT_ASSERT_MESSAGE("Wront type of root comp1", cmp1t == ENt_Node);
+    CPPUNIT_ASSERT_MESSAGE("Wront type of root comp1", cmp1t == ENt_Cont);
     int cn = croot.Count();
-    CPPUNIT_ASSERT_MESSAGE("Wrong root node comps number", cn == 3);
-    
+    CPPUNIT_ASSERT_MESSAGE("Wrong root node comps number", cn == 5);
 }
 
 void Ut_chromo2::test_Chr2()
@@ -184,6 +185,13 @@ void Ut_chromo2::test_Chr5()
 
 }
 
-
-
-
+void Ut_chromo2::test_Chr_Err_1()
+{
+    cout << endl << "=== Test of Chromo2 error handling" << endl;
+    Chromo2 chr;
+    chr.SetFromFile("ut_chr2_err_1.chs");
+    if (chr.IsError()) {
+	cout << "Pos: " << chr.Error().mPos << " -- " << chr.Error().mText << endl;
+    }
+    chr.Root().Dump();
+}

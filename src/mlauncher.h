@@ -3,7 +3,7 @@
 
 #include <miface.h>
 
-/** @ Model launcher interface
+/** @brief Model launcher interface
  * */
 class MLauncher: public MIface
 {
