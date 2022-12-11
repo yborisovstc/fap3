@@ -150,6 +150,8 @@ class MChromo
 	virtual void Save(const string& aFileName, int aIndent = 0) const = 0;
 	virtual ChromoNode CreateNode(const THandle& aHandle) = 0;
 	virtual void ReduceToSelection(const ChromoNode& aSelNode) = 0;
+	//virtual bool IsError() const { return false;}
+	//virtual const CError& Error() const  = 0;
 	virtual bool IsError() const { return false;}
 	virtual const CError& Error() const  = 0;
 };

@@ -796,7 +796,7 @@
 		    </programlisting>
 		    <simpara>This makes systax productions quite complicated.</simpara>
 		</sect4>
-		<sect4><title>Initial</title>
+		<sect4><title>Initial (EBNF)</title>
 		    <programlisting>
 			model_spec = segment | mutation_create_chromo;
 			chromo = chromo_node { node_separator, chromo_node };
@@ -835,6 +835,7 @@
 			white_space = ' ';
 			end_of_line = ;
 
+			(* Ref <xref linkend="ds_cli_pi_ms"/> for the improvement proposal *)
 			mutation = (mutation_create | mutation_content| mutation_remove | mutation_import
 			| mutation_connect | mutation_disconnect | mutation_rename | mutation_move | mutation_comment), ';';
 			mutation_create = [name, separator] ":" separator, parent;
@@ -845,6 +846,7 @@
 			#else
 			mutation_content = [ content_uri, separator ] "=" separator, content_value;
 			#endif // _DCE_
+			content_value = string;
 
 			mutation_import = "+" separator, module_uri;
 			node_uri = uri;
@@ -868,7 +870,7 @@
 			special_name_nearest_namespace = "_@";
 
 			uri = [name], { "." , name }
-			string = """ { symbol } """;
+			string = '"' { symbol } '"';
 		    </programlisting>
 		</sect4>
 	    </sect3>
@@ -953,7 +955,25 @@
 	    </sect3>
 	</sect2>
 	<sect2 id="ds_cli_pi"><title>Proposal of <xref linkend="gls_chromo2"/> improvement</title>
-	    <sect3><title>To make chromo end symbol (";") not required if there is EOL.</title>
+	    <sect3 id="ds_cli_pi_ms"><title>To make mutation end symbol (mutation separator) (";") not mandatory.</title>
+		<sect4><title>Intro</title>
+		    <simpara>I.e. to use the syntax</simpara>
+		    <programlisting>
+			mutation = (mutation_create | mutation_content| mutation_remove | mutation_import
+			| mutation_connect | mutation_disconnect | mutation_rename | mutation_move | mutation_comment), [';'];
+		    </programlisting>
+		    <simpara>In case of a number mutations in one line the separator is useful and helps recognize the mutations. In many other
+			cases the separator is redundant.</simpara>
+		</sect4>
+		<sect4><title>Problem: mutation mutation_chromo production clashes with mutation_create_chromo.</title>
+		    <simpara>For intance:</simpara>
+		    <programlisting>
+			|  e2 : e1 {
+			|     e2_1 : Elem;
+			|  }
+		    </programlisting>
+		    <simpara>is recognized by parser as mutation_create followed by illegal sentence.</simpara>
+		</sect4>
 	    </sect3>
 	    <sect3 id="ds_cli_pi_pn"><title>To introduce special pseudo-names</title>
 		<simpara>
@@ -1158,6 +1178,34 @@
 		    The agent base already has some connpoints that needs to be connected to the compoments of WidgetBase, but this connection cannot be done in the scope of WidgetBase becaues
 		    it doesn't include agent. So currently we need add agent and do these connections for any widget in widget system - i.e. the spec is duplicated many time. The solution can be to
 		    combine all that connections within single chromo named segment and then apply it in any particular widget.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_cli_errh"><title>Handling of chromo2 syntax errors</title>
+	    <sect3><title>Intro</title>
+		<simpara>One of errors handling approach is to add special erroneous non-terminals to the syntax.</simpara>
+		<programlisting>
+		    mutation_content_err_wrong_uri = [ not_node_uri, separator ] "=" separator, content_value;
+		    no_node_uri = no_uri;
+		    no_uri = ...
+
+		    (* Mutation error: missing separator before mutation keyword *)
+		    mut_err_sep_before = (name | uri), mutation_keyword; 
+		    mutation_keyword = mutation_create_keyword | mutation_connect_keyword | mutation_import_keyword | mutation_comment_keyword | mutation_content_keyword | mutation_remove_keyword;
+		    mutation_create_keyword = ":";
+		    mutation_connect_keyword = "~";
+		    mutation_import_keyword = "+";
+		    mutation_comment_keyword = "#";
+		    mutation_content_keyword = "=";
+		    mutation_remove_keyword = "!";
+
+		    (* Mutation error: missing mutation separator *)
+		    mut_err_missing_sep
+		</programlisting>
+	    </sect3>
+	    <sect3><title>Using Recursive descent parsing for errors is rather redundant.</title>
+		<simpara>The problem seems to be that we are trying to use "negative" non-terminals like "not URI". We try to use existing not-terminal matching function to
+		    match this non-terminals. So, our meaning of this not-terminals is "the mininal sentence that match it". For instance "a1.a2*blabla" is "not URI" but
+		    we match "a1.a2*" as sentence matched. </simpara>
 	    </sect3>
 	</sect2>
     </sect1>

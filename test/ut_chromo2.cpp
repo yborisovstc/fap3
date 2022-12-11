@@ -189,6 +189,7 @@ void Ut_chromo2::test_Chr_Err_1()
 {
     cout << endl << "=== Test of Chromo2 error handling" << endl;
     Chromo2 chr;
+   // chr.SetFromFile("ut_chr2_err_1.chs");
     chr.SetFromFile("ut_chr2_err_1.chs");
     if (chr.IsError()) {
 	cout << "Pos: " << chr.Error().mPos << " -- " << chr.Error().mText << endl;

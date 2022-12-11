@@ -10,6 +10,7 @@
 
 using namespace std;
 
+
 /** @brief Chromo2 mutation base
  * */
 class C2Mut
@@ -110,10 +111,6 @@ using TC2MdlNodesRIter = TC2MdlNodes::reverse_iterator;
 class Chromo2Mdl: public MChromoMdl
 {
     public:
-	using TLexPosElem = pair<string, int>;
-	using TLexPos = vector<TLexPosElem>;
-	using TLex = vector<string>;
-    public:
 	static inline const char *Type() { return "ChromoMdlX";}; 
     public:
 	Chromo2Mdl();
@@ -162,48 +159,48 @@ class Chromo2Mdl: public MChromoMdl
 	THandle Set(const THandle& aHandle);
 	virtual THandle Init(TNodeType aRootType);
 	void Reset();
-	const CError& Error() const { return mErr;};
+	const CError& Error() const { return mErr;}
 	bool operator==(const Chromo2Mdl& b) const;
     protected:
-	/** Recursive descent parser: parse name
-	 * */
-	void rdp_model_spec(istream& aIs, streampos aStart, C2MdlNode& aMnode);
-	void rdp_name(istream& aIs, string& aRes);
-	void rdp_spname_ns(istream& aIs, string& aRes);
-	void rdp_spname_self(istream& aIs, string& aRes);
-	void rdp_string(istream& aIs, string& aRes);
-	void rdp_uri(istream& aIs, string& aRes);
-	void rdp_mut_create_chromo(istream& aIs, C2MdlNode& aMnode);
-	void rdp_mut_create(istream& aIs, C2MdlNode& aMnode);
-	void rdp_mut_content(istream& aIs, C2MdlNode& aMnode);
-	void rdp_mut_comment(istream& aIs, C2MdlNode& aMnode);
+	/** Recursive descent parser */
+	bool rdp_model_spec(istream& aIs, streampos aStart, C2MdlNode& aMnode);
+	bool rdp_name(istream& aIs, string& aRes);
+	bool rdp_word_sep(istream& aIs);
+	bool rdp_word(istream& aIs);
+	bool rdp_spname_ns(istream& aIs, string& aRes);
+	bool rdp_spname_self(istream& aIs, string& aRes);
+	bool rdp_string(istream& aIs, string& aRes);
+	bool rdp_uri(istream& aIs, string& aRes);
+	bool rdp_mut_create_chromo(istream& aIs, C2MdlNode& aMnode);
+	bool rdp_mut_create(istream& aIs, C2MdlNode& aMnode);
+	bool rdp_mut_content(istream& aIs, C2MdlNode& aMnode);
+	bool rdp_mut_content_err_p(istream& aIs, C2MdlNode& aMnode);
+	bool rdp_mut_content_err_q(istream& aIs, C2MdlNode& aMnode);
+	bool rdp_mut_comment(istream& aIs, C2MdlNode& aMnode);
+	bool rdp_mut_err_p(istream& aIs);
+	bool rdp_mut_err_sep_before(istream& aIs);
+	bool rdp_mut_comment_err(istream& aIs);
 	bool rdp_mut_connect(istream& aIs, C2MdlNode& aMnode);
 	bool rdp_mut_disconnect(istream& aIs, C2MdlNode& aMnode);
-	void rdp_mut_import(istream& aIs, C2MdlNode& aMnode);
-	void rdp_mut_remove(istream& aIs, C2MdlNode& aMnode);
-	void rdp_sep(istream& aIs);
+	bool rdp_mut_import(istream& aIs, C2MdlNode& aMnode);
+	bool rdp_mut_remove(istream& aIs, C2MdlNode& aMnode);
+	bool rdp_sep(istream& aIs);
 	bool rdp_segment(istream& aIs, C2MdlNode& aMnode);
-	void rdp_segment_target(istream& aIs, C2MdlNode& aMnode, C2MdlNode& aDepSeg);
+	bool rdp_segment_target(istream& aIs, C2MdlNode& aMnode, C2MdlNode& aDepSeg);
 	bool rdp_segment_namespace(istream& aIs, C2MdlNode& aMnode, C2MdlNode& aDepSeg);
 	bool rdp_chromo_node(istream& aIs, C2MdlNode& aMnode);
 	bool rdp_mut(istream& aIs, C2MdlNode& aMnode);
 	bool rdp_ctx_mutation(istream& aIs, C2MdlNode& aMnode);
 	bool rdp_ctx_mut_create_chromo(istream& aIs, C2MdlNode& aMnode);
-	void rdp_context(istream& aIs, C2MdlNode& aMnode);
-	void rdp_context_target(istream& aIs, C2MdlNode& aMnode);
-	void rdp_context_target_ext(istream& aIs, C2MdlNode& aMnode, C2MdlNode& aDepSeg);
-	void rdp_context_namespace(istream& aIs, C2MdlNode& aMnode);
-	/** @brief RDP pareser of context_namespace_ext
-	 * @param aDepNode  segment to keep dependencies
-	 * */
-	void rdp_context_namespace_ext(istream& aIs, C2MdlNode& aMnode, C2MdlNode& aDepSeg);
-	
+	bool rdp_context(istream& aIs, C2MdlNode& aMnode);
+	bool rdp_context_target(istream& aIs, C2MdlNode& aMnode);
+	bool rdp_context_target_ext(istream& aIs, C2MdlNode& aMnode, C2MdlNode& aDepSeg);
+	bool rdp_context_namespace(istream& aIs, C2MdlNode& aMnode);
+	bool rdp_context_namespace_ext(istream& aIs, C2MdlNode& aMnode, C2MdlNode& aDepSeg);
     protected:
-	/** @brief Sets error */
 	void SetErr(istream& aIs, const string& aDescr);
-	/** @brief Resets error */
-	void ResetErr() { mErr = CError();}
-	/** @brief Checks error */
+	void SetErr(const string& aDescr);
+	void ResetErr();
 	bool IsError() const;
 	/** @brief Writes textual representation of node to stream
 	 * @param[in] aNode  chromo node to output
@@ -212,13 +209,7 @@ class Chromo2Mdl: public MChromoMdl
 	 * @param[in] aIndent  output identation
 	 * */
 	static void OutputNode(const C2MdlNode& aNode, ostream& aOs, int aLevel, int aIndent);
-	/** @brief Parses lexems from stream */
-	void GetLexs(istream& aIs, streampos aBeg, streampos aEnd, vector<string>& aLexs);
-	/** @brief Parses lexems from stream, positions are stored */
-	void GetLexsPos(istream& aIs, streampos aBeg, streampos aEnd, TLexPos& aLexs);
 	static string GetContextByAttr(const C2MdlNode& aNode, TNodeAttr aAttr);
-	/** @brief Gets indicator that lexeme is mutation operation */
-	bool IsLexDmcMutop(const string& aLex) const;
     protected:
 	/** @brief Dumps content of input stream fragment
 	 * */
@@ -227,9 +218,10 @@ class Chromo2Mdl: public MChromoMdl
 	 * */
 	void DumpMnode(const C2MdlNode& aNode, int aLevel) const;
 	streampos spos(istream& aIs) { return aIs.tellg();}
+	void rdpBacktrack(istream& aIs, streampos aPos);
     protected:
 	C2MdlNode mRoot;
-	CError mErr;           //!< Error data
+	CError mErr;          //!< Chromo error data - final error
 };
 
 /** @brief Chromo2
