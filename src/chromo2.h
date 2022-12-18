@@ -122,17 +122,14 @@ class Chromo2Mdl: public MChromoMdl
 	virtual TNodeType GetType(const THandle& aHandle);
 	virtual THandle Root(const THandle& aHandle);
 	virtual THandle Parent(const THandle& aHandle);
-	virtual THandle Next(const THandle& aHandle, TNodeType aType = ENt_Unknown);
-	virtual THandle Prev(const THandle& aHandle, TNodeType aType = ENt_Unknown);
-	virtual THandle GetFirstChild(const THandle& aHandle, TNodeType aType = ENt_Unknown);
-	virtual THandle GetLastChild(const THandle& aHandle, TNodeType aType = ENt_Unknown);
+	virtual THandle Next(const THandle& aHandle);
+	virtual THandle Prev(const THandle& aHandle);
+	virtual THandle GetFirstChild(const THandle& aHandle);
+	virtual THandle GetLastChild(const THandle& aHandle);
 	virtual string GetAttr(const THandle& aHandle, TNodeAttr aAttr) const;
 	virtual bool AttrExists(const THandle& aHandle, TNodeAttr aAttr) const ;
 	virtual THandle AddChild(const THandle& aParent, TNodeType aType);
 	virtual THandle AddChild(const THandle& aParent, const THandle& aHandle, bool aCopy = true, bool aRecursively = true);
-	virtual THandle AddNext(const THandle& aPrev, const THandle& aHandle, bool aCopy = true);
-	virtual THandle AddNext(const THandle& aPrev, TNodeType aNode);
-	virtual THandle AddPrev(const THandle& aNext, const THandle& aHandle, bool aCopy = true);
 	virtual bool IsChildOf(const THandle& aNode, const THandle& aParent);
 	// TODO Deattach doesn't work here!
 	virtual void RmChild(const THandle& aParent, const THandle& aChild, bool aDeattachOnly = false);
@@ -145,14 +142,10 @@ class Chromo2Mdl: public MChromoMdl
 	virtual void DumpToLog(const THandle& aNode, MLogRec* aLogRec);
 	virtual bool ToString(const THandle& aNode, string& aString) const;
 	virtual void Save(const string& aFileName, int aIndent = 0) const;
-	virtual THandle Find(const THandle& aHandle, const string& aUri);
-	virtual int GetOrder(const THandle& aHandle, bool aTree = false) const;
-	virtual void DeOrder(const THandle& aHandle);
 	virtual int GetLineId(const THandle& aHandle) const;
 	virtual void TransfTl(const THandle& aHandle, const THandle& aSrc) override;
     public:
 	bool CheckTree(const C2MdlNode& aNode) const;
-	int GetAttrInt(void *aHandle, const char *aName);
 	THandle SetFromFile(const string& aFileName);
 	THandle Set(const string& aUri);
 	THandle SetFromSpec(const string& aSpec);
@@ -249,7 +242,6 @@ class Chromo2: public MChromo
 	virtual void Reset();
 	virtual void Save(const string& aFileName, int aIndent = 0) const;
 	virtual ChromoNode CreateNode(const THandle& aHandle);
-	virtual void ReduceToSelection(const ChromoNode& aSelNode);
 	virtual bool IsError() const;
 	virtual const CError& Error() const;
 	bool operator==(const Chromo2& b) const;

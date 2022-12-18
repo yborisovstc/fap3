@@ -52,7 +52,7 @@ void ImportsMgr::AddImportModulesInfo(const string& aPath)
 		const CError& cerr = spec->Error();
 		mHost.Logger()->Write(EErr, NULL, "Module [%s] error [pos %d]: %s", filepath.c_str(), cerr.mPos.operator streamoff(), cerr.mText.c_str());
 	    }
-	    string rname = spec->Root().Name();
+	    string rname = spec->Root().Attr(ENa_Id);
 	    mModsPaths.insert(pair<string, string>(rname, filepath));
 	    delete spec;
 	}
@@ -125,7 +125,7 @@ bool ImportsMgr::Import(const string& aUri)
 void ImportsMgr::ImportToNode(MNode* aNode, const ChromoNode& aMut)
 {
     if (aMut.Type() == ENt_Node) {
-	MNode* comp = aNode->getNode(aMut.Name());
+	MNode* comp = aNode->getNode(aMut.Attr(ENa_Id));
 	if (!comp) {
 	    // Node doesn't exist yet, to mutate
 	    // Using external mut instead of nodes mut to avoid mut update on recursive import
@@ -246,7 +246,7 @@ void Env::constructSystem()
 	    /**/
 	    string sparent = root.Attr(ENa_Parent);
 	    MNode* parent = mProvider->provGetNode(sparent);
-	    mRoot = mProvider->createNode(sparent, root.Name(), this);
+	    mRoot = mProvider->createNode(sparent, root.Attr(ENa_Id), this);
 	    /**/
 	    MElem* eroot = mRoot ? mRoot->lIf(eroot) : nullptr;
 	    if (eroot != NULL) {

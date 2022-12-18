@@ -17,8 +17,6 @@ map<TNodeAttr, string> KNodeAttrsNames_Init()
     res[ENa_MutNode] = "node";
     res[ENa_MutAttr] = "attr";
     res[ENa_MutVal] = "val";
-    res[ENa_Order] = "ord";
-    res[ENa_TOrder] = "tord";
     res[ENa_Inactive] = "na";
     res[ENa_Targ] = "targ";
     res[ENa_NS] = "ns";
@@ -288,49 +286,10 @@ bool ChromoNode::operator==(const ChromoNode& aNode) const
     return iHandle == aNode.iHandle;
 }
 
-const string ChromoNode::Attr(TNodeAttr aAttr)
-{
-    return  iMdl->GetAttr(iHandle, aAttr);
-    /*
-    string res; 
-    if (sattr != NULL)
-	res.assign(sattr);
-    free(sattr); 
-    return res; 
-    */
-};
-
 const string ChromoNode::Attr(TNodeAttr aAttr) const
 {
     return iMdl->GetAttr(iHandle, aAttr);
-    /*
-    string res; 
-    if (sattr != NULL)
-	res.assign(sattr);
-    free(sattr); 
-    return res; 
-    */
 };
-
-int ChromoNode::AttrInt(TNodeAttr aAttr) const 
-{
-    string attr = Attr(aAttr); 
-    assert(!attr.empty()); 
-    return atoi(attr.c_str());
-};
-
-bool ChromoNode::AttrBool(TNodeAttr aAttr) const 
-{ 
-    string attr = Attr(aAttr); 
-    assert(!attr.empty() || attr == "yes" || attr == "no"); 
-    return (attr == "yes"); 
-};
-
-string ChromoNode::GetName(const string& aTname)
-{
-    size_t tpos = aTname.find("%");
-    return (tpos != string::npos) ? aTname.substr(tpos+1) : aTname;
-}
 
 ChromoNode::Iterator ChromoNode::Parent()
 {
@@ -354,85 +313,6 @@ ChromoNode::Const_Iterator ChromoNode::Parent() const
 {
     THandle parent = iMdl->Parent(iHandle);
     return  (parent == THandle()) ?  End() : Const_Iterator(ChromoNode(iMdl, parent));
-}
-
-ChromoNode::Iterator ChromoNode::Find(TNodeType aType, const string& aName) 
-{ 
-    ChromoNode::Iterator res = End();
-    size_t pos = aName.find("/");
-    string name = aName.substr(0, pos);
-    for (ChromoNode::Iterator it = Begin(); it != End(); it++) {
-	if (((*it).Type() == aType) && (name.compare((*it).Name()) == 0)) {
-	    res = it;  break;
-	}
-    }
-    if ((res != End()) &&  (pos != string::npos)) {
-	res = (*res).Find(aType, aName.substr(pos + 1));	
-    }
-    return res;
-};
-
-ChromoNode::Const_Iterator ChromoNode::Find(TNodeType aType, const string& aName) const
-{ 
-    ChromoNode::Const_Iterator res = End();
-    for (ChromoNode::Const_Iterator it = Begin(); it != End(); it++) {
-	if (((*it).Type() == aType) && (aName.compare((*it).Name()) == 0)) {
-	    res = it;  break;
-	}
-    }
-    return res;
-};
-
-ChromoNode::Iterator ChromoNode::Find(TNodeType aType, const string& aName, TNodeAttr aAttr, const string& aAttrVal)
-{
-    ChromoNode::Iterator res = End();
-    for (ChromoNode::Iterator it = Begin(); it != End(); it++) {
-	const ChromoNode& node = (*it);
-	if ((node.Type() == aType)  && (aName.compare(node.Name()) == 0) && node.AttrExists(aAttr) && (aAttrVal.compare(node.Attr(aAttr)) == 0)) {
-	    res = it;  break;
-	}
-    }
-    return res;
-};
-
-ChromoNode::Const_Iterator ChromoNode::Find(const ChromoNode aNode) const
-{
-    auto res = End();
-    for (auto it = Begin(); it != End(); it++) {
-	const ChromoNode& node = (*it);
-	if (node == aNode) {
-	    res = it;  break;
-	} else {
-	    res = node.Find(aNode);
-	    if (res != node.End()) {
-		break;
-	    }
-	}
-    }
-    return res;
-}
-
-int ChromoNode::GetLocalSize()
-{
-    int res = 0;
-    //for (Iterator it = Begin(); it != End(); it++, res++);
-    Iterator it = Begin();
-    while (it != End()) {
-	it++;
-	res++;
-    }
-    return res;
-}
-
-int ChromoNode::GetLocalSize(TNodeType aType) const
-{
-    int res = 0;
-    for (Const_Iterator it = Begin(); it != End(); it++) {
-	if ((*it).Type() == aType) {
-	    res++;
-	}
-    }
-    return res;
 }
 
 int ChromoNode::Count() const
@@ -461,42 +341,12 @@ ChromoNode ChromoNode::AddChild(const ChromoNode& aNode, bool aCopy, bool aRecur
     return ChromoNode(iMdl, iMdl->AddChild(iHandle, aNode.Handle(), aCopy, aRecursively));
 }
 
-ChromoNode::Iterator ChromoNode::GetChildOwning(const ChromoNode& aNode) const
-{
-    ChromoNode res(aNode);
-    ChromoNode prnt = *res.Parent();
-    while (prnt != *this && prnt != ChromoNode(iMdl, THandle())) {
-	res = prnt;
-    }
-    return Iterator(res);
-}
-
-void ChromoNode::ReduceToSelection(const ChromoNode& aSelNode)
-{
-    assert(*aSelNode.Parent() == *this);
-    Iterator it = Begin();
-    while (it != End() && !(*it == aSelNode)) {
-	ChromoNode node = *it;
-	if (node.Type() == ENt_Import) {
-	    it++;
-	} else {
-	    RmChild(node);
-	    it = Begin();
-	}
-    }
-    Reverse_Iterator itr = Rbegin();
-    while (itr != Rend() && !(*itr == aSelNode)) {
-	RmChild(*itr);
-	itr = Rbegin();
-    }
-}
-
 void ChromoNode::GetUri(GUri& aUri, const ChromoNode& aBase) const
 {
     Const_Iterator parent = Parent();
     if (parent != End()) {
 	if (AttrExists(ENa_Id)) {
-	    aUri.prependElem(Name());
+	    aUri.prependElem(Attr(ENa_Id));
 	}
 	if (AttrExists(ENa_Targ)) {
 	    aUri.prepend(Attr(ENa_Targ));
@@ -505,7 +355,7 @@ void ChromoNode::GetUri(GUri& aUri, const ChromoNode& aBase) const
 	if (owner == aBase) { return; }
 	owner.GetUri(aUri, aBase);
     } else {
-	aUri.prependElem(Name());
+	aUri.prependElem(Attr(ENa_Id));
 	aUri.prependElem("");
     }
 }

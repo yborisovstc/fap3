@@ -818,11 +818,7 @@
 			(* Mutation Create with assosiated chromo *)
 			mutation_create_chromo = mutation_create, [separator], segment;
 
-			(*
-			context = context_unit { separator, context_unit };
-			*)
-			context = context_target, context_namespace | context_target | context_namespace;
-			context_unit = context_target | context_namespace;
+			context = (context_target, context_namespace) | context_target | context_namespace;
 			context_target = (uri | special_name_nearest_namespace), separator, "&lt;";
 			context_target_ext = (uri | special_name_nearest_namespace | mutation_create), separator, "&lt;";
 			context_node = mutation_node;
@@ -857,13 +853,8 @@
 			(* There is alternative variant, where the target should be owner of node being removed:
 			mutation_remove = "!" separator, node_name;
 			*)
-			mutation_comment = "#" separator, string
-			mutation_connect = uri "~" (uri | mutation_create_chromo | mutation_create | segment_target | segment_namespace);
-			mutation_connect = left_pair_spec, separator "~" separator, right_pair_spec;
-			left_pair_spec = uri;
-			right_pair_spec = pair_uri | right_pair_creation;
-			right_pair_creation =  mutation_create | chromo_node_segment;
-			# chromo_node_segment_with_context interprets in connection mutation as node specified as context source
+			mutation_comment = "#", separator, string
+			mutation_connect = uri, separator, "~", separator, (uri | mutation_create_chromo | mutation_create | segment_target | segment_namespace);
 
 			name = letter, { letter | digit | "_"};
 			special_name = special_name_nearest_namespace;
@@ -973,6 +964,10 @@
 			|  }
 		    </programlisting>
 		    <simpara>is recognized by parser as mutation_create followed by illegal sentence.</simpara>
+		    <simpara>Solution: to check mutation_create_chromo first</simpara>
+		</sect4>
+		<sect4><title>Status</title>
+		    <simpara>Implemented. Experimental, ref d65a391ce4b0850e.</simpara>
 		</sect4>
 	    </sect3>
 	    <sect3 id="ds_cli_pi_pn"><title>To introduce special pseudo-names</title>
@@ -985,16 +980,33 @@
 		<simpara>Note that some pseudo-name cannot be used in URI in general. For istance nearedt name space is defined in mutation context but
 		    not native hier one, so it cannot be used in URI.</simpara>
 	    </sect3>
-	    <sect3><title>To introduce "Inactivity" context to solve the problem with comments.</title>
+	    <sect3 id="ds_cli_pi_ic"><title>To introduce "Inactivity" context to solve the problem with comments.</title>
 		<simpara>
 		    Ref <xref linkend="ds_cli_icc_cfc"/> for the FAP2 chromo language weakness. To solve this problem
 			we can just introduce new context of type "Inactive". This context applied to the mut or segment just makes it inactive.
 		</simpara>
+		<simpara>Or, similarly we can introduce special pseudo-name "nil" and use target segment to redirect the number of mutations to "nil"</simpara>
+	    </sect3>
+	    <sect3><title>Special comment mut for long comment boundary </title>
+		<simpara>This is another solution for  <xref linkend="ds_cli_icc_cfc"/>: introduce "begin comment" and "end comment" pseudo-mutations, like </simpara>
+		<programlisting>
+		    # &lt;
+		    # &gt;
+		</programlisting>
 	    </sect3>
 	    <sect3><title>To introduce segment type depending on context.</title>
 		<simpara>
-		    For instance the segment type "target" is can have "{}" boundaries, but "namespace" segment - "()".
+		    For instance the segment type "target" can have "{}" boundaries, but "namespace" segment - "()".
 		</simpara>
+	    </sect3>
+	    <sect3 id="ds_cli_pi_dn"><title>To add "depenency" node to chromo run time model.</title>
+		<sect4><title>Intro</title>
+		    <simpara>Current chromo syntax includes chromo dependency: for instance in mutation_connect right part can be chromo node. This
+			defines mutation_connect dependency on this right part chromo node. But this mutation_connect is compiled into chromo run-time in the manner that
+			dosn't keep such dependency semantic: mutation connect in chromo run-time doesn't have pointer to the dependency but add the dependency node 
+			before mutation connect node in the chromo and state this dep uri as mutation connect right part.</simpara>
+		    <simpara>Ref <xref linkend="ds_ddmc"/> for details.</simpara>
+		</sect4>
 	    </sect3>
 	</sect2>
 	<sect2><title>FAP2 chromo language analysis and criticism.</title>
@@ -1040,8 +1052,7 @@
 	    <sect3><title>Comment syntax is too complicated.</title>
 	    </sect3>
 	    <sect3 id="ds_cli_icc_cfc"><title>Cannot to simply comment out some fragment of chromo.</title>
-	    </sect3>
-	    <sect3><title></title>
+		<simpara>Ref <xref linkend="ds_cli_pi_ic"/> for soution based on special context.</simpara>
 	    </sect3>
 	</sect2>
 	<sect2 id="ds_cli_sno"><title>Issue: cannot specify namespace in <xref linkend="gls_osm"/></title>
@@ -1088,7 +1099,7 @@
 	</sect2>
 	<sect2><title>Issue: weak design of namespace support in <xref linkend="gls_osm"/></title>
 	    <sect3><title>Into</title>
-		<simpara>The desing gaps is:</simpara>
+		<simpara>The design gaps is:</simpara>
 		<itemizedlist>
 		    <listitem>Curently only one namespace can be specified in mut. But if we specify namespaces for two nested node that the 
 			"lower" mut will actually have two namespaces applied. How this mut can be represented in <xref linkend="gls_osm"/> form?
@@ -1136,7 +1147,7 @@
 	<sect2 id="ds_ddmc"><title>Direct <xref linkend="gls_dmc"/> chromo structure - <xref linkend="gls_ddmc"/></title>
 	    <sect3><title>Intro</title>
 		<simpara>The main idea is that current chromo is actually a complex tree. For instance: Q arg of connection mut can be 
-		    simple URI. Or it can be dependent creation mut (in that case the actual Q arg is P arg of this dependent creation mut). Or
+		    simple URI. Or it can be dependent on creation mut (in that case the actual Q arg is P arg of this dependent creation mut). Or
 		    it can depend on namespace segment, in that case conn mut Q arg is this namespace segment "namespace" context.</simpara>
 		<simpara>So there actual relation between connection mut Q arg and another dependent mut parameter. However in the current
 		    chromo2 implementation this relation doesn't exists explicitly. The relation is implemented via name (ID); the name is resolved
@@ -1164,8 +1175,10 @@
 		</sect4>
 	    </sect3>
 	    <sect3><title>Status</title>
-		<simpara>20210417 Decided to postpone the feature. The reason is that the problem with generated chromo output in pure
-		<xref linkend="gls_osm"/> flat format is still not solved, ref <xref linkend="ds_eosm"/>.</simpara>
+		<simpara>
+		    20210417 Decided to postpone the feature. The reason is that the problem with generated chromo output in pure
+		    <xref linkend="gls_osm"/> flat format is still not solved, ref <xref linkend="ds_eosm"/>.
+		</simpara>
 	    </sect3>
 	</sect2>
 	<sect2 id="ds_cli_nseg"><title>Named segment</title>
@@ -1200,6 +1213,8 @@
 
 		    (* Mutation error: missing mutation separator *)
 		    mut_err_missing_sep
+		    (* Mutation error: Wrong mutation left part*)
+		    mut_err_p
 		</programlisting>
 	    </sect3>
 	    <sect3><title>Using Recursive descent parsing for errors is rather redundant.</title>

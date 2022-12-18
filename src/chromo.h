@@ -129,37 +129,22 @@ class ChromoNode
 	bool operator!=(const ChromoNode& aNode) { return !this->operator==(aNode);};
 	bool operator!=(const ChromoNode& aNode) const { return !this->operator==(aNode);};
 	Iterator Begin() { return Iterator(iMdl, iMdl->GetFirstChild(iHandle)); };
-	Const_Iterator Begin() const { return Const_Iterator(iMdl, iMdl->GetFirstChild(iHandle)); };
+	Const_Iterator Begin() const { return Const_Iterator(iMdl, iMdl->GetFirstChild(iHandle)); }
 	Iterator End() { return Iterator(iMdl, THandle()); };
 	Const_Iterator End() const { return Const_Iterator(iMdl, THandle()); };
 	Reverse_Iterator Rbegin() { return Reverse_Iterator(iMdl, iMdl->GetLastChild(iHandle)); };
 	Reverse_Iterator Rend() { return Reverse_Iterator(iMdl, THandle()); };
-	Iterator Find(TNodeType aNodeType) { return Iterator(iMdl, iMdl->GetFirstChild(iHandle, aNodeType)); };
-	Const_Iterator Find(TNodeType aNodeType) const { return Const_Iterator(iMdl, iMdl->GetFirstChild(iHandle, aNodeType)); };
-	Iterator FindNextSibling(TNodeType aNodeType) { return Iterator(iMdl, iMdl->Next(iHandle, aNodeType)); };
-	Const_Iterator FindNextSibling(TNodeType aNodeType) const { return Const_Iterator(iMdl, iMdl->Next(iHandle, aNodeType)); };
     public:
-	TNodeType Type() { return iMdl->GetType(iHandle); };
 	TNodeType Type() const { return iMdl->GetType(iHandle); };
 	int LineId() const { return iMdl->GetLineId(iHandle); };
-	const string Name() { return Attr(ENa_Id);};
-	const string Name() const { return Attr(ENa_Id);};
-	const string Attr(TNodeAttr aAttr);
 	const string Attr(TNodeAttr aAttr) const;
 	void RmAttr(TNodeAttr aAttr) const { iMdl->RmAttr(iHandle, aAttr);};
-	int AttrInt(TNodeAttr aAttr) const;
 	bool AttrExists(TNodeAttr aAttr) const { return iMdl->AttrExists(iHandle, aAttr);};
-	bool AttrBool(TNodeAttr aAttr) const;
 	const THandle& Handle() const { return iHandle;};
 	MChromoMdl* Mdl() const { return iMdl;};
 	ChromoNode AddChild(TNodeType aType);
 	ChromoNode AddChild(const TMut& aMut);
 	ChromoNode AddChild(const ChromoNode& aNode, bool aCopy = true, bool aRecursively = true);
-	ChromoNode AddNext(const ChromoNode& aPrev, const ChromoNode& aNode, bool aCopy = true) { return 
-	    ChromoNode(iMdl, iMdl->AddNext(aPrev.Handle(), aNode.Handle(), aCopy)); };
-	ChromoNode AddNext(TNodeType aType) { return ChromoNode(iMdl, iMdl->AddNext(iHandle, aType));};
-	ChromoNode AddPrev(const ChromoNode& aNext, const ChromoNode& aNode, bool aCopy = true) { return 
-	    ChromoNode(iMdl, iMdl->AddPrev(aNext.Handle(), aNode.Handle(), aCopy)); };
 	// Be careful while removing node got from iterator. Iterator is not cleaned thus it returns wrong node on ++
 	void RmChild(const ChromoNode& aChild, bool aDeattachOnly = false) { iMdl->RmChild(iHandle, aChild.iHandle, aDeattachOnly); };
 	void Rm() { iMdl->Rm(iHandle); };
@@ -172,25 +157,12 @@ class ChromoNode
 	ChromoNode::Iterator Root();
 	ChromoNode::Const_Iterator Parent() const;
 	ChromoNode::Const_Iterator Root() const;
-	ChromoNode::Iterator Find(TNodeType aType, const string& aName);
-	ChromoNode::Const_Iterator Find(TNodeType aType, const string& aName) const;
-	ChromoNode::Iterator Find(TNodeType aType, const string& aName, TNodeAttr aAttr, const string& aAttrVal);
-	ChromoNode::Const_Iterator Find(const ChromoNode aNode) const;
-	ChromoNode::Iterator GetChildOwning(const ChromoNode& aNode) const;
 	void Dump() const;
 	void DumpBackTree() const;
 	void DumpToLog(MLogRec* aLogRec) const { iMdl->DumpToLog(iHandle, aLogRec);};
-	string GetName(const string& aTname);
-	int GetOrder(bool aTree = false) const { return iMdl->GetOrder(iHandle, aTree);};
-	void DeOrder() { iMdl->DeOrder(iHandle);};
 	// The number of direct childs
-	int Count() { return GetLocalSize();};
 	int Count() const;
-	int Count(TNodeType aType) const { return GetLocalSize(aType);};
-	int GetLocalSize();
-	int GetLocalSize(TNodeType aType) const;
 	void GetUri(GUri& aUri, const ChromoNode& aBase) const;
-	void ReduceToSelection(const ChromoNode& aSelNode);
 	void ToString(string& aString) const { iMdl->ToString(iHandle, aString);};
 	operator string() const;
 	bool IsNil() const {return iHandle.IsNull();}

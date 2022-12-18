@@ -35,8 +35,6 @@ enum TNodeAttr
     ENa_Id = 1,
     ENa_Parent = 2,
     ENa_Ref = 3,
-    ENa_Order = 4,
-    ENa_TOrder = 5,
     ENa_MutNode = 10,
     ENa_MutAttr = 11,
     ENa_MutVal = 12,
@@ -88,17 +86,14 @@ class MChromoMdl
 	virtual TNodeType GetType(const THandle& aHandle) = 0;
 	virtual THandle Root(const THandle& aHandle) = 0;
 	virtual THandle Parent(const THandle& aHandle) = 0;
-	virtual THandle Next(const THandle& aHandle, TNodeType aType = ENt_Unknown) = 0;
-	virtual THandle Prev(const THandle& aHandle, TNodeType aType = ENt_Unknown) = 0;
-	virtual THandle GetFirstChild(const THandle& aHandle, TNodeType aType = ENt_Unknown) = 0;
-	virtual THandle GetLastChild(const THandle& aHandle, TNodeType aType = ENt_Unknown) = 0;
+	virtual THandle Next(const THandle& aHandle) = 0;
+	virtual THandle Prev(const THandle& aHandle) = 0;
+	virtual THandle GetFirstChild(const THandle& aHandle) = 0;
+	virtual THandle GetLastChild(const THandle& aHandle) = 0;
 	virtual string GetAttr(const THandle& aHandle, TNodeAttr aAttr) const = 0;
 	virtual bool AttrExists(const THandle& aHandle, TNodeAttr aAttr) const  = 0;
 	virtual THandle AddChild(const THandle& aParent, TNodeType aType) = 0;
 	virtual THandle AddChild(const THandle& aParent, const THandle& aHandle, bool aCopy = true, bool aRecursively = true) = 0;
-	virtual THandle AddNext(const THandle& aPrev, const THandle& aHandle, bool aCopy = true) = 0;
-	virtual THandle AddNext(const THandle& aPrev, TNodeType aNode) = 0;
-	virtual THandle AddPrev(const THandle& aNext, const THandle& aHandle, bool aCopy = true) = 0;
 	virtual bool IsChildOf(const THandle& aNode, const THandle& aParent) = 0;
 	virtual void RmChild(const THandle& aParent, const THandle& aChild, bool aDeattachOnly = false) = 0;
 	virtual void Rm(const THandle& aHandle) = 0;
@@ -116,9 +111,6 @@ class MChromoMdl
 	 * @param[in] aIndent    Indentation of chromo level, 0 - default indent
 	 * */
 	virtual void Save(const string& aFileName, int aIndent = 0) const = 0;
-	virtual THandle Find(const THandle& aHandle, const string& aUri) = 0;
-	virtual int GetOrder(const THandle& aHandle, bool aTree = false) const = 0;
-	virtual void DeOrder(const THandle& aHandle) = 0;
 	virtual int GetLineId(const THandle& aHandle) const = 0;
 	virtual void TransfTl(const THandle& aHandle, const THandle& aSrc) = 0;
 };
@@ -149,9 +141,6 @@ class MChromo
 	 * */
 	virtual void Save(const string& aFileName, int aIndent = 0) const = 0;
 	virtual ChromoNode CreateNode(const THandle& aHandle) = 0;
-	virtual void ReduceToSelection(const ChromoNode& aSelNode) = 0;
-	//virtual bool IsError() const { return false;}
-	//virtual const CError& Error() const  = 0;
 	virtual bool IsError() const { return false;}
 	virtual const CError& Error() const  = 0;
 };

@@ -381,7 +381,7 @@ MNode* Node::getNodeS(const char* aUri)
 MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 {
     string sparent = aMut.Attr(ENa_Parent);
-    string sname = aMut.Name();
+    string sname = aMut.Attr(ENa_Id);
     TNs ns = aCtx.mNs;
     updateNs(ns, aMut);
     bool mutadded = false;

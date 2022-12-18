@@ -11,7 +11,6 @@
 const string KT_Target = "<";
 const string KT_Node = "-";
 const string KT_Namespace = "@";
-const string KT_ContextSmb = KT_Target + KT_Namespace;
 
 const char KT_MutSeparator = ';';
 const char KT_ChromoStart = '{';
@@ -85,8 +84,6 @@ const string KMutSymbolsRp = {
 
 
 
-
-static const vector<string> KDmcMutops = {KMS_Conn}; // TODO not used?
 
 /** @brief Separators **/
 const string KSep = " \t\n\r";
@@ -421,11 +418,6 @@ string GenerateName(const string& aParent, int aPos)
     return aParent + string("_") + to_string(aPos);
 }
 
-bool IsLexCtx(const string& aLex)
-{
-    return aLex == KT_Namespace || aLex == KT_Target || aLex == KT_Node;
-}
-
 TNodeType Chromo2Mdl::GetType(const THandle& aHandle) {
     TNodeType res = ENt_Unknown;
     C2MdlNode* node = aHandle.Data(node);
@@ -464,7 +456,7 @@ THandle Chromo2Mdl::Parent(const THandle& aHandle)
     return node->mOwner;
 }
 
-THandle Chromo2Mdl::Next(const THandle& aHandle, TNodeType aType)
+THandle Chromo2Mdl::Next(const THandle& aHandle)
 {
     C2MdlNode* node = aHandle.Data(node);
     assert(node->mOwner != NULL);
@@ -472,24 +464,24 @@ THandle Chromo2Mdl::Next(const THandle& aHandle, TNodeType aType)
     return next;
 }
 
-THandle Chromo2Mdl::Prev(const THandle& aHandle, TNodeType aType)
+THandle Chromo2Mdl::Prev(const THandle& aHandle)
 {
     C2MdlNode* node = aHandle.Data(node);
     C2MdlNode* prev = node->mOwner->GetPrevComp(node);
     return prev;
 }
 
-THandle Chromo2Mdl::GetFirstChild(const THandle& aHandle, TNodeType aType)
+THandle Chromo2Mdl::GetFirstChild(const THandle& aHandle)
 {
     C2MdlNode* node = aHandle.Data(node);
     C2MdlNode *comp = NULL;
     if (node->mChromo.size() > 0) {
-	comp = &(node->mChromo.front());
+       comp = &(node->mChromo.front());
     }
     return comp;
 }
 
-THandle Chromo2Mdl::GetLastChild(const THandle& aHandle, TNodeType aType)
+THandle Chromo2Mdl::GetLastChild(const THandle& aHandle)
 {
     C2MdlNode* node = aHandle.Data(node);
     C2MdlNode *comp = NULL;
@@ -621,22 +613,6 @@ THandle Chromo2Mdl::AddChild(const THandle& aParent, const THandle& aHandle, boo
     C2MdlNode& res = parent->mChromo.back();
     return &res;
 }
-
-THandle Chromo2Mdl::AddNext(const THandle& aPrev, const THandle& aHandle, bool aCopy)
-{
-    assert(false);
-}
-
-THandle Chromo2Mdl::AddNext(const THandle& aPrev, TNodeType aNode)
-{
-    assert(false);
-}
-
-THandle Chromo2Mdl::AddPrev(const THandle& aNext, const THandle& aHandle, bool aCopy)
-{
-    assert(false);
-}
-
 
 bool Chromo2Mdl::IsChildOf(const THandle& aNode, const THandle& aParent)
 {
@@ -797,30 +773,10 @@ void Chromo2Mdl::Save(const string& aFileName, int aIndent) const
     os.close();
 }
 
-THandle Chromo2Mdl::Find(const THandle& aHandle, const string& aUri)
-{
-    assert(false);
-}
-
-int Chromo2Mdl::GetOrder(const THandle& aHandle, bool aTree) const
-{
-    return 0;
-}
-
-void Chromo2Mdl::DeOrder(const THandle& aHandle)
-{
-    assert(false);
-}
-
 int Chromo2Mdl::GetLineId(const THandle& aHandle) const
 {
     C2MdlNode* node = aHandle.Data(node);
     return node->mChromoPos;
-}
-
-int Chromo2Mdl::GetAttrInt(void *aHandle, const char *aName)
-{
-    assert(false);
 }
 
 // TODO to support pure "segment" chromo, ref DS_ISS_005 
@@ -1276,15 +1232,15 @@ bool Chromo2Mdl::rdp_mut(istream& aIs, C2MdlNode& aMnode)
 	}
     }
     if (res) {
-	//pos = aIs.tellg(); // Syntax modification [';'], ref fap3 ds_cli_pi_ms
+	pos = aIs.tellg(); // Syntax modification [';'], ref fap3 ds_cli_pi_ms
 	char c = aIs.get();
 	if (c == KT_MutSeparator) {
 	} else {
-	    res = false;
+	    //res = false;
 	    /* Syntax modification [';'], ref fap3 ds_cli_pi_ms
+	    */
 	    res = true;
 	    rdpBacktrack(aIs, pos);
-	    */
 	    /*
 	    C2MdlNode* owner = aMnode.mOwner;
 	    aMnode = C2MdlNode(); // Reset the node, to clean translated data
@@ -1303,16 +1259,16 @@ bool Chromo2Mdl::rdp_chromo_node(istream& aIs, C2MdlNode& aMnode)
     C2MdlNode node;
     // Set owner by advance to support dependent mut (DMC)
     node.mOwner = &aMnode;
-    res = rdp_ctx_mutation(aIs, node);
+    res = rdp_segment_target(aIs, node, aMnode);
     if (!res) {
 	rdpBacktrack(aIs, pos);
-	res = rdp_segment_target(aIs, node, aMnode);
+	res = rdp_segment_namespace(aIs, node, aMnode);
 	if (!res) {
 	    rdpBacktrack(aIs, pos);
-	    res = rdp_segment_namespace(aIs, node, aMnode);
+	    res = rdp_ctx_mut_create_chromo(aIs, node);
 	    if (!res) {
 		rdpBacktrack(aIs, pos);
-		res = rdp_ctx_mut_create_chromo(aIs, node);
+		res = rdp_ctx_mutation(aIs, node);
 		if (res) {
 		    aMnode.mChromo.push_back(node);
 		}
@@ -1413,6 +1369,7 @@ bool Chromo2Mdl::rdp_mut_create(istream& aIs, C2MdlNode& aMnode)
 	// Anonymous creation
 	anon = true;
 	rdpBacktrack(aIs, pos);
+	res = true;
     } else {
 	res = rdp_sep(aIs);
     }
@@ -1953,6 +1910,7 @@ bool Chromo2Mdl::rdp_context_namespace(istream& aIs, C2MdlNode& aMnode)
     return res;
 }
 
+// TODO Do we need this (context_target, context_namespace) branch?
 bool Chromo2Mdl::rdp_context(istream& aIs, C2MdlNode& aMnode)
 {
     bool res = true;
@@ -2124,17 +2082,6 @@ void Chromo2::Save(const string& aFileName, int aIndent) const
 ChromoNode Chromo2::CreateNode(const THandle& aHandle)
 {
     return ChromoNode(&mMdl, aHandle);
-}
-
-void Chromo2::ReduceToSelection(const ChromoNode& aSelNode)
-{
-    ChromoNode sel = aSelNode;
-    ChromoNode prnt = *sel.Parent();
-    while (prnt != ChromoNode()) {
-	prnt.ReduceToSelection(sel);
-	sel = prnt;
-	prnt = *sel.Parent();
-    }
 }
 
 bool Chromo2::GetSpec(string& aSpec)
