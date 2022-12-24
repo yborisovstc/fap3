@@ -34,15 +34,14 @@ enum TNodeAttr
     ENa_Unknown = 0,
     ENa_Id = 1,
     ENa_Parent = 2,
-    ENa_Ref = 3,
     ENa_MutNode = 10,
     ENa_MutAttr = 11,
     ENa_MutVal = 12,
     ENa_Inactive = 13, // Sign of mutations being inactive, optimized out for instance
     ENa_Targ = 14, // Target node of mutation, is used in OSM mode, ref ds_mut_osm
     ENa_NS = 16,    //!< Name space
-    ENa_P = 17, //!< 1st argument of muation 
-    ENa_Q = 18, //!< 2nd argument of muation 
+    ENa_P = 17, //!< 1st argument of mutation 
+    ENa_Q = 18, //!< 2nd argument of mutation 
 };
 
 

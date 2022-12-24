@@ -27,6 +27,11 @@ const char KT_UriSep = '.';
 const char KT_EOL = '\n';
 const char KTC_Target = '<';
 const char KTC_Namespace = '@';
+const char KT_Space = ' ';
+
+const string KTS_ChromoStart = string(1, KT_ChromoStart);
+const string KTS_ChromoEnd = string(1, KT_ChromoEnd);
+const string KTS_Space = string(1, KT_Space);
 
 /** @brief Mutation symbols */
 const string KMS_Add = ":";
@@ -96,7 +101,8 @@ const int K_Indent = 4;
 
 
 /** @brief Default P part */
-static const string KT_Default = "$";
+//static const string KT_Default = "$";
+static const string KT_Default = "";
 
 static const string KR_CREATE = ":";
 
@@ -193,21 +199,21 @@ bool C2Mut::operator==(const C2Mut& b) const
 
 
 
-C2MdlNode::C2MdlNode(): mOwner(NULL), mQnode(NULL), mChromoPos(-1)
+C2MdlNode::C2MdlNode(): mOwner(NULL), mQnode(NULL), mChromoPos(-1), mCrel(ECR_Chromo)
 {
 }
 
-C2MdlNode::C2MdlNode(C2MdlNode* aOwner): mOwner(aOwner), mQnode(NULL), mChromoPos(-1)
+C2MdlNode::C2MdlNode(C2MdlNode* aOwner): mOwner(aOwner), mQnode(NULL), mChromoPos(-1), mCrel(ECR_Chromo)
 {
 }
 
 C2MdlNode::C2MdlNode(const C2MdlNode& aSrc): mOwner(aSrc.mOwner), mContext(aSrc.mContext), mMut(aSrc.mMut), mChromo(aSrc.mChromo),
-    mQnode(NULL), mChromoPos(aSrc.mChromoPos)
+    mQnode(NULL), mChromoPos(aSrc.mChromoPos), mCrel(aSrc.mCrel)
 {
 }
 
 C2MdlNode::C2MdlNode(const C2MdlNode& aSrc, C2MdlNode* aOwner): mOwner(aOwner), mContext(aSrc.mContext), mMut(aSrc.mMut),
-    mQnode(NULL), mChromoPos(aSrc.mChromoPos)
+    mQnode(NULL), mChromoPos(aSrc.mChromoPos), mCrel(aSrc.mCrel)
 {
     if (aSrc.mQnode) {
 	mQnode = new C2MdlNode(aSrc.mQnode, this);
@@ -230,6 +236,7 @@ C2MdlNode& C2MdlNode::operator=(const C2MdlNode& aSrc)
 	mChromo.back() = sitem;
     }
     mQnode = nullptr;
+    mCrel = aSrc.mCrel;
     return *this;
 }
 
@@ -252,6 +259,7 @@ void C2MdlNode::CloneFrom(const C2MdlNode& aSrc, bool aChromo)
 	    mChromo.push_back(C2MdlNode(cn, this));
 	}
     }
+    mCrel = aSrc.mCrel;
 }
 
 void C2MdlNode::BindTree(C2MdlNode* aOwner)
@@ -581,8 +589,6 @@ bool Chromo2Mdl::AttrExists(const THandle& aHandle, TNodeAttr aAttr) const
 	    res = ((rel == KMS_Conn || rel == KMS_Disconn) && !node->mMut.mP.empty());
     } else if (aAttr == ENa_Q) {
 	    res = ((rel == KMS_Conn || rel == KMS_Disconn) && !node->mMut.mQ.empty());
-    } else if (aAttr == ENa_Ref) {
-	// Use MutVal instead
     }
     return res;
 }
@@ -700,12 +706,6 @@ void Chromo2Mdl::SetAttr(const THandle& aHandle, TNodeAttr aType, const string& 
 	assert (rel == KMS_Conn || rel == KMS_Disconn);
 	if (rel == KMS_Conn || rel == KMS_Disconn) {
 	    node->mMut.mQ = aVal;
-	}
-    } else if (aType == ENa_Ref) {
-	assert(rel == KMS_Cont);
-	node->mMut.mQ = aVal;
-	if (node->mMut.mP.empty()) {
-	    node->mMut.mP = KT_Default;
 	}
     } else if (aType == ENa_NS) {
 	string ctxrel = GetCtxRel(aType);
@@ -955,41 +955,48 @@ string GroupLexeme(const string& aLex, bool aGroup)
     return res;
 }
 
-void Chromo2Mdl::OutputNode(const C2MdlNode& aNode, ostream& aOs, int aLevel, int aIndent)
+void Chromo2Mdl::OutputNode(const C2MdlNode& aNode, ostream& aOs, int aLevel, int aIndent, bool aIndFl)
 {
     bool cnt = false;
     if (!aNode.mContext.empty()) {
-	Offset(aLevel, aIndent, aOs); 
+	if (aIndFl) { Offset(aLevel, aIndent, aOs); }
 	for (TC2MdlCtxCiter it = aNode.mContext.begin(); it != aNode.mContext.end(); it++) {
-	    aOs << it->second << " " << it->first << " "; cnt = true;
+	    aOs << it->second << KTS_Space << it->first << KTS_Space; cnt = true;
 	}
     }
 
     bool mut = false;
     int cnum = aNode.mChromo.size();
     if (!aNode.mMut.mR.empty()) {
-	if (!cnt) Offset(aLevel, aIndent, aOs);
+	if (!cnt) { if (aIndFl) Offset(aLevel, aIndent, aOs); }
 	bool qstring = (aNode.mMut.mR == KMS_Cont) || (aNode.mMut.mR == KMS_Note);
-	if (aNode.mMut.mP.empty()) aOs  << aNode.mMut.mR << " " << GroupLexeme(aNode.mMut.mQ, qstring);
-	else aOs << aNode.mMut.mP << " " << aNode.mMut.mR << " " << GroupLexeme(aNode.mMut.mQ, qstring);
+	string mutp = aNode.mMut.mP.empty() ? string() : (aNode.mMut.mP + KTS_Space);
+	aOs << mutp << aNode.mMut.mR << KTS_Space << GroupLexeme(aNode.mMut.mQ, qstring);
 	if (cnum == 0) {
-	    aOs << ";";
+	    //aOs << ";";
+	    //aOs << endl;
 	}
-	aOs << endl;
+	//aOs << endl;
 	mut = true;
     }
 
     if (cnum > 0) {
-	if (!cnt || mut) Offset(aLevel, aIndent, aOs); aOs << "{" << endl;
-	for (TC2MdlNodesCiter it = aNode.mChromo.begin(); it != aNode.mChromo.end(); it++) {
-	    const C2MdlNode& node = *it;
-	    OutputNode(node, aOs, aLevel + 1, aIndent);
+	if (aNode.mCrel == C2MdlNode::ECR_Chromo) {
+	    /*if (!cnt || mut) Offset(aLevel, aIndent, aOs); */aOs << KTS_Space << KTS_ChromoStart << endl;
+	    for (TC2MdlNodesCiter it = aNode.mChromo.begin(); it != aNode.mChromo.end(); it++) {
+		const C2MdlNode& node = *it;
+		OutputNode(node, aOs, aLevel + 1, aIndent);
+		aOs << endl;
+	    }
+	    Offset(aLevel, aIndent, aOs); aOs << KTS_ChromoEnd;
+	} else if (aNode.mCrel == C2MdlNode::ECR_QDep) {
+	    const C2MdlNode& node = *(aNode.mChromo.begin());
+	    OutputNode(node, aOs, aLevel, aIndent, false);
 	}
-	Offset(aLevel, aIndent, aOs); aOs << "}" << endl;
     }
 
     if (aNode.mMut.mR.empty() && cnum == 0) {
-	Offset(aLevel, aIndent, aOs); aOs << "{ }" << endl;
+	Offset(aLevel, aIndent, aOs); aOs << KTS_ChromoStart << KTS_Space << KTS_ChromoEnd << endl;
     }
 }
 
@@ -1465,31 +1472,31 @@ bool Chromo2Mdl::rdp_mut_connect(istream& aIs, C2MdlNode& aMnode)
 					aMnode.mChromoPos = pos;
 				    }
 				} else {
-				    aMnode.mOwner->mChromo.push_back(node);
+				    aMnode.mChromo.push_back(node); // Q depenency
+				    aMnode.mCrel = C2MdlNode::ECR_QDep;
 				    aMnode.mMut.mP = name;
 				    aMnode.mMut.mR = string(1, KT_MutConn);
-				    aMnode.mMut.mQ = node.mMut.mP;
 				    aMnode.mChromoPos = pos;
 				}
 			    } else {
-				aMnode.mOwner->mChromo.push_back(node);
+				aMnode.mChromo.push_back(node); // Q depenency
+				aMnode.mCrel = C2MdlNode::ECR_QDep;
 				aMnode.mMut.mP = name;
 				aMnode.mMut.mR = string(1, KT_MutConn);
-				aMnode.mMut.mQ = node.mMut.mP;
 				aMnode.mChromoPos = pos;
 			    }
 			} else {
-			    aMnode.mOwner->mChromo.push_back(node);
+			    aMnode.mChromo.push_back(node); // Q depenency
+			    aMnode.mCrel = C2MdlNode::ECR_QDep;
 			    aMnode.mMut.mP = name;
 			    aMnode.mMut.mR = string(1, KT_MutConn);
-			    aMnode.mMut.mQ = node.mContext.at(KT_Namespace);
 			    aMnode.mChromoPos = pos;
 			}
 		    } else {
-			aMnode.mOwner->mChromo.push_back(node);
+			aMnode.mChromo.push_back(node); // Q depenency
+			aMnode.mCrel = C2MdlNode::ECR_QDep;
 			aMnode.mMut.mP = name;
 			aMnode.mMut.mR = string(1, KT_MutConn);
-			aMnode.mMut.mQ = node.mContext.at(KT_Target);
 			aMnode.mChromoPos = pos;
 		    }
 		}
@@ -2135,7 +2142,6 @@ void Chromo2::ConvertNode(ChromoNode& aDst, const ChromoNode& aSrc)
     ConvertAttr(aDst, aSrc, ENa_Targ);
     ConvertAttr(aDst, aSrc, ENa_MutNode);
     ConvertAttr(aDst, aSrc, ENa_MutVal);
-    ConvertAttr(aDst, aSrc, ENa_Ref);
     ConvertAttr(aDst, aSrc, ENa_NS);
     ConvertAttr(aDst, aSrc, ENa_P);
     ConvertAttr(aDst, aSrc, ENa_Q);
@@ -2268,7 +2274,6 @@ void Chromo2::TransfTlNode(ChromoNode& aDst, const ChromoNode& aSrc, bool aTarg)
     ConvertAttr(aDst, aSrc, ENa_Parent);
     if (aTarg) ConvertAttr(aDst, aSrc, ENa_Targ);
     ConvertAttr(aDst, aSrc, ENa_MutVal);
-    ConvertAttr(aDst, aSrc, ENa_Ref);
     ConvertAttr(aDst, aSrc, ENa_NS);
     ConvertAttr(aDst, aSrc, ENa_P);
     ConvertAttr(aDst, aSrc, ENa_Q);

@@ -13,7 +13,6 @@ map<TNodeAttr, string> KNodeAttrsNames_Init()
     map<TNodeAttr, string> res;
     res[ENa_Id] = "id";
     res[ENa_Parent] = "parent";
-    res[ENa_Ref] = "ref";
     res[ENa_MutNode] = "node";
     res[ENa_MutAttr] = "attr";
     res[ENa_MutVal] = "val";

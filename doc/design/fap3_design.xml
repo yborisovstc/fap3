@@ -1006,7 +1006,13 @@
 			dosn't keep such dependency semantic: mutation connect in chromo run-time doesn't have pointer to the dependency but add the dependency node 
 			before mutation connect node in the chromo and state this dep uri as mutation connect right part.</simpara>
 		    <simpara>Ref <xref linkend="ds_ddmc"/> for details.</simpara>
+		    <simpara>Ref <xref linkend="ds_tch"/> for other materials.</simpara>
 		</sect4>
+	    </sect3>
+	    <sect3><title>Clean-up chromo abstract model (chromo.h)</title>
+		<simpara>For instance ENa_Id can be replaced by ENa_P, etc. ENt_Change can be replaced by ENt_Rename with corresponding replacing of ENa_MutAttr and ENa_MutVal</simpara>
+	    </sect3>
+	    <sect3><title>Do we need multiple context?</title>
 	    </sect3>
 	</sect2>
 	<sect2><title>FAP2 chromo language analysis and criticism.</title>
@@ -1221,6 +1227,14 @@
 		<simpara>The problem seems to be that we are trying to use "negative" non-terminals like "not URI". We try to use existing not-terminal matching function to
 		    match this non-terminals. So, our meaning of this not-terminals is "the mininal sentence that match it". For instance "a1.a2*blabla" is "not URI" but
 		    we match "a1.a2*" as sentence matched. </simpara>
+	    </sect3>
+	</sect2>
+	<sect2><title>How to refer to anonymous nodes in further muts?</title>
+	    <sect3><title>Intro</title>
+		<simpara>Chromo2 introduced support of anonymous nodes. It helps making chromo more compact and readable.
+		    But there is the problem of how to refer anonumous mode in the mutions that goes after anonumous node is created.</simpara>
+	    </sect3>
+	    <sect3><title>Using generated name of anonymous node.</title>
 	    </sect3>
 	</sect2>
     </sect1>
@@ -2418,6 +2432,23 @@
 		    confirmation step of this state is omitted. This means update/confirm data comparition on confirmation step is not necessary -
 		    if state goes to comparition step this means that the data was changed.</simpara>
 		<simpara>This optimization was applied in fap4 primary deds layer.</simpara>
+	    </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1><title>Code review</title>
+	<sect2><title>20221216 Native hier, protocols, node</title>
+	    <sect3><title>Can the protocol of the manager of protocols be used instead of each protocole getLif()</title>
+		<simpara>The ifaces (protocols) base MIface contains getLif() method so each of protocol needs to iplement it.
+		    Does it make sense to have just one protocol (named "protocol mager") to have this method.</simpara>
+	    </sect3>
+	    <sect3><title>MNode is too complex, separate tree nav and mutation?</title>
+	    </sect3>
+	    <sect3><title>Env - is it really needed, especially each node access to env?</title>
+	    </sect3>
+	    <sect3><title>Does it make sense to use composition paradigm in native agents instead of inheritance? </title>
+		<simpara>Protocols are used - this is element of composition paradign. Why the inheritance is used to
+		    create native agents?</simpara>
 	    </sect3>
 	</sect2>
     </sect1>

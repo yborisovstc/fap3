@@ -493,7 +493,26 @@ void Syst::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
     string sp = aMut.Attr(ENa_P);
     string sq = aMut.Attr(ENa_Q);
     MNode* pn = getNode(sp, aCtx.mNs);
-    MNode* qn = getNode(sq, aCtx.mNs);
+    MNode* qn = nullptr;
+    if (sq.empty()) {
+	if (aMut.Count() == 1) {
+	    // Q-dependency
+	    ChromoNode qdep = *aMut.Begin();
+	    mutate(qdep, true, aCtx);
+	    if (qdep.Type() == ENt_Node) {
+		sq = qdep.Attr(ENa_Id);
+	    } else if (qdep.Type() == ENt_Seg) {
+		if (qdep.AttrExists(ENa_Targ)) {
+		    sq = qdep.Attr(ENa_Targ);
+		} else if (qdep.AttrExists(ENa_NS)) {
+		    sq = qdep.Attr(ENa_NS);
+		}
+	    }
+	    qn = getNode(sq, aCtx.mNs);
+	}
+    } else {
+	qn = getNode(sq, aCtx.mNs);
+    }
     if (pn && qn) {
 	MVert* pv = pn->lIf(pv);
 	MVert* qv = qn->lIf(pv);

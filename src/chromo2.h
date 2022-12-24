@@ -60,6 +60,13 @@ using TC2MdlNodes = list<C2MdlNode>;
 class C2MdlNode
 {
     public:
+	// Chromo relation type
+	enum CRel {
+	    ECR_Undefined = 0,
+	    ECR_Chromo = 1,
+	    ECR_QDep = 2,
+	};
+    public:
 	C2MdlNode();
 	C2MdlNode(C2MdlNode* aOwner);
 	C2MdlNode(const C2MdlNode& aSrc);
@@ -86,8 +93,9 @@ class C2MdlNode
 	TC2MdlCtx mContext;       /*!< Context */
 	C2Mut mMut;               /*!< Mutation */
 	TC2MdlNodes mChromo;      /*!< Chromosome */
-	C2MdlNode* mQnode;        /*!< Q node mut dependency, ref ds_chr2_dmc */
+	C2MdlNode* mQnode;        /*!< Q node mut dependency, ref ds_ddmc */
 	int mChromoPos;          /*!< Corresponding position in chromo */
+	CRel mCrel;               /*!< Chromo relation */
 };
 
 /** @brief Chromo2 model unit with mut
@@ -201,7 +209,7 @@ class Chromo2Mdl: public MChromoMdl
 	 * @param[in] aLevel  level of node in chromo hierarchy
 	 * @param[in] aIndent  output identation
 	 * */
-	static void OutputNode(const C2MdlNode& aNode, ostream& aOs, int aLevel, int aIndent);
+	static void OutputNode(const C2MdlNode& aNode, ostream& aOs, int aLevel, int aIndent, bool aIndFl = true);
 	static string GetContextByAttr(const C2MdlNode& aNode, TNodeAttr aAttr);
     protected:
 	/** @brief Dumps content of input stream fragment

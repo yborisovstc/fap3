@@ -122,15 +122,16 @@ class Ut_syst : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST_SUITE(Ut_syst);
     //    CPPUNIT_TEST(test_vert_1);
     //    CPPUNIT_TEST(test_cp_1);
-    CPPUNIT_TEST(test_syst_1);
-    CPPUNIT_TEST(test_syst_link);
+    ///CPPUNIT_TEST(test_syst_1);
+    ///CPPUNIT_TEST(test_syst_link);
     //CPPUNIT_TEST(test_cp_2);
     //CPPUNIT_TEST(test_syst_cp_3);
-    CPPUNIT_TEST(test_syst_sock_1);
-    CPPUNIT_TEST(test_syst_sock_2);
-    CPPUNIT_TEST(test_syst_sock_3);
-    CPPUNIT_TEST(test_syst_sock_4);
+    ///CPPUNIT_TEST(test_syst_sock_1);
+    ///CPPUNIT_TEST(test_syst_sock_2);
+    ///CPPUNIT_TEST(test_syst_sock_3);
+    ///CPPUNIT_TEST(test_syst_sock_4);
     //CPPUNIT_TEST(test_syst_cpe_1);
+    CPPUNIT_TEST(test_syst_dn);
     CPPUNIT_TEST_SUITE_END();
     public:
     virtual void setUp();
@@ -147,6 +148,7 @@ class Ut_syst : public CPPUNIT_NS::TestFixture
     void test_syst_sock_3();
     void test_syst_sock_4();
     void test_syst_cpe_1();
+    void test_syst_dn();
     private:
     MNode* constructSystem(const string& aFname);
     private:
@@ -664,4 +666,39 @@ void Ut_syst::test_syst_sock_4()
     delete mEnv;
 }
 
+/** @brief Test of chromo runtime dependency node, ref ds_cli_pi_dn
+ * */
+void Ut_syst::test_syst_dn()
+{
+    cout << endl << endl << "=== Test of chromo runtime dependency node ===" << endl;
+    string spec = "ut_syst_dn";
+    MNode* root = constructSystem("ut_syst_dn");
+    CPPUNIT_ASSERT_MESSAGE("Fail to construct system", root);
+    MElem* eroot = root->lIf(eroot);
+    CPPUNIT_ASSERT_MESSAGE("Fail to get eroot", eroot);
+    eroot->Chromos().Save(spec + "_saved.chs");
+
+    // Q-dep on mutation_create
+    MNode* v1n = root->getNode("S1.V1");
+    MVert* v1v = v1n ? v1n->lIf(v1v) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get v1v", v1v);
+    MNode* v2n = root->getNode("S1.Vert_136");
+    MVert* v2v = v2n ? v2n->lIf(v2v) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get v2v", v2v);
+    CPPUNIT_ASSERT_MESSAGE("v1v isn't connected to v2v", v2v->isPair(v1v));
+
+    // Q-dep on segment_target
+    MNode* v3n = root->getNode("S1.V3");
+    MVert* v3v = v3n ? v3n->lIf(v3v) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get v3v", v2v);
+    CPPUNIT_ASSERT_MESSAGE("v1v isn't connected to v3v", v3v->isPair(v1v));
+
+    // Q-dep on segment_namespace
+    MNode* v4n = root->getNode("S1.V4");
+    MVert* v4v = v4n ? v4n->lIf(v4v) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get v4v", v1v);
+    CPPUNIT_ASSERT_MESSAGE("v4v isn't connected to v3v", v3v->isPair(v4v));
+
+    delete mEnv;
+}
 

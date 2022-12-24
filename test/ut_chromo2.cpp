@@ -19,6 +19,7 @@ class Ut_chromo2 : public CPPUNIT_NS::TestFixture
 //    CPPUNIT_TEST(test_Chr4);
 //    CPPUNIT_TEST(test_Chr5);
     CPPUNIT_TEST(test_Chr_Err_1);
+    CPPUNIT_TEST(test_Ddmc);
     CPPUNIT_TEST_SUITE_END();
 public:
     virtual void setUp();
@@ -30,6 +31,7 @@ private:
     void test_Chr4();
     void test_Chr5();
     void test_Chr_Err_1();
+    void test_Ddmc();
 private:
     //Env* iEnv;
 };
@@ -195,4 +197,32 @@ void Ut_chromo2::test_Chr_Err_1()
 	cout << "Pos: " << chr.Error().mPos << " -- " << chr.Error().mText << endl;
     }
     chr.Root().Dump();
+}
+
+void Ut_chromo2::test_Ddmc()
+{
+    cout << endl << "=== Test of Chromo2 DDMC" << endl;
+    Chromo2 chr;
+    // Parse the chromo
+    chr.SetFromFile("ut_chr2_ddmc.chs");
+    if (chr.IsError()) {
+	cout << "Pos: " << chr.Error().mPos << " -- " << chr.Error().mText << endl;
+    }
+    chr.Root().Dump();
+    cout << endl;
+    chr.Save("ut_chr2_ddmc_saved.chs");
+
+    // Trying second time parsing
+    chr.SetFromFile("ut_chr2_ddmc_saved.chs");
+    if (chr.IsError()) {
+	cout << "Saved chromo error" << endl;
+	cout << "Pos: " << chr.Error().mPos << " -- " << chr.Error().mText << endl;
+    }
+    chr.Root().Dump();
+    cout << endl;
+
+    // Trying convertion
+    Chromo2 chr2;
+    chr2.Convert(chr);
+    chr2.Save("ut_chr2_ddmc_conv.chs");
 }
