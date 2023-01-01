@@ -13,6 +13,7 @@
 #include "mnt.h"
 */
 #include "node.h"
+#include "import.h"
 #include "unit.h"
 #include "elem.h"
 #include "content.h"
@@ -36,7 +37,7 @@ const string KChromRarg_Chs = "chs";
 
 /** Native agents factory registry */
 const ProvDef::TFReg ProvDef::mReg ( {
-	Item<Node>(), Item<Unit>(), Item<Elem>(), Item<Content>(), Item<Vertu>(), Item<Vert>(), Item<Link>(),
+	Item<Node>(), Item<Unit>(), Item<Import>(), Item<Elem>(), Item<Content>(), Item<Vertu>(), Item<Vert>(), Item<Link>(),
 	Item<Syst>(), Item<ConnPointu>(), Item<CpMnodeOutp>(), Item<CpMnodeInp>(),
 	Item<Extd>(), Item<State>(), Item<Des>(), Item<TrAddVar>(),
 	Item<CpStateInp>(), Item<CpStateOutp>(), Item<ExtdStateInp>(), Item<ExtdStateOutp>(), Item<ExtdStateMnodeOutp>(),

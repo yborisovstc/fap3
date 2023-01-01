@@ -146,7 +146,7 @@
 		Chromo structure that directly aligned to
 		    <xref linkend="gls_dmc"/>.
 			This approach allows to have single unified chromo representation.  Ref
-		    <ulink url="ds_ddmc"/> for details.  </para></glossdef>
+		    <ulink url="ds_cli_ddmc"/> for details.  </para></glossdef>
 	</glossentry>
 
 	<glossentry id="gls_ccn"><glossterm>CCN</glossterm> <acronym>CCN</acronym>
@@ -358,7 +358,7 @@
 		<listitem>
 		    Modify DES cycle to avoid polling the comps but keep the lists of active/updated in owner. Ref <xref linkend="ds_mdc"/> for details.
 		</listitem>
-		<listitem>Implement <xref linkend="gls_ddmc"/>, ref <xref linkend="ds_ddmc"/></listitem>
+		<listitem>Implement <xref linkend="gls_ddmc"/>, ref <xref linkend="ds_cli_ddmc"/></listitem>
 		<listitem>Improve means of debugging, ref <xref linkend="ds_dbg"/></listitem>
 		<listitem>Keep consistent tree-ish chromo on run-time. Ref <xref linkend="ds_tch"/></listitem>
 	    </itemizedlist>
@@ -375,6 +375,11 @@
 	    <simpara>So the model is created via the creation of proper topology of the given set of pre-defined compoments.</simpara>
 	    <simpara>There are a number of models types suitable for such model creation apporach. One of the types is <xref linkend="gls_deds"/> that allows creating
 		complex dynamic systems.</simpara>
+	</sect2>
+	<sect2><title>Misc refs</title>
+	    <itemizedlist>
+		<listitem><ulink url="https://en.wikipedia.org/wiki/Specification_and_Description_Language"/> for SDL</listitem>
+	    </itemizedlist>
 	</sect2>
     </sect1>
 
@@ -800,7 +805,7 @@
 		    <programlisting>
 			model_spec = segment | mutation_create_chromo;
 			chromo = chromo_node { node_separator, chromo_node };
-			chromo_node = ctx_mutation | segment_target | segment_namespace | ctx_mutation_create_chromo;
+			chromo_node = ctx_mutation | segment | segment_target | segment_namespace | ctx_mutation_create_chromo;
 			ctx_mutation = [context, separator ]  mutation;
 			ctx_segment = segment_target | segment_namespace;
 			ctx_mutation_create_chromo = [context, separator ] mutation_create_chromo;
@@ -809,18 +814,14 @@
 			target_primary_segment = context_target_ext, [separator], segment;
 			target_secondary_segment = impliclit_context_unit, [separator] segment;
 
-			(*
-			segment = '{', [separator], chromo, [separator], '}';
-			*)
-
-			segment = '{', [separator], chromo_node { node_separator, chromo_node }, [separator], '}';
+			segment = '{', [separator], chromo_node, { node_separator, chromo_node }, [separator], '}';
 
 			(* Mutation Create with assosiated chromo *)
 			mutation_create_chromo = mutation_create, [separator], segment;
 
 			context = (context_target, context_namespace) | context_target | context_namespace;
-			context_target = (uri | special_name_nearest_namespace), separator, "&lt;";
-			context_target_ext = (uri | special_name_nearest_namespace | mutation_create), separator, "&lt;";
+			context_target = (uri | special_name_nearest_namespace | special_name_nil), separator, "&lt;";
+			context_target_ext = (uri | special_name_nearest_namespace | special_name_nil | mutation_create), separator, "&lt;";
 			context_node = mutation_node;
 			context_namespace = uri, separator, "@";
 			context_namespace_ext = (uri | mutation_create), separator, "@";
@@ -857,8 +858,9 @@
 			mutation_connect = uri, separator, "~", separator, (uri | mutation_create_chromo | mutation_create | segment_target | segment_namespace);
 
 			name = letter, { letter | digit | "_"};
-			special_name = special_name_nearest_namespace;
+			special_name = special_name_nearest_namespace | special_name_nil;
 			special_name_nearest_namespace = "_@";
+			special_name_nil = "_";
 
 			uri = [name], { "." , name }
 			string = '"' { symbol } '"';
@@ -980,14 +982,17 @@
 		<simpara>Note that some pseudo-name cannot be used in URI in general. For istance nearedt name space is defined in mutation context but
 		    not native hier one, so it cannot be used in URI.</simpara>
 	    </sect3>
-	    <sect3 id="ds_cli_pi_ic"><title>To introduce "Inactivity" context to solve the problem with comments.</title>
+	    <sect3 id="ds_cli_pi_ic"><title>To introduce "Inactivity" context to solve the problem with comments. Or using special target segment.</title>
 		<simpara>
 		    Ref <xref linkend="ds_cli_icc_cfc"/> for the FAP2 chromo language weakness. To solve this problem
 			we can just introduce new context of type "Inactive". This context applied to the mut or segment just makes it inactive.
 		</simpara>
 		<simpara>Or, similarly we can introduce special pseudo-name "nil" and use target segment to redirect the number of mutations to "nil"</simpara>
+		<sect4><title>Status</title>
+		    <simpara>20221224 Implemented special target "nil", ref special_name_nil in chromo language syntax notation.</simpara>
+		</sect4>
 	    </sect3>
-	    <sect3><title>Special comment mut for long comment boundary </title>
+	    <sect3 id="ds_cli_pi_scm"><title>Special comment mut for long comment boundary </title>
 		<simpara>This is another solution for  <xref linkend="ds_cli_icc_cfc"/>: introduce "begin comment" and "end comment" pseudo-mutations, like </simpara>
 		<programlisting>
 		    # &lt;
@@ -1005,7 +1010,7 @@
 			defines mutation_connect dependency on this right part chromo node. But this mutation_connect is compiled into chromo run-time in the manner that
 			dosn't keep such dependency semantic: mutation connect in chromo run-time doesn't have pointer to the dependency but add the dependency node 
 			before mutation connect node in the chromo and state this dep uri as mutation connect right part.</simpara>
-		    <simpara>Ref <xref linkend="ds_ddmc"/> for details.</simpara>
+		    <simpara>Ref <xref linkend="ds_cli_ddmc"/> for details.</simpara>
 		    <simpara>Ref <xref linkend="ds_tch"/> for other materials.</simpara>
 		</sect4>
 	    </sect3>
@@ -1058,7 +1063,7 @@
 	    <sect3><title>Comment syntax is too complicated.</title>
 	    </sect3>
 	    <sect3 id="ds_cli_icc_cfc"><title>Cannot to simply comment out some fragment of chromo.</title>
-		<simpara>Ref <xref linkend="ds_cli_pi_ic"/> for soution based on special context.</simpara>
+		<simpara>Ref <xref linkend="ds_cli_pi_ic"/> for soution based on special context or special target.</simpara>
 	    </sect3>
 	</sect2>
 	<sect2 id="ds_cli_sno"><title>Issue: cannot specify namespace in <xref linkend="gls_osm"/></title>
@@ -1100,7 +1105,7 @@
 		</sect4>
 	    </sect3>
 	    <sect3 id="ds_cli_sno_s3"><title>Solution#3 Enable namespace for only serments direct mutations. </title>
-		<simpara>Seems this limitation solves the original problem. With the limitation  Solution#1 and Solution#2  also shell work.</simpara>
+		<simpara>Seems this limitation solves the original problem. With the limitation  Solution#1 and Solution#2  also shall work.</simpara>
 	    </sect3>
 	</sect2>
 	<sect2><title>Issue: weak design of namespace support in <xref linkend="gls_osm"/></title>
@@ -1150,7 +1155,7 @@
 		</sect4>
 	    </sect3>
 	</sect2>
-	<sect2 id="ds_ddmc"><title>Direct <xref linkend="gls_dmc"/> chromo structure - <xref linkend="gls_ddmc"/></title>
+	<sect2 id="ds_cli_ddmc"><title>Direct <xref linkend="gls_dmc"/> chromo structure - <xref linkend="gls_ddmc"/></title>
 	    <sect3><title>Intro</title>
 		<simpara>The main idea is that current chromo is actually a complex tree. For instance: Q arg of connection mut can be 
 		    simple URI. Or it can be dependent on creation mut (in that case the actual Q arg is P arg of this dependent creation mut). Or
@@ -1179,6 +1184,40 @@
 		<sect4><title>How to apply the mutation with the reference.</title>
 		    <simpara>If the mut being applied has the ref then the ref is applied first.</simpara>
 		</sect4>
+	    </sect3>
+	    <sect3 id="ds_cli_ddmc_ues"><title>Soution#2 Using chromo node embedded segment as the relation.</title>
+		<sect4><title>Intro</title>
+		    <simpara>Actually the chromo node (both of abstract chromo model and chromo2 run-time) already has the relation - node embedded "chromo".
+			This embedded chromo is the list of nodes binded to the given node. Currently this dependency is only of type owning-owned, i.e. all the nodes 
+			in chromo are the nodes that have to be applied into the native hier node created by given chromo node mutation.
+			But we can extend the usage of this chromo node embedded chromo: we can use it to keep for instance connection mutation Q-dependent node.</simpara>
+		</sect4>
+		<sect4 id="ds_cli_ddmc_ues_ics"><title>How we need to improve chromo node structure.</title>
+		    <simpara>The proposal is to have the following structure of the node:</simpara>
+		    <programlisting>
+			|   Ctx ----T--- Mut
+			|      \        /
+			|       T      T 
+			|        \    /
+			|        Chromo
+			|          /\
+			|         /  \
+			|        nodes
+		    </programlisting>
+		    <simpara>Here "Ctx" is context value, "T" - context type, "Mut" - mutation part of chromo node, "Chromo" - chromo part of chromo node.</simpara>
+		    <simpara>This node strucure covers all the configuration needed to support current chromo syntax and run-time:</simpara>
+		    <programlisting>
+			Ctx - Chromo, Mut is not set   - segment_namespace and segment_target with uri as context
+			Ctx - Mut, Chromo is not set   - ctx_mutation
+			Mut - Chromo, Ctx is not set   - segment_namespace and segment_target with mutation_create in mutation_create
+		    </programlisting>
+		</sect4>
+	    </sect3>
+	    <sect3 id="ds_cli_ddmc_rcdc"><title>Revieving current design of the creation of system</title>
+		<simpara>20221230 Trying implement <xref linkend="gls_ddmc"/> - improve chromo structure to have dependency as child node, chromo itself is parsed fine,
+		    but the creation of system doesn't work properly. So it needs to be also updated. Seems we need to aligned the creation mechanism to the new chromo structure.
+		    First we need to review the current design and outline the desing update areas. </simpara>
+		<simpara>Ref <xref linkend="ds_rcdc"/> for the details.</simpara>
 	    </sect3>
 	    <sect3><title>Status</title>
 		<simpara>
@@ -1235,6 +1274,29 @@
 		    But there is the problem of how to refer anonumous mode in the mutions that goes after anonumous node is created.</simpara>
 	    </sect3>
 	    <sect3><title>Using generated name of anonymous node.</title>
+	    </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_rcdc"><title>Revieving current design of the creation of system</title>
+	<sect2><title>Intro</title>
+	    <simpara>This desing item was caused by <xref linkend="gls_ddmc"/> - chromo new desing, ref <xref linkend="ds_cli_ddmc_rcdc"/> for details.</simpara>
+	    <simpara>This section is intended to collect the questions, spots, criticism to the current mechanism system creation.</simpara>
+	</sect2>
+	<sect2><title>What is the agent chromo: the description of how to create node or of how to change?</title>
+	    <sect3><title>Intro</title>
+		<simpara>Currently the chromo of the node is mutation_create_chromo, i.e. includes mutation_create part. This actually mean that the agent chromo
+		    contain info of how to create the agent, i.e the mutation of the agents owner. Is this reasonable approach?</simpara>
+		<simpara>Another approach would be to have the agents chromo as the info of changing the agent. Or may be at least plus the parent.</simpara>
+		<simpara>The current approach causes some complication when applying the mutations: we need to use "treat_as_chromo" option of mutation routine
+		    to separate the mutation mutation_create part from segment. So when some owner creates new owned agent it first applies to itself the 
+		    mutation_create part of the mutation and then segment part to the newly created agent ("treat_as_chromo" option is used here).</simpara>
+	    </sect3>
+	    <sect3><title>Actually both</title>
+		<simpara>Mutation part of the node (ENt_Add specifically) is the info of "how to create" but segment part is of "how to change".
+		    Actually these parts even used with theirs specific aims. 
+		    This is why in the current implementation MNode::mutate() method contains aTreatAsChromo arg - if true it tells to the routine
+		    "take that part of the chromo node that is the set of the agent mutations"</simpara>
 	    </sect3>
 	</sect2>
     </sect1>

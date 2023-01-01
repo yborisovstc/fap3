@@ -677,12 +677,14 @@ void Ut_syst::test_syst_dn()
     MElem* eroot = root->lIf(eroot);
     CPPUNIT_ASSERT_MESSAGE("Fail to get eroot", eroot);
     eroot->Chromos().Save(spec + "_saved.chs");
+    cout << "system native hier dump:" << endl;
+    root->dump(Ifu::EDM_Base | Ifu::EDM_Comps | Ifu::EDM_Recursive,0);
 
     // Q-dep on mutation_create
     MNode* v1n = root->getNode("S1.V1");
     MVert* v1v = v1n ? v1n->lIf(v1v) : nullptr;
     CPPUNIT_ASSERT_MESSAGE("Fail to get v1v", v1v);
-    MNode* v2n = root->getNode("S1.Vert_136");
+    MNode* v2n = root->getNode("S1.Vert_211");
     MVert* v2v = v2n ? v2n->lIf(v2v) : nullptr;
     CPPUNIT_ASSERT_MESSAGE("Fail to get v2v", v2v);
     CPPUNIT_ASSERT_MESSAGE("v1v isn't connected to v2v", v2v->isPair(v1v));
@@ -692,6 +694,15 @@ void Ut_syst::test_syst_dn()
     MVert* v3v = v3n ? v3n->lIf(v3v) : nullptr;
     CPPUNIT_ASSERT_MESSAGE("Fail to get v3v", v2v);
     CPPUNIT_ASSERT_MESSAGE("v1v isn't connected to v3v", v3v->isPair(v1v));
+    MElem* v3e = v3n->lIf(v3e);
+    CPPUNIT_ASSERT_MESSAGE("Failed to get v3e", v3e);
+    cout << "V3 chromo:" << endl;
+    v3e->Chromos().Root().Dump();
+    // Q-dep on segment_target
+    MNode* vs1n = root->getNode("S1.VS1");
+    MVert* vs1v = vs1n ? vs1n->lIf(vs1v) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get vs1v", vs1v);
+    CPPUNIT_ASSERT_MESSAGE("v1v isn't connected to vs1v", vs1v->isPair(v1v));
 
     // Q-dep on segment_namespace
     MNode* v4n = root->getNode("S1.V4");

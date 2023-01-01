@@ -25,23 +25,6 @@ class C2Mut
 	string mR; /*!< Relation */
 };
 
-/** @brief Chromo2 context unit
- * */
-#if 0
-class C2MdlCtxNode
-{
-    public:
-	C2MdlCtxNode(const string& aType, const string& aValue);
-    public:
-	string mType; /*!< Type of context */
-	string mValue;/*!< Value of context */
-    public:
-	static const string KT_Target; /*!< Id of target context */
-	static const string KT_Node; /*!< Id of node context */
-	static const string KT_Namespace; /*!< Id of name space context */
-};
-#endif
-
 /** @brief Context in Chromo2 model node: map of [type, value]
  * key is type of context
  * value is value of context
@@ -59,13 +42,6 @@ using TC2MdlNodes = list<C2MdlNode>;
  * */
 class C2MdlNode
 {
-    public:
-	// Chromo relation type
-	enum CRel {
-	    ECR_Undefined = 0,
-	    ECR_Chromo = 1,
-	    ECR_QDep = 2,
-	};
     public:
 	C2MdlNode();
 	C2MdlNode(C2MdlNode* aOwner);
@@ -90,12 +66,12 @@ class C2MdlNode
 	void Reset();
     public:
 	C2MdlNode* mOwner = NULL;
-	TC2MdlCtx mContext;       /*!< Context */
+	string mCtxType;          /*!< Context type */
+	string mContext;          /*!< Context */
 	C2Mut mMut;               /*!< Mutation */
 	TC2MdlNodes mChromo;      /*!< Chromosome */
 	C2MdlNode* mQnode;        /*!< Q node mut dependency, ref ds_ddmc */
 	int mChromoPos;          /*!< Corresponding position in chromo */
-	CRel mCrel;               /*!< Chromo relation */
 };
 
 /** @brief Chromo2 model unit with mut
@@ -169,6 +145,7 @@ class Chromo2Mdl: public MChromoMdl
 	bool rdp_word_sep(istream& aIs);
 	bool rdp_word(istream& aIs);
 	bool rdp_spname_ns(istream& aIs, string& aRes);
+	bool rdp_spname_nil(istream& aIs, string& aRes);
 	bool rdp_spname_self(istream& aIs, string& aRes);
 	bool rdp_string(istream& aIs, string& aRes);
 	bool rdp_uri(istream& aIs, string& aRes);

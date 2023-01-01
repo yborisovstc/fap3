@@ -86,6 +86,8 @@ libfap3_la_SOURCES = \
 		       mnt.cpp \
 		       dbg.h \
 		       dbg.cpp \
+		       import.h \
+		       import.cpp \
 		       unit.h \
 		       unit.cpp
 

@@ -6,6 +6,7 @@
 
 class MNode;
 class MUnit;
+class MElem;
 
 /** @brief Debugging utilities
  * */
@@ -13,6 +14,7 @@ class Dbg
 {
     public:
 	static MUnit* getUnit(MNode* aNode);
+	static MElem* getElem(MNode* aNode);
 	//static MDesSyncable* getDsync(MNode* aNode);
 	template <typename T>
 	    static T* getIface(MNode* aNode);

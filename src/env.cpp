@@ -132,7 +132,7 @@ void ImportsMgr::ImportToNode(MNode* aNode, const ChromoNode& aMut)
 	    MChromo* mut = mHost.provider()->createChromo();
 	    mut->Init(ENt_Node);
 	    mut->Root().AddChild(aMut);
-	    aNode->mutate(mut->Root(), true, MutCtx(aNode), true);
+	    aNode->mutate(mut->Root(), false, MutCtx(aNode), true);
 	    delete mut;
 	} else {
 	    // mHost.Logger()->Write(EErr, NULL, "Importing [%s]: module already exists", aMut.Name().c_str());
@@ -247,6 +247,9 @@ void Env::constructSystem()
 	    string sparent = root.Attr(ENa_Parent);
 	    MNode* parent = mProvider->provGetNode(sparent);
 	    mRoot = mProvider->createNode(sparent, root.Attr(ENa_Id), this);
+	    /*
+	    mRoot = mProvider->createNode("Elem", "ROOT", this);
+	    */
 	    /**/
 	    MElem* eroot = mRoot ? mRoot->lIf(eroot) : nullptr;
 	    if (eroot != NULL) {
@@ -260,6 +263,11 @@ void Env::constructSystem()
 		Logger()->Write(EInfo, mRoot, "Started of creating system, spec [%s]", mSpecFile.c_str());
 		//MutCtx mc(mRoot, mRoot);
 		MutCtx mc(mRoot);
+		// Adding Modules node for imports
+		MChromo* chr = mProvider->createChromo();
+		bool res1 = chr->SetFromSpec("Modules : Import");
+		mRoot->mutate(chr->Root(), true, mc);
+		//mRoot->mutate(root, false, mc, false);
 		mRoot->mutate(root, false, mc, true);
 		Logger()->Write(EInfo, mRoot, "Completed of creating system");
 		// Set launcher

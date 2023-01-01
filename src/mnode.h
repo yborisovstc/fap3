@@ -81,6 +81,10 @@ class MNode: public MIface
 	 * @param aTreatAsChromo  apply the mut just as chromo ignoring mut part, workaround, ref ds_adcm_pamcc
 	 * */
 	// TODO YB to provide proper solution for ds_adcm_pamcc
+	/** @brief Mutate node
+	 * @param aTreatAsChromo the indication that the only segment needs to be handled
+	 * @param  aLocal  the sign of local mut. This means that target attr needs to be ignored
+	 * */
 	virtual void mutate(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx, bool aTreatAsChromo = false, bool aLocal = false) = 0;
 	virtual MNode* createHeir(const string& aName) = 0;
 	virtual bool attachHeir(MNode* aHeir) = 0;

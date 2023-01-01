@@ -8,10 +8,6 @@
 
 /** @brief Chromo grammar terminals
  * */
-const string KT_Target = "<";
-const string KT_Node = "-";
-const string KT_Namespace = "@";
-
 const char KT_MutSeparator = ';';
 const char KT_ChromoStart = '{';
 const char KT_ChromoEnd = '}';
@@ -25,13 +21,16 @@ const char KT_MutContent = '=';
 const char KT_MutRemove = '!';
 const char KT_UriSep = '.';
 const char KT_EOL = '\n';
-const char KTC_Target = '<';
-const char KTC_Namespace = '@';
+const char KT_Target = '<';
+const char KT_Namespace = '@';
 const char KT_Space = ' ';
+const char KT_SpecialNameNil = '_';
 
 const string KTS_ChromoStart = string(1, KT_ChromoStart);
 const string KTS_ChromoEnd = string(1, KT_ChromoEnd);
 const string KTS_Space = string(1, KT_Space);
+const string KTS_Target = string(1, KT_Target);
+const string KTS_Namespace = string(1, KT_Namespace);
 
 /** @brief Mutation symbols */
 const string KMS_Add = ":";
@@ -57,8 +56,8 @@ const string KKeySymbols = {
     KT_MutContent,
     KT_MutRemove,
     KT_EOL,
-    KTC_Target,
-    KTC_Namespace,
+    KT_Target,
+    KT_Namespace,
 };
 
 /** @brief Mutation symbols */
@@ -124,9 +123,8 @@ using namespace std;
 /** @brief Mapping for context: attr to ctx type
  * */
 const map<TNodeAttr, string> KM_CtxAttToType = {
-    {ENa_Targ, KT_Target},
-    {ENa_MutNode, KT_Node},
-    {ENa_NS, KT_Namespace}
+    {ENa_Targ, KTS_Target},
+    {ENa_NS, KTS_Namespace}
 };
 
 /** @brief Mapping for mut: node type to mut rel
@@ -199,21 +197,21 @@ bool C2Mut::operator==(const C2Mut& b) const
 
 
 
-C2MdlNode::C2MdlNode(): mOwner(NULL), mQnode(NULL), mChromoPos(-1), mCrel(ECR_Chromo)
+C2MdlNode::C2MdlNode(): mOwner(NULL), mQnode(NULL), mChromoPos(-1)
 {
 }
 
-C2MdlNode::C2MdlNode(C2MdlNode* aOwner): mOwner(aOwner), mQnode(NULL), mChromoPos(-1), mCrel(ECR_Chromo)
+C2MdlNode::C2MdlNode(C2MdlNode* aOwner): mOwner(aOwner), mQnode(NULL), mChromoPos(-1)
 {
 }
 
-C2MdlNode::C2MdlNode(const C2MdlNode& aSrc): mOwner(aSrc.mOwner), mContext(aSrc.mContext), mMut(aSrc.mMut), mChromo(aSrc.mChromo),
-    mQnode(NULL), mChromoPos(aSrc.mChromoPos), mCrel(aSrc.mCrel)
+C2MdlNode::C2MdlNode(const C2MdlNode& aSrc): mOwner(aSrc.mOwner), mCtxType(aSrc.mCtxType), mContext(aSrc.mContext), mMut(aSrc.mMut), mChromo(aSrc.mChromo),
+    mQnode(NULL), mChromoPos(aSrc.mChromoPos)
 {
 }
 
-C2MdlNode::C2MdlNode(const C2MdlNode& aSrc, C2MdlNode* aOwner): mOwner(aOwner), mContext(aSrc.mContext), mMut(aSrc.mMut),
-    mQnode(NULL), mChromoPos(aSrc.mChromoPos), mCrel(aSrc.mCrel)
+C2MdlNode::C2MdlNode(const C2MdlNode& aSrc, C2MdlNode* aOwner): mOwner(aOwner), mCtxType(aSrc.mCtxType), mContext(aSrc.mContext), mMut(aSrc.mMut),
+    mQnode(NULL), mChromoPos(aSrc.mChromoPos)
 {
     if (aSrc.mQnode) {
 	mQnode = new C2MdlNode(aSrc.mQnode, this);
@@ -226,6 +224,7 @@ C2MdlNode::C2MdlNode(const C2MdlNode& aSrc, C2MdlNode* aOwner): mOwner(aOwner), 
 
 C2MdlNode& C2MdlNode::operator=(const C2MdlNode& aSrc)
 {
+    mCtxType = aSrc.mCtxType;
     mContext = aSrc.mContext;
     mMut = aSrc.mMut;
     //mChromo = aSrc.mChromo;
@@ -236,7 +235,6 @@ C2MdlNode& C2MdlNode::operator=(const C2MdlNode& aSrc)
 	mChromo.back() = sitem;
     }
     mQnode = nullptr;
-    mCrel = aSrc.mCrel;
     return *this;
 }
 
@@ -250,6 +248,7 @@ C2MdlNode::~C2MdlNode()
 
 void C2MdlNode::CloneFrom(const C2MdlNode& aSrc, bool aChromo)
 {
+    mCtxType = aSrc.mCtxType;
     mContext = aSrc.mContext;
     mMut = aSrc.mMut;
     mChromoPos = aSrc.mChromoPos;
@@ -259,7 +258,6 @@ void C2MdlNode::CloneFrom(const C2MdlNode& aSrc, bool aChromo)
 	    mChromo.push_back(C2MdlNode(cn, this));
 	}
     }
-    mCrel = aSrc.mCrel;
 }
 
 void C2MdlNode::BindTree(C2MdlNode* aOwner)
@@ -273,15 +271,17 @@ void C2MdlNode::BindTree(C2MdlNode* aOwner)
 
 void C2MdlNode::AddContext(const string& aType, const string& aValue)
 {
-    mContext.insert(TC2MdlCtxElem(aType, aValue));
+    mCtxType = aType;
+    mContext = aValue;
 }
 
 void C2MdlNode::RmContext(TNodeAttr aAttr)
 {
     assert(KM_CtxAttToType.count(aAttr) > 0);
     string crel = KM_CtxAttToType.at(aAttr);
-    assert(mContext.count(crel) > 0);
-    mContext.erase(crel);
+    if (crel == mCtxType) {
+	mCtxType.clear();
+    }
 }
 
 C2MdlNode* C2MdlNode::GetNextComp(C2MdlNode* aComp)
@@ -315,7 +315,7 @@ bool C2MdlNode::ExistsContextByAttr(TNodeAttr aAttr)
     bool res = false;
     if (KM_CtxAttToType.count(aAttr) > 0) {
 	string rel = KM_CtxAttToType.at(aAttr);
-	res = mContext.count(rel) > 0;
+	res = mCtxType == rel;
     }
     return res;
 }
@@ -504,12 +504,36 @@ string Chromo2Mdl::GetContextByAttr(const C2MdlNode& aNode, TNodeAttr aAttr)
     string res;
     if (KM_CtxAttToType.count(aAttr) > 0) {
 	string rel = KM_CtxAttToType.at(aAttr);
-	if (aNode.mContext.count(rel) > 0) {
-	    res = aNode.mContext.at(rel);
+	if (aNode.mCtxType == rel) {
+	    res = aNode.mContext;
 	}
     }
     return res;
 }
+
+#if 0
+string Chromo2Mdl::GetContextByAttr(const C2MdlNode& aNode, TNodeAttr aAttr)
+{
+    string res;
+    if (KM_CtxAttToType.count(aAttr) > 0) {
+	string rel = KM_CtxAttToType.at(aAttr);
+	if (aNode.mCtxType == rel) {
+	    if (aNode.mContext.empty()) {
+		// Implicit context
+		if (aNode.mMut.mR == KMS_Add) {
+		    res = aNode.mMut.mP;
+		} else {
+		    assert(false);
+		}
+	    } else {
+		// Explicit context
+		res = aNode.mContext;
+	    }
+	}
+    }
+    return res;
+}
+#endif
 
 string Chromo2Mdl::GetAttr(const THandle& aHandle, TNodeAttr aAttr) const
 {
@@ -685,12 +709,11 @@ void Chromo2Mdl::SetAttr(const THandle& aHandle, TNodeAttr aType, const string& 
     } else if (aType == ENa_Targ) {
 	string ctxrel = GetCtxRel(aType);
 	assert (!ctxrel.empty());
-	node->mContext[ctxrel] = aVal;
+	node->mCtxType = ctxrel;
+	node->mContext = aVal;
     } else if (aType == ENa_MutNode) {
-	assert (rel == KMS_Remove || rel == KMS_Add || rel == KMS_Cont || rel == KMS_Conn || rel == KMS_Disconn || rel.empty());
-	if (rel == KMS_Add || rel == KMS_Cont || rel.empty()) {
-	    node->AddContext(KT_Node, aVal);
-	} else if (rel == KMS_Conn || rel == KMS_Disconn) {
+	assert (rel == KMS_Remove || rel == KMS_Conn || rel == KMS_Disconn);
+	if (rel == KMS_Conn || rel == KMS_Disconn) {
 	    node->mMut.mP = aVal;
 	} else if (rel == KMS_Remove) {
 	    node->mMut.mQ = aVal;
@@ -710,7 +733,8 @@ void Chromo2Mdl::SetAttr(const THandle& aHandle, TNodeAttr aType, const string& 
     } else if (aType == ENa_NS) {
 	string ctxrel = GetCtxRel(aType);
 	assert (!ctxrel.empty());
-	node->mContext[ctxrel] = aVal;
+	node->mCtxType = ctxrel;
+	node->mContext = aVal;
     }
 }
 
@@ -733,7 +757,10 @@ void Chromo2Mdl::RmAttr(const THandle& aHandle, TNodeAttr aType)
 	}
     } else if (KM_CtxAttToType.count(aType) > 0) {
 	string crel = KM_CtxAttToType.at(aType);
-	node->mContext.erase(crel);
+	if (crel == node->mCtxType) {
+	    node->mContext.clear();
+	    node->mCtxType.clear();
+	}
     }
 }
 
@@ -958,10 +985,13 @@ string GroupLexeme(const string& aLex, bool aGroup)
 void Chromo2Mdl::OutputNode(const C2MdlNode& aNode, ostream& aOs, int aLevel, int aIndent, bool aIndFl)
 {
     bool cnt = false;
-    if (!aNode.mContext.empty()) {
+    bool cnt_ext = false;
+    if (!aNode.mCtxType.empty()) {
 	if (aIndFl) { Offset(aLevel, aIndent, aOs); }
-	for (TC2MdlCtxCiter it = aNode.mContext.begin(); it != aNode.mContext.end(); it++) {
-	    aOs << it->second << KTS_Space << it->first << KTS_Space; cnt = true;
+	if (!aNode.mContext.empty()) {
+	    aOs << aNode.mContext << KTS_Space << aNode.mCtxType << KTS_Space; cnt = true;
+	} else {
+	    cnt_ext = true;
 	}
     }
 
@@ -980,18 +1010,25 @@ void Chromo2Mdl::OutputNode(const C2MdlNode& aNode, ostream& aOs, int aLevel, in
 	mut = true;
     }
 
+    if (cnt_ext) {
+	aOs << KTS_Space << aNode.mCtxType << KTS_Space;
+    }
+
     if (cnum > 0) {
-	if (aNode.mCrel == C2MdlNode::ECR_Chromo) {
-	    /*if (!cnt || mut) Offset(aLevel, aIndent, aOs); */aOs << KTS_Space << KTS_ChromoStart << endl;
+	if (aNode.mMut.mR == KMS_Conn && aNode.mMut.mQ.empty() && aNode.mChromo.size() == 1) {
+	    // Conn mut dependent node
+	    const C2MdlNode& node = *(aNode.mChromo.begin());
+	    OutputNode(node, aOs, aLevel, aIndent, false);
+	} else {
+	    if (!cnt && !cnt_ext && !mut) { Offset(aLevel, aIndent, aOs);
+	    } else  { aOs << KTS_Space; }
+	    aOs << KTS_ChromoStart << endl;
 	    for (TC2MdlNodesCiter it = aNode.mChromo.begin(); it != aNode.mChromo.end(); it++) {
 		const C2MdlNode& node = *it;
 		OutputNode(node, aOs, aLevel + 1, aIndent);
 		aOs << endl;
 	    }
 	    Offset(aLevel, aIndent, aOs); aOs << KTS_ChromoEnd;
-	} else if (aNode.mCrel == C2MdlNode::ECR_QDep) {
-	    const C2MdlNode& node = *(aNode.mChromo.begin());
-	    OutputNode(node, aOs, aLevel, aIndent, false);
 	}
     }
 
@@ -1008,6 +1045,8 @@ void Chromo2Mdl::DumpMnode(const C2MdlNode& aNode, int aLevel) const
 	cout << "Tree integrity: " << (treeok ? "OK" : "NOK") << endl;
     }
     OutputNode(aNode, cout, aLevel, K_Indent);
+    cout << endl;
+    cout.flush();
 }
 
 bool Chromo2Mdl::CheckTree(const C2MdlNode& aNode) const
@@ -1119,6 +1158,19 @@ bool Chromo2Mdl::rdp_spname_ns(istream& aIs, string& aRes)
     }
     return res;
 }
+
+bool Chromo2Mdl::rdp_spname_nil(istream& aIs, string& aRes)
+{
+    bool res = false;
+    char c1 = aIs.get();
+    aRes.clear();
+    if (c1 == KT_SpecialNameNil) {
+	aRes.push_back(c1);
+	res = true;
+    }
+    return res;
+}
+
 
 bool Chromo2Mdl::rdp_spname_self(istream& aIs, string& aRes)
 {
@@ -1473,28 +1525,24 @@ bool Chromo2Mdl::rdp_mut_connect(istream& aIs, C2MdlNode& aMnode)
 				    }
 				} else {
 				    aMnode.mChromo.push_back(node); // Q depenency
-				    aMnode.mCrel = C2MdlNode::ECR_QDep;
 				    aMnode.mMut.mP = name;
 				    aMnode.mMut.mR = string(1, KT_MutConn);
 				    aMnode.mChromoPos = pos;
 				}
 			    } else {
 				aMnode.mChromo.push_back(node); // Q depenency
-				aMnode.mCrel = C2MdlNode::ECR_QDep;
 				aMnode.mMut.mP = name;
 				aMnode.mMut.mR = string(1, KT_MutConn);
 				aMnode.mChromoPos = pos;
 			    }
 			} else {
 			    aMnode.mChromo.push_back(node); // Q depenency
-			    aMnode.mCrel = C2MdlNode::ECR_QDep;
 			    aMnode.mMut.mP = name;
 			    aMnode.mMut.mR = string(1, KT_MutConn);
 			    aMnode.mChromoPos = pos;
 			}
 		    } else {
 			aMnode.mChromo.push_back(node); // Q depenency
-			aMnode.mCrel = C2MdlNode::ECR_QDep;
 			aMnode.mMut.mP = name;
 			aMnode.mMut.mR = string(1, KT_MutConn);
 			aMnode.mChromoPos = pos;
@@ -1815,12 +1863,16 @@ bool Chromo2Mdl::rdp_context_target(istream& aIs, C2MdlNode& aMnode)
 	rdpBacktrack(aIs, pos);
 	res = rdp_spname_ns(aIs, uri);
     }
+    if (!res) {
+	rdpBacktrack(aIs, pos);
+	res = rdp_spname_nil(aIs, uri);
+    }
     if (res) {
 	res = rdp_sep(aIs);
 	if (res) {
 	    char c = aIs.get();
-	    if (c == KTC_Target) {
-		aMnode.AddContext(KT_Target, uri);
+	    if (c == KT_Target) {
+		aMnode.AddContext(KTS_Target, uri);
 	    } else {
 		res = false;
 	    }
@@ -1833,9 +1885,7 @@ bool Chromo2Mdl::rdp_context_target_ext(istream& aIs, C2MdlNode& aMnode, C2MdlNo
 {
     bool res = true;
     streampos pos = aIs.tellg();
-    C2MdlNode node;
-    bool ismut = false;
-    res = rdp_mut_create(aIs, node);
+    res = rdp_mut_create(aIs, aMnode);
     string uri;
     if (!res) {
 	rdpBacktrack(aIs, pos);
@@ -1844,19 +1894,17 @@ bool Chromo2Mdl::rdp_context_target_ext(istream& aIs, C2MdlNode& aMnode, C2MdlNo
 	    rdpBacktrack(aIs, pos);
 	    res = rdp_spname_ns(aIs, uri);
 	}
-    } else {
-	ismut = true;
+	if (!res) {
+	    rdpBacktrack(aIs, pos);
+	    res = rdp_spname_nil(aIs, uri);
+	}
     }
     if (res) {
 	res = rdp_sep(aIs);
 	if (res) {
 	    char c = aIs.get();
-	    if (c == KTC_Target) {
-		if (ismut) {
-		    aDepSeg.mChromo.push_back(node);
-		    uri = node.mMut.mP;
-		}
-		aMnode.AddContext(KT_Target, uri);
+	    if (c == KT_Target) {
+		aMnode.AddContext(KTS_Target, uri);
 	    } else {
 		res = false;
 	    }
@@ -1865,31 +1913,22 @@ bool Chromo2Mdl::rdp_context_target_ext(istream& aIs, C2MdlNode& aMnode, C2MdlNo
     return res;
 }
 
-
 bool Chromo2Mdl::rdp_context_namespace_ext(istream& aIs, C2MdlNode& aMnode, C2MdlNode& aDepSeg)
 {
     bool res = true;
     streampos pos = aIs.tellg();
-    C2MdlNode node;
-    bool ismut = false;
-    res = rdp_mut_create(aIs, node);
+    res = rdp_mut_create(aIs, aMnode);
     string uri;
     if (!res) {
 	rdpBacktrack(aIs, pos);
 	res = rdp_uri(aIs, uri);
-    } else {
-	ismut = true;
     }
     if (res) {
 	res = rdp_sep(aIs);
 	if (res) {
 	    char c = aIs.get();
-	    if (c == KTC_Namespace) {
-		if (ismut) {
-		    aDepSeg.mChromo.push_back(node);
-		    uri = node.mMut.mP;
-		}
-		aMnode.AddContext(KT_Namespace, uri);
+	    if (c == KT_Namespace) {
+		aMnode.AddContext(KTS_Namespace, uri);
 	    } else {
 		res = false;
 	    }
@@ -1907,8 +1946,8 @@ bool Chromo2Mdl::rdp_context_namespace(istream& aIs, C2MdlNode& aMnode)
 	res = rdp_sep(aIs);
 	if (res) {
 	    char c = aIs.get();
-	    if (c == KTC_Namespace) {
-		aMnode.AddContext(KT_Namespace, uri);
+	    if (c == KT_Namespace) {
+		aMnode.AddContext(KTS_Namespace, uri);
 	    } else {
 		res = false;
 	    }
@@ -2154,6 +2193,24 @@ void Chromo2::ConvertNode(ChromoNode& aDst, const ChromoNode& aSrc)
 	ChromoNode dcomp = aDst.AddChild(scomp.Type());
 	ConvertNode(dcomp, scomp);
     }
+
+#if 0
+    if (aSrc.Type() == ENt_Conn && !aSrc.AttrExists(ENa_Q)) {
+	if (aSrc.Count() == 1) {
+	    // Dependent node
+	    const ChromoNode& scomp = *aSrc.Begin();
+	} else {
+	    // TODO handle the error - add error record to abstract chromo model?
+	}
+    } else {
+	// Chromo
+	for (ChromoNode::Const_Iterator it = aSrc.Begin(); it != aSrc.End(); it++) {
+	    const ChromoNode& scomp = *it;
+	    ChromoNode dcomp = aDst.AddChild(scomp.Type());
+	    ConvertNode(dcomp, scomp);
+	}
+    }
+#endif
 }
 
 void Chromo2::TransformLn(const MChromo& aSrc)

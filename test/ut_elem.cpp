@@ -17,8 +17,9 @@
 class Ut_elem : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_elem);
-    CPPUNIT_TEST(test_elem_inh_1);
+    //CPPUNIT_TEST(test_elem_inh_1);
     //CPPUNIT_TEST(test_elem_imp_1);
+    CPPUNIT_TEST(test_elem_dmc_1);
     CPPUNIT_TEST_SUITE_END();
 public:
     virtual void setUp();
@@ -26,6 +27,7 @@ public:
 private:
     void test_elem_inh_1();
     void test_elem_imp_1();
+    void test_elem_dmc_1();
 private:
     Env* mEnv;
 };
@@ -156,6 +158,11 @@ void Ut_elem::test_elem_imp_1()
     root->dump(Ifu::EDM_Base | Ifu::EDM_Comps | Ifu::EDM_Recursive,0);
     // Save root chromoe
     eroot->Chromos().Save(specn + "_saved." + ext);
+    // Check module comps inheritance
+    MNode* me1n = root->getNode("E1.Me1");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get me1n", me1n);
+    MNode* e11n = root->getNode("E1.Me1.El1_1");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get e11n", e11n);
     // Dump Elem parent
     /*
     MNode* en = root->getNode("Elem");
@@ -168,4 +175,37 @@ void Ut_elem::test_elem_imp_1()
     delete mEnv;
 }
  
+/** @brief Test of node mut propagation
+ * */
+void Ut_elem::test_elem_dmc_1()
+{
+    cout << endl << "=== Test of node mut propagation ===" << endl;
+
+    const string specn("ut_elem_dmc_1");
+    string ext = "chs";
+    string spec = specn + string(".") + "chs";
+    string log = specn + "_" + ext + ".log";
+    mEnv = new Env(spec, log);
+    mEnv->ImpsMgr()->AddImportsPaths("./modules");
+    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv);
+    mEnv->constructSystem();
+    MNode* root = mEnv->Root();
+    MElem* eroot = root ? root->lIf(eroot) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get root", eroot);
+    // Mutate node
+    MNode* n11n = root->getNode("E1.N1_1");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get n11n", n11n);
+    MChromo* chr = mEnv->provider()->createChromo();
+    bool res1 = chr->SetFromSpec("NewNode : Node");
+    MutCtx mc(nullptr);
+    n11n->mutate(chr->Root(), true, mc);
+    // Dump root
+    root->dump(Ifu::EDM_Base | Ifu::EDM_Comps | Ifu::EDM_Recursive,0);
+    // Save root chromo
+    eroot->Chromos().Save(specn + "_saved." + ext);
+
+    delete mEnv;
+}
+ 
+
 

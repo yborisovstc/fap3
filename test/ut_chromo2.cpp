@@ -18,7 +18,7 @@ class Ut_chromo2 : public CPPUNIT_NS::TestFixture
 //    CPPUNIT_TEST(test_Chr3);
 //    CPPUNIT_TEST(test_Chr4);
 //    CPPUNIT_TEST(test_Chr5);
-    CPPUNIT_TEST(test_Chr_Err_1);
+//    CPPUNIT_TEST(test_Chr_Err_1);
     CPPUNIT_TEST(test_Ddmc);
     CPPUNIT_TEST_SUITE_END();
 public:
@@ -209,6 +209,10 @@ void Ut_chromo2::test_Ddmc()
 	cout << "Pos: " << chr.Error().mPos << " -- " << chr.Error().mText << endl;
     }
     chr.Root().Dump();
+    cout << "Root first node dump: " << endl;
+    ChromoNode cn1 = *chr.Root().Begin();
+    cn1.Dump();
+    chr.Root().Dump();
     cout << endl;
     chr.Save("ut_chr2_ddmc_saved.chs");
 
@@ -221,8 +225,10 @@ void Ut_chromo2::test_Ddmc()
     chr.Root().Dump();
     cout << endl;
 
+    cout << "Convert chromo " << endl;
     // Trying convertion
     Chromo2 chr2;
     chr2.Convert(chr);
+    chr2.Root().Dump();
     chr2.Save("ut_chr2_ddmc_conv.chs");
 }

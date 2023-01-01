@@ -17,6 +17,7 @@ static const string K_LogLevel_Dbg= "Dbg";
 
 // TODO to find proper place for it
 static const string K_SpName_Ns= "_@";
+static const string K_SpName_Nil= "_";
 
 Node::Node(const string &aType, const string &aName, MEnv* aEnv): mName(aName.empty() ? aType : aName), mEnv(aEnv), mOcp(this), mOnode(this, this),
     mLogLevel(EInfo), mExplorable(false), mControllable(false)
@@ -184,12 +185,15 @@ void Node::updateNs(TNs& aNs, const ChromoNode& aCnode)
 {
     if (aCnode.AttrExists(ENa_NS)) {
 	string ns = aCnode.Attr(ENa_NS);
-	MNode* nsu = getNode(ns, aNs);
-	if (nsu == NULL) {
-	    Log(TLog(EErr, this) + "Cannot find namespace [" + ns + "]");
-	} else {
-	    aNs.clear(); // Override namespace by explicitly stated one
-	    aNs.push_back(nsu);
+	// Handle only NS for explicit Ctx, ref ds_cli_ddmc_ues_ics
+	if (!ns.empty()) {
+	    MNode* nsu = getNode(ns, aNs);
+	    if (nsu == NULL) {
+		Log(TLog(EErr, this) + "Cannot find namespace [" + ns + "]");
+	    } else {
+		aNs.clear(); // Override namespace by explicitly stated one
+		aNs.push_back(nsu);
+	    }
 	}
     }
 }
@@ -216,7 +220,8 @@ MNode* Node::getNode(const string& aName, const TNs& aNs)
 void Node::mutSegment(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 {
     bool res = true;
-    TNs root_ns; // Don't propagate context from upper layer, ref ds_cli_sno_s3
+    //!!TNs root_ns; // Don't propagate context from upper layer, ref ds_cli_sno_s3
+    TNs root_ns = aCtx.mNs; 
     updateNs(root_ns, aMut);
 
     for (ChromoNode::Const_Iterator rit = aMut.Begin(); rit != aMut.End() && res; rit++)
@@ -236,14 +241,17 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
     bool res = true;
     TNs root_ns = aCtx.mNs;
     updateNs(root_ns, aMut);
+    bool targ_nil = false;
 
     ChromoNode rno = aMut;
     Logger()->SetContextMutId(rno.LineId());
     // Get target node by analysis of mut-target and mut-node, ref ds_chr2_cctx_tn_umt
+    //notifyNodeMutated(aMut, aCtx);
     MNode* targ = this;
     bool exs_targ = rno.AttrExists(ENa_Targ);
     bool exs_mnode = rno.AttrExists(ENa_MutNode);
     string starg, smnode;
+#if 0 //!!
     // Set namespace to mut node
     if (aMut.AttrExists(ENa_NS)) {
 	if (!rno.AttrExists(ENa_NS)) {
@@ -254,10 +262,13 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
 	    //	assert(false);
 	}
     }
+#endif
     if (!aTreatAsChromo && exs_targ && !aLocal) {
 	starg = rno.Attr(ENa_Targ);
 	if (starg == K_SpName_Ns) {
 	    targ = root_ns.back();
+	} else if (starg == K_SpName_Nil) {
+	    targ_nil = true;
 	} else {
 	    targ = targ->getNode(starg, root_ns);
 	}
@@ -279,10 +290,12 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
     if (res) {
 	if (targ != this) {
 	    // Targeted mutation
-	    // Redirect the mut to target: no run-time to keep the mut in internal nodes
-	    // Propagate till target owning comp if run-time to keep hidden all muts from parent
-	    MutCtx mctx(aUpdOnly ?targ : aCtx.mNode, root_ns);
-	    targ->mutate(rno, aUpdOnly, mctx, aTreatAsChromo, true);
+	    if (!targ_nil) {
+		// Redirect the mut to target: no run-time to keep the mut in internal nodes
+		// Propagate till target owning comp if run-time to keep hidden all muts from parent
+		MutCtx mctx(aUpdOnly ? targ : aCtx.mNode, root_ns);
+		targ->mutate(rno, aUpdOnly, mctx, aTreatAsChromo, true);
+	    }
 	} else  {
 	    // Local mutation
 	    MutCtx mctx(aCtx.mNode, root_ns);
@@ -291,6 +304,35 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
 		mutSegment(rno, aUpdOnly, mctx);
 	    } else if (rnotype == ENt_Node) {
 		MNode* mres = mutAddElem(rno, aUpdOnly, mctx);
+		if (rno.Count()) {
+		    TNs root_ns;
+		    assert(!(exs_targ && rno.AttrExists(ENa_NS)));
+		    if (exs_targ) {
+			targ = mres;
+		    } else if (rno.AttrExists(ENa_NS) && rno.Attr(ENa_NS).empty()) {
+			if (rno.Attr(ENa_NS).empty()) {
+			    root_ns.push_back(mres);
+			    targ = this;
+			} else {
+			}
+		    } else {
+			targ = mres;
+		    }
+		    /*
+		    for (ChromoNode::Const_Iterator rit = aMut.Begin(); rit != aMut.End() && res; rit++)
+		    {
+			ChromoNode rno = (*rit);
+			MutCtx mctx(this, root_ns);
+			try {
+			    targ->mutate(rno, aUpdOnly, mctx);
+			} catch (std::exception e) {
+			    Logger()->Write(EErr, this, "Unspecified error on mutation");
+			}
+		    }
+		    */
+		    MutCtx mctx(this, root_ns);
+		    targ->mutate(rno, aUpdOnly, mctx, true);
+		}
 	    } else if (rnotype == ENt_Change) {
 		//ChangeAttr(rno, aRunTime, aCheckSafety, aTrialMode, mctx);
 	    } else if (rnotype == ENt_Cont) {
@@ -414,7 +456,7 @@ MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
 	    uelem = parent->createHeir(sname);
 	    if (uelem) {
 		attachOwned(uelem);
-		notifyNodeMutated(aMut, aCtx);
+		//notifyNodeMutated(aMut, aCtx);
 		mutadded = true;
 		// Mutate object ignoring run-time option. This is required to keep nodes chromo even for inherited nodes
 		// To avoid this inherited nodes chromo being attached we just don't attach inherited nodes chromo
@@ -422,7 +464,7 @@ MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
 		    TNs ns(aCtx.mNs);
 		    //ns.push_back(uelem);
 		    MutCtx ctx(aCtx.mNode, ns);
-		    uelem->mutate(aMut, false, aUpdOnly ? MutCtx(uelem, ns) : ctx, true);
+		    //uelem->mutate(aMut, false, aUpdOnly ? MutCtx(uelem, ns) : ctx, true);
 		}
 		parent->attachHeir(uelem);
 	    } else {
@@ -435,7 +477,7 @@ MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
 	Log(TLog(EErr, this) + "Missing parent name");
     }
     if (!aUpdOnly && !mutadded) {
-	notifyNodeMutated(aMut, aCtx);
+	//notifyNodeMutated(aMut, aCtx);
     }
     return uelem;
 }
@@ -453,7 +495,7 @@ void Node::mutRemove(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 	    owned->deleteOwned();
 	    Log(TLog(EInfo, this) + "Removed node [" + sname + "]");
 	    if (!aUpdOnly) {
-		notifyNodeMutated(aMut, aCtx);
+		//notifyNodeMutated(aMut, aCtx);
 	    }
 	} else {
 	    Log(TLog(EErr, this) + "Failed detached owned [" + sname + "]");
@@ -469,7 +511,7 @@ void Node::mutContent(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
     string sdata = aMut.Attr(ENa_MutVal);
     bool res = setContent(snode, sdata);
     if (!aUpdOnly) {
-	notifyNodeMutated(aMut, aCtx);
+	//notifyNodeMutated(aMut, aCtx);
     }
 }
 
@@ -479,7 +521,7 @@ void Node::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
     string sq = aMut.Attr(ENa_Q);
     Log(TLog(EErr, this) + "Connecting [" + sp + "] to [" + sq + "] - not supported");
     if (!aUpdOnly) {
-	notifyNodeMutated(aMut, aCtx);
+	//notifyNodeMutated(aMut, aCtx);
     }
 }
 
@@ -489,7 +531,7 @@ void Node::mutDisconnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aC
     string sq = aMut.Attr(ENa_Q);
     Log(TLog(EErr, this) + "Disconnecting [" + sp + "] from [" + sq + "] - not supported");
     if (!aUpdOnly) {
-	notifyNodeMutated(aMut, aCtx);
+	//notifyNodeMutated(aMut, aCtx);
     }
 }
 
@@ -503,14 +545,14 @@ void Node::mutImport(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 	Log(TLog(EErr, this) + "Importing [" + srcs + "] failed");
     }
     if (!aUpdOnly) {
-	notifyNodeMutated(aMut, aCtx);
+	//notifyNodeMutated(aMut, aCtx);
     }
 }
 
 
 void Node::notifyNodeMutated(const ChromoNode& aMut, const MutCtx& aCtx)
 {
-    if (Owner() /* && aCtx.mNode */ && aCtx.mNode != this) {
+    if (Owner() /* && aCtx.mNode */ /*&& aCtx.mNode != this*/) {
 	Owner()->onOwnedMutated(owned()->provided(), aMut, aCtx);
     }
 }
@@ -518,7 +560,7 @@ void Node::notifyNodeMutated(const ChromoNode& aMut, const MutCtx& aCtx)
 void Node::onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx)
 {
     // Node is not inheritable, so nothing to do.
-    if (Owner() /* && aCtx.mNode */ && aCtx.mNode != this) {
+    if (Owner() /* && aCtx.mNode */ /*&& aCtx.mNode != this*/) {
 	// Propagate to owner
 	Owner()->onOwnedMutated(aOwned, aMut, aCtx);
     }

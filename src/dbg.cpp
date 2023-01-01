@@ -3,6 +3,7 @@
 #include "mdes.h"
 #include "mnode.h"
 #include "munit.h"
+#include "melem.h"
 #include "mvert.h"
 #include "mdata.h"
 
@@ -13,6 +14,12 @@ int Dbg::mEnableLog = 0;
 MUnit* Dbg::getUnit(MNode* aNode)
 {
     MUnit* res = aNode->lIf(res);
+    return res;
+}
+
+MElem* Dbg::getElem(MNode* aNode)
+{
+    MElem* res = aNode->lIf(res);
     return res;
 }
 

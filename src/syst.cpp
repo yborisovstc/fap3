@@ -498,7 +498,7 @@ void Syst::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 	if (aMut.Count() == 1) {
 	    // Q-dependency
 	    ChromoNode qdep = *aMut.Begin();
-	    mutate(qdep, true, aCtx);
+	    mutate(qdep, aUpdOnly, aCtx);
 	    if (qdep.Type() == ENt_Node) {
 		sq = qdep.Attr(ENa_Id);
 	    } else if (qdep.Type() == ENt_Seg) {
@@ -543,7 +543,7 @@ void Syst::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 	Log(TLog(EErr, this) + "Connecting [" + sp + "] to [" + sq + "] - cannot find [" + (pn ? sq : sp) + "]");
     }
     if (!aUpdOnly) {
-	notifyNodeMutated(aMut, aCtx);
+	//notifyNodeMutated(aMut, aCtx);
     }
 }
 
@@ -583,7 +583,7 @@ void Syst::mutDisconnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aC
 	Log(TLog(EErr, this) + "Disconnecting [" + sp + "] from [" + sq + "] - cannot find [" + (pn ? sq : sp) + "]");
     }
     if (!aUpdOnly) {
-	notifyNodeMutated(aMut, aCtx);
+	//notifyNodeMutated(aMut, aCtx);
     }
 }
 

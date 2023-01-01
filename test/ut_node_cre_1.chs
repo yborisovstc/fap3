@@ -13,4 +13,10 @@ MyRoot : Elem {
     n2 : Node {
         n2_1 : Node;
     }
+    n2 < {
+        n2_2 : Node;
+    }
+    _ < {
+        # "Special target - nil"
+    }
 }
