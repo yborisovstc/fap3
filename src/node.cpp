@@ -246,7 +246,7 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
     ChromoNode rno = aMut;
     Logger()->SetContextMutId(rno.LineId());
     // Get target node by analysis of mut-target and mut-node, ref ds_chr2_cctx_tn_umt
-    //notifyNodeMutated(aMut, aCtx);
+    notifyNodeMutated(aMut, aCtx);
     MNode* targ = this;
     bool exs_targ = rno.AttrExists(ENa_Targ);
     bool exs_mnode = rno.AttrExists(ENa_MutNode);
@@ -552,7 +552,7 @@ void Node::mutImport(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 
 void Node::notifyNodeMutated(const ChromoNode& aMut, const MutCtx& aCtx)
 {
-    if (Owner() /* && aCtx.mNode */ /*&& aCtx.mNode != this*/) {
+    if (Owner() /* && aCtx.mNode */ && aCtx.mNode != this) {
 	Owner()->onOwnedMutated(owned()->provided(), aMut, aCtx);
     }
 }
@@ -560,7 +560,7 @@ void Node::notifyNodeMutated(const ChromoNode& aMut, const MutCtx& aCtx)
 void Node::onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx)
 {
     // Node is not inheritable, so nothing to do.
-    if (Owner() /* && aCtx.mNode */ /*&& aCtx.mNode != this*/) {
+    if (Owner() /* && aCtx.mNode */ && aCtx.mNode != this) {
 	// Propagate to owner
 	Owner()->onOwnedMutated(aOwned, aMut, aCtx);
     }

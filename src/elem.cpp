@@ -68,55 +68,20 @@ void Elem::setCrAttr(const string& aEType, const string& aName)
     croot.SetAttr(ENa_Parent, ptype);
 }
 
-#if 0 // V1
 void Elem::mutate(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx, bool aTreatAsChromo, bool aLocal)
 {
     bool isChild = aMut.IsChildOf(mChromo->Root());
-    if (!aChange /* && !aTreatAsChromo*/ && !isChild) {
-	notifyNodeMutated(aMut, aCtx);
-	if (aTreatAsChromo) {
-	    for (ChromoNode::Const_Iterator rit = aMut.Begin(); rit != aMut.End(); rit++)
-	    {
-		ChromoNode rno = (*rit);
-		ChromoNode mut = mChromo->Root().AddChild(rno, true, true);
-	    }
-	    Unit::mutate(mChromo->Root(), aChange, aCtx, aTreatAsChromo, aLocal);
-	} else {
-	    ChromoNode mut = mChromo->Root().AddChild(aMut, true, true);
-	    if (aLocal) {
-		mut.RmAttr(ENa_Targ);
-	    }
-	    Unit::mutate(mut, aChange, aCtx, aTreatAsChromo, aLocal);
-	}
+    if (!aChange && !aTreatAsChromo && !isChild) {
+        ChromoNode mut = mChromo->Root().AddChild(aMut, true, true);
+        if (aLocal) {
+            mut.RmAttr(ENa_Targ);
+        }
+        Unit::mutate(mut, aChange, aCtx, aTreatAsChromo, aLocal);
     } else {
-	Unit::mutate(aMut, aChange, aCtx, aTreatAsChromo, aLocal);
+        Unit::mutate(aMut, aChange, aCtx, aTreatAsChromo, aLocal);
     }
 }
-#endif
 
-void Elem::mutate(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx, bool aTreatAsChromo, bool aLocal)
-{
-    bool isChild = aMut.IsChildOf(mChromo->Root());
-    if (!aChange /* && !aTreatAsChromo*/ && !isChild) {
-	notifyNodeMutated(aMut, aCtx);
-	if (aTreatAsChromo) {
-	    for (ChromoNode::Const_Iterator rit = aMut.Begin(); rit != aMut.End(); rit++)
-	    {
-		ChromoNode rno = (*rit);
-		ChromoNode mut = mChromo->Root().AddChild(rno, true, true);
-	    }
-	    Unit::mutate(mChromo->Root(), aChange, aCtx, aTreatAsChromo, aLocal);
-	} else {
-	    ChromoNode mut = mChromo->Root().AddChild(aMut, true, true);
-	    if (aLocal) {
-		mut.RmAttr(ENa_Targ);
-	    }
-	    Unit::mutate(mut, aChange, aCtx, aTreatAsChromo, aLocal);
-	}
-    } else {
-	Unit::mutate(aMut, aChange, aCtx, aTreatAsChromo, aLocal);
-    }
-}
 
 MNode* Elem::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 {
@@ -136,10 +101,7 @@ bool Elem::attachHeir(MNode* aHeir)
 
 void Elem::onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx)
 {
-    //auto it = mChromo->Root().Find(aCtx.mParent);
-    //if (it == const_cast<const ChromoNode&>(mChromo->Root()).End()) {
-    bool isChild = aMut.IsChildOf(mChromo->Root());
-    if (!isChild /* && aCtx.mNode != this*/) {
+    if (aCtx.mNode != this) {
 	ChromoNode anode = mChromo->Root().AddChild(aMut, true, true);
 	const MNode* onode = aOwned->lIf(onode);
 	GUri nuri;

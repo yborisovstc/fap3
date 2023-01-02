@@ -987,8 +987,8 @@ void Chromo2Mdl::OutputNode(const C2MdlNode& aNode, ostream& aOs, int aLevel, in
     bool cnt = false;
     bool cnt_ext = false;
     if (!aNode.mCtxType.empty()) {
-	if (aIndFl) { Offset(aLevel, aIndent, aOs); }
 	if (!aNode.mContext.empty()) {
+	    if (aIndFl) { Offset(aLevel, aIndent, aOs); }
 	    aOs << aNode.mContext << KTS_Space << aNode.mCtxType << KTS_Space; cnt = true;
 	} else {
 	    cnt_ext = true;

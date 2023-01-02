@@ -29,4 +29,11 @@ root : Elem {
     _ <  {
         # "Special name nil"
     }
+    v5 : Vert @ {
+        # "mut_add with NS segment"
+    }
+    v6 : Vert < {
+        # "mut_add with Targ segment"
+    }
+}
 }
