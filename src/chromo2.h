@@ -188,6 +188,7 @@ class Chromo2Mdl: public MChromoMdl
 	 * */
 	static void OutputNode(const C2MdlNode& aNode, ostream& aOs, int aLevel, int aIndent, bool aIndFl = true);
 	static string GetContextByAttr(const C2MdlNode& aNode, TNodeAttr aAttr);
+	static bool IsAnonymousId(const string& aId);
     protected:
 	/** @brief Dumps content of input stream fragment
 	 * */

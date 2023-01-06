@@ -494,3 +494,45 @@ void SdoTPairs::DtGet(Stype& aData)
 	}
     }
 }
+
+
+///  SDO "Edges"
+
+SdoEdges::SdoEdges(const string &aType, const string& aName, MEnv* aEnv): Sdog<Vector<Pair<DGuri>>>(aType, aName, aEnv) { }
+
+void SdoEdges::DtGet(Stype& aData)
+{
+#if 0
+    if (!mSue)  {
+	Log(TLog(EErr, this) + "Owner is not explorable");
+    } else {
+	MVert* suev = mSue->lIf(suev);
+	if (!suev) {
+	    Log(TLog(EErr, this) + "Explorable isn't vertex");
+	} else {
+	    aData.mValid = true;
+	    aData.mData.clear();
+	    for (int ind = 0; ind < suev->pairsCount(); ind++) {
+		MVert* pair = suev->getPair(ind);
+		// TODO Workaround used, ref ds_dcs_sdo_gmn. Create solid solution.
+		MUnit* pairu = pair->lIf(pairu);
+		MNode* pairn = pairu ? pairu->getSif(pairn) : nullptr;
+		if (!pairn) {
+		    Log(TLog(EErr, this) + "Couldnt get URI for pair [" + pair->Uid() + "]");
+		    aData.mValid = false;
+		    break;
+		} else {
+		    aData.mValid = true;
+		    GUri puri;
+		    pairn->getUri(puri, mSue);
+		    DGuri purid(puri);
+		    //aData.mData.push_back(purid);
+		}
+	    }
+	}
+    }
+#endif
+}
+
+
+

@@ -902,8 +902,66 @@ bool VectorBase::IsCompatible(const MDtBase& sb) const
     return res;
 }
 
+
 // Vector
 
-
 template<> const char* Vector<string>::TypeSig() { return  "VS";};
+
+
+// Pair base
+
+void PairBase::DataToString(stringstream& aStream) const
+{
+    for (int idx = 0; idx < Size(); idx++) {
+	ElemToString(idx, aStream);
+	aStream << KDataSep;
+    }
+}
+
+bool PairBase::DataFromString(istringstream& aStream, bool& aRes)
+{
+    bool res = true;
+    bool changed = false;
+    string ss = aStream.str();
+    if (!ss.empty()) {
+	int beg = 0;
+	int elem_e = ss.find_first_of(KDataSep, beg);
+	int idx = 0;
+	do {
+	    string elems = ss.substr(beg, elem_e);
+	    istringstream ess(elems);
+	    changed |= ElemFromString(idx++, ess, res);
+	    beg = elem_e == string::npos ? string::npos : elem_e + 1;
+	    elem_e = ss.find_first_of(KDataSep, beg);
+	} while (res && beg != string::npos);
+    }
+    aRes = res;
+    return changed;
+}
+
+bool PairBase::IsCompatible(const MDtBase& sb) const
+{
+    const PairBase& b = dynamic_cast<const PairBase& >(sb); 
+    bool res = b.mValid && b.GetTypeSig() == GetTypeSig();
+    return res;
+}
+
+ostream& operator<<(ostream& aStream, const PairBase& aDt)
+{
+    aStream << aDt.ToString();
+    return aStream;
+}
+
+istream& operator>>(istream& aStream, PairBase& aDt)
+{
+    string str;
+    aStream >> str;
+    aDt.FromString(str);
+    return aStream;
+}
+
+// Pair
+
+template<> const char* Pair<string>::TypeSig() { return  "PS";};
+
 

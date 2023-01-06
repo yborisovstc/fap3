@@ -296,7 +296,7 @@ class TrAtVar: public TrVar
 };
 
 
-/** @brief Agent functions "Tuple composer"
+/** @brief Transition agent "Tuple composer"
  * */
 class TrTuple: public TrBase, public MDVarGet, public MDtGet<NTuple>
 {
@@ -330,8 +330,52 @@ class TrTostrVar: public TrVar
 	virtual string GetInpUri(int aId) const override;
 };
 
+/** @brief Transition "Input selector"
+ * */
+class TrInpSel: public TrBase, public MDVarGet
+{
+    public:
+	enum { EInpInp, EInpIdx };
+    public:
+	static const char* Type() { return "TrInpSel";};
+	TrInpSel(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From MNode
+	virtual MIface* MNode_getLif(const char *aType) override;
+	// From MDVarGet
+	virtual string MDVarGet_Uid() const override { return getUid<MDVarGet>();}
+	virtual MIface* DoGetDObj(const char *aName) override;
+	virtual string VarGetIfid() const override;
+    protected:
+	// From TrBase
+	virtual string GetInpUri(int aId) const override;
+    protected:
+	const static string K_InpInp;
+	const static string K_InpIdx;
+};
 
-
+/** @brief Transition "Inputs counter"
+ * */
+class TrInpCnt: public TrBase, public MDVarGet, public MDtGet<Sdata<int>>
+{
+    public:
+	enum { EInpInp };
+    public:
+	static const char* Type() { return "TrInpCnt";};
+	TrInpCnt(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From MNode
+	virtual MIface* MNode_getLif(const char *aType) override;
+	// From MDVarGet
+	virtual string MDVarGet_Uid() const override { return getUid<MDVarGet>();}
+	virtual MIface* DoGetDObj(const char *aName) override;
+	virtual string VarGetIfid() const override;
+	// From MDtGet
+	virtual void DtGet(Sdata<int>& aData) override;
+    protected:
+	virtual string GetInpUri(int aId) const override; 
+    protected:
+	Sdata<int> mRes;  /*<! Cached result */
+	const static string K_InpInp;
+};
 
 
 /** @brief Agent functions "Mut composer" base

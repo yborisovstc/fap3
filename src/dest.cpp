@@ -894,6 +894,115 @@ string TrTostrVar::GetInpUri(int aId) const
 }
 
 
+// Transition "Inputs counter"
+
+const string TrInpCnt::K_InpInp = "Inp";
+
+TrInpCnt::TrInpCnt(const string& aType, const string& aName, MEnv* aEnv): TrBase(aType, aName, aEnv)
+{
+    AddInput(K_InpInp);
+}
+
+MIface* TrInpCnt::MNode_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MDVarGet>(aType));
+    else res = TrBase::MNode_getLif(aType);
+    return res;
+}
+
+MIface* TrInpCnt::DoGetDObj(const char *aName)
+{
+    return checkLif<MDtGet<Sdata<int>>>(aName);
+}
+
+string TrInpCnt::VarGetIfid() const
+{
+    return MDtGet<Sdata<int>>::Type();
+}
+
+void TrInpCnt::DtGet(Sdata<int>& aData)
+{
+    MNode* inpn = getNode(K_InpInp);
+    if (inpn) {
+	MUnit* inpu = inpn->lIf(inpu);
+	MIfProv* ifp = inpu ? inpu->defaultIfProv(MDVarGet::Type()) : nullptr;
+	MIfProv::TIfaces* ifaces = ifp ? ifp->ifaces() : nullptr;
+	if (ifaces) {
+	    aData.mData = ifaces->size();
+	    aData.mValid = true;
+	}
+    } else {
+	Log(TLog(EDbg, this) + "Cannot get input  [" + GetInpUri(EInpInp) + "]");
+    }
+    mRes = aData;
+}
+
+string TrInpCnt::GetInpUri(int aId) const
+{
+    if (aId == EInpInp) return K_InpInp;
+    else assert(false);
+}
+
+
+
+// Transition "Input selector"
+
+const string TrInpSel::K_InpInp = "Inp";
+const string TrInpSel::K_InpIdx = "Idx";
+
+TrInpSel::TrInpSel(const string& aType, const string& aName, MEnv* aEnv): TrBase(aType, aName, aEnv)
+{
+    AddInput(K_InpInp);
+    AddInput(K_InpIdx);
+}
+
+MIface* TrInpSel::MNode_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MDVarGet>(aType));
+    else res = TrBase::MNode_getLif(aType);
+    return res;
+}
+
+MIface* TrInpSel::DoGetDObj(const char *aName)
+{
+    MIface* ifr = nullptr;
+    int idx = -1;
+    bool res = GetInpSdata(EInpIdx, idx);
+    if (res) {
+	MNode* inpn = getNode(K_InpInp);
+	if (inpn) {
+	    MUnit* inpu = inpn->lIf(inpu);
+	    MIfProv* ifp = inpu ? inpu->defaultIfProv(MDVarGet::Type()) : nullptr;
+	    MIfProv::TIfaces* ifaces = ifp ? ifp->ifaces() : nullptr;
+	    if (ifaces) {
+		if (idx < 0 || idx >= ifaces->size()) {
+		    Log(TLog(EErr, this) + "Incorrect index  [" + to_string(idx) + "], inps num: " + to_string(ifaces->size()));
+		} else {
+		    MDVarGet* vg = static_cast<MDVarGet*>(ifaces->at(idx));
+		    ifr = vg->DoGetDObj(aName);
+		}
+	    }
+	} else {
+	    Log(TLog(EDbg, this) + "Cannot get input  [" + GetInpUri(EInpInp) + "]");
+	}
+    }
+    return ifr;
+}
+
+string TrInpSel::VarGetIfid() const
+{
+    return string();
+}
+
+string TrInpSel::GetInpUri(int aId) const
+{
+    if (aId == EInpInp) return K_InpInp;
+    else if (aId == EInpIdx) return K_InpIdx;
+    else assert(false);
+}
+
 
 
 

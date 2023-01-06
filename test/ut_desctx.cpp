@@ -16,7 +16,8 @@ class Ut_dctx : public CPPUNIT_NS::TestFixture
     //CPPUNIT_TEST(test_des_ctx_1);
     //CPPUNIT_TEST(test_des_ctx_2);
     //CPPUNIT_TEST(test_des_ctx_3);
-    CPPUNIT_TEST(test_des_ctx_4);
+    //CPPUNIT_TEST(test_des_ctx_4);
+    CPPUNIT_TEST(test_des_ctx_5);
     CPPUNIT_TEST_SUITE_END();
     public:
     virtual void setUp();
@@ -28,6 +29,7 @@ class Ut_dctx : public CPPUNIT_NS::TestFixture
     void test_des_ctx_2();
     void test_des_ctx_3();
     void test_des_ctx_4();
+    void test_des_ctx_5();
     private:
     Env* mEnv;
 };
@@ -109,6 +111,24 @@ void Ut_dctx::test_des_ctx_4()
     int dres;
     GetSData(dbg, dres);
     CPPUNIT_ASSERT_MESSAGE("Wrong System1.S1Add result", dres == 9);
+
+    delete mEnv;
+}
+
+/** @brief Test of DES context #5 - upward data flow + inputs serialization
+ * */
+void Ut_dctx::test_des_ctx_5()
+{
+    cout << endl << "=== Test of DES context #5 - upward data flow + inputs serialization ===" << endl;
+    MNode* root = constructSystem("ut_des_ctx_5");
+    bool res = mEnv->RunSystem(4, 2);
+
+    // Verify
+    MNode* dbg = root->getNode("Launcher.System1.S1Add_Dbg");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get Launcher.System1.S1Add_Dbg", dbg);
+    int dres;
+    GetSData(dbg, dres);
+    CPPUNIT_ASSERT_MESSAGE("Wrong System1.S1Add result", dres == 6);
 
     delete mEnv;
 }

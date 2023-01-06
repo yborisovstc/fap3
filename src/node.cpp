@@ -288,7 +288,7 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
 	}
     }
     if (res) {
-	if (targ != this) {
+	if (targ != this || targ_nil) {
 	    // Targeted mutation
 	    if (!targ_nil) {
 		// Redirect the mut to target: no run-time to keep the mut in internal nodes

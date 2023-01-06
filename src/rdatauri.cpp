@@ -2,6 +2,8 @@
 
 
 template<> const char* Vector<DGuri>::TypeSig() { return  "VDG";};
+template<> const char* Pair<DGuri>::TypeSig() { return  "PU";};
+template<> const char* Vector<Pair<DGuri>>::TypeSig() { return  "VPU";};
 
 const char* DGuri::TypeSig() { return  "URI";};
 

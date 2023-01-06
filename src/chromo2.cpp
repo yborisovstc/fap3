@@ -42,6 +42,9 @@ const string KMS_Import = "+";
 const string KMS_Conn = "~";
 const string KMS_Disconn = "!~";
 
+/** @brief Anonymous ID prefix */
+const string K_Aid_Prefix = "ID__";
+
 /** @brief Key symbols */
 const string KKeySymbols = {
     KT_MutSeparator,
@@ -423,7 +426,7 @@ streampos SeekCtrl(istream& aIs, streampos aBeg, streampos aEnd, char aChar)
 
 string GenerateName(const string& aParent, int aPos)
 {
-    return aParent + string("_") + to_string(aPos);
+    return K_Aid_Prefix + aParent + string("_") + to_string(aPos);
 }
 
 TNodeType Chromo2Mdl::GetType(const THandle& aHandle) {
@@ -982,6 +985,13 @@ string GroupLexeme(const string& aLex, bool aGroup)
     return res;
 }
 
+bool Chromo2Mdl::IsAnonymousId(const string& aId)
+{
+    bool res;
+    res = (aId.compare(0, K_Aid_Prefix.size(), K_Aid_Prefix)) == 0;
+    return res;
+}
+
 void Chromo2Mdl::OutputNode(const C2MdlNode& aNode, ostream& aOs, int aLevel, int aIndent, bool aIndFl)
 {
     bool cnt = false;
@@ -1000,7 +1010,7 @@ void Chromo2Mdl::OutputNode(const C2MdlNode& aNode, ostream& aOs, int aLevel, in
     if (!aNode.mMut.mR.empty()) {
 	if (!cnt) { if (aIndFl) Offset(aLevel, aIndent, aOs); }
 	bool qstring = (aNode.mMut.mR == KMS_Cont) || (aNode.mMut.mR == KMS_Note);
-	string mutp = aNode.mMut.mP.empty() ? string() : (aNode.mMut.mP + KTS_Space);
+	string mutp = (aNode.mMut.mP.empty() || IsAnonymousId(aNode.mMut.mP)) ? string() : (aNode.mMut.mP + KTS_Space);
 	aOs << mutp << aNode.mMut.mR << KTS_Space << GroupLexeme(aNode.mMut.mQ, qstring);
 	if (cnum == 0) {
 	    //aOs << ";";

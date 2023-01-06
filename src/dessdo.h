@@ -308,6 +308,19 @@ class SdoTPairs : public Sdog<Vector<DGuri>>
 	Inpg<DGuri> mInpTarg;  //<! Target URI
 };
 
+/** @brief SDO "Edges"
+ * */
+class SdoEdges : public Sdog<Vector<Pair<DGuri>>>
+{
+    public:
+	static const char* Type() { return "SdoEdges";};
+	SdoEdges(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+    public:
+	// From MDtGet
+	virtual void DtGet(Stype& aData) override;
+};
+
+
 
 
 

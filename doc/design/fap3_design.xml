@@ -2083,6 +2083,13 @@
 		<simpara>The idea is to set logging level in symbolic form like "Dbg.2" where "Dbg" is the name of level and "2" is the extension.</simpara>
 	    </sect3>
 	</sect2>
+	<sect2><title>Tips</title>
+	    <programlisting>
+		p Dbg::getElem(this)->Chromos().Root().Dump()
+		p Dbg::getElem(mEnv->Root())->Chromos().Root().Dump()
+		p Dbg::getElem(mEnv->Root()->getNodeS("S1"))->Chromos().Root().Dump()
+	    </programlisting>
+	</sect2>
     </sect1>
 
     <sect1 id="ds_iis"><title>Setting initial invalid status of State</title>
