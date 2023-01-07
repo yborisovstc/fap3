@@ -99,7 +99,7 @@ class Socket: public Vert, public MSocket
  * Isn't connectable itlelf but can represent itself via connpoints
  * Can contain connectables and connect them
  * */
-class Syst : public Elem, public MAhost, public MActr
+class Syst : public Elem, public MAhost, public MActr, public MSyst
 {
     public:
 	using TAgtCp = NCpOmnp<MAhost, MAgent>;
@@ -110,6 +110,7 @@ class Syst : public Elem, public MAhost, public MActr
 	// From Node
 	virtual void mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx) override;
 	virtual void mutDisconnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx) override;
+	virtual MIface* MNode_getLif(const char *aType) override;
 	virtual MIface* MOwner_getLif(const char *aType) override;
 	// From MActr
 	virtual string MActr_Uid() const override {return getUid<MActr>();}
@@ -118,6 +119,9 @@ class Syst : public Elem, public MAhost, public MActr
 	// From MAhost
 	virtual string MAhost_Uid() const override {return getUid<MAhost>();}
 	virtual MIface* MAhost_getLif(const char *aType) override;
+	// From MSyst
+	virtual string MSyst_Uid() const override {return getUid<MSyst>();};
+	virtual const TEdges& connections() const { return mEdges; }
     protected:
 	// From Unit.MIfProvOwner
 	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
@@ -125,6 +129,7 @@ class Syst : public Elem, public MAhost, public MActr
 	bool isComp(MIfProvOwner* aNode) const;
     protected:
 	TAgtCp mAgtCp;  /*!< Agents connpoint */
+	TEdges mEdges;  /*!< Edges */
 };
 
 

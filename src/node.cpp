@@ -232,6 +232,7 @@ void Node::mutSegment(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 	    mutate(rno, aUpdOnly, mctx);
 	} catch (std::exception e) {
 	    Logger()->Write(EErr, this, "Unspecified error on mutation");
+	    mutate(rno, aUpdOnly, mctx); //!!
 	}
     }
 }

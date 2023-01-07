@@ -1,7 +1,7 @@
 #include "rdatauri.h"
 
 
-template<> const char* Vector<DGuri>::TypeSig() { return  "VDG";};
+template<> const char* Vector<DGuri>::TypeSig() { return  "VU";};
 template<> const char* Pair<DGuri>::TypeSig() { return  "PU";};
 template<> const char* Vector<Pair<DGuri>>::TypeSig() { return  "VPU";};
 

@@ -8,6 +8,58 @@ MyRoot : Elem {
             Neg : TrNegVar
             St1.Inp ~ Neg
             Neg.Inp ~ St1
+            _ <  {
+                # "Data: Pair of strings"
+                StPS : State @  {
+                    _@ <  {
+                        Debug.LogLevel = "Dbg"
+                        = "PS _INV"
+                    }
+                    Inp ~ : State {
+                        = "PS First Second"
+                    }
+                }
+                # "Data: Pair of URI"
+                StPU : State @  {
+                    _@ <  {
+                        Debug.LogLevel = "Dbg"
+                        = "PU _INV"
+                    }
+                    Inp ~ : State {
+                        = "PU first1.first2 second1.second2"
+                    }
+                }
+                # "Data: Vector of URI"
+                StVU : State @  {
+                    _@ <  {
+                        Debug.LogLevel = "Dbg"
+                        = "VU _INV"
+                    }
+                    Inp ~ : State {
+                        = "VU e1_f1.e1_f2 e2_f1.e2_f2"
+                    }
+                }
+                # "Data: Vector of Pair of URI"
+                StVPU : State @  {
+                    _@ <  {
+                        Debug.LogLevel = "Dbg"
+                        = "VPU _INV"
+                    }
+                    Inp ~ : State {
+                        = "VPU e1_f1.e1_f2 e1_s1.e1_s2 e2_f1.e2_f2 e2_s1.e2_s2"
+                    }
+                }
+            }
+            # "Data: Vector of Pair of string"
+            StVPS : State @  {
+                _@ <  {
+                    Debug.LogLevel = "Dbg"
+                    = "VPS _INV"
+                }
+                Inp ~ : State {
+                    = "VPS e1_first e1_second e2_first e2_second"
+                }
+            }
             # "URI"
             Const_1 : State {
                 = "URI State1"
@@ -59,7 +111,7 @@ MyRoot : Elem {
             # "Intput counter"
             InpCntRes : State @  {
                 _@ <  {
-                    = "SI <ERR>"
+                    = "SI _INV"
                     Debug.LogLevel = "Dbg"
                 }
                 Inp ~ : TrInpCnt @  {

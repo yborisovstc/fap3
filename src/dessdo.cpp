@@ -502,36 +502,42 @@ SdoEdges::SdoEdges(const string &aType, const string& aName, MEnv* aEnv): Sdog<V
 
 void SdoEdges::DtGet(Stype& aData)
 {
-#if 0
     if (!mSue)  {
 	Log(TLog(EErr, this) + "Owner is not explorable");
     } else {
-	MVert* suev = mSue->lIf(suev);
-	if (!suev) {
-	    Log(TLog(EErr, this) + "Explorable isn't vertex");
+	MSyst* sues = mSue->lIf(sues);
+	if (!sues) {
+	    Log(TLog(EErr, this) + "Explorable isn't system");
 	} else {
 	    aData.mValid = true;
 	    aData.mData.clear();
-	    for (int ind = 0; ind < suev->pairsCount(); ind++) {
-		MVert* pair = suev->getPair(ind);
-		// TODO Workaround used, ref ds_dcs_sdo_gmn. Create solid solution.
-		MUnit* pairu = pair->lIf(pairu);
-		MNode* pairn = pairu ? pairu->getSif(pairn) : nullptr;
-		if (!pairn) {
-		    Log(TLog(EErr, this) + "Couldnt get URI for pair [" + pair->Uid() + "]");
+	    for (auto conn : sues->connections()) {
+		MVert* p = conn.first;
+		MUnit* pu = p->lIf(pu);
+		MNode* pn = pu ? pu->getSif(pn) : nullptr;
+		MVert* q = conn.second;
+		MUnit* qu = q->lIf(qu);
+		MNode* qn = qu ? qu->getSif(qn) : nullptr;
+		if (!pn || !qn) {
+		    Log(TLog(EErr, this) + "Couldnt get URI for vert [" + (pn ? p->Uid(): q->Uid()) + "]");
 		    aData.mValid = false;
 		    break;
 		} else {
 		    aData.mValid = true;
 		    GUri puri;
-		    pairn->getUri(puri, mSue);
+		    pn->getUri(puri, mSue);
+		    GUri quri;
+		    qn->getUri(quri, mSue);
 		    DGuri purid(puri);
-		    //aData.mData.push_back(purid);
+		    DGuri qurid(puri);
+		    Pair<DGuri> elem;
+		    elem.mData.first = purid;
+		    elem.mData.second = qurid;
+		    aData.mData.push_back(elem);
 		}
 	    }
 	}
     }
-#endif
 }
 
 

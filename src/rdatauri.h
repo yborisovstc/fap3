@@ -31,12 +31,13 @@ class DGuri: public DtBase
 	bool operator<(const DGuri& b) const { return mData < b.mData;};
 	bool operator<=(const DGuri& b) const { return mData <= b.mData;};
     public:
+	friend std::ostream& operator<<(std::ostream& os, const DGuri& aDuri);
+	friend std::istream& operator>>(std::istream& is, DGuri& aDuri);
+    public:
 	GUri mData;
 };
 
-std::ostream& operator<<(std::ostream& os, const DGuri& aDuri);
 
-std::istream& operator>>(std::istream& is, DGuri& aDuri);
 
 
 #endif

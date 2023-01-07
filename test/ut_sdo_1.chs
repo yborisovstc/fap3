@@ -87,12 +87,12 @@ Root : Elem {
         }
         # "V5 pairs";
         Dbg_DcoPairs : State @ {
-            _@ < { Debug.LogLevel = "Dbg"; = "VDG <ERR>"; }
+            _@ < { Debug.LogLevel = "Dbg"; = "VU _INV"; }
             Inp ~ V5.DcoPairs;
         }
         # "Component V5 pairs";
         Dbg_DcoTPairs : State @ {
-            _@ < { Debug.LogLevel = "Dbg"; = "VDG <ERR>"; }
+            _@ < { Debug.LogLevel = "Dbg"; = "VU _INV"; }
             Inp ~ DcoTPairs : SdoTPairs @ {
                 _@ < Debug.LogLevel = "Dbg";
                 Targ ~ : State { = "URI V5"; };

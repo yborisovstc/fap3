@@ -404,12 +404,13 @@ class Vector : public VectorBase
 class PairBase : public DtBase
 {
     public:
+	enum TElemId {E_P, E_Q};
+    public:
 	PairBase(): DtBase() {};
 	PairBase(int aSize): DtBase() {};
 	PairBase(const PairBase& aSrc): DtBase(aSrc) {};
-	virtual void ElemToString(int aInd, stringstream& aStream) const { aStream << "?";};
-	virtual bool ElemFromString(int aIdx, istringstream& aStream, bool& aRes) { return false;}
-	virtual int Size() const { return 2;}
+	virtual void ElemToString(TElemId aId, stringstream& aStream) const { aStream << "?";};
+	virtual bool ElemFromString(TElemId aId, istringstream& aStream, bool& aRes) { return false;}
 	// From DtBase
 	virtual void DataToString(stringstream& aStream) const override;
 	virtual bool DataFromString(istringstream& aStream, bool& aRes);
@@ -430,16 +431,14 @@ class Pair : public PairBase
 	static const char* TypeSig();
 	static bool IsSrepFit(const string& aString) { return DtBase::IsSrepFit(aString, TypeSig());};
 	static bool IsDataFit(const Pair<T>& aData) { return DtBase::IsDataFit(aData, TypeSig());};
-	// From PairBase
-	virtual int Size() const override { return mData.size();}
-	virtual void ElemToString(int aIdx, stringstream& aStream) const override { aStream << mData.at(aIdx);}
-	virtual bool ElemFromString(int aIdx, istringstream& aStream, bool& aRes) override {
-	    assert(aIdx <= mData.size());
-	    T data; aStream >> data; bool res = aIdx >= mData.size() || mData.at(aIdx) != data; 
-	    if (aIdx < mData.size())
-		mData.at(aIdx) = data;
-	    else 
-		mData.push_back(data);
+	virtual void ElemToString(TElemId aId, stringstream& aStream) const {
+	    if (aId == E_P) aStream << mData.first;
+	    else  aStream << mData.second;
+	}
+	virtual bool ElemFromString(TElemId aId, istringstream& aStream, bool& aRes) {
+	    T data; aStream >> data;
+	    if (aId == E_P) mData.first = data;
+	    else mData.second = data;
 	    aRes = true;
 	    return true; // TODO YB get non trivial ret val
 	}
@@ -447,19 +446,13 @@ class Pair : public PairBase
 	    if (!IsCompatible(b)) return false;
 	    const Pair<T>* vb = dynamic_cast<const Pair<T>*>(&b);
 	    if (!vb) return false;
-    	    return this->mData == vb->mData; }
+	    return this->mData == vb->mData; }
 	virtual bool operator!=(const MDtBase& b) const override { return !Pair::operator==(b);}
 	// From MDtBase
 	virtual string GetTypeSig() const { return TypeSig();};
 	virtual DtBase* Clone() {return new Pair<T>(*this);};
-	// Local
-	virtual bool GetElem(int aInd, T& aElem) const {
-	    bool res = true;
-	    if (aInd < Size()) aElem = mData.at(aInd);
-	    else res = false;
-	    return res; }
     public:
-	vector<T> mData;
+	pair<T,T> mData;
 };
 
 

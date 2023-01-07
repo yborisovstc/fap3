@@ -2336,12 +2336,12 @@
 	</sect2>
     </sect1>
 
-    <sect1 id="ds_rdi"><title>Redesign data intarfaces.</title>
+    <sect1 id="ds_rdi"><title>Redesign of data interfaces.</title>
 	<sect2><title>Intro</title>
-	    <simpara>Current desing weakness is exposed by the use-case: how to simple check MDtBase IsValid() paremeter. This paremeter is base one, i.e. not
-		specific for type of data. It happens that it is not possible to get data base paremeter in simply manner. Ref dest.h TrIsValid.</simpara>
+	    <simpara>Current desing weakness is exposed by the use-case: how to simply check MDtBase IsValid() parameter. This parameter is the base one, i.e. not
+		specific for type of data. It happens that it is not possible to get data base parameter in simply manner. Ref dest.h TrIsValid.</simpara>
 	    <simpara>Currently the data ifaces are MDVarGet and parametrized MDtGet plus similar ifaces for setting data. All data related features are based on this
-		paremetrized data ifaces. This data parametrized iface approach causes a lot of related solutions. For instance there are paremetrized functions so 
+		parametrized data ifaces. This data parametrized iface approach causes a lot of related solutions. For instance there are paremetrized functions so 
 		transitions just dynamically creates the function that matches output and input data types.</simpara>
 	    <simpara>This approach was originated on earlier FAP design where is was assumed that any data types are allowed in the model. But then the
 		idea of universal data was introduced, ref MDataBase iface. This approach allows to get rid of parametrized data at least for the model parts relation.
@@ -2501,6 +2501,32 @@
 		    confirmation step of this state is omitted. This means update/confirm data comparition on confirmation step is not necessary -
 		    if state goes to comparition step this means that the data was changed.</simpara>
 		<simpara>This optimization was applied in fap4 primary deds layer.</simpara>
+	    </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_rdr"><title>Row data redesign.</title>
+	<sect2><title>Intro</title>
+	    <simpara>The current design of row data is not consistent enough.</simpara>
+	    <simpara>The first problem is the composite data inconsistent text representation.
+		The use-case that expose the design problem is the data "Vector of Pair of string", signature "VPS",
+		ref rdata.cpp. The problem here is at least in the data deserialization from the text representation. It is assumed in the current design that the textual representation
+		of composite data is rather simple: just peace of text separated by space. This doesn't work for the composite data whose component is also composite data,
+		for instance Vector of Pairs.</simpara>
+	    <simpara>So, we need to re-design row-data at least in point of serialization/deserialization.</simpara>
+	</sect2>
+	<sect2><title>Data text representation syntax</title>
+	    <sect3><title>Intro</title>
+		<simpara>Ref <ulink url="../../../grayb/doc/design/index.html#ds_agt_data_repr"/> for the data represntation syntax in fap2 (and actually the current one).</simpara>
+	    </sect3>
+	    <sect3><title>Syntax</title>
+		<programlisting>
+		    data_repr = type , ":" value
+		    type = type_signature , "," , type_parameters
+		    value = (scalar_data_value | composite_data_value)
+		    composite_data_value = "(", component_data_value, ")"
+		    component_data_value = value
+		</programlisting>
 	    </sect3>
 	</sect2>
     </sect1>

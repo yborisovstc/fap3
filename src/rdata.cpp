@@ -19,6 +19,9 @@ template<> const char* Sdata<bool>::TypeSig() { return  "SB";};
 template<> const char* Sdata<string>::TypeSig() { return  "SS";};
 template<> const char* Sdata<Vector<string>>::TypeSig() { return  "SVS";};
 
+// Composite data
+template<> const char* Vector<Pair<string>>::TypeSig() { return  "VPS";};
+
 template<> void Sdata<int>::InpFromString(istringstream& aStream, int& aRes) { aStream >> std::boolalpha >> aRes; }
 template<> void Sdata<float>::InpFromString(istringstream& aStream, float& aRes) { aStream >> std::boolalpha >> aRes; }
 template<> void Sdata<bool>::InpFromString(istringstream& aStream, bool& aRes) { aStream >> std::boolalpha >> aRes; }
@@ -912,10 +915,9 @@ template<> const char* Vector<string>::TypeSig() { return  "VS";};
 
 void PairBase::DataToString(stringstream& aStream) const
 {
-    for (int idx = 0; idx < Size(); idx++) {
-	ElemToString(idx, aStream);
-	aStream << KDataSep;
-    }
+    ElemToString(E_P, aStream);
+    aStream << KDataSep;
+    ElemToString(E_Q, aStream);
 }
 
 bool PairBase::DataFromString(istringstream& aStream, bool& aRes)
@@ -926,14 +928,16 @@ bool PairBase::DataFromString(istringstream& aStream, bool& aRes)
     if (!ss.empty()) {
 	int beg = 0;
 	int elem_e = ss.find_first_of(KDataSep, beg);
-	int idx = 0;
-	do {
-	    string elems = ss.substr(beg, elem_e);
-	    istringstream ess(elems);
-	    changed |= ElemFromString(idx++, ess, res);
-	    beg = elem_e == string::npos ? string::npos : elem_e + 1;
+	string elems = ss.substr(beg, elem_e);
+	istringstream ess(elems);
+	changed |= ElemFromString(E_P, ess, res);
+	if (elem_e != string::npos) {
+	    beg = elem_e + 1;
 	    elem_e = ss.find_first_of(KDataSep, beg);
-	} while (res && beg != string::npos);
+	    elems = ss.substr(beg, elem_e);
+	    istringstream ess2(elems);
+	    changed |= ElemFromString(E_Q, ess2, res);
+	}
     }
     aRes = res;
     return changed;

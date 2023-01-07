@@ -472,6 +472,14 @@ Syst::~Syst()
 {
 }
 
+MIface* Syst::MNode_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MSyst>(aType));
+    else res = Elem::MNode_getLif(aType);
+    return res;
+}
+
 /** TODO Vulnerability: access to many ifaces. This is required for embedded agents.
  *  Maybe it makes sense to have owner API getting owned as arg, so owner can analyze
  *  if the owned if agent. We also can have system propery with the policy of getting
@@ -522,6 +530,7 @@ void Syst::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 		res = MVert::connect(pv, qv);
 		if (!res) {
 		    Log(TLog(EErr, this) + "Failed connecting [" + sp + "] to [" + sq + "]");
+		    mEdges.push_back(TEdge(pv, qv));
 		    res = MVert::connect(pv, qv);
 		}
 	    } else {
