@@ -191,4 +191,15 @@ bool GUri::isName() const
     return mElems.size() == 1 && !mElems.at(0).empty();
 }
 
+ostream& operator<<(ostream& aStream, const GUri& aDt)
+{
+    aStream << aDt.toString();
+    return aStream;
+}
 
+istream& operator>>(istream& aStream, GUri& aDt)
+{
+    // TODO YB implement. Use chromo2 rdp_uri to read stream
+    assert(false);
+    return aStream;
+}

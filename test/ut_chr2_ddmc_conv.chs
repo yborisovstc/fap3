@@ -1,7 +1,4 @@
 root : Elem {
-    v4 ~ v1_27 : v1 @  {
-        # "Anonymous namespace"
-    }
     Modules : Node {
         + Module1
     }
@@ -23,13 +20,19 @@ root : Elem {
             # "Special name namespace"
         }
     }
-    v4 ~ v1_429 : v1 <  {
+    v4 ~ : v1 <  {
         # "Anonymous target"
     }
-    v4 ~ v1_482 : v1 @  {
+    v4 ~ : v1 @  {
         # "Anonymous namespace"
     }
     _ <  {
         # "Special name nil"
+    }
+    v5 : Vert @  {
+        # "mut_add with NS segment"
+    }
+    v6 : Vert <  {
+        # "mut_add with Targ segment"
     }
 }

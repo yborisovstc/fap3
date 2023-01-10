@@ -839,7 +839,8 @@ void TrTuple::DtGet(NTuple& aData)
 			if (inphb) {
 			    string values;
 			    inphb->ToString(values);
-			    elem->FromString(values);
+			    istringstream isv(values);
+			    elem->FromString(isv);
 			}
 		    } else {
 			Log(TLog(EErr, this) + "Input [" + compn->name() + "] is incompatible with tuple component");

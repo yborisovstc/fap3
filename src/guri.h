@@ -51,6 +51,8 @@ class GUri
 	bool isAbsolute() const;
 	bool isValid() const { return !mErr;}
 	bool isName() const;
+	friend ostream& operator<<(ostream& aStream, const GUri& aDt);
+	friend istream& operator>>(istream& aStream, GUri& aDt);
     public:
 	static const string nil; // TODO YB move to proper place
 	static const string K_Self;

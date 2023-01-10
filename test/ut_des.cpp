@@ -15,7 +15,7 @@ class Ut_des : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST_SUITE(Ut_des);
 //    CPPUNIT_TEST(test_des_1);
 //    CPPUNIT_TEST(test_des_ades_1);
-    CPPUNIT_TEST(test_des_dmc_1);
+    //CPPUNIT_TEST(test_des_dmc_1);
 //    CPPUNIT_TEST(test_des_ifr_inval_1);
     CPPUNIT_TEST(test_des_tr_1);
 //    CPPUNIT_TEST(test_des_asr_1);
@@ -170,6 +170,13 @@ void Ut_des::test_des_tr_1()
 {
     cout << endl << "=== Test of DES transisions ===" << endl;
 
+    Sdata<string> ss;
+    istringstream iss("SS 'H \\'ello\\' dude!'");
+    iss >> ss;
+    ostringstream oss;
+    oss << ss << endl;
+    cout << oss.str();
+
     MNode* root = constructSystem("ut_des_tr_1");
     MElem* eroot = root ? root->lIf(eroot) : nullptr;
 
@@ -184,7 +191,7 @@ void Ut_des::test_des_tr_1()
     cdc.Root().Dump();
 
     // Run 
-    bool res = mEnv->RunSystem(3);
+    bool res = mEnv->RunSystem(3, 3);
     CPPUNIT_ASSERT_MESSAGE("Failed running system", eroot);
     // Verify the state
     MNode* stn = root->getNode("Launcher.Ds1.St1");

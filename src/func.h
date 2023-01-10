@@ -150,7 +150,7 @@ class FUri: public Func, public MDtGet<DGuri> {
 	virtual string Uid() const override { return mHost.getHostUri() + Ifu::KUidSepIc + "func" + Ifu::KUidSep + MDtGet<DGuri>::Type();}
 	virtual string IfaceGetId() const { return MDtGet<TData>::Type();}
 	virtual void DtGet(TData& aData);
-	virtual void GetResult(string& aResult) const {mRes.ToString(aResult);}
+	virtual void GetResult(string& aResult) const {ostringstream os; mRes.ToString(os); aResult = os.str();}
 	virtual string GetInpExpType(int aId) const;
 	TData mRes;
 };
@@ -169,7 +169,7 @@ class FApnd: public Func, public MDtGet<T> {
 	virtual string Uid() const override { return mHost.getHostUri() + Ifu::KUidSepIc + "func" + Ifu::KUidSep + MDtGet<T>::Type();}
 	virtual string IfaceGetId() const { return MDtGet<TData>::Type();}
 	virtual void DtGet(TData& aData);
-	virtual void GetResult(string& aResult) const {mRes.ToString(aResult);}
+	virtual void GetResult(string& aResult) const {ostringstream os; mRes.ToString(os); aResult = os.str();}
 	virtual string GetInpExpType(int aId) const;
 	TData mRes;
 };
@@ -188,7 +188,7 @@ class FSvld: public Func, public MDtGet<T> {
 	virtual string Uid() const override { return mHost.getHostUri() + Ifu::KUidSepIc + "func" + Ifu::KUidSep + MDtGet<T>::Type();}
 	virtual string IfaceGetId() const { return MDtGet<TData>::Type();}
 	virtual void DtGet(TData& aData);
-	virtual void GetResult(string& aResult) const {mRes.ToString(aResult);}
+	virtual void GetResult(string& aResult) const {ostringstream os; mRes.ToString(os); aResult = os.str();}
 	virtual string GetInpExpType(int aId) const;
 	TData mRes;
 };
@@ -316,7 +316,7 @@ class FSizeVect: public Func, public MDtGet<Sdata<int>> {
 	virtual string Uid() const override { return mHost.getHostUri() + Ifu::KUidSepIc + "func" + Ifu::KUidSep + MDtGet<TOutp>::Type();}
 	virtual string IfaceGetId() const override { return MDtGet<TOutp>::Type();}
 	virtual void DtGet(TOutp& aData) override;
-	virtual void GetResult(string& aResult) const override {mRes.ToString(aResult);}
+	virtual void GetResult(string& aResult) const override {ostringstream os; mRes.ToString(os); aResult = os.str();}
 	virtual string GetInpExpType(int aId) const override;
     protected:
 	TOutp mRes;
@@ -342,7 +342,7 @@ class FAtVect: public FAtBase, public MDtGet<Sdata<T>> {
 	virtual string Uid() const override { return mHost.getHostUri() + Ifu::KUidSepIc + "func" + Ifu::KUidSep + MDtGet<Sdata<T>>::Type();}
 	virtual string IfaceGetId() const override { return MDtGet<Sdata<T>>::Type();}
 	virtual void DtGet(Sdata<T>& aData) override;
-	virtual void GetResult(string& aResult) const override {mRes.ToString(aResult);}
+	virtual void GetResult(string& aResult) const override {ostringstream os; mRes.ToString(os); aResult = os.str();}
 	virtual string GetInpExpType(int aId) const override;
     protected:
 	Sdata<T> mRes;

@@ -646,7 +646,8 @@ void AMnodeAdp::ApplyMut()
 		MDtGet<DChr2>* gsd = vget->GetDObj(gsd);
 		if (gsd) {
 		    DChr2 data;
-		    data.FromString("CHR2 {  }");
+		    istringstream is("CHR2 {  }");
+		    data.FromString(is);
 		    gsd->DtGet(data);
 		    Chromo2& chromo = data.mData;
 		    if (data.IsValid()) {

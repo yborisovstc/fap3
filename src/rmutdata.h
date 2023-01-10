@@ -19,8 +19,8 @@ class DMut: public DtBase
     public:
 	// From DtBase
 	virtual string GetTypeSig() const override { return TypeSig();};
-	virtual bool DataFromString(istringstream& aStream, bool& aRes) override;
-	virtual void DataToString(stringstream& aStream) const override;
+	virtual void DataFromString(istringstream& aStream) override;
+	virtual void DataToString(ostringstream& aStream) const override;
 	virtual bool operator==(const MDtBase& b) const override {
 	    return this->DtBase::operator==(b) && (mData == dynamic_cast<const DMut&>(b).mData);}
 	virtual bool operator!=(const MDtBase& b) const override { return !DMut::operator==(b);}
@@ -47,8 +47,8 @@ class DChr2: public DtBase
 	DChr2& operator=(const DChr2& b) { this->DtBase::operator=(b); mData = b.mData; return *this;};
 	// From DtBase
 	virtual string GetTypeSig() const override { return TypeSig();};
-	virtual bool DataFromString(istringstream& aStream, bool& aRes) override;
-	virtual void DataToString(stringstream& aStream) const override;
+	virtual void DataFromString(istringstream& aStream) override;
+	virtual void DataToString(ostringstream& aStream) const override;
 	virtual bool operator==(const MDtBase& b) const override {
 	    return this->DtBase::operator==(b) && (mData == dynamic_cast<const DChr2&>(b).mData);}
 	virtual bool operator!=(const MDtBase& b) const override { return !DChr2::operator==(b);}

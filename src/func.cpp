@@ -86,7 +86,9 @@ template<class T> void FAddDt<T>::DtGet(T& aData)
 
 template<class T> void FAddDt<T>::GetResult(string& aResult) const
 {
-    mRes.ToString(aResult);
+    ostringstream oss;
+    mRes.ToString(oss);
+    aResult = oss.str();
 }
 
 template <class T> string FAddDt<T>::GetInpExpType(int aId) const
@@ -104,8 +106,7 @@ void FAddDt<T>::MDtGet_doDump(int aLevel, int aIdt, ostream& aOs) const
     auto self = const_cast<FAddDt<T>*>(this);
     T data;
     self->DtGet(data);
-    string str;
-    data.ToString(str);
+    string str = data.ToString();
     aOs << "Data: " << str << endl;
 }
 
@@ -173,7 +174,9 @@ template<class T> void FMplDt<T>::DtGet(T& aData)
 
 template<class T> void FMplDt<T>::GetResult(string& aResult) const
 {
-    mRes.ToString(aResult);
+    ostringstream oss;
+    mRes.ToString(oss);
+    aResult = oss.str();
 }
 
 template <class T> string FMplDt<T>::GetInpExpType(int aId) const
@@ -191,8 +194,7 @@ void FMplDt<T>::MDtGet_doDump(int aLevel, int aIdt, ostream& aOs) const
     auto self = const_cast<FMplDt<T>*>(this);
     T data;
     self->DtGet(data);
-    string str;
-    data.ToString(str);
+    string str = data.ToString();
     aOs << "Data: " << str << endl;
 }
 
@@ -260,7 +262,9 @@ string FBAndDt::GetInpExpType(int aId) const
 
 void FBAndDt::GetResult(string& aResult) const
 {
-    mRes.ToString(aResult);
+    ostringstream oss;
+    mRes.ToString(oss);
+    aResult = oss.str();
 }
 
 
@@ -280,7 +284,9 @@ string FBBase::GetInpExpType(int aId) const
 
 void FBBase::GetResult(string& aResult) const
 {
-    mRes.ToString(aResult);
+    ostringstream oss;
+    mRes.ToString(oss);
+    aResult = oss.str();
 }
 
 
@@ -615,7 +621,8 @@ template<class T> void FMaxDt<T>::DtGet(T& aData)
 
 template<class T> void FMaxDt<T>::GetResult(string& aResult) const
 {
-    mRes.ToString(aResult);
+    ostringstream oss;
+    mRes.ToString(oss);
 }
 
 static void FMaxDtFact() {
@@ -637,7 +644,9 @@ string FCmpBase::IfaceGetId() const
 
 void FCmpBase::GetResult(string& aResult) const
 {
-    mRes.ToString(aResult);
+    ostringstream oss;
+    mRes.ToString(oss);
+    aResult = oss.str();
 }
 
 void FCmpBase::DtGet(Sdata<bool>& aData)
@@ -812,7 +821,9 @@ void FBnegDt::DtGet(Sdata<bool>& aData)
 
 void FBnegDt::GetResult(string& aResult) const
 {
-    mRes.ToString(aResult);
+    ostringstream oss;
+    mRes.ToString(oss);
+    aResult = oss.str();
 }
 
 
@@ -922,8 +933,7 @@ void FAtVect<T>::DtGet(Sdata<T>& aData)
 		aData.mValid = arg.GetElem(ind.mData, aData.mData);
 		res = true;
 	    } else {
-		string inds;
-		ind.ToString(inds, false);
+		string inds = ind.ToString(false);
 		mHost.log(EWarn, "Index is exceeded: " + inds);
 	    }
 	} else {
@@ -964,7 +974,9 @@ MIface* FToStrBase::getLif(const char *aName)
 
 void FToStrBase::GetResult(string& aResult) const
 {
-    mRes.ToString(aResult);
+    ostringstream oss;
+    mRes.ToString(oss);
+    aResult = oss.str();
 }
 
 
@@ -997,7 +1009,7 @@ void FSToStr<T>::DtGet(Sdata<string>& aData)
 	if (dfget) {
 	    Sdata<T> arg;
 	    dfget->DtGet(arg);
-	    arg.ToString(aData.mData, false);
+	    aData.mData = arg.ToString(false);
 	    aData.mValid = true;
 	}
     } else {
@@ -1074,7 +1086,9 @@ string FUriToStr::GetInpExpType(int aId) const
 
 void FIsValidBase::GetResult(string& aResult) const
 {
-    mRes.ToString(aResult);
+    ostringstream oss;
+    mRes.ToString(oss);
+    aResult = oss.str();
 }
 
 MIface *FIsValidBase::getLif(const char *aName)

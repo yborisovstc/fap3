@@ -8,46 +8,75 @@ MyRoot : Elem {
             Neg : TrNegVar
             St1.Inp ~ Neg
             Neg.Inp ~ St1
-            _ <  {
-                # "Data: Pair of strings"
-                StPS : State @  {
-                    _@ <  {
-                        Debug.LogLevel = "Dbg"
-                        = "PS _INV"
-                    }
-                    Inp ~ : State {
-                        = "PS First Second"
-                    }
+            # "Data: Scalar: string"
+            StSS : State @  {
+                _@ <  {
+                    Debug.LogLevel = "Dbg"
+                    = "SS _INV"
                 }
-                # "Data: Pair of URI"
-                StPU : State @  {
-                    _@ <  {
-                        Debug.LogLevel = "Dbg"
-                        = "PU _INV"
-                    }
-                    Inp ~ : State {
-                        = "PU first1.first2 second1.second2"
-                    }
+                Inp ~ : State {
+                    = "SS 'Hello World!'"
                 }
-                # "Data: Vector of URI"
-                StVU : State @  {
-                    _@ <  {
-                        Debug.LogLevel = "Dbg"
-                        = "VU _INV"
-                    }
-                    Inp ~ : State {
-                        = "VU e1_f1.e1_f2 e2_f1.e2_f2"
-                    }
+            }
+            # "Data: Pair of strings"
+            StPS : State @  {
+                _@ <  {
+                    Debug.LogLevel = "Dbg"
+                    = "PS _INV"
                 }
-                # "Data: Vector of Pair of URI"
-                StVPU : State @  {
-                    _@ <  {
-                        Debug.LogLevel = "Dbg"
-                        = "VPU _INV"
-                    }
-                    Inp ~ : State {
-                        = "VPU e1_f1.e1_f2 e1_s1.e1_s2 e2_f1.e2_f2 e2_s1.e2_s2"
-                    }
+                Inp ~ : State {
+                    = "PS ( First , Second )"
+                }
+            }
+            # "Data: Pair of scalar data: strings"
+            StPSS : State @  {
+                _@ <  {
+                    Debug.LogLevel = "Dbg"
+                    = "PSS _INV"
+                }
+                Inp ~ : State {
+                    = "PSS ( SS 'First elem' , SS 'Second elem' )"
+                }
+            }
+
+            # "Data: Pair of data URI"
+            StPU : State @  {
+                _@ <  {
+                    Debug.LogLevel = "Dbg"
+                    = "PDU _INV"
+                }
+                Inp ~ : State {
+                    = "PDU ( URI first1.first2 , URI second1.second2 )"
+                }
+            }
+            # "Data: Vector of strings"
+            StVS : State @  {
+                _@ <  {
+                    Debug.LogLevel = "Dbg"
+                    = "VS _INV"
+                }
+                Inp ~ : State {
+                    = "VS ( elem1 , elem2 , elem3 )"
+                }
+            }
+            # "Data: Vector of URI"
+            StVDU : State @  {
+                _@ <  {
+                    Debug.LogLevel = "Dbg"
+                    = "VDU _INV"
+                }
+                Inp ~ : State {
+                    = "VDU ( URI e1_f1.e1_f2 , URI e2_f1.e2_f2 )"
+                }
+            }
+            # "Data: Vector of Pair of URI"
+            StVPU : State @  {
+                _@ <  {
+                    Debug.LogLevel = "Dbg"
+                    = "VPDU _INV"
+                }
+                Inp ~ : State {
+                    = "VPDU ( PDU ( URI e1f1.e1f2 , URI e1s1.e1s2 ) , PDU ( URI e2f1.e2f2 , URI e2s1.e2s2 ) )"
                 }
             }
             # "Data: Vector of Pair of string"
@@ -57,7 +86,7 @@ MyRoot : Elem {
                     = "VPS _INV"
                 }
                 Inp ~ : State {
-                    = "VPS e1_first e1_second e2_first e2_second"
+                    = "VPS ( PS (e1_first , e1_second ) ,  PS (e2_first , e2_second ) )"
                 }
             }
             # "URI"
@@ -66,7 +95,7 @@ MyRoot : Elem {
             }
             # "Size of vector"
             St2 : State {
-                = "VS Item_1 Item_2 Item_3"
+                = "VS ( Item_1 , Item_2 , Item_3 )"
             }
             St3 : State {
                 = "SI -1"
@@ -123,9 +152,6 @@ MyRoot : Elem {
                     }
                     Inp ~ : State {
                         = "SS Inp3"
-                    }
-                    Idx ~ : State {
-                        = "SI 2"
                     }
                 }
             }

@@ -8,7 +8,19 @@ const char KDataSep = ' ';
 const char KSigParsToDataSep = ' ';
 const char KSigToParsSep = ',';
 const char KParsSep = ',';
+const char KCompDataStart = '(';
+const char KCompDataEnd = ')';
+const char KCompDataSep = ',';
+const char KSStringDelim = '\'';
+const char KT_EOL = '\n';
+const char KT_Escape = '\\';
 
+/** @brief Separators **/
+const string KSep = " \t\n\r";
+
+static const string KSCompDataStart = string(1, KCompDataStart);
+static const string KSCompDataEnd = string(1, KCompDataEnd);
+static const string  KSSStringDelim = string(1, KSStringDelim);
 
 const char MDtBase::mKTypeToDataSep = KSigParsToDataSep;
 
@@ -17,15 +29,24 @@ template<> const char* Sdata<int>::TypeSig() { return  "SI";};
 template<> const char* Sdata<float>::TypeSig() { return  "SF";};
 template<> const char* Sdata<bool>::TypeSig() { return  "SB";};
 template<> const char* Sdata<string>::TypeSig() { return  "SS";};
-template<> const char* Sdata<Vector<string>>::TypeSig() { return  "SVS";};
-
-// Composite data
-template<> const char* Vector<Pair<string>>::TypeSig() { return  "VPS";};
+//template<> const char* Sdata<Vector<string>>::TypeSig() { return  "SVS";};
 
 template<> void Sdata<int>::InpFromString(istringstream& aStream, int& aRes) { aStream >> std::boolalpha >> aRes; }
 template<> void Sdata<float>::InpFromString(istringstream& aStream, float& aRes) { aStream >> std::boolalpha >> aRes; }
 template<> void Sdata<bool>::InpFromString(istringstream& aStream, bool& aRes) { aStream >> std::boolalpha >> aRes; }
-template<> void Sdata<string>::InpFromString(istringstream& aStream, string& aRes) { aRes = aStream.str(); }
+template<> void Sdata<string>::InpFromString(istringstream& aStream, string& aRes) {
+    if (!RdpUtil::sstring(aStream, aRes)) {
+	aStream >> aRes;
+    }
+}
+
+
+template<> void Sdata<int>::DataToString(ostringstream& aStream) const { aStream << std::boolalpha << mData; };
+template<> void Sdata<float>::DataToString(ostringstream& aStream) const { aStream << std::boolalpha << mData; };
+template<> void Sdata<bool>::DataToString(ostringstream& aStream) const { aStream << std::boolalpha << mData; };
+template<> void Sdata<string>::DataToString(ostringstream& aStream) const {
+    aStream << KSSStringDelim << mData << KSSStringDelim;
+};
 
 // Special values
 const string KSv_Inv = "_INV"; //!< Invalid
@@ -62,57 +83,54 @@ bool DtBase::IsDataFit(const DtBase& aData, const string& aTypeSig)
     return  aData.mValid && aData.GetTypeSig() == aTypeSig;
 }
 
-void DtBase::ToString(string& aString, bool aSig) const
+void DtBase::ToString(ostringstream& aOs, bool aSig) const
 {
-    stringstream ss;
     if (aSig) {
-	ss << GetTypeSig() << " ";
+	aOs << GetTypeSig() << " ";
     }
     if (!mValid) {
-	ss << "<ERR>";
+	aOs << "<ERR>";
     }
     else {
-	DataToString(ss);
+	DataToString(aOs);
     }
-    aString = ss.str();
 }
 
-bool DtBase::FromString(const string& aString)
+void DtBase::FromString(istringstream& aStream)
 {
-    bool res = true, inv = false;
-    bool changed = false;
+    bool was_valid = mValid;
+    mValid = false;
+    string sigpars;
+    aStream >> sigpars;
     string sig;
-    int end = ParseSigPars(aString, sig);
+    int end = ParseSigPars(sigpars, sig);
     if (sig == GetTypeSig()) {
 	mSigTypeOK = true;
-	string ss;
-	if (end != string::npos) {
-	    int beg = end + 1;
-	    //end = aString.find(' ', beg);
-	    //ss = aString.substr(beg, end - beg);
-	    ss = aString.substr(beg);
+	RdpUtil::sep(aStream);
+	if (!RdpUtil::val_inv(aStream)) {
+	    DataFromString(aStream);
 	}
-	if (!ss.empty()) {
-	    if (ss == KSv_Inv) {
-		res = false;
-	    } else {
-		istringstream sstr(ss);
-		changed |= DataFromString(sstr, res);
-	    }
-	}
-	/* YB Let's enable default data
-	else {
-	    res = false;
-	}
-	*/
-    }
-    else {
-	res = false;
+    } else {
 	mSigTypeOK = false;
     }
-    if (mValid != res) { mValid = res; changed = true; }
-    return changed;
+    if (mValid != was_valid) { mChanged = true; }
 }
+
+ostream& operator<<(ostream& aStream, const DtBase& aDt)
+{
+    ostringstream& os = dynamic_cast<ostringstream&>(aStream);
+    aDt.ToString(os);
+    return aStream;
+}
+
+istream& operator>>(istream& aStream, DtBase& aDt)
+{
+    istringstream& is = dynamic_cast<istringstream&>(aStream);
+    aDt.FromString(is);
+    return aStream;
+}
+
+
 
 // Matrix, base
 
@@ -168,7 +186,7 @@ int MtrBase::ParseSigPars(const string& aCont, string& aSig, MtrBase::TMtrType& 
 			    istringstream sstr(par);
 			    sstr >> dp2;
 			}
-			aDim.first = dp1; aDim.second = dp2; 
+			aDim.first = dp1; aDim.second = dp2;
 			if (dp2 == 0) {
 			    aDim.second = dp1;
 			    if (opt == EVect) {
@@ -194,7 +212,7 @@ int MtrBase::IntSize() const
     int res = mDim.first * mDim.second;
     if (mType == EMt_Diagonal) {
 	res = mDim.first;
-    } 
+    }
     return res;
 }
 
@@ -212,9 +230,9 @@ bool MtrBase::IsDataFit(const MtrBase& aData, const string& aTypeSig)
     return  aData.mValid && aData.GetTypeSig() == aTypeSig &&  aData.mType != EMt_Unknown && aData.mDim.first != 0 && aData.mDim.second != 0;
 }
 
-void MtrBase::ToString(string& aString, bool aSig) const
+void MtrBase::ToString(ostringstream& aOs, bool aSig) const
 {
-    stringstream ss;
+    ostringstream& ss = aOs;
     if (aSig) {
 	ss << GetTypeSig() << " ";
     }
@@ -247,13 +265,13 @@ void MtrBase::ToString(string& aString, bool aSig) const
 	    ElemToString(cnt, ss);
 	}
     }
-    aString = ss.str();
 }
 
-bool MtrBase::FromString(const string& aString)
+void MtrBase::FromString(istringstream& aStream)
 {
-    bool res = true;
+    bool valid = true;
     bool changed = false;
+    string aString = aStream.str(); //!!
     string ss;
     TMtrType mtype;
     TMtrDim mdim;
@@ -271,18 +289,17 @@ bool MtrBase::FromString(const string& aString)
 	    ss = aString.substr(beg, end - beg);
 	    if (!ss.empty()) {
 		istringstream sstr(ss);
-		changed |= ElemFromString(cnt++, sstr, res);
+		ElemFromString(cnt++, sstr);
 	    }
-	} while (end != string::npos && res && cnt < IntSize());
+	} while (end != string::npos && valid && cnt < IntSize());
 	if (cnt != IntSize() || end != string::npos) {
-	    res = false;
+	    valid = false;
 	}
     }
     else {
-	res = false;
+	valid = false;
     }
-    if (mValid != res) { mValid = res; changed = true; }
-    return changed;
+    if (mValid != valid) { mValid = valid; mChanged = true; }
 }
 
 MtrBase& MtrBase::operator+=(const MtrBase& b)
@@ -340,13 +357,13 @@ MtrBase& MtrBase::Mpl(const void* b)
     return *this;
 }
 
-MtrBase& MtrBase::Mpl(const MtrBase& a, const MtrBase& b) 
+MtrBase& MtrBase::Mpl(const MtrBase& a, const MtrBase& b)
 {
     if (a.mValid && b.mValid) {
-	if (mType == EMt_Unknown) 
-	{ 
+	if (mType == EMt_Unknown)
+	{
 	    if (a.mType == EMt_Diagonal && b.mType == EMt_Diagonal) {
-		mType = EMt_Diagonal; 
+		mType = EMt_Diagonal;
 	    }
 	    else {
 		mType = EMt_Regular;
@@ -526,7 +543,7 @@ bool NTuple::IsCTypesFit(const tCTypes& aCt) const
     return res;
 }
 
-void NTuple::TypeParsToString(stringstream& aStream) const
+void NTuple::TypeParsToString(ostringstream& aStream) const
 {
     for (tComps::const_iterator it = mData.begin(); it != mData.end(); it++) {
 	if (it != mData.begin()) {
@@ -538,7 +555,7 @@ void NTuple::TypeParsToString(stringstream& aStream) const
     }
 }
 
-void NTuple::DataToString(stringstream& aStream) const
+void NTuple::DataToString(ostringstream& aStream) const
 {
     for (tComps::const_iterator it = mData.begin(); it != mData.end(); it++) {
 	if (it != mData.begin()) {
@@ -549,9 +566,9 @@ void NTuple::DataToString(stringstream& aStream) const
 	comp.second->DataToString(aStream);
     }
 }
-void NTuple::ToString(string& aString, bool aSig) const
+void NTuple::ToString(ostringstream& aOs, bool aSig) const
 {
-    stringstream ss;
+    ostringstream& ss = aOs;
     if (aSig) {
 	ss << GetTypeSig() << KSigToParsSep;
     }
@@ -563,23 +580,23 @@ void NTuple::ToString(string& aString, bool aSig) const
 	ss << KSigParsToDataSep;
 	DataToString(ss);
     }
-    aString = ss.str();
 }
 
 
-bool NTuple::FromString(const string& aString)
+void NTuple::FromString(istringstream& aStream)
 {
-    bool res = true;
+    bool valid = true;
     bool changed = false;
+    string aString = aStream.str(); //!!
     string ss;
     string sig;
     tCTypes ctypes;
     int beg = 0, end = 0;
     end = ParseSigPars(aString, sig, ctypes);
     if (sig == GetTypeSig()) {
-	if (!IsCTypesFit(ctypes)) { 
+	if (!IsCTypesFit(ctypes)) {
 	    Init(ctypes);
-	    changed = true; 
+	    mChanged = true;
 	}
 	string ss;
 	int cnt = 0;
@@ -591,19 +608,19 @@ bool NTuple::FromString(const string& aString)
 		tComp& cp =  mData.at(cnt);
 		DtBase* comp = cp.second;
 		istringstream sstr(ss);
-		changed |= comp->DataFromString(sstr, res);
+		comp->DataFromString(sstr);
+		mChanged |= comp->mChanged;
 	    }
 	    cnt++;
-	} while (end != string::npos && res && cnt < mData.size());
+	} while (end != string::npos && valid && cnt < mData.size());
 	if (cnt != mData.size() || end != string::npos) {
-	    res = false;
+	    valid = false;
 	}
     }
     else {
-	res = false;
+	valid = false;
     }
-    if (mValid != res) { mValid = res; changed = true; }
-    return changed;
+    if (mValid != valid) { mValid = valid; mChanged = true; }
 }
 
 void NTuple::Init(const tCTypes& aCt)
@@ -638,7 +655,7 @@ DtBase* NTuple::GetElem(const string& aName)
 }
 
 bool NTuple::operator==(const MDtBase& sb) const
-{ 
+{
     const NTuple& b = dynamic_cast<const NTuple&>(sb);
     bool res = true;
     if (!&b || DtBase::operator!=(b) || mData.size() != b.mData.size()) {
@@ -755,19 +772,19 @@ void Enum::Init(const tSet& aSet)
     mSet = aSet;
 }
 
-bool Enum::FromString(const string& aString)
+void Enum::FromString(istringstream& aStream)
 {
-    bool res = true;
-    bool changed = false;
+    bool valid = true;
+    string aString = aStream.str(); //!!
     string ss;
     string sig;
     int beg = 0, end = 0;
     tSet set;
     end = ParseSigPars(aString, sig, set);
     if (end != string::npos && sig == GetTypeSig()) {
-	if (!AreTypeParsFit(set)) { 
+	if (!AreTypeParsFit(set)) {
 	    Init(set);
-	    changed = true; 
+	    mChanged = true;
 	}
 	if (end != string::npos) {
 	    int beg = end + 1;
@@ -776,42 +793,39 @@ bool Enum::FromString(const string& aString)
 	}
 	if (!ss.empty()) {
 	    istringstream sstr(ss);
-	    changed |= DataFromString(sstr, res);
+	    DataFromString(sstr);
 	}
     }
     else {
-	res = false;
+	valid = false;
     }
-    if (mValid != res) { mValid = res; changed = true; }
-    return changed;
+    if (mValid != valid) { mValid = valid; mChanged = true; }
 }
 
-bool Enum::DataFromString(istringstream& aStream, bool& aRes)
+void Enum::DataFromString(istringstream& aStream)
 {
-    bool changed = false;
+    bool valid = true;
     string sdata;
     aStream >> sdata;
-    if (aRes = !aStream.fail()) {
-	bool valid = false; 
+    if (valid = !aStream.fail()) {
 	int data = -1;
 	// Check if data belongs to the set
-	for (int ind = 0; ind != mSet.size() && !valid; ind++) {
+	for (int ind = 0; ind != mSet.size() && valid; ind++) {
 	    string& selem = mSet.at(ind);
 	    if (sdata == selem) {
-		valid = true; data = ind;
+		data = ind;
+	    } else {
+		valid = false;
 	    }
 	}
-	if (mValid != valid) { 
-	    mValid = valid; changed = true; 
-	}
-	if (mValid && mData != data) { 
-	    mData = data; changed = true; 
+	if (mData != data) {
+	    mData = data; mChanged = true;
 	}
     }
-    return changed;
+    if (mValid != valid) { mValid = valid; mChanged = true; }
 }
 
-void Enum::TypeParsToString(stringstream& aStream) const
+void Enum::TypeParsToString(ostringstream& aStream) const
 {
     for (tSet::const_iterator it = mSet.begin(); it != mSet.end(); it++) {
 	if (it != mSet.begin()) {
@@ -822,9 +836,9 @@ void Enum::TypeParsToString(stringstream& aStream) const
     }
 }
 
-void Enum::ToString(string& aString, bool aSig) const
+void Enum::ToString(ostringstream& aOs, bool aSig) const
 {
-    stringstream ss;
+    ostringstream& ss = aOs;
     if (aSig) {
 	ss << GetTypeSig() << KSigToParsSep;
     }
@@ -836,11 +850,10 @@ void Enum::ToString(string& aString, bool aSig) const
 	ss << KSigParsToDataSep;
 	DataToString(ss);
     }
-    aString = ss.str();
 }
 
-void Enum::DataToString(stringstream& aStream) const 
-{ 
+void Enum::DataToString(ostringstream& aStream) const
+{
     if (mData < 0 || mData >= mSet.size()) {
 	aStream << "ERROR";
     } else {
@@ -850,11 +863,11 @@ void Enum::DataToString(stringstream& aStream) const
 
 bool Enum::IsCompatible(const DtBase& sb) const
 {
-    const Enum& b = dynamic_cast<const Enum& >(sb); 
+    const Enum& b = dynamic_cast<const Enum& >(sb);
     bool res = b.mValid && b.GetTypeSig() == TypeSig() && mSet.size() == b.mSet.size();
     if (res) {
 	for (int i = 0; i < mSet.size() && res; i++) {
-	    if (mSet.at(i) != b.mSet.at(i)) 
+	    if (mSet.at(i) != b.mSet.at(i))
 		res = false;
 	}
     }
@@ -862,110 +875,174 @@ bool Enum::IsCompatible(const DtBase& sb) const
 }
 
 bool Enum::operator==(const MDtBase& sb) const
-{ 
-    const Enum& b = dynamic_cast<const Enum& >(sb); 
+{
+    const Enum& b = dynamic_cast<const Enum& >(sb);
     return &b != NULL && DtBase::operator==(b)  && mData == b.mData;
 };
 
 // Vector base
 
-void VectorBase::DataToString(stringstream& aStream) const
+void VectorBase::DataToString(ostringstream& aStream) const
 {
-    for (int idx = 0; idx < Size(); idx++) {
-	ElemToString(idx, aStream);
-	aStream << KDataSep;
+    aStream << KSCompDataStart;
+    if (Size() > 0) {
+	ElemToString(0, aStream);
     }
+    for (int idx = 1; idx < Size(); idx++) {
+	aStream << KCompDataSep;
+	ElemToString(idx, aStream);
+    }
+    aStream << KSCompDataEnd;
 }
 
-bool VectorBase::DataFromString(istringstream& aStream, bool& aRes)
+void VectorBase::DataFromString(istringstream& aStream)
 {
-    bool res = true;
-    bool changed = false;
+    bool was_valid = mValid;
+    mValid = true;
     string ss = aStream.str();
-    if (!ss.empty()) {
-	int beg = 0;
-	int elem_e = ss.find_first_of(KDataSep, beg);
+    char c = aStream.get();
+    mValid = (c == KCompDataStart);
+    if (mValid) {
 	int idx = 0;
 	do {
-	    string elems = ss.substr(beg, elem_e);
-	    istringstream ess(elems);
-	    changed |= ElemFromString(idx++, ess, res);
-	    beg = elem_e == string::npos ? string::npos : elem_e + 1;
-	    elem_e = ss.find_first_of(KDataSep, beg);
-	} while (res && beg != string::npos);
+	    RdpUtil::sep(aStream);
+	    ElemFromString(idx++, aStream);
+	    if (mValid) {
+		RdpUtil::sep(aStream);
+		char c = aStream.get();
+		if (c == KCompDataEnd) {
+		    break;
+		} else if (c != KCompDataSep) {
+		    mValid = false;
+		}
+	    }
+	} while(mValid && !aStream.fail());
     }
-    aRes = res;
-    return changed;
+    if (mValid != was_valid) { mChanged = true;}
 }
 
 bool VectorBase::IsCompatible(const MDtBase& sb) const
 {
-    const VectorBase& b = dynamic_cast<const VectorBase& >(sb); 
+    const VectorBase& b = dynamic_cast<const VectorBase& >(sb);
     bool res = b.mValid && b.GetTypeSig() == GetTypeSig();
     return res;
 }
-
-
-// Vector
-
-template<> const char* Vector<string>::TypeSig() { return  "VS";};
 
 
 // Pair base
 
-void PairBase::DataToString(stringstream& aStream) const
+PairBase::PairBase(const PairBase& aSrc): DtBase(aSrc)
 {
-    ElemToString(E_P, aStream);
-    aStream << KDataSep;
-    ElemToString(E_Q, aStream);
 }
 
-bool PairBase::DataFromString(istringstream& aStream, bool& aRes)
+void PairBase::DataToString(ostringstream& aStream) const
 {
-    bool res = true;
-    bool changed = false;
-    string ss = aStream.str();
-    if (!ss.empty()) {
-	int beg = 0;
-	int elem_e = ss.find_first_of(KDataSep, beg);
-	string elems = ss.substr(beg, elem_e);
-	istringstream ess(elems);
-	changed |= ElemFromString(E_P, ess, res);
-	if (elem_e != string::npos) {
-	    beg = elem_e + 1;
-	    elem_e = ss.find_first_of(KDataSep, beg);
-	    elems = ss.substr(beg, elem_e);
-	    istringstream ess2(elems);
-	    changed |= ElemFromString(E_Q, ess2, res);
+    aStream << KSCompDataStart;
+    ElemToString(E_P, aStream);
+    aStream << KCompDataSep;
+    ElemToString(E_Q, aStream);
+    aStream << KSCompDataEnd;
+}
+
+void PairBase::DataFromString(istringstream& aStream)
+{
+    bool was_valid = mValid;
+    mValid = true;
+    char c = aStream.get();
+    if (c == KCompDataStart) {
+	RdpUtil::sep(aStream);
+	ElemFromString(E_P, aStream);
+	if (mValid) {
+	    RdpUtil::sep(aStream);
+	    char c = aStream.get();
+	    mValid = (c == KCompDataSep);
+	    if (mValid) {
+		RdpUtil::sep(aStream);
+		ElemFromString(E_Q, aStream);
+		if (mValid) {
+		    RdpUtil::sep(aStream);
+		    c = aStream.get();
+		    mValid = (c == KCompDataEnd);
+		}
+	    }
 	}
     }
-    aRes = res;
-    return changed;
+    if (mValid != was_valid) { mChanged = true;}
 }
 
 bool PairBase::IsCompatible(const MDtBase& sb) const
 {
-    const PairBase& b = dynamic_cast<const PairBase& >(sb); 
+    const PairBase& b = dynamic_cast<const PairBase& >(sb);
     bool res = b.mValid && b.GetTypeSig() == GetTypeSig();
     return res;
 }
 
-ostream& operator<<(ostream& aStream, const PairBase& aDt)
+
+// RdpUtil
+
+bool RdpUtil::isSep(char aSmb)
 {
-    aStream << aDt.ToString();
-    return aStream;
+    return  (KSep.find(aSmb) != string::npos);
 }
 
-istream& operator>>(istream& aStream, PairBase& aDt)
+bool RdpUtil::sep(istream& aIs)
 {
-    string str;
-    aStream >> str;
-    aDt.FromString(str);
-    return aStream;
+    bool res = false;
+    streampos pos = aIs.tellg(); // Debug
+    char c = aIs.get();
+    if (isSep(c)) {
+	do {
+	    c = aIs.get();
+	} while (isSep(c));
+	aIs.seekg(-1, aIs.cur);
+	res = true;
+    } else {
+	res = false;
+	aIs.seekg(-1, aIs.cur);
+    }
+    return res;
 }
 
-// Pair
+bool RdpUtil::val_inv(istream& aIs)
+{
+    bool res = true;
+    streampos pos = aIs.tellg();
+    for (int i = 0; i < KSv_Inv.size(); i++) {
+	char c = aIs.get();
+	if (c != KSv_Inv.at(i)) {
+	    res = false;
+	    aIs.seekg(pos, aIs.beg); // Backtrack
+	    break;
+	}
+    }
+    return res;
+}
 
-template<> const char* Pair<string>::TypeSig() { return  "PS";};
+bool RdpUtil::sstring(istream& aIs, string& aRes)
+{
+    bool res = true;
+    bool esc = false;
+    streampos pos = aIs.tellg();
+    char c = aIs.get();
+    if (c == KSStringDelim ) {
+	c = aIs.get();
+	while ((c != KSStringDelim || c == KSStringDelim && esc)  && c != KT_EOL) {
+	    if (c == KT_Escape) {
+		esc = true;
+	    } else {
+		aRes.push_back(c);
+		esc = false;
+	    }
+	    c = aIs.get();
+	}
+	if (c != KSStringDelim) {
+	    res = false;
+	}
+    } else {
+	aIs.seekg(pos, aIs.beg); // Backtrack
+	res = false;
+    }
+    return res;
+}
 
 

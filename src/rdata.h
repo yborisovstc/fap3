@@ -8,8 +8,12 @@
 #include <cmath>
 #include <assert.h>
 
-// Row data
-//
+/** @brief FAP Row data
+ * The terms:
+ * native data - upderlaying platform data
+ * fap row data - FAP data layer, unified text representation (used in system chromo)
+ *                support data statuses "valid", "updated" and "inited"
+* */
 
 using namespace std;
 
@@ -21,16 +25,15 @@ class MDtBase
     public:
 	static const char* Type() { return "MDtBase";};
     public:
-	virtual void ToString(string& aString, bool aSig = true) const = 0;
-	virtual bool FromString(const string& aString) = 0;
+	virtual void ToString(ostringstream& aOs, bool aSig = true) const = 0;
+	virtual void FromString(istringstream& aStream) = 0;
 	virtual bool IsValid() const { return false;}
 	virtual bool operator==(const MDtBase& b) const = 0;
 	virtual bool operator!=(const MDtBase& b) const = 0;
     public:
 	virtual string GetTypeSig() const { return "?";}
-	virtual void DataToString(stringstream& aStream) const {aStream << "?";}
-	// TODO to swap aRes and return data (sign of change)
-	virtual bool DataFromString(istringstream& aStream, bool& aRes) { return false;}
+	virtual void DataToString(ostringstream& aStream) const {aStream << "?";}
+	virtual void DataFromString(istringstream& aStream) = 0;
 	virtual bool IsCompatible(const MDtBase& b) const {return true;}
     public:
 	static const char mKTypeToDataSep;
@@ -42,26 +45,30 @@ class MDtBase
 class DtBase : public MDtBase
 {
     public:
-	DtBase(): mValid(false) {};
-	DtBase(const DtBase& d): mValid(d.mValid), mSigTypeOK(false) {};
+	DtBase(): mValid(false), mChanged(false), mSigTypeOK(false) {};
+	DtBase(const DtBase& d): mValid(d.mValid), mChanged(d.mChanged), mSigTypeOK(d.mSigTypeOK) {};
 	virtual ~DtBase();
-	string ToString(bool aSig = true) const { string res; ToString(res, aSig); return res; }
+	string ToString(bool aSig = true) const { ostringstream res; ToString(res, aSig); return res.str(); }
 	static int ParseSigPars(const string& aCont, string& aSig);
 	static bool IsSrepFit(const string& aString, const string& aTypeSig);
 	static bool IsDataFit(const DtBase& aData, const string& aTypeSig);
-	virtual void ToString(string& aString, bool aSig = true) const override;
-	virtual bool FromString(const string& aString) override;
+	virtual void ToString(ostringstream& aOs, bool aSig = true) const override;
+	virtual void FromString(istringstream& aStream) override;
 	virtual bool operator==(const MDtBase& b) const override { return mValid == b.IsValid();}
 	virtual bool operator!=(const MDtBase& b) const override { return !DtBase::operator==(b);}
 	virtual bool IsValid() const override { return mValid;}
+	virtual void DataFromString(istringstream& aStream) { mValid = false;}
     public:
 	virtual DtBase* Clone() {return NULL;}
 	virtual void SetMplncArg1Hint(const DtBase& res, const DtBase& arg2) {};
 	virtual void SetMplncArg2Hint(const DtBase& res, const DtBase& arg1) {};
     public:
+	friend ostream& operator<<(ostream& aStream, const DtBase& aDt);
+	friend istream& operator>>(istream& aStream, DtBase& aDt);
+    public:
 	bool mValid;
-	// Invalidity reason: sigtype is invalis
-	bool mSigTypeOK;
+	bool mChanged;   //!< Indication that data was changed on last update FromString
+	bool mSigTypeOK; //!< Invalidity reason: sigtype is invalis
 };
 
 template<class T> class Sdata: public DtBase
@@ -77,8 +84,8 @@ template<class T> class Sdata: public DtBase
 	static Sdata<T>* Construct(const string& aSrep) {Sdata<T>* res = NULL; if (IsSrepFit(aSrep)) { res = new Sdata<T>(); } else ;return res;};
 	//bool Set(const Sdata& d);
 	virtual string GetTypeSig() const { return TypeSig();};
-	virtual void DataToString(stringstream& aStream) const override { aStream << std::boolalpha << mData;};
-	virtual bool DataFromString(istringstream& aStream, bool& aRes) override;
+	virtual void DataToString(ostringstream& aStream) const override;
+	virtual void DataFromString(istringstream& aStream) override;
 	virtual DtBase* Clone() {return new Sdata<T>(*this);};
 	virtual bool operator==(const MDtBase& sb) const override { const Sdata<T>& b = dynamic_cast<const Sdata<T>& >(sb);
 	    return &b != NULL && DtBase::operator==(b) && mData == b.mData;};
@@ -101,16 +108,18 @@ template<class T> class Sdata: public DtBase
 	T mData;
 };
 
-template<class T> bool Sdata<T>::DataFromString(istringstream& aStream, bool& aRes)
+template<class T> void Sdata<T>::DataFromString(istringstream& aStream)
 {
-    bool changed = false;
+    bool valid = true;
+    mChanged = false;
     T sdata;
     InpFromString(aStream, sdata);
-//    aStream >> std::boolalpha >> sdata;
-    if (aRes = !aStream.fail()) {
-	mValid = true; if (mData != sdata) { mData = sdata; changed = true; }
+    if (!aStream.fail()) {
+	if (mData != sdata) { mData = sdata; mChanged = true; }
+    } else {
+	valid = false;
     }
-    return changed;
+    if (mValid != valid) { mValid = valid; mChanged = true;}
 }
 
 
@@ -135,8 +144,8 @@ class MtrBase: public DtBase
 	MtrBase(): DtBase(), mType(EMt_Unknown), mDim(TMtrDim(0, 0)) {};
 	MtrBase(TMtrType aType, TMtrDim aDim): DtBase(), mType(aType), mDim(aDim) {};
 	MtrBase(const MtrBase& aMtr): DtBase(aMtr), mType(aMtr.mType), mDim(aMtr.mDim) {};
-	virtual void ToString(string& aString, bool aSig = true) const;
-	bool FromString(const string& aString);
+	virtual void ToString(ostringstream& aOs, bool aSig = true) const;
+	void FromString(istringstream& aStream) override;
 	static bool IsSrepFit(const string& aString, const string& aTypeSig);
 	static bool IsDataFit(const MtrBase& aData, const string& aTypeSig);
 	static int ParseSigPars(const string& aCont, string& aSig, MtrBase::TMtrType& aType, MtrBase::TMtrDim& aDim);
@@ -148,8 +157,8 @@ class MtrBase: public DtBase
 	MtrBase& Mpl(const MtrBase& a, const MtrBase& b);
 	MtrBase& Mpl(const void* b);
 	MtrBase& Invm(const MtrBase& a);
-	virtual void ElemToString(int aInd, stringstream& aStream) const { aStream << "?";};
-	virtual bool ElemFromString(int aInd, istringstream& aStream, bool& aRes) { return false;}
+	virtual void ElemToString(int aInd, ostringstream& aStream) const { aStream << "?";};
+	virtual void ElemFromString(int aInd, istringstream& aStream) { }
 	virtual void AddElem(const MtrBase& aB, int aRI, int aCI) {};
 	virtual void SubElem(const MtrBase& aB, int aRI, int aCI) {};
 	virtual void MplElems(int r, int c, const MtrBase& a, int ar, int ac, const MtrBase& b, int br, int bc) {};
@@ -183,8 +192,8 @@ template<class T> class Mtr: public MtrBase
 	Mtr<T>& operator=(const Mtr<T>& b) { this->MtrBase::operator=(b); mData = b.mData; return *this;};
 	template <class TA> void CastDown(const Mtr<TA>& a);
 	virtual string GetTypeSig() const { return TypeSig();};
-	virtual void ElemToString(int aInd, stringstream& aStream) const { aStream << mData.at(aInd);};
-	virtual bool ElemFromString(int aInd, istringstream& aStream, bool& aRes);
+	virtual void ElemToString(int aInd, ostringstream& aStream) const { aStream << mData.at(aInd);};
+	virtual void ElemFromString(int aInd, istringstream& aStream);
 	virtual void AddElem(const MtrBase& b, int r, int c);
 	virtual void SubElem(const MtrBase& b, int r, int c);
 	virtual void MplElems(int r, int c, const MtrBase& a, int ar, int ac, const MtrBase& b, int br, int bc);
@@ -247,17 +256,17 @@ template<class T> void Mtr<T>::SubElem(const MtrBase& b, int r, int c)
     Elem(r, c) -= ((Mtr<T>&) b).GetElem(r, c);
 };
 
-template<class T> bool Mtr<T>::ElemFromString(int aInd, istringstream& aStream, bool& aRes)
+template<class T> void Mtr<T>::ElemFromString(int aInd, istringstream& aStream)
 {
-    bool changed = false;
+    bool valid = true;
     T sdata;
     aStream >> sdata;
-    if (aRes = !aStream.fail()) {
-	if (aInd >= mData.size()) { mData.resize(IntSize()); changed = true; }
+    if (valid = !aStream.fail()) {
+	if (aInd >= mData.size()) { mData.resize(IntSize()); mChanged = true; }
 	T& data = mData.at(aInd);
-	if (data != sdata) { data = sdata; changed = true; }
+	if (data != sdata) { data = sdata; mChanged = true; }
     }
-    return changed;
+    if (mValid != valid) { mValid = valid; mChanged = true; }
 }
 
 // Tuple, with named components, adds the components on run-time
@@ -283,17 +292,17 @@ class NTuple: public DtBase
 	static bool IsDataFit(const NTuple& aData);
 	static int ParseSigPars(const string& aCont, string& aSig, tCTypes& aCTypes);
 	void Init(const tCTypes& aCt);
-	virtual void ToString(string& aString, bool aSig = true) const override;
-	bool FromString(const string& aString);
+	virtual void ToString(ostringstream& aOs, bool aSig = true) const override;
+	void FromString(istringstream& aStream) override;
 	DtBase* GetElem(const string& aName);
 	virtual bool operator==(const MDtBase& sb) const override;
 	virtual bool operator!=(const MDtBase& b) const override { return !NTuple::operator==(b);}
 	NTuple& operator=(const NTuple& b);
 	virtual string GetTypeSig() const { return TypeSig();};
-	virtual void DataToString(stringstream& aStream) const;
+	virtual void DataToString(ostringstream& aStream) const;
     protected:
 	bool IsCTypesFit(const tCTypes& aCt) const;
-	void TypeParsToString(stringstream& aStream) const;
+	void TypeParsToString(ostringstream& aStream) const;
     public:
 	tComps mData;
 };
@@ -314,13 +323,13 @@ class Enum: public DtBase
 	static int ParseSigPars(const string& aCont, string& aSig, tSet& aSet);
 	static int ParseSig(const string& aCont, string& aSig);
 	bool AreTypeParsFit(const tSet& aSet) const;
-	virtual void ToString(string& aString, bool aSig = true) const override;
-	bool FromString(const string& aString);
+	virtual void ToString(ostringstream& aOs, bool aSig = true) const override;
+	void FromString(istringstream& aStream) override;
 	void Init(const tSet& aSet);
     public:
 	virtual string GetTypeSig() const { return TypeSig();};
-	virtual bool DataFromString(istringstream& aStream, bool& aRes);
-	virtual void DataToString(stringstream& aStream) const;
+	virtual void DataFromString(istringstream& aStream);
+	virtual void DataToString(ostringstream& aStream) const;
 	virtual bool IsCompatible(const DtBase& b) const;
     public:
 	virtual bool operator==(const MDtBase& sb) const override;
@@ -331,7 +340,7 @@ class Enum: public DtBase
 	bool operator<=(const Enum& b) const { return mData <= b.mData;};
 
     protected:
-	void TypeParsToString(stringstream& aStream) const;
+	void TypeParsToString(ostringstream& aStream) const;
     public:
 	tSet mSet;
 	int mData;
@@ -346,12 +355,12 @@ class VectorBase : public DtBase
 	VectorBase(): DtBase() {};
 	VectorBase(int aSize): DtBase() {};
 	VectorBase(const VectorBase& aSrc): DtBase(aSrc) {};
-	virtual void ElemToString(int aInd, stringstream& aStream) const { aStream << "?";};
-	virtual bool ElemFromString(int aIdx, istringstream& aStream, bool& aRes) { return false;}
+	virtual void ElemToString(int aInd, ostringstream& aStream) const { aStream << "?";};
+	virtual void ElemFromString(int aIdx, istringstream& aStream) = 0;
 	virtual int Size() const { return -1;}
 	// From DtBase
-	virtual void DataToString(stringstream& aStream) const override;
-	virtual bool DataFromString(istringstream& aStream, bool& aRes);
+	virtual void DataToString(ostringstream& aStream) const override;
+	virtual void DataFromString(istringstream& aStream) override;
 	virtual bool IsCompatible(const MDtBase& b) const override;
 };
 
@@ -369,22 +378,31 @@ class Vector : public VectorBase
 	static bool IsDataFit(const Vector<T>& aData) { return DtBase::IsDataFit(aData, TypeSig());};
 	// From VectorBase
 	virtual int Size() const override { return mData.size();}
-	virtual void ElemToString(int aIdx, stringstream& aStream) const override { aStream << mData.at(aIdx);}
-	virtual bool ElemFromString(int aIdx, istringstream& aStream, bool& aRes) override {
+	virtual void ElemToString(int aIdx, ostringstream& aStream) const override {
+	    aStream << mData.at(aIdx);
+	}
+	virtual void ElemFromString(int aIdx, istringstream& aStream) override {
 	    assert(aIdx <= mData.size());
-	    T data; aStream >> data; bool res = aIdx >= mData.size() || mData.at(aIdx) != data; 
-	    if (aIdx < mData.size())
+	    bool changed = false;
+	    if (aIdx < mData.size()) {
+		T data;
+		aStream >> data;
+		if (data != mData.at(aIdx)) {
+		    mChanged = true;
+		}
 		mData.at(aIdx) = data;
-	    else 
+	    } else  {
+		T data;
+		aStream >> data;
 		mData.push_back(data);
-	    aRes = true;
-	    return true; // TODO YB get non trivial ret val
+		mChanged = true;
+	    }
 	}
 	virtual bool operator==(const MDtBase& b) const override {
 	    if (!IsCompatible(b)) return false;
 	    const Vector<T>* vb = dynamic_cast<const Vector<T>*>(&b);
 	    if (!vb) return false;
-    	    return this->mData == vb->mData; }
+	    return this->mData == vb->mData; }
 	virtual bool operator!=(const MDtBase& b) const override { return !Vector::operator==(b);}
 	// From MDtBase
 	virtual string GetTypeSig() const { return TypeSig();};
@@ -408,15 +426,13 @@ class PairBase : public DtBase
     public:
 	PairBase(): DtBase() {};
 	PairBase(int aSize): DtBase() {};
-	PairBase(const PairBase& aSrc): DtBase(aSrc) {};
-	virtual void ElemToString(TElemId aId, stringstream& aStream) const { aStream << "?";};
-	virtual bool ElemFromString(TElemId aId, istringstream& aStream, bool& aRes) { return false;}
+	PairBase(const PairBase& aSrc);
+	virtual void ElemToString(TElemId aId, ostringstream& aStream) const { aStream << "?";};
+	virtual void ElemFromString(TElemId aId, istringstream& aStream) = 0;
 	// From DtBase
-	virtual void DataToString(stringstream& aStream) const override;
-	virtual bool DataFromString(istringstream& aStream, bool& aRes);
+	virtual void DataToString(ostringstream& aStream) const override;
+	virtual void DataFromString(istringstream& aStream);
 	virtual bool IsCompatible(const MDtBase& b) const override;
-	friend ostream& operator<<(ostream& aStream, const PairBase& aDt);
-	friend istream& operator>>(istream& aStream, PairBase& aDt);
 };
 
 /** @brief Typed pair
@@ -427,20 +443,18 @@ class Pair : public PairBase
     public:
 	Pair(): PairBase() {}
 	Pair(int aSize): PairBase(aSize) {}
-	Pair(const Pair& aSrc): PairBase(aSrc) {}
+	// TODO Avoid copying of massive data
+	Pair(const Pair& aSrc): PairBase(aSrc), mData(aSrc.mData) { }
 	static const char* TypeSig();
 	static bool IsSrepFit(const string& aString) { return DtBase::IsSrepFit(aString, TypeSig());};
 	static bool IsDataFit(const Pair<T>& aData) { return DtBase::IsDataFit(aData, TypeSig());};
-	virtual void ElemToString(TElemId aId, stringstream& aStream) const {
+	virtual void ElemToString(TElemId aId, ostringstream& aStream) const override {
 	    if (aId == E_P) aStream << mData.first;
 	    else  aStream << mData.second;
 	}
-	virtual bool ElemFromString(TElemId aId, istringstream& aStream, bool& aRes) {
-	    T data; aStream >> data;
-	    if (aId == E_P) mData.first = data;
-	    else mData.second = data;
-	    aRes = true;
-	    return true; // TODO YB get non trivial ret val
+	virtual void ElemFromString(TElemId aId, istringstream& aStream) override {
+	    if (aId == E_P) aStream >> mData.first;
+	    else aStream >> mData.second;
 	}
 	virtual bool operator==(const MDtBase& b) const override {
 	    if (!IsCompatible(b)) return false;
@@ -455,6 +469,16 @@ class Pair : public PairBase
 	pair<T,T> mData;
 };
 
+/** @brief Row data parsing utilities
+ * */
+class RdpUtil
+{
+    public:
+	static bool isSep(char aCh);
+	static bool sep(istream& aIs);
+	static bool val_inv(istream& aIs);
+	static bool sstring(istream& aIs, string& aRes);
+};
 
 
 #endif

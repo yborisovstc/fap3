@@ -14,21 +14,18 @@ bool DMut::IsDataFit(const DMut& aData)
     return res;
 }
 
-bool DMut::DataFromString(istringstream& aStream, bool& aRes)
+void DMut::DataFromString(istringstream& aStream)
 {
-    bool changed = true;
+    mChanged = false;
     TMut mut(aStream.str());
-    aRes = mut.IsValid();
-    if (aRes) {
-    // changed = mData != mut;
+    bool valid = mut.IsValid();
+    if (valid) {
 	mData = mut;
-    } else {
-	changed = false;
     }
-    return changed;
+    if (mValid) { mChanged = true; mValid = false;}
 }
 
-void DMut::DataToString(stringstream& aStream) const
+void DMut::DataToString(ostringstream& aStream) const
 {
     aStream << mData.ToString();
 }
@@ -52,20 +49,15 @@ bool DChr2::IsDataFit(const DChr2& aData)
     return res;
 }
 
-bool DChr2::DataFromString(istringstream& aStream, bool& aRes)
+void DChr2::DataFromString(istringstream& aStream)
 {
-    bool changed = true;
     mData.Reset();
     mData.SetFromSpec(aStream.str());
-    aRes = !mData.IsError();
-    if (aRes) {
-    } else {
-	changed = false;
-    }
-    return changed;
+    bool valid = !mData.IsError();
+    if (mValid != valid) { mValid = valid; mChanged = true; }
 }
 
-void DChr2::DataToString(stringstream& aStream) const
+void DChr2::DataToString(ostringstream& aStream) const
 {
     string spec;
     DChr2* self = const_cast<DChr2*>(this);

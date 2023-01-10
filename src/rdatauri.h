@@ -20,8 +20,8 @@ class DGuri: public DtBase
     public:
 	// From DtBase
 	virtual string GetTypeSig() const override { return TypeSig();};
-	virtual bool DataFromString(istringstream& aStream, bool& aRes) override;
-	virtual void DataToString(stringstream& aStream) const override;
+	virtual void DataFromString(istringstream& aStream) override;
+	virtual void DataToString(ostringstream& aStream) const override;
 	DGuri& operator+=(const DGuri& b) { mData.append(b.mData); return *this;}
 	virtual bool operator==(const MDtBase& b) const override {
 	    return this->DtBase::operator==(b) && (mData == dynamic_cast<const DGuri&>(b).mData);}

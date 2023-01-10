@@ -5,8 +5,24 @@
 #include "mvert.h"
 #include "data.h"
 #include "vert.h"
+#include "guri.h"
 #include "rmutdata.h"
 #include "rdatauri.h"
+
+
+
+// Row data signatures
+//
+// Composite data
+template<> const char* Vector<string>::TypeSig() { return  "VS";};
+template<> const char* Vector<Pair<string>>::TypeSig() { return  "VPS";};
+template<> const char* Pair<string>::TypeSig() { return  "PS";};
+template<> const char* Pair<Sdata<string>>::TypeSig() { return  "PSS";};
+//template<> const char* Pair<GUri>::TypeSig() { return  "PU";};
+template<> const char* Vector<DGuri>::TypeSig() { return  "VDU";};
+template<> const char* Pair<DGuri>::TypeSig() { return  "PDU";};
+template<> const char* Vector<Pair<DGuri>>::TypeSig() { return  "VPDU";};
+
 
 
 // Matrix
@@ -114,7 +130,8 @@ template<class T> HBase* HDt<T>::Create(DHost* aHost, const string& aString, MDV
 
 template<class T> HDt<T>::HDt(DHost* aHost, const string& aCont): HBase(aHost) 
 {
-    mData.FromString(aCont);
+    istringstream is(aCont);
+    mData.FromString(is);
 }
 
 template<class T> HDt<T>::HDt(DHost* aHost, const T& aData): HBase(aHost), mData(aData)
@@ -123,12 +140,16 @@ template<class T> HDt<T>::HDt(DHost* aHost, const T& aData): HBase(aHost), mData
 
 template<class T> bool HDt<T>::FromString(const string& aString)
 {
-    return mData.FromString(aString);
+    istringstream is(aString);
+    mData.FromString(is);
+    return mData.IsValid();
 }
 
 template<class T> void HDt<T>::ToString(string& aString)
 {
-    mData.ToString(aString);
+    ostringstream oss;
+    mData.ToString(oss);
+    aString = oss.str();
 }
 
 template<class T> bool HDt<T>::Set(MDVarGet* aInp)
@@ -245,6 +266,8 @@ bool BdVar::Init(const string& aString, MDVarGet* aInpv)
     else if ((mData = HDt<Vector<string>>::Create(this, aString, aInpv)) != NULL);
     else if ((mData = HDt<Vector<DGuri>>::Create(this, aString, aInpv)) != NULL);
     else if ((mData = HDt<Pair<string>>::Create(this, aString, aInpv)) != NULL);
+    else if ((mData = HDt<Pair<Sdata<string>>>::Create(this, aString, aInpv)) != NULL);
+    //else if ((mData = HDt<Pair<GUri>>::Create(this, aString, aInpv)) != NULL);
     else if ((mData = HDt<Pair<DGuri>>::Create(this, aString, aInpv)) != NULL);
     else if ((mData = HDt<Vector<Pair<DGuri>>>::Create(this, aString, aInpv)) != NULL);
     else if ((mData = HDt<Vector<Pair<string>>>::Create(this, aString, aInpv)) != NULL);
@@ -264,7 +287,8 @@ bool BdVar::FromString(const string& aData)
     if (mData == NULL) {
 	res = Init(aData);
     } else {
-	res = mData->FromString(aData);
+	mData->FromString(aData);
+	res = mData->IsValid();
 	if (!mData->IsValid() && !mData->IsSigOK()) {
 	    // Signature get's not fit, reinit
 	    Init(aData);
@@ -293,8 +317,8 @@ bool BdVar::ToString(string& aData)
 bool BdVar::update()
 {
     bool res = false;
-    string old_value; // Dbg
-    ToString(old_value); // Dbg
+    //string old_value; // Dbg
+    //ToString(old_value); // Dbg
     MDVarGet* vget = mHost->HGetInp(this);
     if (vget) {
 	if (!mData) {

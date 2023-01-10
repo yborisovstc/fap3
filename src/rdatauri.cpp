@@ -1,10 +1,6 @@
 #include "rdatauri.h"
 
 
-template<> const char* Vector<DGuri>::TypeSig() { return  "VU";};
-template<> const char* Pair<DGuri>::TypeSig() { return  "PU";};
-template<> const char* Vector<Pair<DGuri>>::TypeSig() { return  "VPU";};
-
 const char* DGuri::TypeSig() { return  "URI";};
 
 bool DGuri::IsSrepFit(const string& aString)
@@ -18,36 +14,37 @@ bool DGuri::IsDataFit(const DGuri& aData)
     return res;
 }
 
-bool DGuri::DataFromString(istringstream& aStream, bool& aRes)
+void DGuri::DataFromString(istringstream& aStream)
 {
-    bool changed = true;
-    GUri uri(aStream.str());
-    aRes = uri.isValid();
-    if (aRes) {
+    mChanged = false;
+    string str;
+    aStream >> str;
+    GUri uri(str);
+    bool valid = uri.isValid();
+    if (valid) {
 	if (mData != uri) {
 	    mData = uri;
+	    mChanged = true;
 	}
-    } else {
-	changed = false;
     }
-    return changed;
+    if (mValid != valid) { mValid = valid; mChanged = true; }
 }
 
-void DGuri::DataToString(stringstream& aStream) const
+void DGuri::DataToString(ostringstream& aStream) const
 {
     aStream << mData.operator string();
 }
 
 
-std::ostream& operator<<(std::ostream& os, const DGuri& aDuri) {
-    os << aDuri.mData.toString();
-    return os;
+std::ostream& operator<<(std::ostream& aOs, const DGuri& aDuri) {
+    ostringstream& os = dynamic_cast<ostringstream&>(aOs);
+    aDuri.ToString(os);
+    return aOs;
 }
 
-std::istream& operator>>(std::istream& is, DGuri& aDuri) {
-    string str; is >> str;
-    aDuri.mData = GUri(str);
-    aDuri.mValid = aDuri.mData.isValid();
+std::istream& operator>>(std::istream& aIs, DGuri& aDuri) {
+    istringstream& is = dynamic_cast<istringstream&>(aIs);
+    aDuri.FromString(is);
     return is;
 }
 

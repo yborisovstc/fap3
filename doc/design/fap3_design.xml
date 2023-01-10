@@ -2507,13 +2507,20 @@
 
     <sect1 id="ds_rdr"><title>Row data redesign.</title>
 	<sect2><title>Intro</title>
-	    <simpara>The current design of row data is not consistent enough.</simpara>
-	    <simpara>The first problem is the composite data inconsistent text representation.
-		The use-case that expose the design problem is the data "Vector of Pair of string", signature "VPS",
-		ref rdata.cpp. The problem here is at least in the data deserialization from the text representation. It is assumed in the current design that the textual representation
-		of composite data is rather simple: just peace of text separated by space. This doesn't work for the composite data whose component is also composite data,
-		for instance Vector of Pairs.</simpara>
-	    <simpara>So, we need to re-design row-data at least in point of serialization/deserialization.</simpara>
+	    <sect3><title>Hierarchical composite data: serialization instead of direct parsing.</title>
+		<simpara>The current design of row data is not consistent enough.</simpara>
+		<simpara>The first problem is the composite data inconsistent text representation.
+		    The use-case that expose the design problem is the container "Vector of Pair of string", signature "VPS",
+		    ref rdata.cpp. The problem here is at least in the data deserialization from the text representation. It is assumed in the current design that the textual representation
+		    of composite data is rather simple: just peace of text separated by space. This doesn't work for the composite data whose component is also composite data,
+		    for instance Vector of Pairs.</simpara>
+		<simpara>So, we need to re-design row-data at least in point of serialization/deserialization. We need to use subsequentual serialization from/to stream instead
+		    of direct parsting of string.</simpara>
+	    </sect3>
+	    <sect3><title>Scalar data of string</title>
+		<simpara>Migrating to serialization affects scalar data of string: now we need to understand where are the start and end of the string, i.e. string representation
+		    syntax needs to include string delimiters.</simpara>
+	    </sect3>
 	</sect2>
 	<sect2><title>Data text representation syntax</title>
 	    <sect3><title>Intro</title>
@@ -2521,13 +2528,27 @@
 	    </sect3>
 	    <sect3><title>Syntax</title>
 		<programlisting>
-		    data_repr = type , ":" value
-		    type = type_signature , "," , type_parameters
+		    data_repr = (scalar_data_repr | composite_date_repr)
+		    composite_date_repr = (container_data_repr | tuple_data_repr)
+		    container_data_repr = type, separator, container_data_value
+		    type = type_signature, [ "," , type_parameters ]
 		    value = (scalar_data_value | composite_data_value)
-		    composite_data_value = "(", component_data_value, ")"
-		    component_data_value = value
+		    container_data_value = "(", [[separator], component_data_value], {[separator], ",", component_data_value}, ")"
+		    component_data_value = data_repr
+
+		    (* Node that native_string_repr differs from scalar_string_data:
+		    native_string_repr terminates with space whereas scalar_string_data terminates by end_of_data 
+		    native_string_repr = sybmbols, space
+
+		    space = " "
+		    scalar_data_repr = (scalar_string_repr | scalar_int_repr | ...)
+		    scalar_string_repr = scalar_string_sig, separator, scalar_string_data
+		    scalar_string_data = "'", {symbol}, "'"
 		</programlisting>
 	    </sect3>
+	</sect2>
+	<sect2><title>[STATUS]</title>
+	    <simpara>20230109 Initial implementation. Tested with modnav.</simpara>
 	</sect2>
     </sect1>
 
