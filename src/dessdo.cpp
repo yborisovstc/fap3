@@ -529,10 +529,11 @@ void SdoEdges::DtGet(Stype& aData)
 		    GUri quri;
 		    qn->getUri(quri, mSue);
 		    DGuri purid(puri);
-		    DGuri qurid(puri);
+		    DGuri qurid(quri);
 		    Pair<DGuri> elem;
 		    elem.mData.first = purid;
 		    elem.mData.second = qurid;
+		    elem.mValid = true;
 		    aData.mData.push_back(elem);
 		}
 	    }

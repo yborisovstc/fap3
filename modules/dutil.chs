@@ -118,25 +118,24 @@ DesUtils : Elem {
             Inp2 ~ InpD.Int
         }
     }
-    InpItr : Des {
-        # "Inputs iterator"
-        # "InpM - multiplexed input"
+    IdxItr : Des {
+        # "Index based iterator"
+        # "InpCnt - container elements count"
         # "InpDone - sign of selected input is handled"
-        InpM : ExtdStateInp
+        # "OutpDone - sign of iterator reaches the end"
+        InpCnt : ExtdStateInp
         InpDone : ExtdStateInp
         Outp : ExtdStateOutp
-        ICnt : TrInpCnt @  {
-            Inp ~ InpM.Int
-        }
+        OutpDone : ExtdStateOutp
         ICnt_Dbg : State @  {
             _@ <  {
                 Debug.LogLevel = "Dbg"
-                = "SI <ERR>"
+                = "SI _INV"
             }
-            Inp ~ ICnt
+            Inp ~ InpCnt.Int
         }
-        InpMIdx : State @  {
-            # "Input index"
+        SIdx : State @  {
+            # "Index"
             _@ <  {
                 = "SI 0"
                 Debug.LogLevel = "Dbg"
@@ -146,25 +145,49 @@ DesUtils : Elem {
                 Sel ~ CidxAnd1 : TrAndVar @  {
                     Inp ~ Cmp_Gt : TrCmpVar @  {
                         Inp ~ : TrAddVar @  {
-                            Inp ~ ICnt
+                            Inp ~ InpCnt.Int
                             InpN ~ : State {
                                 = "SI 1"
                             }
                         }
-                        Inp2 ~ InpMIdx
+                        Inp2 ~ SIdx
                         _@ < Debug.LogLevel = "Dbg"
                     }
                     Inp ~ InpDone.Int
                 }
-                Inp1 ~ InpMIdx
+                Inp1 ~ SIdx
                 Inp2 ~ : TrAddVar @  {
-                    Inp ~ InpMIdx
+                    Inp ~ SIdx
                     Inp ~ : State {
                         = "SI 1"
                     }
                 }
             }
         }
-        Outp.Int ~ InpMIdx
+        Outp.Int ~ SIdx
+        OutpDone.Int ~ : TrAndVar @  {
+            Inp ~ InpDone.Int
+            Inp ~ : TrNegVar @  {
+                Inp ~ Cmp_Gt
+            }
+        }
+    }
+    InpItr : Des {
+        # "Inputs iterator"
+        # "InpM - multiplexed input"
+        # "InpDone - sign of selected input is handled"
+        # "OutpDone - sign of iterator reaches the end"
+        InpM : ExtdStateInp
+        InpDone : ExtdStateInp
+        Outp : ExtdStateOutp
+        OutpDone : ExtdStateOutp
+        Itr : IdxItr @  {
+            InpCnt ~ : TrInpCnt @  {
+                Inp ~ InpM.Int
+            }
+        }
+        Itr.InpDone ~ InpDone.Int
+        Outp.Int ~ Itr.Outp
+        OutpDone.Int ~ Itr.OutpDone
     }
 }

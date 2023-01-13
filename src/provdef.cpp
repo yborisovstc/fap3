@@ -56,7 +56,7 @@ const ProvDef::TFReg ProvDef::mReg ( {
 	/* SDOs */
         Item<SdoName>(), Item<SdoParent>(), Item<SdoComp>(), Item<SdoConn>(), Item<SdoCompsCount>(), Item<SdoCompsNames>(), 
 	Item<SdoPairsCount>(), Item<SdoPair>(), Item<SdoCompOwner>(), Item<SdoCompComp>(), Item<SdoPairs>(), Item<SdoTPairs>(),
-        Item<SdoTcPair>(),
+        Item<SdoTcPair>(), Item<SdoEdges>(),
 	/* DES context */
 	Item<DesCtxSpl>(), Item<DesCtxCsm>(), 
 	/* DES active subs */

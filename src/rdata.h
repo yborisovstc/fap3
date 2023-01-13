@@ -40,12 +40,13 @@ class MDtBase
 };
 
 
-// Scalar data
+// Data base
+//  TODO to use compact storage for the flags
 
 class DtBase : public MDtBase
 {
     public:
-	DtBase(): mValid(false), mChanged(false), mSigTypeOK(false) {};
+	DtBase(): mValid(false), mChanged(false), mSigTypeOK(false), mDsErr(false) {};
 	DtBase(const DtBase& d): mValid(d.mValid), mChanged(d.mChanged), mSigTypeOK(d.mSigTypeOK) {};
 	virtual ~DtBase();
 	string ToString(bool aSig = true) const { ostringstream res; ToString(res, aSig); return res.str(); }
@@ -69,6 +70,7 @@ class DtBase : public MDtBase
 	bool mValid;
 	bool mChanged;   //!< Indication that data was changed on last update FromString
 	bool mSigTypeOK; //!< Invalidity reason: sigtype is invalis
+	bool mDsErr;     //!< Deserialization error occured, ref ds_rdr_itr_senl. Not propagated
 };
 
 template<class T> class Sdata: public DtBase

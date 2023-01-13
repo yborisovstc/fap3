@@ -109,9 +109,9 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
  	/** @brief Input "Enable" access point
 	 * @param  Specific is that boolean AND is applied for inp ifaces
 	 * */
-	class SdcIapEnb: public SdcIap<bool> {
+	class SdcIapEnb: public SdcIap<Sdata<bool>> {
 	    public:
-		SdcIapEnb(const string& aName, ASdc* aHost, const string& aInpUri): SdcIap<bool>(aName, aHost, aInpUri) {}
+		SdcIapEnb(const string& aName, ASdc* aHost, const string& aInpUri): SdcIap<Sdata<bool>>(aName, aHost, aInpUri) {}
 		// Local
 		virtual bool updateData();
 	};
@@ -153,18 +153,17 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 
 	/** @brief Parameter access point, using Sdata
 	 * */
-	template <typename T> class SdcPap: public SdcPapb, public MDtGet<Sdata<T>> {
+	template <typename T> class SdcPap: public SdcPapb, public MDtGet<T> {
 	    public:
-		template<typename P> using TGetData = std::function<void (Sdata<P>&)>;
+		template<typename P> using TGetData = std::function<void (P&)>;
 	    public:
 		SdcPap(const string& aName, ASdc* aHost, const string& aCpUri, TGetData<T> aGetData): SdcPapb(aName, aHost, aCpUri), mGetData(aGetData) {}
 		// From MDVarGet
-		virtual string VarGetIfid() const override {return MDtGet<Sdata<T>>::Type();}
+		virtual string VarGetIfid() const override {return MDtGet<T>::Type();}
 		virtual MIface* DoGetDObj(const char *aName) override;
 		// From MDtGet
-		virtual string MDtGet_Uid() const {return MDtGet<Sdata<T>>::Type();}
-		//virtual void DtGet(Sdata<T>& aData) override { mHost->getOut(aData);}
-		virtual void DtGet(Sdata<T>& aData) override { mGetData(aData);}
+		virtual string MDtGet_Uid() const {return MDtGet<T>::Type();}
+		virtual void DtGet(T& aData) override { mGetData(aData);}
 	    public:
 		TGetData<T> mGetData;
 		T mData;
@@ -172,15 +171,15 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 
 	/** @brief Parameter access point, using cached Sdata
 	 * */
-	template <typename T> class SdcPapc: public SdcPapb, public MDtGet<Sdata<T>> {
+	template <typename T> class SdcPapc: public SdcPapb, public MDtGet<T> {
 	    public:
 		SdcPapc(const string& aName, ASdc* aHost, const string& aCpUri): SdcPapb(aName, aHost, aCpUri) {}
 		// From MDVarGet
-		virtual string VarGetIfid() const override {return MDtGet<Sdata<T>>::Type();}
+		virtual string VarGetIfid() const override {return MDtGet<T>::Type();}
 		virtual MIface* DoGetDObj(const char *aName) override;
 		// From MDtGet
-		virtual string MDtGet_Uid() const {return MDtGet<Sdata<T>>::Type();}
-		virtual void DtGet(Sdata<T>& aData) override { aData.mData = mData; aData.mValid = true;}
+		virtual string MDtGet_Uid() const {return MDtGet<T>::Type();}
+		virtual void DtGet(T& aData) override { aData = mData; }
 		// Local
 		void updateData(const T& aData);
 	    public:
@@ -303,8 +302,6 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 	void notifyMaps();
 	void notifyOutp() { mOapOut.NotifyInpsUpdated(); }
 	void UpdateMag();
-	/** @brief Calculate control conditions */
-	virtual void getCcd(bool& aData) {}
     protected:
 	vector<SdcIapb*> mIaps; /*!< Input adapters registry */
 	vector<SdcPapb*> mPaps; /*!< Param adapters registry */
@@ -314,7 +311,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 	bool mUpdNotified;  //<! Sign of that State notified observers on Update
 	bool mActNotified;  //<! Sign of that State notified observers on Activation
 	ASdc::SdcIapEnb mIapEnb; /*!< "Enable" input access point */
-	ASdc::SdcPap<bool> mOapOut; /*!< Controlling status access point */
+	ASdc::SdcPap<Sdata<bool>> mOapOut; /*!< Controlling status access point */
 	MagObs mMagObs;             /*!< MAG observer */
 	bool mCdone;               /*!<  Sign that controlling was completed, ref ds_dcs_sdc_dsgn_cc */
 };
@@ -322,9 +319,9 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 template <typename T> MIface* ASdc::SdcPap<T>::DoGetDObj(const char *aName)
 {
     MIface* res = NULL;
-    string tt = MDtGet<Sdata<T> >::Type();
+    string tt = MDtGet<T>::Type();
     if (tt.compare(aName) == 0) {
-	res = dynamic_cast<MDtGet<Sdata<T> >*>(this);
+	res = dynamic_cast<MDtGet<T>*>(this);
     }
     return res;
 }
@@ -333,9 +330,9 @@ template <typename T>
 MIface* ASdc::SdcPapc<T>::DoGetDObj(const char *aName)
 {
     MIface* res = NULL;
-    string tt = MDtGet<Sdata<T> >::Type();
+    string tt = MDtGet<T>::Type();
     if (tt.compare(aName) == 0) {
-	res = dynamic_cast<MDtGet<Sdata<T> >*>(this);
+	res = dynamic_cast<MDtGet<T>*>(this);
     }
     return res;
 }
@@ -362,7 +359,7 @@ class ASdcMut : public ASdc
 	virtual bool getState(bool aConf = false) override;
 	bool doCtl() override;
     protected:
-	ASdc::SdcIap<string> mIapTarg; /*!< "Target" input access point, URI */
+	ASdc::SdcIap<Sdata<string>> mIapTarg; /*!< "Target" input access point, URI */
 	ASdc::SdcIapg<DChr2> mIapMut; /*!< "Mutation" input access point, Chromo2 */
 	bool mMutApplied; /*!< Indicatio of mut has been applied successfully */
 };
@@ -383,9 +380,9 @@ class ASdcComp : public ASdc
 	virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override;
 	virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override;
     protected:
-	ASdc::SdcIap<string> mIapName; /*!< "Name" input access point */
-	ASdc::SdcIap<string> mIapParent; /*!< "Parent" input access point */
-	ASdc::SdcPapc<string> mOapName; /*!< Comps Name parameter point, Name pipelined, ref ds_dcs_sdc_dsgn_idp */
+	ASdc::SdcIap<Sdata<string>> mIapName; /*!< "Name" input access point */
+	ASdc::SdcIap<Sdata<string>> mIapParent; /*!< "Parent" input access point */
+	ASdc::SdcPapc<Sdata<string>> mOapName; /*!< Comps Name parameter point, Name pipelined, ref ds_dcs_sdc_dsgn_idp */
 };
 
 /** @brief SDC agent "Removing Component"
@@ -403,8 +400,8 @@ class ASdcRm : public ASdc
 	virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override;
 	virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override;
     protected:
-	ASdc::SdcIap<string> mIapName; /*!< "Name" input access point */
-	ASdc::SdcPapc<string> mOapName; /*!< Comps Name parameter point, Name pipelined, ref ds_dcs_sdc_dsgn_idp */
+	ASdc::SdcIap<Sdata<string>> mIapName; /*!< "Name" input access point */
+	ASdc::SdcPapc<Sdata<string>> mOapName; /*!< Comps Name parameter point, Name pipelined, ref ds_dcs_sdc_dsgn_idp */
 };
 
 
@@ -420,10 +417,9 @@ class ASdcConn : public ASdc
 	// From ASdc
 	virtual bool getState(bool aConf = false) override;
 	bool doCtl() override;
-	virtual void getCcd(bool& aData) override;
     protected:
-	ASdc::SdcIap<string> mIapV1; /*!< "V1" input access point */
-	ASdc::SdcIap<string> mIapV2; /*!< "V2" input access point */
+	ASdc::SdcIap<Sdata<string>> mIapV1; /*!< "V1" input access point */
+	ASdc::SdcIap<Sdata<string>> mIapV2; /*!< "V2" input access point */
 };
 
 /** @brief SDC agent "Disonnect"
@@ -438,38 +434,9 @@ class ASdcDisconn : public ASdc
 	virtual bool getState(bool aConf = false) override;
 	bool doCtl() override;
     protected:
-	ASdc::SdcIap<string> mIapV1; /*!< "V1" input access point */
-	ASdc::SdcIap<string> mIapV2; /*!< "V2" input access point */
+	ASdc::SdcIap<Sdata<string>> mIapV1; /*!< "V1" input access point */
+	ASdc::SdcIap<Sdata<string>> mIapV2; /*!< "V2" input access point */
 };
-
-#if 0
-/** @brief SDC agent "Insert"
- * Inserts system between given CP and its pair
- * There are improved version 2.
- * The current version is required because the ver.2 isn't compatible
- * with current version of vis container.
- * */
-class ASdcInsert : public ASdc
-{
-    public:
-	static const char* Type() { return "ASdcInsert";};
-	ASdcInsert(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
-    protected:
-	// From MObserver
-	virtual void onObsChanged(MObservable* aObl) override;
-	// From ASdc
-	virtual bool getState(bool aConf = false) override;
-	bool doCtl() override;
-	virtual void getCcd(bool& aData) override;
-    protected:
-	ASdc::SdcIap<string> mIapCp; /*!< "Given CP" input access point */
-	ASdc::SdcIap<string> mIapIcp; /*!< "Inserted system CP conn to given CP" input access point */
-	ASdc::SdcIap<string> mIapIcpp; /*!< "Inserted system CP conn to given CP pair" input access point */
-	ASdc::SdcPapc<string> mOapName; /*!< Comps Name parameter point, Name pipelined, ref ds_dcs_sdc_dsgn_idp */
-	ASdc::MagDobs mDobsIcp; /*!< "Inserted system CP conn to given CP" observation */
-	MVert* mCpPair;
-};
-#endif
 
 /** @brief SDC agent "Insert node into list, ver. 2"
  * */
@@ -485,10 +452,10 @@ class ASdcInsert2 : public ASdc
 	virtual bool getState(bool aConf = false) override;
 	bool doCtl() override;
     protected:
-	ASdc::SdcIap<string> mIapName; /*!< "Link name" input access point */
-	ASdc::SdcIap<string> mIapPrev; /*!< "Prev CP" input access point */
-	ASdc::SdcIap<string> mIapNext; /*!< "Next CP" input access point */
-	ASdc::SdcIap<string> mIapPname; /*!< "Position - name" input access point */
+	ASdc::SdcIap<Sdata<string>> mIapName; /*!< "Link name" input access point */
+	ASdc::SdcIap<Sdata<string>> mIapPrev; /*!< "Prev CP" input access point */
+	ASdc::SdcIap<Sdata<string>> mIapNext; /*!< "Next CP" input access point */
+	ASdc::SdcIap<Sdata<string>> mIapPname; /*!< "Position - name" input access point */
 	ASdc::MagDobs mDobsNprev; /*!< "Link prev CP" observation */
 	MVert* mCpPair;
 };
@@ -507,9 +474,9 @@ class ASdcExtract : public ASdc
 	virtual bool getState(bool aConf = false) override;
 	bool doCtl() override;
     protected:
-	ASdc::SdcIap<string> mIapName; /*!< "Link name" input access point */
-	ASdc::SdcIap<string> mIapPrev; /*!< "Prev CP" input access point */
-	ASdc::SdcIap<string> mIapNext; /*!< "Next CP" input access point */
+	ASdc::SdcIap<Sdata<string>> mIapName; /*!< "Link name" input access point */
+	ASdc::SdcIap<Sdata<string>> mIapPrev; /*!< "Prev CP" input access point */
+	ASdc::SdcIap<Sdata<string>> mIapNext; /*!< "Next CP" input access point */
 	MVert* mCpPair;
 };
 

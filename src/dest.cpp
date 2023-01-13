@@ -735,9 +735,12 @@ void TrSizeVar::Init(const string& aIfaceName)
 	mFunc = NULL;
     }
     MDVarGet* inp = GetInp(Func::EInp1);
+    // TODO Redesing to avoid overhead, ref ds_rdr_itr_ovst
     if (inp) {
 	string t_inp = inp->VarGetIfid();
 	if ((mFunc = FSizeVect<string>::Create(this, aIfaceName, t_inp)));
+	else if ((mFunc = FSizeVect<Pair<DGuri>>::Create(this, aIfaceName, t_inp)));
+	else if ((mFunc = FSizeVect<DGuri>::Create(this, aIfaceName, t_inp)));
     }
 }
 

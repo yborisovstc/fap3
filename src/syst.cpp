@@ -530,8 +530,9 @@ void Syst::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 		res = MVert::connect(pv, qv);
 		if (!res) {
 		    Log(TLog(EErr, this) + "Failed connecting [" + sp + "] to [" + sq + "]");
-		    mEdges.push_back(TEdge(pv, qv));
 		    res = MVert::connect(pv, qv);
+		} else {
+		    mEdges.push_back(TEdge(pv, qv));
 		}
 	    } else {
 		Log(TLog(EErr, this) + "Connecting [" + sp + "] to [" + sq + "] - already connected");

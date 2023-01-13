@@ -1299,6 +1299,8 @@ void Init()
     FCmp<Enum>::Create(host, "", "", FCmpBase::ELt);
     FCmp<DGuri>::Create(host, "", "", FCmpBase::ELt);
     FSizeVect<string>::Create(host, string(), string());
+    FSizeVect<Pair<DGuri>>::Create(host, string(), string());
+    FSizeVect<DGuri>::Create(host, string(), string());
     FAtVect<string>::Create(host, string(), string());
     FApnd<Sdata<string>>::Create(host, string(), string());
     FApnd<DGuri>::Create(host, string(), string());

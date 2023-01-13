@@ -35,6 +35,7 @@ class HBase: public MIface
 	virtual string IfaceSGetId() const = 0;
 	virtual bool IsValid() const { return true;}
 	virtual bool IsSigOK() const { return false;}
+	virtual bool IsDsErr() const { return false;};
 	DHost& mHost;
 };
 
@@ -55,6 +56,7 @@ template <class T> class HMtr: public HBase, public MMtrGet<T> {
 	virtual void ToString(string& aString);
 	virtual bool Set(MDVarGet* aInp);
 	virtual bool IsValid() const { return mData.mValid;};
+	virtual bool IsDsErr() const { return mData.mDsErr;};
     protected:
 	Mtr<T> mData;
 };
@@ -80,6 +82,7 @@ template <class T> class HDt: public HBase, public MDtGet<T>, public MDtSet<T> {
 	virtual bool Set(MDVarGet* aInp);
 	virtual bool IsValid() const { return mData.mValid;};
 	virtual bool IsSigOK() const { return mData.mSigTypeOK;};
+	virtual bool IsDsErr() const { return mData.mDsErr;};
     protected:
 	T mData;
 };
@@ -99,6 +102,7 @@ class BdVar: public MDVar, public MUpdatable, public MDVarGet, public MDVarSet, 
 	virtual bool FromString(const string& aData); 
 	virtual bool ToString(string& aData); 
 	virtual bool IsValid() const;
+	virtual bool IsDsError() const;
 	// From MUpdatable
 	virtual string MUpdatable_Uid() const override { return mHost->GetDvarUid(this);}
 	virtual bool update() override;

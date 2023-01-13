@@ -53,6 +53,14 @@ Root : Elem {
                     = "SB true"
                 }
             }
+            SrzDone : State @  {
+                _@ <  {
+                    Debug.LogLevel = "Dbg"
+                    = "SB _INV"
+                }
+                Inp ~ Srz.OutpDone
+            }
+
             # "Selected input"
             SelectedInp : TrInpSel @  {
                 Inp ~ CtxC.Ctx1.Int

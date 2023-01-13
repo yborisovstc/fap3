@@ -2506,7 +2506,8 @@
     </sect1>
 
     <sect1 id="ds_rdr"><title>Row data redesign.</title>
-	<sect2><title>Intro</title>
+	<sect2 id="ds_rdr_itr"><title>Intro</title>
+	    <simpara>The current implementation of row data has a number of problems that are indicated by use-cases below</simpara>
 	    <sect3><title>Hierarchical composite data: serialization instead of direct parsing.</title>
 		<simpara>The current design of row data is not consistent enough.</simpara>
 		<simpara>The first problem is the composite data inconsistent text representation.
@@ -2520,6 +2521,14 @@
 	    <sect3><title>Scalar data of string</title>
 		<simpara>Migrating to serialization affects scalar data of string: now we need to understand where are the start and end of the string, i.e. string representation
 		    syntax needs to include string delimiters.</simpara>
+	    </sect3>
+	    <sect3 id="ds_rdr_itr_ovst"><title>Overhead in Containers size transition.</title>
+		<simpara>Look at TrSizeVar. Here we don't actually need to know what is the type of Vectors element. We simply need to get the size of Vector. But with the 
+		    current design we need to exactly resolve the full type of Vector, i.e. have a number Vector variants supported.</simpara>
+	    </sect3>
+	    <sect3 id="ds_rdr_itr_senl"><title>Data text represenation syntax error is not logged</title>
+		<simpara>The root-cause is that row-data has only one mValid flag that covers both undefined data and the data that gets erroneous because of wrong text representation.</simpara>
+		<simpara>The solution would be have separate flags for these two cases.</simpara>
 	    </sect3>
 	</sect2>
 	<sect2><title>Data text representation syntax</title>

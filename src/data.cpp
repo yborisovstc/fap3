@@ -362,4 +362,8 @@ bool BdVar::IsValid() const
     return mData ? mData->IsValid() : false;
 }
 
+bool BdVar::IsDsError() const
+{
+    return mData ? mData->IsDsErr() : false;
+}
 

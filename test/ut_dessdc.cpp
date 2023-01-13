@@ -14,11 +14,12 @@ class Ut_sdc : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_sdc);
 
-    //CPPUNIT_TEST(test_Sdc_1);
+    CPPUNIT_TEST(test_Sdc_1);
     //CPPUNIT_TEST(test_Sdc_2);
     //CPPUNIT_TEST(test_Sdc_3);
     //CPPUNIT_TEST(test_Sdc_4);
-    CPPUNIT_TEST(test_Sdo_1);
+    //CPPUNIT_TEST(test_Sdo_1);
+    //CPPUNIT_TEST(test_Sdo_2);
     CPPUNIT_TEST_SUITE_END();
     public:
     virtual void setUp();
@@ -31,6 +32,7 @@ class Ut_sdc : public CPPUNIT_NS::TestFixture
     void test_Sdc_3();
     void test_Sdc_4();
     void test_Sdo_1();
+    void test_Sdo_2();
     private:
     Env* mEnv;
 };
@@ -87,7 +89,7 @@ void Ut_sdc::test_Sdc_1()
     bool res = mEnv->RunSystem(7, 2);
 
     // Verify the comp created
-    MNode* comp = root->getNode("Launcher.Comp");
+    MNode* comp = root->getNode("Launcher.Comp2");
     CPPUNIT_ASSERT_MESSAGE("Comp hasn't been created", comp);
 
     delete mEnv;
@@ -213,7 +215,20 @@ void Ut_sdc::test_Sdo_1()
     GetGData(conndbg, dresu);
     CPPUNIT_ASSERT_MESSAGE("Wrong DCO V1 pairs count result", dresu.mData == "V4.V4_1");
 
+}
+
+void Ut_sdc::test_Sdo_2()
+{
+    printf("\n === Test of SDO #2: comps, connections, etc.\n");
+    MNode* root = constructSystem("ut_sdo_2");
+
+    bool res = mEnv->RunSystem(5, 2);
+
+    // Verify V1 observing
+    MNode* cdbg = root->getNode("Launcher.Dbg_DcoComp");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get Launcher.Dbg_DcoComp", cdbg);
+    bool dres = false;
 
     delete mEnv;
 }
-
+ 

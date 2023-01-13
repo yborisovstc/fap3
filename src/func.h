@@ -348,6 +348,26 @@ class FAtVect: public FAtBase, public MDtGet<Sdata<T>> {
 	Sdata<T> mRes;
 };
 
+#if 0
+/** @briefGetting component of container: Pair
+ * */
+template <class T>
+class FAtPair: public FAtBase, public MDtGet<Sdata<T>> {
+    public:
+	static Func* Create(Host* aHost, const string& aOutIid, const string& aInp1Id);
+	FAtVect(Host& aHost): FAtBase(aHost) {};
+	virtual MIface* getLif(const char *aName) override;
+	virtual string Uid() const override { return mHost.getHostUri() + Ifu::KUidSepIc + "func" + Ifu::KUidSep + MDtGet<Sdata<T>>::Type();}
+	virtual string IfaceGetId() const override { return MDtGet<Sdata<T>>::Type();}
+	virtual void DtGet(Sdata<T>& aData) override;
+	virtual void GetResult(string& aResult) const override {ostringstream os; mRes.ToString(os); aResult = os.str();}
+	virtual string GetInpExpType(int aId) const override;
+    protected:
+	Sdata<T> mRes;
+};
+#endif
+
+
 
 /** @brief Conversion to string
  * */

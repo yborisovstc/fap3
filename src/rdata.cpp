@@ -109,9 +109,11 @@ void DtBase::FromString(istringstream& aStream)
 	RdpUtil::sep(aStream);
 	if (!RdpUtil::val_inv(aStream)) {
 	    DataFromString(aStream);
+	    mDsErr = !mValid;
 	}
     } else {
 	mSigTypeOK = false;
+	mDsErr = true;
     }
     if (mValid != was_valid) { mChanged = true; }
 }
