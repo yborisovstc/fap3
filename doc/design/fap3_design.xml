@@ -2530,6 +2530,15 @@
 		<simpara>The root-cause is that row-data has only one mValid flag that covers both undefined data and the data that gets erroneous because of wrong text representation.</simpara>
 		<simpara>The solution would be have separate flags for these two cases.</simpara>
 	    </sect3>
+	    <sect3><title>Row data support of container components access interfaces</title>
+		<simpara>This would be much more effective then copy container and then get compoments from it. Refer FAtVect&lt;T&gt;::DtGet():</simpara>
+		<programlisting>
+		    ||          Vector&lt;T&gt; arg;
+		    ||          dfget->DtGet(arg); !! YB the data is copied
+		    ...
+		    234                 aData.mValid = arg.GetElem(ind.mData, aData.mData);
+		</programlisting>
+	    </sect3>
 	</sect2>
 	<sect2><title>Data text representation syntax</title>
 	    <sect3><title>Intro</title>
@@ -2853,6 +2862,12 @@
 	    <sect2><title>Solution</title>
 		<simpara>We need to redesing IRM rouing for MDesInpObserver iface. Ref <xref linkend="ds_sor"/> for the desing change details.</simpara>
 	    </sect2>
+	</sect2>
+	<sect2 id="ds_iss_010"><title>[<glossterm id="iss_010">DS_ISS_010</glossterm>] 20230114 Socket resolves iface even the iface is not provided by socket pins</title>
+	    <simpara>There is still the redirection to the socket pair event if iface isn't resolved by pins. </simpara>
+	    <sect3><title>Solution</title>
+		<simpara>To disable redirecting to the socket pair if iface isn't resolved by pins.</simpara>
+	    </sect3>
 	</sect2>
     </sect1>
 

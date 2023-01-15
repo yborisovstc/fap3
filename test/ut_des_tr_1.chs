@@ -38,7 +38,6 @@ MyRoot : Elem {
                     = "PSS ( SS 'First elem' , SS 'Second elem' )"
                 }
             }
-
             # "Data: Pair of data URI"
             StPU : State @  {
                 _@ <  {
@@ -104,15 +103,41 @@ MyRoot : Elem {
             St3.Inp ~ : TrSizeVar @  {
                 Inp ~ St2
             }
-            # "Item of vector"
+            # "Item of vector, wrapped by Sdata"
             St4 : State {
-                = "SS "
+                = "SS _INV"
                 Debug.LogLevel = "Dbg"
             }
             St4.Inp ~ : TrAtVar @  {
                 Inp ~ St2
                 Index ~ : State {
                     = "SI 2"
+                }
+            }
+            # "Item of vector, generic: not wrapped by Sdata"
+            SAtgVdu : State {
+                = "URI _INV"
+                Debug.LogLevel = "Dbg"
+            }
+            SAtgVdu.Inp ~ : TrAtgVar @  {
+                Inp ~ : State {
+                    = "VDU ( URI a1.a2 , URI b1.b2 )"
+                }
+                Index ~ : State {
+                    = "SI 1"
+                }
+            }
+            # "Item of Pair, generic: not wrapped by Sdata"
+            SAtgPu : State {
+                = "URI _INV"
+                Debug.LogLevel = "Dbg"
+            }
+            SAtgPu.Inp ~ : TrAtgVar @  {
+                Inp ~ : State {
+                    = "PDU ( URI a1.a2 , URI b1.b2 )"
+                }
+                Index ~ : State {
+                    = "SI 1"
                 }
             }
             # "Tuple composer"

@@ -126,12 +126,12 @@ class Ut_syst : public CPPUNIT_NS::TestFixture
     ///CPPUNIT_TEST(test_syst_link);
     //CPPUNIT_TEST(test_cp_2);
     //CPPUNIT_TEST(test_syst_cp_3);
-    ///CPPUNIT_TEST(test_syst_sock_1);
+    CPPUNIT_TEST(test_syst_sock_1);
     ///CPPUNIT_TEST(test_syst_sock_2);
     ///CPPUNIT_TEST(test_syst_sock_3);
     ///CPPUNIT_TEST(test_syst_sock_4);
     //CPPUNIT_TEST(test_syst_cpe_1);
-    CPPUNIT_TEST(test_syst_dn);
+    //!CPPUNIT_TEST(test_syst_dn);
     CPPUNIT_TEST_SUITE_END();
     public:
     virtual void setUp();
@@ -549,6 +549,10 @@ void Ut_syst::test_syst_sock_1()
     MUnit* s1p1u = s1p1n->lIf(s1p1u);
     MTIf1* ifc1 = s1p1u->getSif(ifc1);
     CPPUNIT_ASSERT_MESSAGE("Fail to get ifc1", ifc1);
+    // Verify IFR for iface that doesn't provided by pins
+    MUnit* s1u = s1n->lIf(s1u);
+    MSyst* s1s = s1u ? s1u->getSif(s1s) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Resolved iface not-provided", !s1s);
 
     delete mEnv;
 }

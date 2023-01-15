@@ -365,6 +365,7 @@ void Socket::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 		}
 		compcp = owner()->nextPair(compcp);
 	    }
+#if 0 // ds_iss_010. Disabled redirection to pair to avoid resolving iface not provided by pins
 	    // Using priority logic: if pins resolve then stop
 	    if (!aReq->provided()->isResolved()) {
 		// Then redirect to pair
@@ -374,8 +375,8 @@ void Socket::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 			pairu->resolveIface(aName, aReq);
 		    }
 		}
-
 	    }
+#endif
 	}
     }
 }

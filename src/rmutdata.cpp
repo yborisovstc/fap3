@@ -51,9 +51,13 @@ bool DChr2::IsDataFit(const DChr2& aData)
 
 void DChr2::DataFromString(istringstream& aStream)
 {
+    bool valid = false;
     mData.Reset();
-    mData.SetFromSpec(aStream.str());
-    bool valid = !mData.IsError();
+    string str;
+    if (RdpUtil::sstring(aStream, str)) {
+	mData.SetFromSpec(str);
+	valid = !mData.IsError();
+    }
     if (mValid != valid) { mValid = valid; mChanged = true; }
 }
 

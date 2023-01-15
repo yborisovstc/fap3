@@ -331,7 +331,8 @@ class FAtBase: public Func
 };
 
 
-/** @briefGetting component of container: Vector
+/** @brief Getting component of container: Vector, wrapping by Sdata
+ * It seems useful in case of having Vector of primitive scalar data (e.g. string)
  * */
 template <class T>
 class FAtVect: public FAtBase, public MDtGet<Sdata<T>> {
@@ -348,24 +349,42 @@ class FAtVect: public FAtBase, public MDtGet<Sdata<T>> {
 	Sdata<T> mRes;
 };
 
-#if 0
-/** @briefGetting component of container: Pair
+/** @brief Getting component of container: Vector, generic variant
+ * DOESN'T wrap component by Sdata
  * */
 template <class T>
-class FAtPair: public FAtBase, public MDtGet<Sdata<T>> {
+class FAtgVect: public FAtBase, public MDtGet<T> {
     public:
 	static Func* Create(Host* aHost, const string& aOutIid, const string& aInp1Id);
-	FAtVect(Host& aHost): FAtBase(aHost) {};
+	FAtgVect(Host& aHost): FAtBase(aHost) {};
 	virtual MIface* getLif(const char *aName) override;
-	virtual string Uid() const override { return mHost.getHostUri() + Ifu::KUidSepIc + "func" + Ifu::KUidSep + MDtGet<Sdata<T>>::Type();}
-	virtual string IfaceGetId() const override { return MDtGet<Sdata<T>>::Type();}
-	virtual void DtGet(Sdata<T>& aData) override;
+	virtual string Uid() const override { return mHost.getHostUri() + Ifu::KUidSepIc + "func" + Ifu::KUidSep + MDtGet<T>::Type();}
+	virtual string IfaceGetId() const override { return MDtGet<T>::Type();}
+	virtual void DtGet(T& aData) override;
 	virtual void GetResult(string& aResult) const override {ostringstream os; mRes.ToString(os); aResult = os.str();}
 	virtual string GetInpExpType(int aId) const override;
     protected:
-	Sdata<T> mRes;
+	T mRes;
 };
-#endif
+
+/** @brief Getting component of container: Pair, generic variant
+ * DOESN'T wrap component by Sdata
+ * */
+template <class T>
+class FAtgPair: public FAtBase, public MDtGet<T> {
+    public:
+	static Func* Create(Host* aHost, const string& aOutIid, const string& aInp1Id);
+	FAtgPair(Host& aHost): FAtBase(aHost) {};
+	virtual MIface* getLif(const char *aName) override;
+	virtual string Uid() const override { return mHost.getHostUri() + Ifu::KUidSepIc + "func" + Ifu::KUidSep + MDtGet<T>::Type();}
+	virtual string IfaceGetId() const override { return MDtGet<T>::Type();}
+	virtual void DtGet(T& aData) override;
+	virtual void GetResult(string& aResult) const override {ostringstream os; mRes.ToString(os); aResult = os.str();}
+	virtual string GetInpExpType(int aId) const override;
+    protected:
+	T mRes;
+};
+
 
 
 

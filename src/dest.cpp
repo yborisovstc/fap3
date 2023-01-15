@@ -756,7 +756,7 @@ string TrSizeVar::VarGetIfid() const
 }
 
 
-// Agent function "Get n-coord of Vector"
+// Agent transition "Get n-coord of Vector, wrapping it by Sdata"
 
 TrAtVar::TrAtVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
 {
@@ -779,6 +779,38 @@ void TrAtVar::Init(const string& aIfaceName)
 }
 
 string TrAtVar::GetInpUri(int aId) const
+{
+    if (aId == Func::EInp2) return "Index";
+    else if (aId == Func::EInp1) return "Inp";
+    else return string();
+}
+
+
+// Agent transition "Get n-coord of Vector, generic, no wrapping by Sdata"
+
+TrAtgVar::TrAtgVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+{
+    AddInput("Inp");
+    AddInput("Index");
+}
+
+void TrAtgVar::Init(const string& aIfaceName)
+{
+    if (mFunc) {
+	delete mFunc;
+	mFunc = NULL;
+     }
+    MDVarGet* inp_ind = GetInp(Func::EInp2);
+    MDVarGet* inp = GetInp(Func::EInp1);
+    if (inp_ind && inp) {
+	 string t_inp = inp->VarGetIfid();
+	if ((mFunc = FAtgVect<DGuri>::Create(this, aIfaceName, t_inp)));
+	else if ((mFunc = FAtgVect<Pair<DGuri>>::Create(this, aIfaceName, t_inp)));
+	else if ((mFunc = FAtgPair<DGuri>::Create(this, aIfaceName, t_inp)));
+    }
+}
+
+string TrAtgVar::GetInpUri(int aId) const
 {
     if (aId == Func::EInp2) return "Index";
     else if (aId == Func::EInp1) return "Inp";

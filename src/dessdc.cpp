@@ -889,18 +889,18 @@ bool ASdcInsert2::doCtl()
 	// Disconnect Cp
 	bool cres = MVert::disconnect(pnode_nextv, mCpPair);
 	if (!cres) {
-	    Log(TLog(EInfo, this) + "Failed disconnecting [" + pnode_next->Uid() + "] - [" + mCpPair->Uid() + "]");
+	    Log(TLog(EErr, this) + "Failed disconnecting [" + pnode_next->Uid() + "] - [" + mCpPair->Uid() + "]");
 	    break;
 	}
 	// Connect
 	cres = MVert::connect(prevv, pnode_nextv);
 	if (!cres) {
-	    Log(TLog(EInfo, this) + "Failed connecting [" + pnode_next->Uid() + "] - [" + next->Uid() + "]");
+	    Log(TLog(EErr, this) + "Failed connecting [" + prevv->Uid() + "] - [" + pnode_next->Uid() + "]");
 	    break;
 	}
 	cres = MVert::connect(nextv, mCpPair);
 	if (!cres) {
-	    Log(TLog(EInfo, this) + "Failed connecting [" + nextv->Uid() + "] - [" + mCpPair->Uid() + "]");
+	    Log(TLog(EErr, this) + "Failed connecting [" + nextv->Uid() + "] - [" + mCpPair->Uid() + "]");
 	    break;
 	}
 	Log(TLog(EInfo, this) + "Managed agent is updated, inserted [" + comp->Uid() + "] before [" + pnode->Uid() + "]");

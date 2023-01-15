@@ -888,7 +888,7 @@ template <class T> string FSizeVect<T>::GetInpExpType(int aId) const
 }
 
 
-// Getting component of container: vector
+// Getting component of container: vector, wrapping comp by Sdata
 //
 template <class T>
 Func* FAtVect<T>::Create(Host* aHost, const string& aOutIid, const string& aInpIid)
@@ -961,6 +961,159 @@ template <class T> string FAtVect<T>::GetInpExpType(int aId) const
     }
     return res;
 }
+
+
+// Getting component of container: vector, generic, NOT wrapping comp by Sdata
+//
+template <class T>
+Func* FAtgVect<T>::Create(Host* aHost, const string& aOutIid, const string& aInpIid)
+{
+    Func* res = NULL;
+    if (!aOutIid.empty()) {
+	if (aOutIid == MDtGet<T>::Type() && aInpIid == MDtGet<Vector<T>>::Type()) {
+	    res = new FAtgVect<T>(*aHost);
+	}
+    } else {
+	// Weak negotiation - just base on input type
+	if (aInpIid == MDtGet<Vector<T>>::Type()) {
+	    res = new FAtgVect<T>(*aHost);
+	}
+    }
+    return res;
+}
+
+template<class T>
+MIface *FAtgVect<T>::getLif(const char *aName)
+{
+    MIface* res = NULL;
+    if (strcmp(aName, MDtGet<T>::Type()) == 0) res = (MDtGet<T>*) this;
+    return res;
+}
+
+template <class T>
+void FAtgVect<T>::DtGet(T& aData)
+{
+    bool res = false;
+    MDVarGet* dget = mHost.GetInp(EInp1);
+    MDtGet<Vector<T>>* dfget = dget->GetDObj(dfget);
+    dget = mHost.GetInp(EInp2);
+    MDtGet<Sdata<int>>* diget = dget->GetDObj(diget);
+    if (dfget && diget) {
+	Vector<T> arg;
+	dfget->DtGet(arg);
+	Sdata<int> ind;
+	diget->DtGet(ind);
+	if (arg.mValid && ind.mValid ) {
+	    if (ind.mData < arg.Size()) {
+		aData.mValid = arg.GetElem(ind.mData, aData);
+		res = true;
+	    } else {
+		string inds = ind.ToString(false);
+		mHost.log(EWarn, "Index is exceeded: " + inds);
+	    }
+	} else {
+	    mHost.log(EDbg, "Invalid argument");
+	}
+    } else if (!dfget) {
+	mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp1) + "]");
+    } else if (!diget) {
+	mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp2) + "]");
+    }
+    aData.mValid = res;
+    if (mRes != aData) {
+	mRes = aData;
+	mHost.OnFuncContentChanged();
+    }
+}
+
+template <class T> string FAtgVect<T>::GetInpExpType(int aId) const
+{
+    string res;
+    if (aId == EInp1) {
+	res = MDtGet<Vector<T>>::Type();
+    } else if (aId == EInp2) {
+	res = MDtGet<Sdata<int>>::Type();
+    }
+    return res;
+}
+
+// Getting component of container: Pair, generic, NOT wrapping comp by Sdata
+//
+template <class T>
+Func* FAtgPair<T>::Create(Host* aHost, const string& aOutIid, const string& aInpIid)
+{
+    Func* res = NULL;
+    if (!aOutIid.empty()) {
+	if (aOutIid == MDtGet<T>::Type() && aInpIid == MDtGet<Pair<T>>::Type()) {
+	    res = new FAtgPair<T>(*aHost);
+	}
+    } else {
+	// Weak negotiation - just base on input type
+	if (aInpIid == MDtGet<Pair<T>>::Type()) {
+	    res = new FAtgPair<T>(*aHost);
+	}
+    }
+    return res;
+}
+
+template<class T>
+MIface *FAtgPair<T>::getLif(const char *aName)
+{
+    MIface* res = NULL;
+    if (strcmp(aName, MDtGet<T>::Type()) == 0) res = (MDtGet<T>*) this;
+    return res;
+}
+
+template <class T>
+void FAtgPair<T>::DtGet(T& aData)
+{
+    bool res = false;
+    MDVarGet* dget = mHost.GetInp(EInp1);
+    MDtGet<Pair<T>>* dfget = dget->GetDObj(dfget);
+    dget = mHost.GetInp(EInp2);
+    MDtGet<Sdata<int>>* diget = dget->GetDObj(diget);
+    if (dfget && diget) {
+	Pair<T> arg;
+	dfget->DtGet(arg);
+	Sdata<int> ind;
+	diget->DtGet(ind);
+	if (arg.mValid && ind.mValid ) {
+	    if (ind.mData == 0) {
+		aData = arg.mData.first;
+		res = true;
+	    } else if (ind.mData == 1) {
+		aData = arg.mData.second;
+		res = true;
+	    } else {
+		string inds = ind.ToString(false);
+		mHost.log(EWarn, "Index is exceeded: " + inds);
+	    }
+	} else {
+	    mHost.log(EDbg, "Invalid argument");
+	}
+    } else if (!dfget) {
+	mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp1) + "]");
+    } else if (!diget) {
+	mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp2) + "]");
+    }
+    aData.mValid = res;
+    if (mRes != aData) {
+	mRes = aData;
+	mHost.OnFuncContentChanged();
+    }
+}
+
+template <class T> string FAtgPair<T>::GetInpExpType(int aId) const
+{
+    string res;
+    if (aId == EInp1) {
+	res = MDtGet<Pair<T>>::Type();
+    } else if (aId == EInp2) {
+	res = MDtGet<Sdata<int>>::Type();
+    }
+    return res;
+}
+
 
 
 /// Conversion to string base
@@ -1302,6 +1455,9 @@ void Init()
     FSizeVect<Pair<DGuri>>::Create(host, string(), string());
     FSizeVect<DGuri>::Create(host, string(), string());
     FAtVect<string>::Create(host, string(), string());
+    FAtgVect<DGuri>::Create(host, string(), string());
+    FAtgVect<Pair<DGuri>>::Create(host, string(), string());
+    FAtgPair<DGuri>::Create(host, string(), string());
     FApnd<Sdata<string>>::Create(host, string(), string());
     FApnd<DGuri>::Create(host, string(), string());
     FSToStr<int>::Create(host, string(), string());

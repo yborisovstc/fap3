@@ -281,7 +281,7 @@ class TrSizeVar: public TrVar
 	virtual string VarGetIfid() const override;
 };
 
-/** @brief Agent function "Getting component"
+/** @brief Agent function "Getting component, wrapping it by Sdata"
  * */
 class TrAtVar: public TrVar
 {
@@ -294,6 +294,22 @@ class TrAtVar: public TrVar
 	// From Func::Host
 	virtual int GetInpCpsCount() const override {return 2;}
 };
+
+
+/** @brief Agent function "Getting component, generic, no wrapping by Sdata"
+ * */
+class TrAtgVar: public TrVar
+{
+    public:
+	static const char* Type() { return "TrAtgVar";};
+	TrAtgVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From TrVar
+	virtual void Init(const string& aIfaceName) override;
+	virtual string GetInpUri(int aId) const override;
+	// From Func::Host
+	virtual int GetInpCpsCount() const override {return 2;}
+};
+
 
 
 /** @brief Transition agent "Tuple composer"
