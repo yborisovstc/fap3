@@ -125,6 +125,7 @@ DesUtils : Elem {
         # "OutpDone - sign of iterator reaches the end"
         InpCnt : ExtdStateInp
         InpDone : ExtdStateInp
+        InpReset : ExtdStateInp
         Outp : ExtdStateOutp
         OutpDone : ExtdStateOutp
         ICnt_Dbg : State @  {
@@ -141,27 +142,33 @@ DesUtils : Elem {
                 Debug.LogLevel = "Dbg"
             }
             Inp ~ : TrSwitchBool @  {
-                _@ < Debug.LogLevel = "Dbg"
-                Sel ~ CidxAnd1 : TrAndVar @  {
-                    Inp ~ Cmp_Gt : TrCmpVar @  {
-                        Inp ~ : TrAddVar @  {
-                            Inp ~ InpCnt.Int
-                            InpN ~ : State {
-                                = "SI 1"
+                Inp1 ~ : TrSwitchBool @  {
+                    _@ < Debug.LogLevel = "Dbg"
+                    Sel ~ CidxAnd1 : TrAndVar @  {
+                        Inp ~ Cmp_Gt : TrCmpVar @  {
+                            Inp ~ : TrAddVar @  {
+                                Inp ~ InpCnt.Int
+                                InpN ~ : State {
+                                    = "SI 1"
+                                }
                             }
+                            Inp2 ~ SIdx
+                            _@ < Debug.LogLevel = "Err"
                         }
-                        Inp2 ~ SIdx
-                        _@ < Debug.LogLevel = "Dbg"
+                        Inp ~ InpDone.Int
                     }
-                    Inp ~ InpDone.Int
-                }
-                Inp1 ~ SIdx
-                Inp2 ~ : TrAddVar @  {
-                    Inp ~ SIdx
-                    Inp ~ : State {
-                        = "SI 1"
+                    Inp1 ~ SIdx
+                    Inp2 ~ : TrAddVar @  {
+                        Inp ~ SIdx
+                        Inp ~ : State {
+                            = "SI 1"
+                        }
                     }
                 }
+                Inp2 ~ : State {
+                    = "SI 0"
+                }
+                Sel ~ InpReset.Int
             }
         }
         Outp.Int ~ SIdx
@@ -179,6 +186,7 @@ DesUtils : Elem {
         # "OutpDone - sign of iterator reaches the end"
         InpM : ExtdStateInp
         InpDone : ExtdStateInp
+        InpReset : ExtdStateInp
         Outp : ExtdStateOutp
         OutpDone : ExtdStateOutp
         Itr : IdxItr @  {
@@ -187,7 +195,25 @@ DesUtils : Elem {
             }
         }
         Itr.InpDone ~ InpDone.Int
+        Itr.InpReset ~ InpReset.Int
         Outp.Int ~ Itr.Outp
         OutpDone.Int ~ Itr.OutpDone
+    }
+    # "Data change detector, ref ds_dcs_iui_dci"
+    ChgDetector : Des {
+        Inp : ExtdStateInp
+        Outp : ExtdStateOutp
+        Outp.Int ~ Cmp_Neq : TrCmpVar @  {
+            Cmp_Neq.Inp ~ StInpSig : State @  {
+                _@ <  {
+                    Debug.LogLevel = "Err"
+                    = "SI _INV"
+                }
+                StInpSig.Inp ~ Hash : TrHash @  {
+                    Hash.Inp ~ Inp.Int
+                }
+            }
+            Cmp_Neq.Inp2 ~ Hash
+        }
     }
 }

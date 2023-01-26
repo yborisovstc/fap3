@@ -542,4 +542,27 @@ void SdoEdges::DtGet(Stype& aData)
 }
 
 
+#if 0 // NOT COMPLETED
+
+/// Inputs update indicator, ref ds_dcs_iui_sla
+
+SdoUpdateInd::SdoUpdateInd(const string &aType, const string& aName, MEnv* aEnv): CpStateOutp(aType, aName, aEnv)
+{
+    mData.mData = false;
+    mData.mValid = true;
+}
+
+MIface* SdoUpdateInd::MNode_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MDVarGet>(aType));
+    else res = CpStateOutp::MNode_getLif(aType);
+    return res;
+}
+
+void SdoUpdateInd::MDVarGet_doDump(int aLevel, int aIdt, ostream& aOs) const
+{
+}
+#endif
+
 

@@ -307,6 +307,29 @@ string TrMplVar::GetInpUri(int aId) const
 }
 
 
+///// TrMinVar
+
+TrMinVar::TrMinVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+{
+    AddInput("Inp");
+}
+
+void TrMinVar::Init(const string& aIfaceName)
+{
+    if (mFunc) {
+	delete mFunc;
+	mFunc = NULL;
+    }
+    if ((mFunc = FMinDt<Sdata<int>>::Create(this, aIfaceName)) != NULL);
+}
+
+string TrMinVar::GetInpUri(int aId) const
+{
+    if (aId == FMaxBase::EInp) return "Inp";
+    else return string();
+}
+
+
 
 ///// TrMaxVar
 
@@ -324,7 +347,7 @@ void TrMaxVar::Init(const string& aIfaceName)
     if ((mFunc = FMaxDt<Sdata<int>>::Create(this, aIfaceName)) != NULL);
 }
 
-string TrMaxVar::GetInpUri(int aId) const 
+string TrMaxVar::GetInpUri(int aId) const
 {
     if (aId == FMaxBase::EInp) return "Inp";
     else return string();
@@ -820,8 +843,7 @@ string TrAtgVar::GetInpUri(int aId) const
 
 
 // Agent functions "Tuple composer"
-
-
+//
 const string TrTuple::K_InpName = "Inp";
 
 TrTuple::TrTuple(const string& aType, const string& aName, MEnv* aEnv): TrBase(aType, aName, aEnv)
@@ -851,7 +873,7 @@ string TrTuple::VarGetIfid() const
     return MDtGet<NTuple>::Type();
 }
 
-// TODO The design is ugly and bulky. To redesing, ref ds_ibc_dgit 
+// TODO The design is ugly and bulky. To redesing, ref ds_ibc_dgit
 void TrTuple::DtGet(NTuple& aData)
 {
     bool res = false;
@@ -868,14 +890,11 @@ void TrTuple::DtGet(NTuple& aData)
 		DtBase* elem = aData.GetElem(compn->name());
 		if (elem) {
 		    string dgtype = string("MDtGet_") + elem->GetTypeSig();
-		    MIface* inpdg = inpvg->DoGetDObj(dgtype.c_str());
+		    MDtGetBase* inpdg = static_cast<MDtGetBase*>(inpvg->DoGetDObj(dgtype.c_str()));
 		    if (inpdg) {
-			HBase* inphb = dynamic_cast<HBase*>(inpdg);
-			if (inphb) {
-			    string values;
-			    inphb->ToString(values);
-			    istringstream isv(values);
-			    elem->FromString(isv);
+			res = inpdg->DtbGet(*elem);
+			if (!res) {
+			    Log(TLog(EErr, this) + "Failed getting [" + compn->name() + "] data");
 			}
 		    } else {
 			Log(TLog(EErr, this) + "Input [" + compn->name() + "] is incompatible with tuple component");
@@ -898,6 +917,98 @@ void TrTuple::DtGet(NTuple& aData)
     }
     mRes = aData;
 }
+
+
+#if 0
+// Agent transition "Tuple component selector"
+//
+const string TrTupleSel::K_InpName = "Inp";
+const string TrTupleSel::K_CompName = "Comp";
+
+TrTupleSel::TrTupleSel(const string& aType, const string& aName, MEnv* aEnv): TrBase(aType, aName, aEnv)
+{
+    AddInput(K_InpName);
+    AddInput(K_CompName);
+}
+
+MIface* TrTupleSel::MNode_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MDVarGet>(aType));
+    else res = TrBase::MNode_getLif(aType);
+    return res;
+}
+
+MIface* TrTupleSel::DoGetDObj(const char *aName)
+{
+    MIface* res = NULL;
+    MNode* tinp = getNode(K_InpName);
+    GetGData(tinp, mData);
+    Sdata<string> compName;
+    MNode* cnamen = getNode(K_CompName);
+    GetGData(cnamen, compName);
+    if (mData.IsValid() && compName.IsValid()) {
+	DtBase* elem = mData.GetElem(compName.mData);
+	string elemGetterType = string("MDtGet_") + elem->GetTypeSig();
+	if (aName = elemGetterType) {
+	}
+	return res;
+    }
+#endif
+
+
+// Transition agent "Tuple component selector"
+//
+//
+const string TrTupleSel::K_InpName = "Inp";
+const string TrTupleSel::K_CompName = "Comp";
+
+TrTupleSel::TrTupleSel(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+{
+    AddInput(K_InpName);
+    AddInput(K_CompName);
+}
+
+void TrTupleSel::Init(const string& aIfaceName)
+{
+    if (mFunc) {
+	delete mFunc;
+	mFunc = NULL;
+     }
+    if ((mFunc = FTupleSel<Sdata<int>>::Create(this, aIfaceName)));
+}
+
+string TrTupleSel::GetInpUri(int aId) const
+{
+    if (aId == Func::EInp1) return K_InpName;
+    else if (aId == Func::EInp2) return K_CompName;
+    else return string();
+}
+
+string TrTupleSel::VarGetIfid() const
+{
+    string res;
+    // Override TrVar behavior - we can assume ifid from input data
+    MDVarGet* dget = const_cast<TrTupleSel*>(this)->GetInp(Func::EInp1);
+    MDtGet<NTuple>* dfget = dget ? dget->GetDObj(dfget) : nullptr;
+    dget = const_cast<TrTupleSel*>(this)->GetInp(Func::EInp2);
+    MDtGet<Sdata<string>>* diget = dget ? dget->GetDObj(diget) : nullptr;
+    if (dfget && diget) {
+	NTuple arg;
+	dfget->DtGet(arg);
+	Sdata<string> ind;
+	diget->DtGet(ind);
+	if (arg.mValid && ind.mValid) {
+	    DtBase* elem = arg.GetElem(ind.mData);
+	    res = MDtGetBase::MDtGetType(elem->GetTypeSig());
+	} else {
+	    Log(TLog(EErr, this) + "Invalid argument");
+	}
+    }
+    return res;
+}
+
+
 
 ///// To string
 
@@ -1003,7 +1114,22 @@ MIface* TrInpSel::MNode_getLif(const char *aType)
 
 MIface* TrInpSel::DoGetDObj(const char *aName)
 {
-    MIface* ifr = nullptr;
+    MDVarGet* inp = GetInp();
+    MIface* ifr = inp ? inp->DoGetDObj(aName) : nullptr;
+    return ifr;
+}
+
+string TrInpSel::VarGetIfid() const
+{
+    string res;
+    MDVarGet* inp = const_cast<TrInpSel*>(this)->GetInp();
+    res = inp->VarGetIfid();
+    return res;
+}
+
+MDVarGet* TrInpSel::GetInp()
+{
+    MDVarGet* inp = nullptr;
     int idx = -1;
     bool res = GetInpSdata(EInpIdx, idx);
     if (res) {
@@ -1016,20 +1142,14 @@ MIface* TrInpSel::DoGetDObj(const char *aName)
 		if (idx < 0 || idx >= ifaces->size()) {
 		    Log(TLog(EErr, this) + "Incorrect index  [" + to_string(idx) + "], inps num: " + to_string(ifaces->size()));
 		} else {
-		    MDVarGet* vg = static_cast<MDVarGet*>(ifaces->at(idx));
-		    ifr = vg->DoGetDObj(aName);
+		    inp = static_cast<MDVarGet*>(ifaces->at(idx));
 		}
 	    }
 	} else {
 	    Log(TLog(EDbg, this) + "Cannot get input  [" + GetInpUri(EInpInp) + "]");
 	}
     }
-    return ifr;
-}
-
-string TrInpSel::VarGetIfid() const
-{
-    return string();
+    return inp;
 }
 
 string TrInpSel::GetInpUri(int aId) const
@@ -1448,6 +1568,102 @@ string TrIsValid::GetInpUri(int aId) const
 {
     if (aId == Func::EInp1) return "Inp";
     else return string();
+}
+
+
+
+// Transition "Type enforcing"
+
+TrType::TrType(const string& aType, const string& aName, MEnv* aEnv): TrBase(aType, aName, aEnv)
+{
+    AddInput(GetInpUri(EInp));
+}
+
+MIface* TrType::MNode_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MDVarGet>(aType));
+    else res = TrBase::MNode_getLif(aType);
+    return res;
+}
+
+string TrType::GetInpUri(int aId) const
+{
+    if (aId == EInp) return "Inp";
+    else return string();
+}
+
+MIface* TrType::DoGetDObj(const char *aName)
+{
+    MIface* res = NULL;
+    // TODO Implement
+    return res;
+}
+
+string TrType::VarGetIfid() const
+{
+    // TODO Implement
+    return string();
+}
+
+
+
+/// Transition "Hash of data", ref ds_dcs_iui_tgh
+
+TrHash::TrHash(const string& aType, const string& aName, MEnv* aEnv): TrBase(aType, aName, aEnv)
+{
+    AddInput(GetInpUri(EInp));
+}
+
+MIface* TrHash::MNode_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MDVarGet>(aType));
+    else res = TrBase::MNode_getLif(aType);
+    return res;
+}
+
+string TrHash::GetInpUri(int aId) const
+{
+    if (aId == EInp) return "Inp";
+    else return string();
+}
+
+MIface* TrHash::DoGetDObj(const char *aName)
+{
+    MIface* res = NULL;
+    if (strcmp(aName, MDtGet<Sdata<int>>::Type()) == 0) {
+	res = dynamic_cast<MDtGet<Sdata<int>>*>(this);
+    }
+    return res;
+}
+
+string TrHash::VarGetIfid() const
+{
+    return MDtGet<Sdata<int>>::Type();
+}
+
+void TrHash::DtGet(Sdata<int>& aData)
+{
+    MNode* inp = getNode(GetInpUri(EInp));
+    if (inp) {
+	MUnit* inpu = inp->lIf(inpu);
+	MIfProv* ifp = inpu ? inpu->defaultIfProv(MDVarGet::Type()) : nullptr;
+	MIfProv::TIfaces* inps= ifp ? ifp->ifaces() : nullptr;
+	int hash = 0;
+	for (auto dgeti : *inps) {
+	    MDVarGet* dget = dynamic_cast<MDVarGet*>(dgeti);
+	    MDtGetBase* dgetb = dynamic_cast<MDtGetBase*>(dget->DoGetDObj(dget->VarGetIfid().c_str()));
+	    MDtBase* data = dgetb->DtbDup();
+	    hash += data->Hash();
+	    delete data;
+	}
+	aData.mData = hash;
+	aData.mValid = true;
+    } else {
+	Log(TLog(EDbg, this) + "Cannot get input  [" + GetInpUri(EInp) + "]");
+    }
+
 }
 
 

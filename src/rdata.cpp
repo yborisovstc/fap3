@@ -568,6 +568,7 @@ void NTuple::DataToString(ostringstream& aStream) const
 	comp.second->DataToString(aStream);
     }
 }
+
 void NTuple::ToString(ostringstream& aOs, bool aSig) const
 {
     ostringstream& ss = aOs;
@@ -583,7 +584,6 @@ void NTuple::ToString(ostringstream& aOs, bool aSig) const
 	DataToString(ss);
     }
 }
-
 
 void NTuple::FromString(istringstream& aStream)
 {
@@ -643,6 +643,16 @@ void NTuple::Init(const tCTypes& aCt)
     }
 }
 
+static DtBase* InitCompData(const string& aSig)
+{
+    DtBase* comp = NULL;
+    if ((comp = Sdata<int>::Construct(aSig)) != NULL);
+    else if ((comp = Sdata<float>::Construct(aSig)) != NULL);
+    else if ((comp = Sdata<bool>::Construct(aSig)) != NULL);
+    else if ((comp = Sdata<string>::Construct(aSig)) != NULL);
+    return comp;
+}
+
 DtBase* NTuple::GetElem(const string& aName)
 {
     DtBase* res = NULL;
@@ -691,6 +701,19 @@ NTuple& NTuple::operator=(const NTuple& b)
     return *this;
 }
 
+int NTuple::Hash() const
+{
+    int hash = 0;
+    std::hash<string> hs;
+    for (tComps::const_iterator it = mData.begin(); it != mData.end(); it++) {
+	const tComp& bcomp = *it;
+	const string& name = bcomp.first;
+	DtBase* comp = bcomp.second->Clone();
+	hash += hs(name);
+	hash += comp->Hash();
+    }
+    return hash;
+}
 
 
 // Enumeration

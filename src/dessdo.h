@@ -321,6 +321,39 @@ class SdoEdges : public Sdog<Vector<Pair<DGuri>>>
 };
 
 
+#if 0 // NOT COMPLETED
+/** @brief Inputs update indicator, ref ds_dcs_iui_sla
+ * This is not SDO exactly but nevertheless acts as SDO observing the interior of system
+ * The output is boolean indication of inputs update happened
+ * */
+class SdoUpdateInd: public CpStateOutp, public MDesSyncable, public MDesInpObserver, public MDVarGet, public MDtGet<Sdata<bool>>
+{
+    public:
+	static const char* Type() { return "SdoUpdateInd";};
+	SdoUpdateInd(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+    public:
+	// From MNode
+	virtual MIface* MNode_getLif(const char *aType) override;
+	// From MDVarGet
+	virtual string MDVarGet_Uid() const override { return getUid<MDVarGet>();}
+	virtual void MDVarGet_doDump(int aLevel, int aIdt, ostream& aOs) const override;
+	// From MDesSyncable
+	virtual string MDesSyncable_Uid() const override {return getUid<MDesSyncable>();}
+	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+	virtual MIface* MDesSyncable_getLif(const char *aType) override { return nullptr; }
+	virtual void update() override;
+	virtual void confirm() override;
+	virtual void setUpdated() override;
+	virtual void setActivated() override;
+	// From MDesInpObserver
+	virtual string MDesInpObserver_Uid() const {return getUid<MDesInpObserver>();}
+	virtual void MDesInpObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+	virtual void onInpUpdated() override;
+    protected:
+	Sdata<bool> mData;
+};
+#endif
+
 
 
 

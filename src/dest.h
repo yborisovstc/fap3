@@ -59,8 +59,8 @@ class TrVar: public TrBase, public MDVarGet, public Func::Host
 	virtual void OnFuncContentChanged() override;
 	virtual int GetInpCpsCount() const {return 0;}
 	virtual void log(int aCtg, const string& aMsg);
-	virtual MIfProv::TIfaces* GetInps(int aId, const string& aIfName, bool aOpt) override;
 	virtual string getHostUri() const { return getUriS(nullptr);}
+	virtual MIfProv::TIfaces* GetInps(int aId, const string& aIfName, bool aOpt) override;
     protected:
 	virtual void Init(const string& aIfaceName);
 	virtual string GetInpUri(int aId) const override;
@@ -100,6 +100,18 @@ class TrMplVar: public TrVar
 	virtual int GetInpCpsCount() const override {return 2;}
 };
 
+
+/** @brief Agent function "Min of Var data"
+ * */
+class TrMinVar: public TrVar
+{
+    public:
+	static const char* Type() { return "TrMinVar";};
+	TrMinVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From ATrVar
+	virtual void Init(const string& aIfaceName) override;
+	virtual string GetInpUri(int aId) const override;
+};
 
 
 /** @brief Agent function "Max of Var data"
@@ -328,11 +340,55 @@ class TrTuple: public TrBase, public MDVarGet, public MDtGet<NTuple>
 	// From MDtGet
 	virtual void DtGet(NTuple& aData) override;
     protected:
-	virtual string GetInpUri(int aId) const override { return string();} 
+	virtual string GetInpUri(int aId) const override { return string();}
     protected:
 	NTuple mRes;  /*<! Cached result */
 	const static string K_InpName;
 };
+
+#if 0
+/** @brief Transition agent "Tuple component selector"
+ * */
+class TrTupleSel: public TrBase, public MDVarGet
+{
+    public:
+	static const char* Type() { return "TrTupleSel";};
+	TrTupleSel(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From MNode
+	virtual MIface* MNode_getLif(const char *aType) override;
+	// From MDVarGet
+	virtual string MDVarGet_Uid() const override { return getUid<MDVarGet>();}
+	virtual MIface* DoGetDObj(const char *aName) override;
+	virtual string VarGetIfid() const override;
+    protected:
+	virtual string GetInpUri(int aId) const override { return string();}
+    protected:
+	NTuple mData;  /*<! Cached input */
+	const static string K_InpName;
+	const static string K_CompName;
+};
+#endif
+
+/** @brief Transition agent "Tuple component selector"
+ * */
+class TrTupleSel: public TrVar
+{
+    public:
+	static const char* Type() { return "TrTupleSel";};
+	TrTupleSel(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From TrVar
+	virtual void Init(const string& aIfaceName) override;
+	virtual string GetInpUri(int aId) const override;
+	// From TrVar.MDVarGet
+	virtual string VarGetIfid() const override;
+	// From Func::Host
+	virtual int GetInpCpsCount() const override {return 2;}
+    protected:
+	const static string K_InpName;
+	const static string K_CompName;
+};
+
+
 
 /** @brief Transition agent "To string"
  * */
@@ -365,6 +421,8 @@ class TrInpSel: public TrBase, public MDVarGet
 	// From TrBase
 	virtual string GetInpUri(int aId) const override;
     protected:
+	MDVarGet* GetInp();
+    protected:
 	const static string K_InpInp;
 	const static string K_InpIdx;
 };
@@ -387,7 +445,7 @@ class TrInpCnt: public TrBase, public MDVarGet, public MDtGet<Sdata<int>>
 	// From MDtGet
 	virtual void DtGet(Sdata<int>& aData) override;
     protected:
-	virtual string GetInpUri(int aId) const override; 
+	virtual string GetInpUri(int aId) const override;
     protected:
 	Sdata<int> mRes;  /*<! Cached result */
 	const static string K_InpInp;
@@ -572,6 +630,49 @@ class TrIsValid: public TrVar
 };
 
 
+/** @brief Transition "Type enforcing"
+ * !! NOT COMPLETED
+ * */
+class TrType: public TrBase, public MDVarGet
+{
+    public:
+	enum {EInp};
+    public:
+	static const char* Type() { return "TrType";};
+	TrType(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From MNode
+	virtual MIface* MNode_getLif(const char *aType) override;
+	// From MDVarGet
+	virtual string MDVarGet_Uid() const override { return getUid<MDVarGet>();}
+	virtual MIface* DoGetDObj(const char *aName) override;
+	virtual string VarGetIfid() const override;
+    protected:
+	// From TrBase
+	virtual string GetInpUri(int aId) const override;
+};
+
+
+/** @brief Transition "Hash of data", ref ds_dcs_iui_tgh
+ * */
+class TrHash: public TrBase, public MDVarGet, public MDtGet<Sdata<int>>
+{
+    public:
+	enum {EInp};
+    public:
+	static const char* Type() { return "TrHash";};
+	TrHash(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From MNode
+	virtual MIface* MNode_getLif(const char *aType) override;
+	// From MDVarGet
+	virtual string MDVarGet_Uid() const override { return getUid<MDVarGet>();}
+	virtual MIface* DoGetDObj(const char *aName) override;
+	virtual string VarGetIfid() const override;
+	// From MDtGet
+	virtual void DtGet(Sdata<int>& aData) override;
+    protected:
+	// From TrBase
+	virtual string GetInpUri(int aId) const override;
+};
 
 
 

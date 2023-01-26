@@ -21,6 +21,7 @@ class Ut_des : public CPPUNIT_NS::TestFixture
 //    CPPUNIT_TEST(test_des_asr_1);
 //    CPPUNIT_TEST(test_des_asr_2);
 //    CPPUNIT_TEST(test_des_utl_1);
+//    CPPUNIT_TEST(test_des_utl_2);
     CPPUNIT_TEST_SUITE_END();
     public:
     virtual void setUp();
@@ -36,6 +37,7 @@ class Ut_des : public CPPUNIT_NS::TestFixture
     void test_des_asr_1();
     void test_des_asr_2();
     void test_des_utl_1();
+    void test_des_utl_2();
     private:
     Env* mEnv;
 };
@@ -160,7 +162,7 @@ void Ut_des::test_des_ades_1()
     Sdata<int> val;
     dgi->DtGet(val);
     CPPUNIT_ASSERT_MESSAGE("Wrong final state valud", val.mData == 4);
-    
+
     delete mEnv;
 }
 
@@ -190,7 +192,7 @@ void Ut_des::test_des_tr_1()
     cout << "chromo2 data root dump:" << endl;
     cdc.Root().Dump();
 
-    // Run 
+    // Run
     bool res = mEnv->RunSystem(3, 3);
     CPPUNIT_ASSERT_MESSAGE("Failed running system", eroot);
     // Verify the state
@@ -210,7 +212,18 @@ void Ut_des::test_des_tr_1()
     Sdata<string> st4val;
     st4dgs->DtGet(st4val);
     CPPUNIT_ASSERT_MESSAGE("Wrong value of St4", st4val.mData == "Item_3");
-    
+
+    // Verify TupleRes2
+    MNode* tr2 = root->getNode("Launcher.Ds1.TupleRes2");
+    MDVarGet* tr2dg = tr2 ? tr2->lIf(tr2dg) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Cannot get TupleRes2 MDVarGet", tr2dg);
+    MDtGet<NTuple>* tr2si = tr2dg->GetDObj(tr2si);
+    CPPUNIT_ASSERT_MESSAGE("Cannot get TupleRes2 MDtGet<NTuple>", tr2si);
+    NTuple tr2_data;
+    tr2si->DtGet(tr2_data);
+    CPPUNIT_ASSERT_MESSAGE("Cannot get TupleRes2 data", tr2_data.IsValid());
+    CPPUNIT_ASSERT_MESSAGE("Wrong TupleRes2 --value-- data", tr2_data.mData.at(1).second->ToString(true) == "SI 7");
+
     delete mEnv;
 }
 
@@ -470,6 +483,27 @@ void Ut_des::test_des_utl_1()
     CPPUNIT_ASSERT_MESSAGE("Failed getting launcher", launcher);
     MDesSyncable* ls = launcher->lIf(ls);
     CPPUNIT_ASSERT_MESSAGE("Failed getting launcher syncable", ls);
+
+    delete mEnv;
+}
+
+void Ut_des::test_des_utl_2()
+{
+    cout << endl << "=== Test of DES utilities: reset  ===" << endl;
+
+    MNode* root = constructSystem("ut_des_utl_2");
+    MNode* launcher = root->getNode("Launcher");
+    CPPUNIT_ASSERT_MESSAGE("Failed getting launcher", launcher);
+
+    // Run
+    bool res = mEnv->RunSystem(15, 2);
+    CPPUNIT_ASSERT_MESSAGE("Failed running system", res);
+
+    MNode* maxn = launcher->getNode("Max");
+    CPPUNIT_ASSERT_MESSAGE("Failed getting Max node", maxn);
+    int maxval = 0;
+    res = GetSData(maxn, maxval);
+    CPPUNIT_ASSERT_MESSAGE("Wrong Max value", res && (maxval == 10));
 
     delete mEnv;
 }

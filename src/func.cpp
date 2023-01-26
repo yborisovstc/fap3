@@ -563,6 +563,72 @@ string FSvld<T>::GetInpExpType(int aId) const
 
 
 
+// Min: Generic data
+
+template<class T> Func* FMinDt<T>::Create(Host* aHost, const string& aString)
+{
+    Func* res = NULL;
+    if (aString == MDtGet<T>::Type()) {
+	res = new FMinDt<T>(*aHost);
+    }
+    return res;
+}
+
+template<class T> MIface *FMinDt<T>::getLif(const char *aName)
+{
+    MIface* res = NULL;
+    if (strcmp(aName, MDtGet<T>::Type()) == 0) res = dynamic_cast<MDtGet<T>*>(this);
+    return res;
+}
+
+template<class T> void FMinDt<T>::DtGet(T& aData)
+{
+    bool res = true;
+    MIfProv::TIfaces* inps = mHost.GetInps(EInp, MDVarGet::Type(), false);
+    bool first = true;
+    if (inps) for (auto dgeti : *inps) {
+	MDVarGet* dget = dynamic_cast<MDVarGet*>(dgeti);
+	MDtGet<T>* dfget = dget->GetDObj(dfget);
+	if (dfget != NULL) {
+	    T arg = aData;
+	    dfget->DtGet(arg);
+	    if (arg.mValid) {
+		if (first) {
+		    aData = arg;
+		    first = false;
+		} else {
+		    if (arg.mData < aData.mData) {
+			aData = arg;
+		    }
+		}
+	    } else {
+		mHost.log(EDbg, "Invalid argument [" + mHost.GetInpUri(EInp) + "]");
+		res = false; break;
+	    }
+	} else {
+	    mHost.log(EErr, "Incompatible argument [" + mHost.GetInpUri(EInp) + "]");
+	    res = false; break;
+	}
+    }
+    aData.mValid = res;
+    if (mRes != aData) {
+	mRes = aData;
+	mHost.OnFuncContentChanged();
+    }
+}
+
+template<class T> void FMinDt<T>::GetResult(string& aResult) const
+{
+    ostringstream oss;
+    mRes.ToString(oss);
+}
+
+static void FMinDtFact() {
+    FMinDt<Sdata<int>>::Create(NULL, "");
+}
+
+
+
 
 
 // Max: Generic data
@@ -1436,6 +1502,66 @@ void FTailnUri::DtGet(TData& aData)
 }
 
 
+// Getting component of tuple
+//
+template <class T>
+Func* FTupleSel<T>::Create(Host* aHost, const string& aOutIid)
+{
+    Func* res = NULL;
+    if (!aOutIid.empty() && aOutIid == MDtGet<T>::Type()) {
+	res = new FTupleSel<T>(*aHost);
+    }
+    return res;
+}
+
+template<class T>
+MIface *FTupleSel<T>::getLif(const char *aName)
+{
+    MIface* res = NULL;
+    if (strcmp(aName, MDtGet<T>::Type()) == 0) res = (MDtGet<T>*) this;
+    return res;
+}
+
+template <class T>
+void FTupleSel<T>::DtGet(T& aData)
+{
+    MDVarGet* dget = mHost.GetInp(EInp1);
+    MDtGet<NTuple>* dfget = dget ? dget->GetDObj(dfget) : nullptr;
+    dget = mHost.GetInp(EInp2);
+    MDtGet<Sdata<string>>* diget = dget ? dget->GetDObj(diget) : nullptr;
+    if (dfget && diget) {
+	NTuple arg;
+	dfget->DtGet(arg);
+	Sdata<string> ind;
+	diget->DtGet(ind);
+	if (arg.mValid && ind.mValid ) {
+	    DtBase* elem = arg.GetElem(ind.mData);
+	    T* telem = dynamic_cast<T*>(elem);
+	    if (telem) {
+		aData = *telem;
+	    } else {
+		mHost.log(EWarn, "Tuple comp [" + ind.mData + "] isn't that requested");
+	    }
+	} else {
+	    mHost.log(EDbg, "Invalid argument");
+	}
+    } else if (!dfget) {
+	mHost.log(EDbg, "Invalid input [" + mHost.GetInpUri(EInp1) + "]");
+    } else if (!diget) {
+	mHost.log(EDbg, "Invalid input [" + mHost.GetInpUri(EInp2) + "]");
+    }
+    if (mRes != aData) {
+	mRes = aData;
+	mHost.OnFuncContentChanged();
+    }
+}
+
+template <class T> string FTupleSel<T>::GetInpExpType(int aId) const
+{
+    return string();
+}
+
+
 
 
 // Just to keep templated methods in cpp
@@ -1465,6 +1591,7 @@ void Init()
     FIsValid<Sdata<string>>::Create(host, "");
     FSvld<DGuri>::Create(host, "", "");
     FSvld<Sdata<string>>::Create(host, "", "");
+    FTupleSel<Sdata<int>>::Create(host, "");
 }
 
 

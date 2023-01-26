@@ -734,5 +734,4 @@ class DesInpDemux : public Des
 	int mIdx; //!< Index of input iface
 };
 
-
 #endif

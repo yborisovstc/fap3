@@ -195,6 +195,29 @@ class FSvld: public Func, public MDtGet<T> {
 
 
 
+// Minimum, variable type
+
+class FMinBase: public Func {
+    public:
+	enum { EInp = Func::EInp1 };
+	FMinBase(Host& aHost): Func(aHost) {};
+};
+
+/** @brief Getting minimum, generic data
+ * */
+template <class T> class FMinDt: public FMinBase, public MDtGet<T> {
+    public:
+	static Func* Create(Host* aHost, const string& aString);
+	FMinDt(Host& aHost): FMinBase(aHost) {};
+	virtual MIface* getLif(const char *aName) override;
+	virtual string Uid() const override { return mHost.getHostUri() + Ifu::KUidSepIc + "func" + Ifu::KUidSep + MDtGet<T>::Type();}
+	virtual string IfaceGetId() const { return MDtGet<T>::Type();};
+	virtual void DtGet(T& aData);
+	virtual void GetResult(string& aResult) const;
+	T mRes;
+};
+
+
 
 
 // Maximum, variable type
@@ -592,6 +615,24 @@ class FTailnUri: public FTailn<DGuri> {
 	static Func* Create(Host* aHost, const string& aString);
 	FTailnUri(Host& aHost): FTailn<DGuri>(aHost) {};
 	virtual void DtGet(TData& aData);
+};
+
+
+/** @brief Getting component of tuple
+ * */
+template <class T>
+class FTupleSel: public Func, public MDtGet<T> {
+    public:
+	static Func* Create(Host* aHost, const string& aOutIid);
+	FTupleSel(Host& aHost): Func(aHost) {};
+	virtual MIface* getLif(const char *aName) override;
+	virtual string Uid() const override { return mHost.getHostUri() + Ifu::KUidSepIc + "func" + Ifu::KUidSep + MDtGet<T>::Type();}
+	virtual string IfaceGetId() const override { return MDtGet<T>::Type();}
+	virtual void DtGet(T& aData) override;
+	virtual void GetResult(string& aResult) const override {ostringstream os; mRes.ToString(os); aResult = os.str();}
+	virtual string GetInpExpType(int aId) const override;
+    protected:
+	T mRes;
 };
 
 

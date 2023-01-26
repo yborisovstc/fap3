@@ -162,6 +162,70 @@ MyRoot : Elem {
                     }
                 }
             }
+            # "Tuple composer, inp via conn"
+            T2Data : State {
+                = "SI 5"
+            }
+            T2extd : ExtdStateInp
+            T2extd ~ T2Data
+            TupleRes2 : State @  {
+                _@ <  {
+                    = "TPL,SI:data,SI:value _INV _INV"
+                    Debug.LogLevel = "Dbg"
+                }
+                Inp ~ : TrTuple @  {
+                    Inp ~ : State {
+                        = "TPL,SI:data,SI:value _INV _INV"
+                    }
+                    _@ <  {
+                        data : CpStateInp
+                        value : CpStateInp
+                    }
+                    data ~ T2extd.Int
+                    value ~ : TrAddVar @  {
+                        Inp ~ : State {
+                            = "SI 2"
+                        }
+                        Inp ~ : State {
+                            = "SI 5"
+                        }
+                    }
+                }
+            }
+            # "Tuple component selector"
+            TupleSelData_Dbg : State @  {
+                _@ <  {
+                    = "SI _INV"
+                    Debug.LogLevel = "Dbg"
+                }
+                Inp ~ TplSelData : TrTupleSel @  {
+                    Inp ~ TupleRes2
+                    Comp ~ : State {
+                        = "SS data"
+                    }
+                }
+            }
+            # "Tuple component selector iface guessing"
+            TupleSelIfaceG : State @  {
+                _@ <  {
+                    Debug.LogLevel = "Dbg"
+                    = "SB _INV"
+                }
+                Inp ~ ColPos_Lt : TrCmpVar @  {
+                    Inp ~ : TrTupleSel @  {
+                        Inp ~ TupleRes2
+                        Comp ~ : State {
+                            = "SS data"
+                        }
+                    }
+                    Inp2 ~ : TrTupleSel @  {
+                        Inp ~ TupleRes2
+                        Comp ~ : State {
+                            = "SS value"
+                        }
+                    }
+                }
+            }
             # "Intput counter"
             InpCntRes : State @  {
                 _@ <  {
@@ -469,6 +533,52 @@ MyRoot : Elem {
                     }
                 }
             }
+            # "Hash of int"
+            SHashInt : State @  {
+                _@ <  {
+                    Debug.LogLevel = "Dbg"
+                    = "SI _INV"
+                }
+                Inp ~ : TrHash @  {
+                    Inp ~ : State {
+                        = "SI 23"
+                    }
+                    Inp ~ : State {
+                        = "SI 17"
+                    }
+                }
+            }
+            # "Hash of string"
+            SHashStr : State @  {
+                _@ <  {
+                    Debug.LogLevel = "Dbg"
+                    = "SI _INV"
+                }
+                Inp ~ : TrHash @  {
+                    Inp ~ : State {
+                        = "SS 'Test string 1'"
+                    }
+                    Inp ~ : State {
+                        = "SS 'Test string 2'"
+                    }
+                }
+            }
+            # "Hash of tuple"
+            SHashTuple : State @  {
+                _@ <  {
+                    Debug.LogLevel = "Dbg"
+                    = "SI _INV"
+                }
+                Inp ~ : TrHash @  {
+                    Inp ~ : State {
+                        = "TPL,SS:name,SI:value first 1"
+                    }
+                    Inp ~ : State {
+                        = "TPL,SS:name,SI:value second 2"
+                    }
+                }
+            }
+
         }
     }
 }

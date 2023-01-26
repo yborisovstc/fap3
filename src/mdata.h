@@ -71,10 +71,22 @@ class MDVarSet: public MIface
 };
 
 
+/** @brief Generic data getter base
+ * Temporary solution for ds_rdi
+ * */
+class MDtGetBase: public MIface
+{
+    public:
+	virtual bool DtbGet(MDtBase& aData) { return false;}
+	/** @brief Duplicate (allocate and copy) data
+	 * */
+	virtual MDtBase* DtbDup() { return nullptr;}
+	static const string MDtGetType(const string& aDataType) { return string("MDtGet_") + aDataType; }
+};
 
-// Generic data
+// Generic data getter
 
-template <class T> class MDtGet: public MIface
+template <class T> class MDtGet: public MDtGetBase
 {
     public:
 	static const string mType;
@@ -83,11 +95,24 @@ template <class T> class MDtGet: public MIface
 	virtual string Uid() const override { return mType;}
 	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { return MDtGet_doDump(aLevel, aIdt, std::cout);}
 	virtual void MDtGet_doDump(int aLevel, int aIdt, ostream& aOs) const {}
+	// From MDtGetBase
+	virtual bool DtbGet(MDtBase& aData) override {
+	    bool res = false;
+	    T* data = dynamic_cast<T*>(&aData);
+	    if (data) {
+		DtGet(*data); res = true;
+	    }
+	    return res;
+	}
+	virtual MDtBase* DtbDup() override {
+	    MDtBase* data = new T; DtbGet(*data); return data;
+	}
 	// Local
 	virtual void DtGet(T& aData) = 0;
 };
 
 template<class T> const string MDtGet<T>::mType = string("MDtGet_") + T::TypeSig();
+
 
 /** @brief Generic data setter interface
  * */

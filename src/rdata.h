@@ -6,6 +6,7 @@
 #include <string>
 #include <sstream>
 #include <cmath>
+#include <functional>
 #include <assert.h>
 
 /** @brief FAP Row data
@@ -35,6 +36,7 @@ class MDtBase
 	virtual void DataToString(ostringstream& aStream) const {aStream << "?";}
 	virtual void DataFromString(istringstream& aStream) = 0;
 	virtual bool IsCompatible(const MDtBase& b) const {return true;}
+	virtual int Hash() const { return 0;}
     public:
 	static const char mKTypeToDataSep;
 };
@@ -104,6 +106,7 @@ template<class T> class Sdata: public DtBase
 	Sdata<T>& operator*=(const Sdata<T>& b) { mData *= b.mData; return *this;};
 	Sdata<T>& operator!() { mData = !mData; return *this;};
 	bool Set(const T& aData) { bool res = aData != mData; mData = aData; mValid = true; return res; };
+	virtual int Hash() const override { std::hash<T> h; std::hash<bool> hv; return h(mData) + hv(mValid);}
     protected:
 	void InpFromString(istringstream& aStream, T& aRes);
     public:
@@ -287,7 +290,7 @@ class NTuple: public DtBase
 	typedef vector<tCompSig> tCTypes;
     public:
 	NTuple(): DtBase() {};
-	NTuple(const NTuple& aTuple): DtBase(aTuple) {};
+	NTuple(const NTuple& aSrc): DtBase(aSrc) {};
 	virtual ~NTuple();
 	static const char* TypeSig();
 	static bool IsSrepFit(const string& aString);
@@ -302,6 +305,8 @@ class NTuple: public DtBase
 	NTuple& operator=(const NTuple& b);
 	virtual string GetTypeSig() const { return TypeSig();};
 	virtual void DataToString(ostringstream& aStream) const;
+	virtual int Hash() const override;
+	static DtBase* InitCompData(const string& aSig);
     protected:
 	bool IsCTypesFit(const tCTypes& aCt) const;
 	void TypeParsToString(ostringstream& aStream) const;

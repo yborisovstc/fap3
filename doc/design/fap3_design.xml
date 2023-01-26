@@ -2054,6 +2054,46 @@
 		    solutions.  </simpara>
 	    </sect3>
 	</sect2>
+	<sect2 id="ds_dcs_iui"><title>Inputs update indication</title>
+	    <sect3 id="ds_dcs_iui_itr"><title>Intro</title>
+		<simpara>Let's look at FAP3-VIS VertDrp for the primary use-case. In VertDrp there is subsystem that positions the CRPs. This subsystem gets the inputs of CRPs params "CrpPars".
+		    Then the subs iterates thru the inputs and performs poistioning for each CRP. But what is CRP pars changed during the iteration? In that case we need to reset the iterator and
+		    start the positioning process from scratch. The question is of how to get this CrpPars inputs update indication in "DES compatible" form that allows us to use it as
+		    reset data.</simpara>
+		<simpara>Even if the problems seems simple it is not. The first thinking is that we can use some DES level subsystem to form this indication basing solely on MDesInpObserver 
+		    notifications. But this seems not reachable - the notification just indicates the updates so subsystem states re-calculates its value. I couldn't find the universal way of 
+		    implementing the update DES indication using solely DES elements. The only solution I invented is getting data form the input and form the data change indication.
+		    So to have universal method we need creating specific native agents to get the indication.</simpara>
+		<simpara>So there are at least three approaches in creating such native agent: </simpara>
+		<itemizedlist>
+		    <listitem>Data change indication (depends on data type), ref <xref linkend="ds_dcs_iui_dci"/> for details</listitem>
+		    <listitem>Transition that gives the data "hash", ref <xref linkend="ds_dcs_iui_tgh"/> for details.</listitem>
+		    <listitem>State like agent that exposes bool -inp changed- indication, ref <xref linkend="ds_dcs_iui_sla"/> for details.</listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3 id="ds_dcs_iui_dci"><title>Data change indication (depends on data type)</title>
+		<sect4><title>Intro</title>
+		    <simpara>This is the straightforward solution. It is used in ut_des_utl_2.chs, ref ChgDetector_Neq. If the input is mutiiface then trans like TrAddVar can be used
+			to get "common" data.</simpara>
+		</sect4>
+	    </sect3>
+	    <sect3 id="ds_dcs_iui_tgh"><title>Transition giving the input data hash</title>
+		<sect4><title>Intro</title>
+		    <simpara>The idea is to form the inputs hash and expose it in form of DES integer data. The data then can be used in DES to form hash change bool indication.
+			Actually this is almost same as detecting the data change method mentioned in <xref linkend="ds_dcs_iui_itr"/> but kind of universal, i.e. not depends on
+			    the particular data type.
+			    The cons of this approach (comparing with "State like agent" is that it can be used in cases where we need to form the change indication not just for 
+			    the whole input data but form the component of the data (the component of tuple for instance). This case if quite often. For instance VertCRP forms pairs most left
+			    position by iterating pairs params. The params is the tuple but the iterator checks the only one comp of the tuple - column pos.
+		    </simpara>
+		</sect4>
+	    </sect3>
+	    <sect3 id="ds_dcs_iui_sla"><title>State like agent that exposes bool -inp changed- indication</title>
+		<sect4><title>Intro</title>
+		    <simpara>The cons is that it is not possible to form the change indicator for container compoment, other solution allows this.</simpara>
+		</sect4>
+	    </sect3>
+	</sect2>
     </sect1>
 
     <sect1 id="ds_dbg"><title>Debugging</title>
@@ -2351,6 +2391,15 @@
 	    <simpara>Pros: This solution allows smooth migration from templated iface. We just can redesing DES framework part by part.</simpara>
 	    <simpara>Cons: MDVarGet actually is not needed in our case - it aims exactly to support different type of data instead of generic one.</simpara>
 	</sect2>
+	<sect2><title>Do we really need paremetrized MDtGet iface?</title>
+	    <sect3><title>Intro</title>
+		<simpara>
+		    Potentially we can have only MDVarGet with the method:
+		<programlisting> virtual bool DtbGet(MDtBase&amp; aData) </programlisting>
+		    With this method it is possible both resolving the suitable data getter and obtain the data.
+	    </simpara>
+	    </sect3>
+	</sect2>
     </sect1>
 
     <sect1 id="ds_sor"><title>Redesing transtions to simplify MDesInpObserver routing.</title>
@@ -2502,6 +2551,23 @@
 		    if state goes to comparition step this means that the data was changed.</simpara>
 		<simpara>This optimization was applied in fap4 primary deds layer.</simpara>
 	    </sect3>
+	</sect2>
+	<sect2><title>TrTuple::DtGet() - data copied via serialization-deserialization.</title>
+	    <programlisting>
+		string values;
+		inphb->ToString(values);
+		istringstream isv(values);
+		elem->FromString(isv);
+	    </programlisting>
+	</sect2>
+	<sect2><title>Data copied from transition output</title>
+	    <simpara>Many transition data "receivers" just copied data from its inputs and then use it. We need to avoid copying data but use refs instead.</simpara>
+	    <simpara>Hm. This copying seems the correct in general - function creates new data (result) and copy it to "receiver". The only problem here is that function
+		copy the result to intgernal debugging data. This needs to be redesigned. Also getting the reference can be more optimal in the cases when the 
+		receiver doens't need the whole data but just parts of it. The example is the tuple component selector (TrTupleSel) or Vector element selector (TrAtVar). Currently
+		the selector transition copied the whole container and then gets the component of it. This is not optimal.</simpara>
+	    <simpara>The problem with getting refence is that we will need to cache the data in transitions - indeed we can get the ref to the persistent data only.
+		For the case of state as data getter it is simple, the state keeps persistent data.</simpara>
 	</sect2>
     </sect1>
 
@@ -2867,6 +2933,9 @@
 	    <simpara>There is still the redirection to the socket pair event if iface isn't resolved by pins. </simpara>
 	    <sect3><title>Solution</title>
 		<simpara>To disable redirecting to the socket pair if iface isn't resolved by pins.</simpara>
+	    </sect3>
+	    <sect3><title>Status</title>
+		<simpara>Fixed 20230115</simpara>
 	    </sect3>
 	</sect2>
     </sect1>
