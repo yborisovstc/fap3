@@ -751,10 +751,11 @@ template <class T> void FCmp<T>::DtGet(Sdata<bool>& aData)
 		    else if (mFType == EGt) sres = arg1 > arg2;
 		    else if (mFType == EGe) sres = arg1 >= arg2;
 		    aData.Set(sres);
-		} else if (mFType == ENeq) { // Enable comparing invalid data
-		    aData.Set(arg1 != arg2);
 		} else {
-		    res = false;
+		    // Enable comparing invalid data
+		    if (mFType == EEq) aData.Set(arg1 == arg2);
+		    else if (mFType == ENeq) aData.Set(arg1 != arg2);
+		    else { res = false; }
 		}
 	    } else {
 		res = false;
@@ -801,6 +802,8 @@ MIface *FSwitchBool::getLif(const char *aName)
     return res;
 }
 
+// TODO Incorrect Sel error handling - in case of error just returns false
+// i.e. selects "false" case. This behaviour is not reasonable.
 bool FSwitchBool::GetCtrl() const
 {
     bool res = false;
@@ -1589,9 +1592,11 @@ void Init()
     FSToStr<int>::Create(host, string(), string());
     FIsValid<DGuri>::Create(host, "");
     FIsValid<Sdata<string>>::Create(host, "");
+    FIsValid<Sdata<int>>::Create(host, "");
     FSvld<DGuri>::Create(host, "", "");
     FSvld<Sdata<string>>::Create(host, "", "");
     FTupleSel<Sdata<int>>::Create(host, "");
+    FTupleSel<Sdata<string>>::Create(host, "");
 }
 
 

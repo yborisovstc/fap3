@@ -565,7 +565,7 @@ void NTuple::DataToString(ostringstream& aStream) const
 	    aStream << sep;
 	}
 	const tComp& comp = *it;
-	comp.second->DataToString(aStream);
+	comp.second->ToString(aStream, false);
     }
 }
 
@@ -576,7 +576,7 @@ void NTuple::ToString(ostringstream& aOs, bool aSig) const
 	ss << GetTypeSig() << KSigToParsSep;
     }
     if (!mValid) {
-	ss << " <ERROR>";
+	ss << " <ERR>";
     }
     else {
 	TypeParsToString(ss);

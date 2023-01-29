@@ -255,6 +255,7 @@ bool Vert::isLinked(const MVert* aPair, bool aDirect) const
 void Vert::onConnected()
 {
     invalidateIrm();
+    notifyChanged();
 }
 
 void Vert::onDisconnected()

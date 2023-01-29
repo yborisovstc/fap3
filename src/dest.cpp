@@ -886,9 +886,9 @@ void TrTuple::DtGet(NTuple& aData)
 	if (compn->name() != K_InpName) {
 	    MUnit* inpu = compn->lIf(inpu);
 	    MDVarGet* inpvg = inpu ? inpu->getSif(inpvg) : nullptr;
-	    if (inpvg) {
-		DtBase* elem = aData.GetElem(compn->name());
-		if (elem) {
+	    DtBase* elem = aData.GetElem(compn->name());
+	    if (elem) {
+		if (inpvg) {
 		    string dgtype = string("MDtGet_") + elem->GetTypeSig();
 		    MDtGetBase* inpdg = static_cast<MDtGetBase*>(inpvg->DoGetDObj(dgtype.c_str()));
 		    if (inpdg) {
@@ -900,18 +900,12 @@ void TrTuple::DtGet(NTuple& aData)
 			Log(TLog(EErr, this) + "Input [" + compn->name() + "] is incompatible with tuple component");
 		    }
 		} else {
-		    Log(TLog(EErr, this) + "No such component [" + compn->name() + "] of tuple");
+		    elem->mValid = false;
+		    Log(TLog(EDbg, this) + "Cannot get input  [" + compn->name() + "]");
 		}
+	    } else {
+		Log(TLog(EErr, this) + "No such component [" + compn->name() + "] of tuple");
 	    }
-	    /*
-	       string value;
-	       res = GetSData(compn, value);
-	       if (!res) {
-	       Log(TLog(EErr, this) + "Cannot get input data  [" + compn->name() + "]");
-	       }
-	       DtBase* elem = aData.GetElem(compn->name());
-	       elem->FromString(value);
-	       */
 	}
 	compo = owner()->nextPair(compo);
     }
@@ -976,6 +970,10 @@ void TrTupleSel::Init(const string& aIfaceName)
 	mFunc = NULL;
      }
     if ((mFunc = FTupleSel<Sdata<int>>::Create(this, aIfaceName)));
+    else if ((mFunc = FTupleSel<Sdata<string>>::Create(this, aIfaceName)));
+    else {
+	Logger()->Write(EErr, this, "Failed init function");
+    }
 }
 
 string TrTupleSel::GetInpUri(int aId) const
@@ -1558,6 +1556,7 @@ void TrIsValid::Init(const string& aIfaceName)
 	string t1 = inp1->VarGetIfid();
 	if (mFunc = FIsValid<DGuri>::Create(this, t1));
 	else if (mFunc = FIsValid<Sdata<string>>::Create(this, t1));
+	else if (mFunc = FIsValid<Sdata<int>>::Create(this, t1));
 	else {
 	    Log(TLog(EErr, this) + "Failed init, input [" + t1 + "]");
 	}

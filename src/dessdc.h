@@ -438,7 +438,14 @@ class ASdcDisconn : public ASdc
 	ASdc::SdcIap<Sdata<string>> mIapV2; /*!< "V2" input access point */
 };
 
-/** @brief SDC agent "Insert node into list, ver. 2"
+/** @brief SDC agent "Insert node into list, ver. 2. Insertion before the chain given node"
+ * TODO The curret approach for insertion is wrong: the element is inserted BEFORE
+ * given chain node (position node). But the insertion causes the change of position of this given chain node
+ * so getting status of the control operation results to false. We need to use opposite approach -
+ * insert AFTER given chain node. In this case the position of this given node is not changed.
+ * Actually even the current approach works ok if the given chan node is specified basing on the position from end.
+ * But in many cases this is rather inconvenient. For instance in the colums chain in column layout the position of
+ * the columnn is calculated from start to end.
  * */
 class ASdcInsert2 : public ASdc
 {
@@ -459,6 +466,29 @@ class ASdcInsert2 : public ASdc
 	ASdc::MagDobs mDobsNprev; /*!< "Link prev CP" observation */
 	MVert* mCpPair;
 };
+
+/** @brief SDC agent "Insert node into list AFTER a the chain given node"
+ * */
+class ASdcInsertN : public ASdc
+{
+    public:
+	static const char* Type() { return "ASdcInsertN";};
+	ASdcInsertN(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+    protected:
+	// From MObserver
+	virtual void onObsChanged(MObservable* aObl) override;
+	// From ASdc
+	virtual bool getState(bool aConf = false) override;
+	bool doCtl() override;
+    protected:
+	ASdc::SdcIap<Sdata<string>> mIapName; /*!< "Link name" input access point */
+	ASdc::SdcIap<Sdata<string>> mIapPrev; /*!< "Prev CP" input access point */
+	ASdc::SdcIap<Sdata<string>> mIapNext; /*!< "Next CP" input access point */
+	ASdc::SdcIap<Sdata<string>> mIapPname; /*!< "Position - name" input access point */
+	ASdc::MagDobs mDobsNprev; /*!< "Link prev CP" observation */
+	MVert* mCpPair;
+};
+
 
 
 /** @brief SDC agent "Extract, reverse to Insert"

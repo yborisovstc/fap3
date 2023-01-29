@@ -92,7 +92,8 @@ template <class T> class MDtGet: public MDtGetBase
 	static const string mType;
 	static const char* Type() { return mType.c_str();};
 	// From MIface
-	virtual string Uid() const override { return mType;}
+	virtual string Uid() const override { return MDtGet_Uid();}
+	virtual string MDtGet_Uid() const { return mType;}
 	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { return MDtGet_doDump(aLevel, aIdt, std::cout);}
 	virtual void MDtGet_doDump(int aLevel, int aIdt, ostream& aOs) const {}
 	// From MDtGetBase

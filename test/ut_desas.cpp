@@ -14,7 +14,8 @@ class Ut_desas : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_desas);
     //CPPUNIT_TEST(test_Desas_1);
-    CPPUNIT_TEST(test_Desas_2);
+    //CPPUNIT_TEST(test_Desas_2);
+    CPPUNIT_TEST(test_Desas_3);
     CPPUNIT_TEST_SUITE_END();
     public:
     virtual void setUp();
@@ -24,6 +25,7 @@ class Ut_desas : public CPPUNIT_NS::TestFixture
     private:
     void test_Desas_1();
     void test_Desas_2();
+    void test_Desas_3();
     private:
     Env* mEnv;
 };
@@ -87,6 +89,25 @@ void Ut_desas::test_Desas_2()
 
     delete mEnv;
 }
+
+/** @brief DESAS test - getting list position
+ * */
+void Ut_desas::test_Desas_3()
+{
+    printf("\n === Test of DES active subs: getting list node\n");
+    MNode* root = constructSystem("ut_desas_3");
+
+    bool res = mEnv->RunSystem(12, 2);
+
+    MNode* asRes = root->getNode("Launcher.AsRes");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get Launcher.AsRes", asRes);
+    DGuri dres;
+    GetGData(asRes, dres);
+    CPPUNIT_ASSERT_MESSAGE("Wrong AsRes data", dres.mData == "E3");
+
+    delete mEnv;
+}
+
 
 
 

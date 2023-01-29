@@ -339,6 +339,7 @@ class TrTuple: public TrBase, public MDVarGet, public MDtGet<NTuple>
 	virtual string VarGetIfid() const override;
 	// From MDtGet
 	virtual void DtGet(NTuple& aData) override;
+	virtual string MDtGet_Uid() const { return getUid<MDtGet<NTuple>>();}
     protected:
 	virtual string GetInpUri(int aId) const override { return string();}
     protected:

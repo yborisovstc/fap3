@@ -1049,6 +1049,7 @@ void DesLauncher::outputCounter(int aCnt)
 
 
 static const string K_SsInitUri = "Init";
+static const string K_SsUri = "Subsys";
 
 /// Active subsystem of DES
 
@@ -1063,12 +1064,34 @@ bool DesAs::Run(int aCount, int aIdleCount)
     int cnt = 0;
     int idlecnt = 0;
     do {
-	if (owner()->pcount() != 1) {
-	    Log(TLog(EErr, this) + "Subsystems number != 1");
-	    res = false; break;
+	/*
+	MNode* ss = nullptr;
+	auto owdCp = owner()->firstPair();
+	while (owdCp) {
+	    MNode* compn = owdCp->provided()->lIf(compn);
+	    MDesSyncable* comps = compn ? compn->lIf(comps) : nullptr;
+	    if (comps) {
+		if (ss == nullptr) {
+		    ss = compn;
+		} else {
+		    // TODO Is this limination really needed?
+		    Log(TLog(EErr, this) + "Subsystems number > 1");
+		}
+	    }
+	    owdCp = owner()->nextPair(owdCp);
+	}
+	if (ss == nullptr) {
+	    Log(TLog(EErr, this) + "No subsystems found");
+	    break;
 	}
 	// Initiate subsystem, ref ds_desas_sis_iph
-	MNode* ss = owner()->firstPair()->provided()->lIf(ss);
+	//MNode* ss = owner()->firstPair()->provided()->lIf(ss);
+	*/
+	MNode* ss = getNode(K_SsUri);
+	if (ss == nullptr) {
+	    Log(TLog(EErr, this) + "No subsystem [" + K_SsUri + "] found");
+	    break;
+	}
 	MNode* ssinit = ss->getNode(K_SsInitUri);
 	if (!ssinit) {
 	    Log(TLog(EErr, this) + "Couldn't find Init state");
@@ -1084,7 +1107,7 @@ bool DesAs::Run(int aCount, int aIdleCount)
 	    Log(TLog(EInfo, this) + ">>> Init update");
 	    Des::update();
 	    if (!mUpdated.empty()) {
-		Log(TLog(EInfo, this) + ">>> Init confirm]");
+		Log(TLog(EInfo, this) + ">>> Init confirm");
 		Des::confirm();
 	    }
 	}

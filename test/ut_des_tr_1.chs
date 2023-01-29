@@ -192,6 +192,25 @@ MyRoot : Elem {
                     }
                 }
             }
+            # "Tuple composer, missing inp"
+            TupleRes3 : State @  {
+                _@ <  {
+                    = "TPL,SI:data,SI:value -1 -2"
+                    Debug.LogLevel = "Dbg"
+                }
+                Inp ~ TupleCps3 : TrTuple @  {
+                    Inp ~ : State {
+                        = "TPL,SI:data,SI:value -1 -2"
+                    }
+                    _@ <  {
+                        data : CpStateInp
+                        value : CpStateInp
+                    }
+                    value ~ : State {
+                        = "SI 2"
+                    }
+                }
+            }
             # "Tuple component selector"
             TupleSelData_Dbg : State @  {
                 _@ <  {
@@ -578,7 +597,6 @@ MyRoot : Elem {
                     }
                 }
             }
-
         }
     }
 }

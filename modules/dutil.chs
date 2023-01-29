@@ -216,4 +216,87 @@ DesUtils : Elem {
             Cmp_Neq.Inp2 ~ Hash
         }
     }
+    ListItemByPos : DesAs {
+        # "DES active subsystem. Getting list node with given pos in the list"
+        # "Input: node position in the list"
+        InpPos : ExtdStateInp
+        # "Input: link to observed list"
+        InpMagLink : Link {
+            Outp : CpStateMnodeOutp
+        }
+        # "Output: URI of list node with given pos"
+        OutpNode : ExtdStateOutp
+        Debug.LogLevel = "Err"
+        Subsys : DAdp {
+            InpPos : ExtdStateInp
+            # "Desas init"
+            Init : State {
+                = "SB false"
+                Debug.LogLevel = "Err"
+            }
+            CurPos : State @  {
+                _@ <  {
+                    Debug.LogLevel = "Err"
+                    = "SI 0"
+                }
+                Inp ~ : TrSwitchBool @  {
+                    Inp1 ~ : TrSwitchBool @  {
+                        Inp1 ~ : TrAddVar @  {
+                            Inp ~ CurPos
+                            Inp ~ : State {
+                                = "SI 1"
+                            }
+                        }
+                        Inp2 ~ CurPos
+                        Sel ~ PosReached_Ge : TrCmpVar @  {
+                            Inp ~ CurPos
+                            Inp2 ~ InpPos.Int
+                        }
+                    }
+                    Inp2 ~ : State {
+                        = "SI 0"
+                    }
+                    Sel ~ Init
+                }
+            }
+            Res : State {
+                = "URI _INV"
+                Debug.LogLevel = "Err"
+            }
+            PairOfPrev : SdoTcPair @  {
+                Targ ~ Res
+                TargComp ~ : State {
+                    = "URI Prev"
+                }
+            }
+            PairOfPrev_Dbg : State @  {
+                _@ <  {
+                    Debug.LogLevel = "Err"
+                    = "URI _INV"
+                }
+                Inp ~ PairOfPrev
+            }
+            PairOfPrevOwner : SdoCompOwner @  {
+                Comp ~ PairOfPrev
+            }
+            Res.Inp ~ : TrSwitchBool @  {
+                Inp1 ~ : TrSwitchBool @  {
+                    Inp1 ~ PairOfPrevOwner
+                    Inp2 ~ Res
+                    Sel ~ PosReached_Ge
+                }
+                Inp2 ~ : State {
+                    = "URI Start"
+                }
+                Sel ~ Init
+            }
+        }
+        Subsys.InpPos ~ InpPos.Int
+        Subsys.InpMagBase ~ InpMagLink.Outp
+        Subsys.InpMagUri ~ : State {
+            = "SS ''"
+        }
+        OutpNode.Int ~ Subsys.Res
+        # "<<< DES active subsystem. Getting node with given pos of list"
+    }
 }

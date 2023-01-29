@@ -262,8 +262,10 @@ class SdoPair : public Sdog<DGuri>
 	static const char* Type() { return "SdoPair";};
 	SdoPair(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual void DtGet(Stype& aData) override;
+	virtual void onObsChanged(MObservable* aObl) override;
     protected:
 	Inp<string> mInpTarg;  //<! Target Vertex URI
+	MNode* mVertUe;        //<! Vertex under exploring 
 };
 
 /** @brief SDO "Single pair of targets comp"

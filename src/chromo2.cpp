@@ -1337,8 +1337,14 @@ bool Chromo2Mdl::rdp_chromo_node(istream& aIs, C2MdlNode& aMnode)
 	    res = rdp_ctx_mut_create_chromo(aIs, node);
 	    if (!res) {
 		rdpBacktrack(aIs, pos);
-		res = rdp_ctx_mutation(aIs, node);
-		if (res) {
+		res = rdp_segment(aIs, node);
+		if (!res) {
+		    rdpBacktrack(aIs, pos);
+		    res = rdp_ctx_mutation(aIs, node);
+		    if (res) {
+			aMnode.mChromo.push_back(node);
+		    }
+		} else {
 		    aMnode.mChromo.push_back(node);
 		}
 	    } else {

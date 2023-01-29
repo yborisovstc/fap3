@@ -2938,6 +2938,8 @@
 		<simpara>Fixed 20230115</simpara>
 	    </sect3>
 	</sect2>
+	<sect2 id="ds_iss_011"><title>[<glossterm id="iss_011">DS_ISS_011</glossterm>] 20230128 Cannot set invalid string Sdata</title>
+	</sect2>
     </sect1>
 
 

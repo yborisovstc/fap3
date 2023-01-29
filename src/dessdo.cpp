@@ -257,6 +257,7 @@ void SdoCompComp::DtGet(Stype& aData)
 	    if (comp) {
 		MNode* ccomp = comp->getNode(ccuri.mData);
 		if (ccomp) {
+		    aData.mData.clear();
 		    ccomp->getUri(aData.mData, mSue);
 		    aData.mValid = true;
 		} else {
@@ -332,7 +333,7 @@ void SdoPairsCount::DtGet(Stype& aData)
 ///  SDO "Vertex pair URI"
 
 SdoPair::SdoPair(const string &aType, const string& aName, MEnv* aEnv): Sdog<DGuri>(aType, aName, aEnv),
-    mInpTarg(this, "Vp")
+    mInpTarg(this, "Vp"), mVertUe(nullptr)
 {
 }
 
@@ -346,6 +347,17 @@ void SdoPair::DtGet(Stype& aData)
 	Log(TLog(EWarn, this) + "Owner is not explorable");
     } else {
 	MNode* vertn = mSue->getNode(verts);
+	if (vertn != mVertUe) {
+	    mVertUe = vertn;
+	    // Start observing vertex under exploring
+	    MObservable* obl = mVertUe->lIf(obl);
+	    if (obl) {
+		res = obl->addObserver(&mObrCp);
+	    }
+	    if (!res || !obl) {
+		Logger()->Write(EErr, this, "Cannot attach VertUe to observer");
+	    }
+	}
 	if (vertn) {
 	    MVert* vertv = vertn->lIf(vertv);
 	    if (vertv) {
@@ -363,6 +375,18 @@ void SdoPair::DtGet(Stype& aData)
 		Log(TLog(EErr, this) + "Target [" + verts + "] is not vertex");
 	    }
 	}
+    }
+}
+
+
+void SdoPair::onObsChanged(MObservable* aObl)
+{
+    MObservable* obl = mVertUe->lIf(obl);
+    if (aObl == obl) {
+	//Log(TLog(EDbg, this) + "SdoPair::onObsChanged");
+	NotifyInpsUpdated();
+    } else {
+	SdoBase::onObsChanged(aObl);
     }
 }
 
