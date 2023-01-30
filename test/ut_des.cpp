@@ -172,6 +172,10 @@ void Ut_des::test_des_tr_1()
 {
     cout << endl << "=== Test of DES transisions ===" << endl;
 
+    DChr2 sc;
+    sc.FromString("CHR2 { Text = \\\"Button 3\\\";  BgColor < { R = \\\"0.0\\\"; G = \\\"0.0\\\"; B = \\\"1.0\\\"; } }");
+    cout << sc.ToString() << endl;
+
     Sdata<string> ss;
     istringstream iss("SS 'H \\'ello\\' dude!'");
     iss >> ss;

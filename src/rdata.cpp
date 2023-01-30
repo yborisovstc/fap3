@@ -31,13 +31,18 @@ template<> const char* Sdata<bool>::TypeSig() { return  "SB";};
 template<> const char* Sdata<string>::TypeSig() { return  "SS";};
 //template<> const char* Sdata<Vector<string>>::TypeSig() { return  "SVS";};
 
-template<> void Sdata<int>::InpFromString(istringstream& aStream, int& aRes) { aStream >> std::boolalpha >> aRes; }
-template<> void Sdata<float>::InpFromString(istringstream& aStream, float& aRes) { aStream >> std::boolalpha >> aRes; }
-template<> void Sdata<bool>::InpFromString(istringstream& aStream, bool& aRes) { aStream >> std::boolalpha >> aRes; }
-template<> void Sdata<string>::InpFromString(istringstream& aStream, string& aRes) {
-    if (!RdpUtil::sstring(aStream, aRes)) {
-	aStream >> aRes;
+template<> bool Sdata<int>::InpFromString(istringstream& aStream, int& aRes) { aStream >> std::boolalpha >> aRes; return !aStream.fail();}
+template<> bool Sdata<float>::InpFromString(istringstream& aStream, float& aRes) { aStream >> std::boolalpha >> aRes; return !aStream.fail(); }
+template<> bool Sdata<bool>::InpFromString(istringstream& aStream, bool& aRes) { aStream >> std::boolalpha >> aRes; return !aStream.fail(); }
+template<> bool Sdata<string>::InpFromString(istringstream& aStream, string& aRes) {
+    bool res = !RdpUtil::val_inv(aStream);
+    if (res) {
+	if (!RdpUtil::sstring(aStream, aRes)) {
+	    aStream >> aRes;
+	    res = !aStream.fail();
+	}
     }
+    return res;
 }
 
 
@@ -45,7 +50,11 @@ template<> void Sdata<int>::DataToString(ostringstream& aStream) const { aStream
 template<> void Sdata<float>::DataToString(ostringstream& aStream) const { aStream << std::boolalpha << mData; };
 template<> void Sdata<bool>::DataToString(ostringstream& aStream) const { aStream << std::boolalpha << mData; };
 template<> void Sdata<string>::DataToString(ostringstream& aStream) const {
-    aStream << KSSStringDelim << mData << KSSStringDelim;
+    if (mValid) {
+	aStream << KSSStringDelim << mData << KSSStringDelim;
+    } else {
+	aStream << "<ERR>";
+    }
 };
 
 // Special values
@@ -107,7 +116,8 @@ void DtBase::FromString(istringstream& aStream)
     if (sig == GetTypeSig()) {
 	mSigTypeOK = true;
 	RdpUtil::sep(aStream);
-	if (!RdpUtil::val_inv(aStream)) {
+	bool eof = aStream.eof();
+	if (!aStream.eof() && !RdpUtil::val_inv(aStream)) {
 	    DataFromString(aStream);
 	    mDsErr = !mValid;
 	}
@@ -1013,17 +1023,21 @@ bool RdpUtil::isSep(char aSmb)
 bool RdpUtil::sep(istream& aIs)
 {
     bool res = false;
-    streampos pos = aIs.tellg(); // Debug
-    char c = aIs.get();
-    if (isSep(c)) {
-	do {
-	    c = aIs.get();
-	} while (isSep(c));
-	aIs.seekg(-1, aIs.cur);
-	res = true;
-    } else {
-	res = false;
-	aIs.seekg(-1, aIs.cur);
+    if (!aIs.eof()) {
+	streampos pos = aIs.tellg(); // Debug
+	char c = aIs.get();
+	if (isSep(c)) {
+	    do {
+		c = aIs.get();
+	    } while (isSep(c) && !aIs.eof());
+	    if (!aIs.eof()) {
+		aIs.seekg(-1, aIs.cur);
+	    }
+	    res = true;
+	} else {
+	    res = false;
+	    aIs.seekg(-1, aIs.cur);
+	}
     }
     return res;
 }

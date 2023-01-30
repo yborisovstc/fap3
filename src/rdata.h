@@ -52,6 +52,7 @@ class DtBase : public MDtBase
 	DtBase(const DtBase& d): mValid(d.mValid), mChanged(d.mChanged), mSigTypeOK(d.mSigTypeOK) {};
 	virtual ~DtBase();
 	string ToString(bool aSig = true) const { ostringstream res; ToString(res, aSig); return res.str(); }
+	void FromString(const string& aSrc) { istringstream src(aSrc); FromString(src); }
 	static int ParseSigPars(const string& aCont, string& aSig);
 	static bool IsSrepFit(const string& aString, const string& aTypeSig);
 	static bool IsDataFit(const DtBase& aData, const string& aTypeSig);
@@ -108,22 +109,17 @@ template<class T> class Sdata: public DtBase
 	bool Set(const T& aData) { bool res = aData != mData; mData = aData; mValid = true; return res; };
 	virtual int Hash() const override { std::hash<T> h; std::hash<bool> hv; return h(mData) + hv(mValid);}
     protected:
-	void InpFromString(istringstream& aStream, T& aRes);
+	bool InpFromString(istringstream& aStream, T& aRes);
     public:
 	T mData;
 };
 
 template<class T> void Sdata<T>::DataFromString(istringstream& aStream)
 {
-    bool valid = true;
     mChanged = false;
     T sdata;
-    InpFromString(aStream, sdata);
-    if (!aStream.fail()) {
-	if (mData != sdata) { mData = sdata; mChanged = true; }
-    } else {
-	valid = false;
-    }
+    bool valid = InpFromString(aStream, sdata);
+    if (valid && mData != sdata) { mData = sdata; mChanged = true; }
     if (mValid != valid) { mValid = valid; mChanged = true;}
 }
 

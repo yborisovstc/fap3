@@ -2355,7 +2355,7 @@
 		actually.</simpara>
 	    <simpara>But it is not possible to set this special value via mutation and the special values don't have text representation.</simpara>
 	</sect2>
-	<sect2><title>Special values text representation, option#1.</title>
+	<sect2><title>Option#1. Special values text representation.</title>
 	    <simpara>We can use for instance the syntax of special values text representatio as: </simpara>
 	    <programlisting>
 		representation = SIGNATURE " " "&lt;" special_value "&gt;"
@@ -2364,15 +2364,26 @@
 		special_value_unset = "NIL"
 	    </programlisting>
 	</sect2>
-	<sect2><title>Special values text representation, option#2.</title>
+	<sect2><title>Option#2.Special values text representation.</title>
 	    <simpara>We can use for instance the syntax of special values text representatio as: </simpara>
 	    <programlisting>
 		representation = SIGNATURE " " special_value
 		special_value = special_value_invalid | special_value_unset
-		special_value_invalid = "_err"
-		special_value_unset = "_nil"
+		special_value_invalid = "_INV"
+		special_value_unset = "_NIL"
 	    </programlisting>
 	    <simpara>We can introduce also escaping such special values</simpara>
+	</sect2>
+	<sect2><title>Option#3 Use missing data criteria instead of special values</title>
+	    <simpara>Using special value is annoying. In many cases we need to initialize the state with invalid data. It is more compact sintax if 
+		we classify the data as invalid in case of the symbols after data signature are missing but same time classifying this as no data error
+		(because no data is specified). The reasoning here is as: There is no data, so data is not set, i.e. invalid, but there is not data syntax error,
+		because of not data specified.</simpara>
+	    <simpara>We still need special_value_invalid in rare cases for instance when specifying invalid data in tuple (there are no signature when specifying
+		field data in tuple, ref <xref linkend="iss_011"/>)</simpara>
+	</sect2>
+	<sect2><title>Status</title>
+	    <simpara>20230130 Implemented Option#3 but Option#2 special_value_invalid also enabled.</simpara>
 	</sect2>
     </sect1>
 
@@ -2940,7 +2951,10 @@
 		<simpara>Fixed 20230115</simpara>
 	    </sect3>
 	</sect2>
-	<sect2 id="ds_iss_011"><title>[<glossterm id="iss_011">DS_ISS_011</glossterm>] 20230128 Cannot set invalid string Sdata</title>
+	<sect2 id="ds_iss_011"><title>[<glossterm id="iss_011">DS_ISS_011</glossterm>] 20230128 Cannot set invalid string Sdata field in tuple</title>
+	    <sect3><title>Status</title>
+		<simpara>20230130 Implemented, ref also dependent design item <xref linkend="ds_dsv"/> </simpara>
+	    </sect3>
 	</sect2>
     </sect1>
 

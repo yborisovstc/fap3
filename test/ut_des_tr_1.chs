@@ -22,7 +22,7 @@ MyRoot : Elem {
             StPS : State @  {
                 _@ <  {
                     Debug.LogLevel = "Dbg"
-                    = "PS _INV"
+                    = "PS "
                 }
                 Inp ~ : State {
                     = "PS ( First , Second )"
@@ -32,7 +32,7 @@ MyRoot : Elem {
             StPSS : State @  {
                 _@ <  {
                     Debug.LogLevel = "Dbg"
-                    = "PSS _INV"
+                    = "PSS "
                 }
                 Inp ~ : State {
                     = "PSS ( SS 'First elem' , SS 'Second elem' )"
@@ -42,7 +42,7 @@ MyRoot : Elem {
             StPU : State @  {
                 _@ <  {
                     Debug.LogLevel = "Dbg"
-                    = "PDU _INV"
+                    = "PDU "
                 }
                 Inp ~ : State {
                     = "PDU ( URI first1.first2 , URI second1.second2 )"
@@ -52,7 +52,7 @@ MyRoot : Elem {
             StVS : State @  {
                 _@ <  {
                     Debug.LogLevel = "Dbg"
-                    = "VS _INV"
+                    = "VS"
                 }
                 Inp ~ : State {
                     = "VS ( elem1 , elem2 , elem3 )"
@@ -62,7 +62,7 @@ MyRoot : Elem {
             StVDU : State @  {
                 _@ <  {
                     Debug.LogLevel = "Dbg"
-                    = "VDU _INV"
+                    = "VDU "
                 }
                 Inp ~ : State {
                     = "VDU ( URI e1_f1.e1_f2 , URI e2_f1.e2_f2 )"
@@ -72,7 +72,7 @@ MyRoot : Elem {
             StVPU : State @  {
                 _@ <  {
                     Debug.LogLevel = "Dbg"
-                    = "VPDU _INV"
+                    = "VPDU "
                 }
                 Inp ~ : State {
                     = "VPDU ( PDU ( URI e1f1.e1f2 , URI e1s1.e1s2 ) , PDU ( URI e2f1.e2f2 , URI e2s1.e2s2 ) )"
@@ -82,7 +82,7 @@ MyRoot : Elem {
             StVPS : State @  {
                 _@ <  {
                     Debug.LogLevel = "Dbg"
-                    = "VPS _INV"
+                    = "VPS "
                 }
                 Inp ~ : State {
                     = "VPS ( PS (e1_first , e1_second ) ,  PS (e2_first , e2_second ) )"
@@ -105,7 +105,7 @@ MyRoot : Elem {
             }
             # "Item of vector, wrapped by Sdata"
             St4 : State {
-                = "SS _INV"
+                = "SS "
                 Debug.LogLevel = "Dbg"
             }
             St4.Inp ~ : TrAtVar @  {
@@ -116,7 +116,7 @@ MyRoot : Elem {
             }
             # "Item of vector, generic: not wrapped by Sdata"
             SAtgVdu : State {
-                = "URI _INV"
+                = "URI "
                 Debug.LogLevel = "Dbg"
             }
             SAtgVdu.Inp ~ : TrAtgVar @  {
@@ -129,7 +129,7 @@ MyRoot : Elem {
             }
             # "Item of Pair, generic: not wrapped by Sdata"
             SAtgPu : State {
-                = "URI _INV"
+                = "URI "
                 Debug.LogLevel = "Dbg"
             }
             SAtgPu.Inp ~ : TrAtgVar @  {
@@ -143,7 +143,7 @@ MyRoot : Elem {
             # "Tuple composer"
             TupleRes : State @  {
                 _@ <  {
-                    = "TPL,SS:name,SI:value none 0"
+                    = "TPL,SS:name,SI:value _INV 0"
                     Debug.LogLevel = "Dbg"
                 }
                 Inp ~ : TrTuple @  {
@@ -170,12 +170,12 @@ MyRoot : Elem {
             T2extd ~ T2Data
             TupleRes2 : State @  {
                 _@ <  {
-                    = "TPL,SI:data,SI:value _INV _INV"
+                    = "TPL,SI:data,SI:value  "
                     Debug.LogLevel = "Dbg"
                 }
                 Inp ~ : TrTuple @  {
                     Inp ~ : State {
-                        = "TPL,SI:data,SI:value _INV _INV"
+                        = "TPL,SI:data,SI:value  "
                     }
                     _@ <  {
                         data : CpStateInp
@@ -214,7 +214,7 @@ MyRoot : Elem {
             # "Tuple component selector"
             TupleSelData_Dbg : State @  {
                 _@ <  {
-                    = "SI _INV"
+                    = "SI "
                     Debug.LogLevel = "Dbg"
                 }
                 Inp ~ TplSelData : TrTupleSel @  {
@@ -228,7 +228,7 @@ MyRoot : Elem {
             TupleSelIfaceG : State @  {
                 _@ <  {
                     Debug.LogLevel = "Dbg"
-                    = "SB _INV"
+                    = "SB "
                 }
                 Inp ~ ColPos_Lt : TrCmpVar @  {
                     Inp ~ : TrTupleSel @  {
@@ -248,7 +248,7 @@ MyRoot : Elem {
             # "Intput counter"
             InpCntRes : State @  {
                 _@ <  {
-                    = "SI _INV"
+                    = "SI "
                     Debug.LogLevel = "Dbg"
                 }
                 Inp ~ : TrInpCnt @  {
@@ -286,12 +286,12 @@ MyRoot : Elem {
             }
             # "Chromo data"
             ChrD : State {
-                = "CHR2 { Text = \\\"Button 3\\\";  BgColor < { R = \\\"0.0\\\"; G = \\\"0.0\\\"; B = \\\"1.0\\\"; } }"
+                = "CHR2 '{ Text = \\\"Button 3\\\";  BgColor < { R = \\\"0.0\\\"; G = \\\"0.0\\\"; B = \\\"1.0\\\"; } }'"
             }
             # "Chromo composer"
             ChromoRes : State @  {
                 _@ <  {
-                    = "CHR2 { }"
+                    = "CHR2"
                     Debug.LogLevel = "Dbg"
                 }
                 Inp ~ : TrChr @  {
@@ -316,15 +316,15 @@ MyRoot : Elem {
             # "Chrom composer - from chromos"
             ChromocRes : State @  {
                 _@ <  {
-                    = "CHR2 { }"
+                    = "CHR2"
                     Debug.LogLevel = "Dbg"
                 }
                 Inp ~ : TrChrc @  {
                     Inp ~ : State {
-                        = "CHR2 { Node : TestNode; }"
+                        = "CHR2 '{ Node : TestNode; }'"
                     }
                     Inp ~ : State {
-                        = "CHR2 { Node2 : TestNode; }"
+                        = "CHR2 '{ Node2 : TestNode; }'"
                     }
                 }
             }
@@ -403,7 +403,7 @@ MyRoot : Elem {
             SMutCont2 : State @  {
                 _@ <  {
                     Debug.LogLevel = "Dbg"
-                    = "CHR2 { }"
+                    = "CHR2"
                 }
                 Inp ~ : TrChr @  {
                     Mut ~ : TrMutCont @  {
@@ -423,18 +423,18 @@ MyRoot : Elem {
             SIsValid1 : State @  {
                 _@ <  {
                     Debug.LogLevel = "Dbg"
-                    = "SB _INV"
+                    = "SB "
                 }
                 Inp ~ : TrIsValid @  {
                     Inp ~ : State {
-                        = "URI _INV"
+                        = "URI "
                     }
                 }
             }
             SIsValid2 : State @  {
                 _@ <  {
                     Debug.LogLevel = "Dbg"
-                    = "SB _INV"
+                    = "SB "
                 }
                 Inp ~ : TrIsValid @  {
                     Inp ~ : State {
@@ -446,11 +446,11 @@ MyRoot : Elem {
             SSelValid1 : State @  {
                 _@ <  {
                     Debug.LogLevel = "Dbg"
-                    = "URI _INV"
+                    = "URI "
                 }
                 Inp ~ TSv1 : TrSvldVar @  {
                     Inp1 ~ : State {
-                        = "URI _INV"
+                        = "URI "
                     }
                     Inp2 ~ : State {
                         = "URI Hello"
@@ -460,7 +460,7 @@ MyRoot : Elem {
             SSelValid1d : State @  {
                 _@ <  {
                     Debug.LogLevel = "Dbg"
-                    = "URI _INV"
+                    = "URI "
                 }
                 Inp ~ TSv1
             }
@@ -482,11 +482,11 @@ MyRoot : Elem {
             SSelValidS1 : State @  {
                 _@ <  {
                     Debug.LogLevel = "Dbg"
-                    = "SS _INV"
+                    = "SS "
                 }
                 Inp ~ : TrSvldVar @  {
                     Inp1 ~ : State {
-                        = "SS _INV"
+                        = "SS "
                     }
                     Inp2 ~ : State {
                         = "SS Hello"
@@ -511,7 +511,7 @@ MyRoot : Elem {
             SUriTail : State @  {
                 _@ <  {
                     Debug.LogLevel = "Dbg"
-                    = "URI _INV"
+                    = "URI "
                 }
                 Inp ~ : TrTailVar @  {
                     Inp ~ : State {
@@ -526,7 +526,7 @@ MyRoot : Elem {
             SUriHead : State @  {
                 _@ <  {
                     Debug.LogLevel = "Dbg"
-                    = "URI _INV"
+                    = "URI "
                 }
                 Inp ~ : TrHeadVar @  {
                     Inp ~ : State {
@@ -541,7 +541,7 @@ MyRoot : Elem {
             SUriTailn : State @  {
                 _@ <  {
                     Debug.LogLevel = "Dbg"
-                    = "URI _INV"
+                    = "URI "
                 }
                 Inp ~ : TrTailnVar @  {
                     Inp ~ : State {
@@ -556,7 +556,7 @@ MyRoot : Elem {
             SHashInt : State @  {
                 _@ <  {
                     Debug.LogLevel = "Dbg"
-                    = "SI _INV"
+                    = "SI "
                 }
                 Inp ~ : TrHash @  {
                     Inp ~ : State {
@@ -571,7 +571,7 @@ MyRoot : Elem {
             SHashStr : State @  {
                 _@ <  {
                     Debug.LogLevel = "Dbg"
-                    = "SI _INV"
+                    = "SI "
                 }
                 Inp ~ : TrHash @  {
                     Inp ~ : State {
@@ -586,7 +586,7 @@ MyRoot : Elem {
             SHashTuple : State @  {
                 _@ <  {
                     Debug.LogLevel = "Dbg"
-                    = "SI _INV"
+                    = "SI "
                 }
                 Inp ~ : TrHash @  {
                     Inp ~ : State {
@@ -616,7 +616,7 @@ MyRoot : Elem {
             SPair2 : State @  {
                 _@ <  {
                     Debug.LogLevel = "Dbg"
-                    = "SI _INV"
+                    = "SI "
                 }
                 Inp ~ Pair2At : TrAtgVar @  {
                     Inp ~ : TrPair @  {
