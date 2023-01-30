@@ -94,6 +94,31 @@ template <class T> class FMplDt: public FMplBase, public MDtGet<T> {
 };
 
 
+/** @brief Division, base
+ * */
+class FDivBase: public Func {
+    public:
+	enum { EInp = EInp1, EInp2 = EInp2 };
+	FDivBase(Host& aHost): Func(aHost) {};
+};
+
+/** @brief Division, generic data
+ * */
+template <class T> class FDivDt: public FDivBase, public MDtGet<T> {
+    public:
+	static Func* Create(Host* aHost, const string& aString);
+	FDivDt(Host& aHost): FDivBase(aHost) {};
+	virtual MIface* getLif(const char *aName) override;
+	virtual string IfaceGetId() const { return MDtGet<T>::Type();};
+	virtual void DtGet(T& aData);
+	virtual void GetResult(string& aResult) const;
+	virtual string GetInpExpType(int aId) const;
+	// From MDtGet
+	virtual void MDtGet_doDump(int aLevel, int aIdt, ostream& aOs) const override;
+	T mRes;
+};
+
+
 
 
 /** @brief Boolean func base, generic data
@@ -633,6 +658,26 @@ class FTupleSel: public Func, public MDtGet<T> {
 	virtual string GetInpExpType(int aId) const override;
     protected:
 	T mRes;
+};
+
+
+/** @brief Compose Pair from comps (DataBase)
+ * */
+template <class T>
+class FPair: public Func, public MDtGet<Pair<T>> {
+    public:
+	using TData = Pair<T>;
+	using TInpData = T;
+    public:
+	static Func* Create(Host* aHost, const string& aOutIid, const string& aInp1Id);
+	FPair(Host& aHost): Func(aHost) {}
+	virtual MIface* getLif(const char *aName) override;
+	virtual string Uid() const override { return mHost.getHostUri() + Ifu::KUidSepIc + "func" + Ifu::KUidSep + TData::Type();}
+	virtual string IfaceGetId() const { return MDtGet<TData>::Type();}
+	virtual void DtGet(TData& aData);
+	virtual void GetResult(string& aResult) const {ostringstream os; mRes.ToString(os); aResult = os.str();}
+	virtual string GetInpExpType(int aId) const;
+	TData mRes;
 };
 
 

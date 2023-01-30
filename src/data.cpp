@@ -18,7 +18,7 @@ template<> const char* Vector<string>::TypeSig() { return  "VS";};
 template<> const char* Vector<Pair<string>>::TypeSig() { return  "VPS";};
 template<> const char* Pair<string>::TypeSig() { return  "PS";};
 template<> const char* Pair<Sdata<string>>::TypeSig() { return  "PSS";};
-//template<> const char* Pair<GUri>::TypeSig() { return  "PU";};
+template<> const char* Pair<Sdata<int>>::TypeSig() { return  "PSI";};
 template<> const char* Vector<DGuri>::TypeSig() { return  "VDU";};
 template<> const char* Pair<DGuri>::TypeSig() { return  "PDU";};
 template<> const char* Vector<Pair<DGuri>>::TypeSig() { return  "VPDU";};
@@ -267,6 +267,7 @@ bool BdVar::Init(const string& aString, MDVarGet* aInpv)
     else if ((mData = HDt<Vector<DGuri>>::Create(this, aString, aInpv)) != NULL);
     else if ((mData = HDt<Pair<string>>::Create(this, aString, aInpv)) != NULL);
     else if ((mData = HDt<Pair<Sdata<string>>>::Create(this, aString, aInpv)) != NULL);
+    else if ((mData = HDt<Pair<Sdata<int>>>::Create(this, aString, aInpv)) != NULL);
     //else if ((mData = HDt<Pair<GUri>>::Create(this, aString, aInpv)) != NULL);
     else if ((mData = HDt<Pair<DGuri>>::Create(this, aString, aInpv)) != NULL);
     else if ((mData = HDt<Vector<Pair<DGuri>>>::Create(this, aString, aInpv)) != NULL);

@@ -597,6 +597,41 @@ MyRoot : Elem {
                     }
                 }
             }
+            # "Pair composition"
+            SPair1 : State @  {
+                _@ <  {
+                    Debug.LogLevel = "Dbg"
+                    = "PSI (SI 1, SI 2)"
+                }
+                Inp ~ : TrPair @  {
+                    First ~ : State {
+                        = "SI 11"
+                    }
+                    Second ~ : State {
+                        = "SI 22"
+                    }
+                }
+            }
+            # "Pair compostion then selection"
+            SPair2 : State @  {
+                _@ <  {
+                    Debug.LogLevel = "Dbg"
+                    = "SI _INV"
+                }
+                Inp ~ Pair2At : TrAtgVar @  {
+                    Inp ~ : TrPair @  {
+                        First ~ : State {
+                            = "SI 11"
+                        }
+                        Second ~ : State {
+                            = "SI 22"
+                        }
+                    }
+                    Index ~ : State {
+                        = "SI 0"
+                    }
+                }
+            }
         }
     }
 }

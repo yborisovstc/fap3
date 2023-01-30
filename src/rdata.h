@@ -440,9 +440,12 @@ class PairBase : public DtBase
 	virtual void DataToString(ostringstream& aStream) const override;
 	virtual void DataFromString(istringstream& aStream);
 	virtual bool IsCompatible(const MDtBase& b) const override;
+	// Local
+	virtual DtBase* GetElem(TElemId aId) {return nullptr;}
 };
 
 /** @brief Typed pair
+ * TODO to intro unityped pair, ref Tuple
  * */
 template <typename T>
 class Pair : public PairBase
@@ -472,6 +475,10 @@ class Pair : public PairBase
 	// From MDtBase
 	virtual string GetTypeSig() const { return TypeSig();};
 	virtual DtBase* Clone() {return new Pair<T>(*this);};
+	// From PairBase
+	//DtBase* GetElem(TElemId aId) override {
+	//    return dynamic_cast<DtBase*>((aId == E_P) ? &mData.first : &mData.second);
+	//}
     public:
 	pair<T,T> mData;
 };

@@ -100,6 +100,20 @@ class TrMplVar: public TrVar
 	virtual int GetInpCpsCount() const override {return 2;}
 };
 
+/** @brief Transition "Division of Var data"
+ * */
+class TrDivVar: public TrVar
+{
+    public:
+	static const char* Type() { return "TrDivVar";};
+	TrDivVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From TrVar
+	virtual void Init(const string& aIfaceName) override;
+	virtual string GetInpUri(int aId) const override;
+	virtual int GetInpCpsCount() const override {return 2;}
+};
+
+
 
 /** @brief Agent function "Min of Var data"
  * */
@@ -451,6 +465,21 @@ class TrInpCnt: public TrBase, public MDVarGet, public MDtGet<Sdata<int>>
 	Sdata<int> mRes;  /*<! Cached result */
 	const static string K_InpInp;
 };
+
+/** @brief Agent function "Pair composer"
+ * */
+class TrPair: public TrVar
+{
+    public:
+	static const char* Type() { return "TrPair";};
+	TrPair(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From TrVar
+	virtual void Init(const string& aIfaceName) override;
+	virtual string GetInpUri(int aId) const override;
+	// From Func::Host
+	virtual int GetInpCpsCount() const override {return 2;}
+};
+
 
 
 /** @brief Agent functions "Mut composer" base

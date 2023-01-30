@@ -306,6 +306,31 @@ string TrMplVar::GetInpUri(int aId) const
     if (aId == FMplBase::EInp) return "Inp"; else return string();
 }
 
+///// TrDivVar
+
+TrDivVar::TrDivVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+{
+    AddInput(GetInpUri(FDivBase::EInp));
+    AddInput(GetInpUri(FDivBase::EInp2));
+}
+
+void TrDivVar::Init(const string& aIfaceName)
+{
+    if (mFunc) {
+	delete mFunc;
+	mFunc = NULL;
+    }
+    if ((mFunc = FDivDt<Sdata<int>>::Create(this, aIfaceName)) != NULL);
+}
+
+string TrDivVar::GetInpUri(int aId) const 
+{
+    if (aId == FDivBase::EInp) return "Inp";
+    else if (aId == FDivBase::EInp2) return "Inp2";
+    else return string();
+}
+
+
 
 ///// TrMinVar
 
@@ -830,6 +855,7 @@ void TrAtgVar::Init(const string& aIfaceName)
 	if ((mFunc = FAtgVect<DGuri>::Create(this, aIfaceName, t_inp)));
 	else if ((mFunc = FAtgVect<Pair<DGuri>>::Create(this, aIfaceName, t_inp)));
 	else if ((mFunc = FAtgPair<DGuri>::Create(this, aIfaceName, t_inp)));
+	else if ((mFunc = FAtgPair<Sdata<int>>::Create(this, aIfaceName, t_inp)));
     }
 }
 
@@ -1005,6 +1031,47 @@ string TrTupleSel::VarGetIfid() const
     }
     return res;
 }
+
+// Pair composer
+
+TrPair::TrPair(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+{
+    AddInput(GetInpUri(Func::EInp1));
+    AddInput(GetInpUri(Func::EInp2));
+}
+
+void TrPair::Init(const string& aIfaceName)
+{
+    if (mFunc) {
+	delete mFunc;
+	mFunc = NULL;
+    }
+    MDVarGet* inp1 = GetInp(Func::EInp1);
+    MDVarGet* inp2 = GetInp(Func::EInp2);
+    if (inp1 && inp2) {
+	string t1 = inp1->VarGetIfid();
+	string t2 = inp2->VarGetIfid();
+	if (t1 == t2) {
+	    if ((mFunc = FPair<DGuri>::Create(this, aIfaceName, t1)));
+	    else if ((mFunc = FPair<Sdata<int>>::Create(this, aIfaceName, t1)));
+	    else {
+		Log(TLog(EErr, this) + "Failed init, iface [" + aIfaceName + "]");
+	    }
+	} else {
+	    Log(TLog(EErr, this) + "Failed init, incompatible inputs [" + t1 + "], [" + t2 + "]");
+	}
+    } else {
+	Log(TLog(EErr, this) + "Missing input [" + (inp2 ? GetInpUri(Func::EInp1) : GetInpUri(Func::EInp1)) + "]");
+    }
+}
+
+string TrPair::GetInpUri(int aId) const
+{
+    if (aId == Func::EInp1) return "First";
+    else if (aId == Func::EInp2) return "Second";
+    else return string();
+}
+
 
 
 

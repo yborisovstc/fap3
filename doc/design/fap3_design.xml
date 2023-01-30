@@ -2391,13 +2391,15 @@
 	    <simpara>Pros: This solution allows smooth migration from templated iface. We just can redesing DES framework part by part.</simpara>
 	    <simpara>Cons: MDVarGet actually is not needed in our case - it aims exactly to support different type of data instead of generic one.</simpara>
 	</sect2>
-	<sect2><title>Do we really need paremetrized MDtGet iface?</title>
+	<sect2><title>Solution_2: Get rid of parametrized MDtGet iface?</title>
 	    <sect3><title>Intro</title>
 		<simpara>
 		    Potentially we can have only MDVarGet with the method:
-		<programlisting> virtual bool DtbGet(MDtBase&amp; aData) </programlisting>
-		    With this method it is possible both resolving the suitable data getter and obtain the data.
-	    </simpara>
+		    <programlisting> virtual bool DtbGet(MDtBase&amp; aData) </programlisting>
+			With this method it is possible both resolving the suitable data getter and obtain the data.
+		</simpara>
+		<simpara>Cons if this approach is that MDVarGet implementation shall cast data instance from MDtBase to particular data type
+		    on each DtbGet call. With parametrized MDVarGet iface such cast is not required.</simpara>
 	    </sect3>
 	</sect2>
     </sect1>
