@@ -22,7 +22,6 @@ static const string KSCompDataStart = string(1, KCompDataStart);
 static const string KSCompDataEnd = string(1, KCompDataEnd);
 static const string  KSSStringDelim = string(1, KSStringDelim);
 
-const char MDtBase::mKTypeToDataSep = KSigParsToDataSep;
 
 // Scalar data
 template<> const char* Sdata<int>::TypeSig() { return  "SI";};

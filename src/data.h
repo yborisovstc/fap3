@@ -92,7 +92,7 @@ template <class T> class HDt: public HBase, public MDtGet<T>, public MDtSet<T> {
  *
  * This data can be used in two phase data processing, like DES state
  * */
-class BdVar: public MDVar, public MUpdatable, public MDVarGet, public MDVarSet, public DHost
+class BdVar: public MDVar, public MUpdatable, public MDVarGet, public DHost
 {
     public:
 	static const char* Type() { return "BdVar";};
@@ -110,10 +110,6 @@ class BdVar: public MDVar, public MUpdatable, public MDVarGet, public MDVarSet, 
 	virtual string MDVarGet_Uid() const override {return mHost->GetDvarUid(this);}
 	virtual string VarGetIfid() const override;
 	virtual MIface* DoGetDObj(const char *aName) override;
-	// From MDVarSet
-	virtual string MDVarSet_Uid() const override { return mHost->GetDvarUid(this);}
-	virtual string VarGetSIfid();
-	virtual MIface *DoGetSDObj(const char *aName) override;
 	// From MDVar
 	virtual string MDVar_Uid() const override { return mHost->GetDvarUid(this);}
 	virtual MIface* MDVar_getLif(const char *aType) override;

@@ -39,7 +39,7 @@ const string KChromRarg_Chs = "chs";
 const ProvDef::TFReg ProvDef::mReg ( {
 	Item<Node>(), Item<Unit>(), Item<Import>(), Item<Elem>(), Item<Content>(), Item<Vertu>(), Item<Vert>(), Item<Link>(),
 	Item<Syst>(), Item<ConnPointu>(), Item<CpMnodeOutp>(), Item<CpMnodeInp>(),
-	Item<Extd>(), Item<State>(), Item<Des>(), Item<TrAddVar>(),
+	Item<Extd>(), Item<State>(), Item<State2>(), Item<Des>(), Item<TrAddVar>(), Item<TrAddVar2>(),
 	Item<CpStateInp>(), Item<CpStateOutp>(), Item<ExtdStateInp>(), Item<ExtdStateOutp>(), Item<ExtdStateMnodeOutp>(),
 	Item<CpStateMnodeInp>(),  Item<CpStateMnodeOutp>(),
 	Item<DesLauncher>(), Item<Sout>(), Item<ADes>(), Item<Socket>(),
@@ -62,6 +62,12 @@ const ProvDef::TFReg ProvDef::mReg ( {
 	/* DES active subs */
 	Item<DesAs>(), 
 	});
+
+/** Data factory registry */
+const ProvDef::TDtFReg ProvDef::mDtReg ( {
+	DItem<Sdata<int>>()
+	});
+
 
 
 

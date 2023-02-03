@@ -24,7 +24,9 @@ class Func
 		}
 		return res;
 	    }
+	    // TODO is aIfName needed, it is always MDVarGet
 	    virtual MIfProv::TIfaces* GetInps(int aId, const string& aIfName, bool aOpt) = 0;
+	    // TODO is it needed?
 	    virtual void OnFuncContentChanged() = 0;
 	    virtual string GetInpUri(int aId) const = 0;
 	    virtual void log(int aCtg, const string& aMsg) = 0;
@@ -38,6 +40,7 @@ class Func
 	virtual string IfaceGetId() const = 0;
 	virtual void GetResult(string& aResult) const { aResult = "<?>";};
 	virtual string GetInpExpType(int aId) const { return "<?>";};
+	virtual DtBase* FDtGet() { return nullptr;}
 	/** @brief Helper. Gets value from MDVarGet */
 	template <typename T> static bool GetData(MDVarGet* aDvget, T& aData);
     protected:
@@ -67,6 +70,24 @@ template <class T> class FAddDt: public FAddBase, public MDtGet<T> {
 	virtual void MDtGet_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	T mRes;
 };
+
+/** @brief Addition, v.2, generic data
+ * */
+template <class T> class FAddDt2: public FAddBase
+{
+    public:
+	using TInpIc = vector<MDVarGet*>;
+	static Func* Create(Host* aHost, const string& aOutId);
+	FAddDt2(Host& aHost): FAddBase(aHost), mInpIc(nullptr), mInpNIc(nullptr) {};
+	virtual string IfaceGetId() const { return string();}
+	virtual void GetResult(string& aResult) const;
+	virtual string GetInpExpType(int aId) const;
+	virtual DtBase* FDtGet() override;
+	T mRes;
+	TInpIc* mInpIc;
+	TInpIc* mInpNIc;
+};
+
 
 
 /** @brief Multiplication, base
@@ -672,7 +693,7 @@ class FPair: public Func, public MDtGet<Pair<T>> {
 	static Func* Create(Host* aHost, const string& aOutIid, const string& aInp1Id);
 	FPair(Host& aHost): Func(aHost) {}
 	virtual MIface* getLif(const char *aName) override;
-	virtual string Uid() const override { return mHost.getHostUri() + Ifu::KUidSepIc + "func" + Ifu::KUidSep + TData::Type();}
+	virtual string Uid() const override { return mHost.getHostUri() + Ifu::KUidSepIc + "func" + Ifu::KUidSep + TData::TypeSig();}
 	virtual string IfaceGetId() const { return MDtGet<TData>::Type();}
 	virtual void DtGet(TData& aData);
 	virtual void GetResult(string& aResult) const {ostringstream os; mRes.ToString(os); aResult = os.str();}

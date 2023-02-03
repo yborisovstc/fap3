@@ -134,6 +134,8 @@ void Unit::invalidateIrm()
 	for (auto node : mIrns) {
 	if (node->isValid()) {
 	    node->setValid(false);
+	    // Keep ifaces actual, ref ds_desopt_uic
+	    node->ifaces();
 	}
     }
 }

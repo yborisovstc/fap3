@@ -103,14 +103,17 @@ class TstProv: public ProvBase
 	virtual ~TstProv() {}
 	// From ProvBase
 	virtual const TFReg& FReg() const override {return mReg;}
+	virtual const TDtFReg& FDtReg() const override {return mDtReg;}
 	virtual void setChromoRslArgs(const string& aRargs) override {}
 	virtual void getChromoRslArgs(string& aRargs) override {}
     private:
 	static const TFReg mReg;
+	static const TDtFReg mDtReg;
 };
 
 
 const ProvBase::TFReg TstProv::mReg ({ Item<TstAgt>() });
+const ProvBase::TDtFReg TstProv::mDtReg;
 
 
 

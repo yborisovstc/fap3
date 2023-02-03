@@ -115,12 +115,27 @@ MChromo* ProvBase::createChromo()
     return new Chromo2();
 }
 
+DtBase* ProvBase::createData(const string& aType)
+{
+    return CreateData(aType);
+}
+
 MNode* ProvBase::CreateAgent(const string& aType, const string& aName, MEnv* aEnv) const
 {
     MNode* res = NULL;
     if (FReg().count(aType) > 0) {
 	TFact* fact = FReg().at(aType);
 	res = fact(aName, aEnv);
+    }
+    return res;
+}
+
+DtBase* ProvBase::CreateData(const string& aType) const
+{
+    DtBase* res = NULL;
+    if (FDtReg().count(aType) > 0) {
+	TDtFact* fact = FDtReg().at(aType);
+	res = fact();
     }
     return res;
 }

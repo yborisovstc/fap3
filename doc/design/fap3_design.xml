@@ -2573,14 +2573,54 @@
 		elem->FromString(isv);
 	    </programlisting>
 	</sect2>
-	<sect2><title>Data copied from transition output</title>
-	    <simpara>Many transition data "receivers" just copied data from its inputs and then use it. We need to avoid copying data but use refs instead.</simpara>
-	    <simpara>Hm. This copying seems the correct in general - function creates new data (result) and copy it to "receiver". The only problem here is that function
-		copy the result to intgernal debugging data. This needs to be redesigned. Also getting the reference can be more optimal in the cases when the 
-		receiver doens't need the whole data but just parts of it. The example is the tuple component selector (TrTupleSel) or Vector element selector (TrAtVar). Currently
-		the selector transition copied the whole container and then gets the component of it. This is not optimal.</simpara>
-	    <simpara>The problem with getting refence is that we will need to cache the data in transitions - indeed we can get the ref to the persistent data only.
-		For the case of state as data getter it is simple, the state keeps persistent data.</simpara>
+	<sect2><title>Data copied from transition output. To use data reference instead.</title>
+	    <sect3><title>Intro</title>
+		<simpara>Many transition data "receivers" just copied data from its inputs and then use it. We need to avoid copying data but use refs instead.</simpara>
+		<simpara>Hm. This copying seems the correct in general - function creates new data (result) and copy it to "receiver". The only problem here is that function
+		    copy the result also to internal debugging data. This needs to be redesigned. Also getting the reference can be more optimal in the cases when the 
+		    receiver doens't need the whole data but just parts of it. The example is the tuple component selector (TrTupleSel) or Vector element selector (TrAtVar). Currently
+		    the selector transition copied the whole container and then gets the component of it. This is not optimal.</simpara>
+		<simpara>The problem with getting refence is that we will need to cache the data in transitions - indeed we can get the ref to the persistent data only.
+		    For the case of state as data getter it is simple, the state keeps persistent data.</simpara>
+	    </sect3>
+	    <sect3><title>Where to cache data in transtions: inputs or outputs?</title>
+		<simpara>As was discussed in intro we anycase need to cache the data. The only questions in what point? There are two options: cache inputs data or 
+		    cache output data.</simpara>
+		<simpara>It is quite obvious that the inputs number is greater than the number of outputs. In "internals" of transition tree inputs number is greater 
+		    because one output can be connected to the number of inputs but normally the numbers are same. But there are also "inputs" of transition tree - those
+		    tranisition inputs that connect to states outputs. They make the inputs total number greater.</simpara>
+		<simpara>So it makes sense to cache output data in transition.</simpara>
+		<simpara>In that case we can also optimize the state - we don't need "updated" data anymore - the data is already cached in the transition connected to
+		    state input.</simpara>
+		<simpara>With this approach we needs to modify data getter iface (MDtGet) - it needs to return reference instead of perform the copy of data.</simpara>
+	    </sect3>
+	    <sect3><title>How caching output approach affect distributed DES design.</title>
+		<simpara>Distributed DES design is based on iface proxy. How modified MDtGet (returning the ref) proxy will be implemented? </simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_desopt_uic"><title>Getting inputs involves getting input node/unit - can we use iface cache directly.</title>
+	    <sect3><title>Intro</title>
+		<simpara>Look at the typical function code:</simpara>
+		<programlisting>
+		    template&lt;class T&gt; void FAddDt&lt;T&gt;::DtGet(T&amp; aData)
+			-   {
+			|       bool res = true;
+			|       MIfProv::TIfaces* inps = mHost.GetInps(EInp, MDVarGet::Type(), false);
+			...
+		</programlisting>
+		<simpara>Where:</simpara>
+		<programlisting>
+		    MIfProv::TIfaces* TrVar::GetInps(int aId, const string&amp; aIfName, bool aOpt)
+		    -   {
+		    |       MIfProv::TIfaces* res = nullptr;
+		    |       MNode* inp = getNode(GetInpUri(aId));
+		    |-      if (inp) {
+		    ||          MUnit* inpu = inp->lIf(inpu);
+		    ||          MIfProv* ifp = inpu ? inpu->defaultIfProv(aIfName) : nullptr;
+		    ||          res = ifp ? ifp->ifaces() : nullptr;
+		</programlisting>
+		<simpara>We can see that each DES cycle getNode() is called. It needs to be avoided.</simpara>
+	    </sect3>
 	</sect2>
     </sect1>
 

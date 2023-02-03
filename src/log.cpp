@@ -4,6 +4,7 @@
 #include <sys/time.h>
 #include <stdexcept> 
 #include <stdarg.h> 
+#include <iomanip>
 
 #include "log.h"
 #include "guri.h"
@@ -41,7 +42,7 @@ TLog::TLog(int aCtg, const MNode* aAgt): mCtg(aCtg)
     timespec_get(&ts, TIME_UTC);
     char buff[100];
     strftime(buff, sizeof buff, "%D %T", gmtime(&ts.tv_sec));
-    ss << buff << "." << ts.tv_nsec;
+    ss << buff << "." << setfill('0') << setw(9) << ts.tv_nsec;
     mTimestampS = ss.str();
     mCtgS = CtgText(mCtg);
     if (aAgt != NULL) {
@@ -172,7 +173,7 @@ void Logrec::Write(TLogRecCtg aCtg, const MNode* aNode, const char* aFmt,...)
     char buff[100];
     strftime(buff, sizeof buff, "%D %T", gmtime(&ts.tv_sec));
 
-    ss << buff << "." << ts.tv_nsec << KColSep;
+    ss << buff << "." << setfill('0') << setw(9) << ts.tv_nsec << KColSep;
     ss << CtgText(aCtg) << KColSep;
     int mutid = mCtxMutId;
     if (mutid != -1) {

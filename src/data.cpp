@@ -201,8 +201,6 @@ MIface* BdVar::MDVar_getLif(const char *aName)
 	res = dynamic_cast<MDVar*>(this);
     } else if (strcmp(aName, MDVarGet::Type()) == 0) {
 	res = dynamic_cast<MDVarGet*>(this);
-    } else if (strcmp(aName, MDVarSet::Type()) == 0) {
-	res = dynamic_cast<MDVarSet*>(this);
     }
     return res;
 }
@@ -210,11 +208,6 @@ MIface* BdVar::MDVar_getLif(const char *aName)
 string BdVar::VarGetIfid() const
 {
     return mData != NULL ? mData->IfaceGetId() : string();
-}
-
-string BdVar::VarGetSIfid()
-{
-    return mData != NULL ? mData->IfaceSGetId() : string();
 }
 
 MIface* BdVar::DoGetDObj(const char *aName)
@@ -228,17 +221,6 @@ MIface* BdVar::DoGetDObj(const char *aName)
     }
     return res;
 }
-
-MIface *BdVar::DoGetSDObj(const char *aName)
-{
-    MIface* res = NULL;
-    if (mData != NULL) {
-	res = mData->HBase_getLif(aName);
-    }
-    return res;
-}
-
-
 BdVar::~BdVar()
 {
     if (mData != NULL) {

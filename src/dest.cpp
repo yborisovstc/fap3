@@ -285,6 +285,42 @@ string TrAddVar::GetInpUri(int aId) const
 }
 
 
+///// TrAddVar, ver.2
+
+TrAddVar2::TrAddVar2(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+{
+    AddInput("Inp");
+    AddInput("InpN");
+}
+
+void TrAddVar2::Init(const string& aIfaceName)
+{
+    if (mFunc) {
+	delete mFunc;
+	mFunc = NULL;
+    }
+    if ((mFunc = FAddDt2<Sdata<int>>::Create(this, aIfaceName)) != NULL);
+}
+
+string TrAddVar2::GetInpUri(int aId) const 
+{
+    if (aId == FAddBase::EInp) return "Inp";
+    else if (aId == FAddBase::EInpN) return "InpN";
+    else return string();
+}
+
+DtBase* TrAddVar2::VDtGet(const string& aType)
+{
+    DtBase* res = NULL;
+    if (!mFunc) {
+	Init(aType);
+    }
+    if (mFunc) {
+	res = mFunc->FDtGet();
+    }
+    return res;
+}
+
 ///// TrMplVar
 
 TrMplVar::TrMplVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)

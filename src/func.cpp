@@ -111,6 +111,82 @@ void FAddDt<T>::MDtGet_doDump(int aLevel, int aIdt, ostream& aOs) const
 }
 
 
+///// FAddDt v.2
+
+template<class T> Func* FAddDt2<T>::Create(Host* aHost, const string& aString)
+{
+    Func* res = NULL;
+    if (aString.empty()) {
+	// Weak negotiation, basing on inputs only
+	bool inpok = true;
+	MIfProv::TIfaces* inps = aHost->GetInps(EInp, MDVarGet::Type(), false);
+	for (auto dgeti : *inps) {
+	    MDVarGet* dget = dynamic_cast<MDVarGet*>(dgeti);
+	    inpok = dget->VarGetIfid() == T::TypeSig();
+	    if (!inpok) { break; }
+	}
+	if (inpok) {
+	    res = new FAddDt2<T>(*aHost);
+	}
+    } else if (aString == T::TypeSig()) {
+	    res = new FAddDt2<T>(*aHost);
+	}
+    return res;
+}
+
+template<class T> DtBase* FAddDt2<T>::FDtGet()
+{
+    bool res = true;
+    bool resSet = false;
+    if (!mInpIc) mInpIc = reinterpret_cast<TInpIc*>(mHost.GetInps(EInp, MDVarGet::Type(), false));
+    bool first = true;
+    if (mInpIc) for (auto dget : *mInpIc) {
+	T* arg = reinterpret_cast<T*>(dget->VDtGet(T::TypeSig()));
+	if (arg && arg->mValid) {
+	    if (first) { mRes = *arg; first = false;
+	    } else { mRes += *arg; }
+	    resSet = true;
+	} else {
+	    mHost.log(EDbg, "Invalid argument [" + mHost.GetInpUri(EInp) + "]");
+	    res = false; break;
+	}
+    }
+    if (!mInpNIc) mInpNIc = reinterpret_cast<TInpIc*>(mHost.GetInps(EInpN, MDVarGet::Type(), false));
+    if (mInpNIc) for (auto dget : *mInpNIc) {
+	T* arg = reinterpret_cast<T*>(dget->VDtGet(T::TypeSig()));
+	if (arg && arg->mValid) {
+	    if (resSet) {
+		mRes -= *arg;
+	    } else {
+		//mRes = -(*arg);
+	    }
+	} else {
+	    mHost.log(EDbg, "Invalid argument [" + mHost.GetInpUri(EInpN) + "]");
+	    res = false; break;
+	}
+    }
+    mRes.mValid = res;
+    return &mRes;
+}
+
+
+template<class T> void FAddDt2<T>::GetResult(string& aResult) const
+{
+    ostringstream oss;
+    mRes.ToString(oss);
+    aResult = oss.str();
+}
+
+template <class T> string FAddDt2<T>::GetInpExpType(int aId) const
+{
+    string res;
+    if (aId == EInp) {
+	res = T::TypeSig();
+    }
+    return res;
+}
+
+
 ///// FMplDt
 
 template<class T> Func* FMplDt<T>::Create(Host* aHost, const string& aString)
@@ -1755,6 +1831,7 @@ void Init()
 {
     Fhost* host = nullptr;
     FAddDt<Sdata<int>>::Create(host, "");
+    FAddDt2<Sdata<int>>::Create(host, "");
     FMplDt<Sdata<int>>::Create(host, "");
     FDivDt<Sdata<int>>::Create(host, "");
     FMaxDt<Sdata<int>>::Create(host, "");

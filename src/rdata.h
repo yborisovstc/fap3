@@ -24,11 +24,11 @@ using namespace std;
 class MDtBase
 {
     public:
-	static const char* Type() { return "MDtBase";};
-    public:
 	virtual void ToString(ostringstream& aOs, bool aSig = true) const = 0;
 	virtual void FromString(istringstream& aStream) = 0;
 	virtual bool IsValid() const { return false;}
+	virtual bool IsDsError() const { return false;}
+	virtual bool IsChanged() const { return false;}
 	virtual bool operator==(const MDtBase& b) const = 0;
 	virtual bool operator!=(const MDtBase& b) const = 0;
     public:
@@ -37,8 +37,6 @@ class MDtBase
 	virtual void DataFromString(istringstream& aStream) = 0;
 	virtual bool IsCompatible(const MDtBase& b) const {return true;}
 	virtual int Hash() const { return 0;}
-    public:
-	static const char mKTypeToDataSep;
 };
 
 
@@ -61,7 +59,13 @@ class DtBase : public MDtBase
 	virtual bool operator==(const MDtBase& b) const override { return mValid == b.IsValid();}
 	virtual bool operator!=(const MDtBase& b) const override { return !DtBase::operator==(b);}
 	virtual bool IsValid() const override { return mValid;}
+	virtual bool IsDsError() const override { return mDsErr;}
+	virtual bool IsChanged() const { return mChanged;}
 	virtual void DataFromString(istringstream& aStream) { mValid = false;}
+	virtual DtBase& operator=(const DtBase& b) { mValid = b.mValid; return *this;};
+	template <typename T> static DtBase* getDt(DtBase* aSrc) {
+	    return (aSrc->GetTypeSig() == string(T::TypeSig())) ? reinterpret_cast<T*>(aSrc) : nullptr;
+	}
     public:
 	virtual DtBase* Clone() {return NULL;}
 	virtual void SetMplncArg1Hint(const DtBase& res, const DtBase& arg2) {};
@@ -87,7 +91,6 @@ template<class T> class Sdata: public DtBase
 	static bool IsSrepFit(const string& aString) { return DtBase::IsSrepFit(aString, TypeSig());};
 	static bool IsDataFit(const Sdata<T>& aData) { return DtBase::IsDataFit(aData, TypeSig());};
 	static Sdata<T>* Construct(const string& aSrep) {Sdata<T>* res = NULL; if (IsSrepFit(aSrep)) { res = new Sdata<T>(); } else ;return res;};
-	//bool Set(const Sdata& d);
 	virtual string GetTypeSig() const { return TypeSig();};
 	virtual void DataToString(ostringstream& aStream) const override;
 	virtual void DataFromString(istringstream& aStream) override;
@@ -100,6 +103,11 @@ template<class T> class Sdata: public DtBase
 	bool operator<(const Sdata<T>& b) const { return mData < b.mData;};
 	bool operator<=(const Sdata<T>& b) const { return mData <= b.mData;};
 	Sdata<T>& Invm(const Sdata<T>& b) { mData = 1 / b.mData; return *this;};
+	virtual DtBase& operator=(const DtBase& b) {
+	    const Sdata<T>& bc = reinterpret_cast<const Sdata<T>&>(b);
+	    this->Sdata<T>::operator=(bc);
+	    return *this;
+	};
 	Sdata<T>& operator=(const Sdata<T>& b) { this->DtBase::operator=(b); mData = b.mData; return *this;};
 	//Sdata<T>& operator=(const Sdata<T>& b) { mData = b.mData; mValid = b.mValid; mSigTypeOK = b.mSigTypeOK; return *this;};
 	Sdata<T>& operator+=(const Sdata<T>& b) { mData += b.mData; return *this;};

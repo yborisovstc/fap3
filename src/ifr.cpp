@@ -303,7 +303,15 @@ void IfrNodeRoot::setValid(bool aValid)
     if (aValid) {
 	// Update iface cache
 	updateIcache();
+    } else {
+	cleanIcache();
     }
+}
+
+void IfrNodeRoot::cleanIcache()
+{
+    mIcache.clear();
+    mIcacheValid = false;
 }
 
 void IfrNodeRoot::updateIcache()

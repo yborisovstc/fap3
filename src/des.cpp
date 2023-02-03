@@ -7,6 +7,8 @@
 
 #define DES_RGS_VERIFY
 
+#define STATE2_DATA_REF
+
 const string KCont_Provided = "Provided";
 const string KCont_Required = "Required";
 
@@ -168,7 +170,6 @@ MIface* State::MNode_getLif(const char *aType)
     else if (res = checkLif<MDesInpObserver>(aType));
     else if (res = checkLif<MConnPoint>(aType));
     else if (res = checkLifs<MDVarGet>(aType, dynamic_cast<MDVarGet*>(mCdata)));
-    else if (res = checkLif<MDVarSet>(aType));
     else res = Vertu::MNode_getLif(aType);
     return res;
 }
@@ -301,16 +302,6 @@ string State::provName() const
 string State::reqName() const
 {
     return MDesInpObserver::Type();
-}
-	
-string State::VarGetSIfid()
-{
-    return mPdata == NULL ? string() : mPdata->VarGetSIfid();
-}
-
-MIface *State::DoGetSDObj(const char *aName)
-{
-    return mPdata == NULL ? NULL : mPdata->DoGetSDObj(aName);
 }
 
 MIface* State::MOwned_getLif(const char *aType)
@@ -487,6 +478,397 @@ void State::onDisconnected()
 #endif
     NotifyInpsUpdated();
 }
+
+
+// State, ver. 2, non-inhritable, monolitic, direct data, switching updated-confirmed
+
+const string State2::KCont_Value = "";
+
+bool State2::SContValue::getData(string& aData) const
+{
+    aData = mHost.mCdata->ToString();
+    return true;
+}
+
+#ifdef STATE2_DATA_REF
+bool State2::SContValue::setData(const string& aData)
+{
+    return mHost.updateWithContValue(aData);
+}
+#else
+bool State2::SContValue::setData(const string& aData)
+{
+    bool res = false;
+    mHost.mPdata->FromString(aData);
+    mHost.mCdata->FromString(aData);
+    if (mHost.mPdata->IsValid() && mHost.mCdata->IsValid()) {
+	if (res) {
+	    mHost.NotifyInpsUpdated();
+	}
+    }  else {
+	if (!mHost.mPdata->IsValid() && mHost.mPdata->IsDsError()) {
+	    mHost.Log(TLog(EErr, &mHost) + "Error on applying content [" + mName + "] value [" + aData + "]");
+	    mHost.mPdata->FromString(aData);
+	}
+    }
+    return mHost.mCdata->IsChanged();
+}
+#endif
+
+State2::State2(const string &aType, const string& aName, MEnv* aEnv): Vertu(aType, aName, aEnv),
+    mPdata(NULL), mCdata(NULL), mUpdNotified(false), mActNotified(false), mInpIc(nullptr)
+{
+    MNode* cp = Provider()->createNode(CpStateInp::Type(), "Inp", mEnv);
+    assert(cp);
+    bool res = attachOwned(cp);
+    assert(res);
+}
+
+State2::~State2()
+{
+#ifndef STATE2_DATA_REF
+    if (mPdata) {
+	delete mPdata;
+    }
+#endif
+    if (mCdata) {
+	delete mCdata;
+    }
+}
+
+MIface* State2::MNode_getLif(const char *aType)
+{
+    MIface* res = NULL;
+    if (res = checkLif<MDesSyncable>(aType));
+    else if (res = checkLif<MDesInpObserver>(aType));
+    else if (res = checkLif<MConnPoint>(aType));
+    else if (res = checkLif<MDVarGet>(aType));
+    else res = Vertu::MNode_getLif(aType);
+    return res;
+}
+
+MIface* State2::MOwner_getLif(const char *aType)
+{
+    MIface* res = NULL;
+    if (res = checkLif<MDesSyncable>(aType)); // ??
+    else if(res = checkLif<MUnit>(aType));  // IFR from inputs
+    else res = Vertu::MOwner_getLif(aType);
+    return res;
+}
+
+MIface* State2::MOwned_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MDesSyncable>(aType));
+    else res = Unit::MOwned_getLif(aType);
+    return res;
+}
+
+void State2::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+{
+    if (aName == provName()) {
+	MIface* ifr = MNode_getLif(aName.c_str());
+	if (ifr && !aReq->binded()->provided()->findIface(ifr)) {
+	    addIfpLeaf(ifr, aReq);
+	}
+    } else {
+	Vertu::resolveIfc(aName, aReq);
+    }
+}
+
+MContent* State2::getCont(int aIdx)
+{
+    return const_cast<MContent*>(const_cast<const State2*>(this)->getCont(aIdx));
+}
+
+const MContent* State2::getCont(int aIdx) const
+{
+    const MContent* res = nullptr;
+    if (aIdx == 0) res = &mValue;
+    else if (aIdx == 1) res = Node::getCont(aIdx - 1);
+    return res;
+}
+
+bool State2::getContent(const GUri& aCuri, string& aRes) const
+{
+    bool res = true;
+    string name = aCuri;
+    if (name == KCont_Value)
+	res = mValue.getData(aRes);
+    else
+	res = Vertu::getContent(aCuri, aRes);
+    return res;
+}
+
+bool State2::setContent(const GUri& aCuri, const string& aData)
+{
+    bool res = true;
+    string name = aCuri;
+    if (name == KCont_Value)
+	res = mValue.setData(aData);
+    else
+	res = Vertu::setContent(aCuri, aData);
+    return res;
+}
+
+void State2::onContentChanged(const MContent* aCont)
+{
+    Vertu::onContentChanged(aCont);
+}
+
+MIface* State2::MVert_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MConnPoint>(aType));
+    else res = Vertu::MVert_getLif(aType);
+    return res;
+}
+
+bool State2::isCompatible(MVert* aPair, bool aExt)
+{
+    bool res = false;
+    bool ext = aExt;
+    MVert* cp = aPair;
+    // Checking if the pair is Extender
+    if (aPair != this) {
+	MVert* ecp = cp->getExtd(); 
+	if (ecp) {
+	    ext = !ext;
+	    cp = ecp;
+	}
+	if (cp) {
+	    // Check roles conformance
+	    string prov = provName();
+	    string req = reqName();
+	    MConnPoint* mcp = cp->lIf(mcp);
+	    if (mcp) {
+		string pprov = mcp->provName();
+		string preq = mcp->reqName();
+		if (ext) {
+		    res = prov == pprov && req == preq;
+		} else {
+		    res = prov == preq && req == pprov;
+		}
+	    }
+	}
+    } else {
+	res = aExt;
+    }
+    return res;
+}
+
+void State2::setActivated()
+{
+    if (!mActNotified) {
+	// Propagate activation to owner
+	MUnit* ownu = Owner()->lIf(ownu);
+	MDesObserver* obs = ownu ? ownu->getSif(obs) : nullptr;
+	if (obs) {
+	    obs->onActivated(this);
+	    mActNotified = true;
+	}
+    }
+}
+
+#if 0
+void State2::update()
+{
+    mActNotified = false;
+    if (mCdata) {
+	MDVarGet* vget = GetInp();
+	if (vget) {
+	    try {
+		mPdata = vget->VDtGet(mCdata->GetTypeSig());
+	    } catch (std::exception e) {
+		Logger()->Write(EErr, this, "Unspecified error on update");
+	    }
+	} else {
+	    Log(TLog(EDbg, this) + "Cannot get input");
+	}
+	setUpdated();
+    }
+}
+#endif
+
+void State2::update()
+{
+    mActNotified = false;
+    if (mCdata) {
+	if (!mInpIc) mInpIc = GetInps();
+	if (mInpIc->size() == 1) {
+	    MDVarGet* vget = mInpIc->at(0);
+	    try {
+		mPdata = vget->VDtGet(mCdata->GetTypeSig());
+	    } catch (std::exception e) {
+		Logger()->Write(EErr, this, "Unspecified error on update");
+	    }
+	} else {
+	    Log(TLog(EDbg, this) + "Cannot get input");
+	}
+	setUpdated();
+    }
+}
+
+void State2::NotifyInpsUpdated()
+{
+    for (auto pair : mPairs) {
+	MUnit* pe = pair->lIf(pe);
+	auto ifcs = pe->getIfs<MDesInpObserver>();
+	if (ifcs) for (auto ifc : *ifcs) {
+	    MDesInpObserver* obs = static_cast<MDesInpObserver*>(ifc);
+	    obs->onInpUpdated();
+	}
+    }
+}
+
+void State2::confirm()
+{
+    mUpdNotified = false;
+    if (mCdata && mPdata) {
+	string old_value;
+	if (isLogLevel(EDbg)) {
+	    old_value = mCdata->ToString();
+	}
+	if (*mCdata != *mPdata) {
+	    *mCdata = *mPdata;
+	    NotifyInpsUpdated();
+	    if (isLogLevel(EDbg)) {
+		string new_value = mCdata->ToString();
+		Logger()->Write(EInfo, this, "Updated [%s <- %s]", new_value.c_str(), old_value.c_str());
+	    }
+	} else {
+	    // State is not changed. No need to notify connected inps. But we still need to make IFR paths to inps
+	    // actual. Ref ds_asr.
+	    // TODO PERF
+	    refreshInpObsIfr();
+	}
+    }
+}
+
+void State2::setUpdated()
+{
+    MUnit* ownu = Owner()->lIf(ownu);
+    MDesObserver* obs = ownu->getSif(obs);
+    if (obs && !mUpdNotified) {
+	obs->onUpdated(this);
+	mUpdNotified = true;
+    }
+}
+
+void State2::onInpUpdated()
+{
+    setActivated();
+}
+
+
+MDVarGet* State2::GetInp()
+{
+    MDVarGet* res = NULL;
+    MNode* inpn = getNode("Inp");
+    MUnit* inpu = inpn->lIf(inpu);
+    MIfProv* difp = inpu->defaultIfProv(MDVarGet::Type());
+    MIfProv* ifp = difp ? difp->first() : nullptr;
+    if (ifp) {
+	res = dynamic_cast<MDVarGet*>(ifp->iface());
+    } else {
+	Log(TLog(EDbg, this) + "Cannot get input");
+    }
+    return res;
+}
+
+State2::TInpIc* State2::GetInps()
+{
+    MIfProv::TIfaces* res = nullptr;  
+    MNode* inp = getNode("Inp");
+    if (inp) {
+	MUnit* inpu = inp->lIf(inpu);
+	MIfProv* ifp = inpu ? inpu->defaultIfProv(MDVarGet::Type()) : nullptr;
+	res = ifp ? ifp->ifaces() : nullptr;
+    } else {
+	Log(TLog(EDbg, this) + "Cannot get input");
+    }
+    return reinterpret_cast<TInpIc*>(res);
+}
+
+string State2::provName() const
+{
+    return MDVarGet::Type();
+}
+
+string State2::reqName() const
+{
+    return MDesInpObserver::Type();
+}
+
+string State2::VarGetIfid() const
+{
+    return mCdata ? mCdata->GetTypeSig() : string();
+}
+
+DtBase* State2::CreateData(const string& aType)
+{
+   return Provider()->createData(aType);
+}
+
+void State2::onConnected()
+{
+    Vertu::onConnected();
+    NotifyInpsUpdated();
+}
+
+void State2::onDisconnected()
+{
+    Vertu::onDisconnected();
+    NotifyInpsUpdated();
+}
+
+void State2::onIfpInvalidated(MIfProv* aProv)
+{
+    Vertu::onIfpInvalidated(aProv);
+    setActivated();
+    NotifyInpsUpdated();
+}
+
+void State2::refreshInpObsIfr()
+{
+    for (auto pair : mPairs) {
+	MUnit* pe = pair->lIf(pe);
+	// Don't add self to if request context to enable routing back to self
+	MIfProv* ifp = pe->defaultIfProv(MDesInpObserver::Type());
+	MIfProv* prov = ifp->first();
+    }
+}
+
+bool State2::updateWithContValue(const string& aData)
+{
+    bool res = false;
+    if (!mCdata) {
+	string type;
+	DtBase::ParseSigPars(aData, type);
+	mCdata = CreateData(type);
+    }
+    if (mCdata) {
+	res = true;
+	mCdata->FromString(aData);
+	if (mCdata->IsValid()) {
+	    if (mCdata->IsChanged()) {
+		NotifyInpsUpdated();
+	    }
+	}  else {
+	    if (!mCdata->IsValid() && mCdata->IsDsError()) {
+		Log(TLog(EErr, this) + "Error on applying content [" + mName + "] value [" + aData + "]");
+		mCdata->FromString(aData);
+	    }
+	}
+    }
+    return res;
+}
+
+DtBase* State2::VDtGet(const string& aType)
+{
+    return (mCdata && aType == mCdata->GetTypeSig()) ? mCdata : nullptr;
+}
+
 
 
 /// DES
@@ -981,13 +1363,14 @@ bool DesLauncher::Run(int aCount, int aIdleCount)
     bool res = true;
     int cnt = 0;
     int idlecnt = 0;
+    Log(TLog(EInfo, this) + "START");
     while (!mStop && (aCount == 0 || cnt < aCount) && (aIdleCount == 0 || idlecnt < aIdleCount)) {
 	if (!mActive.empty()) {
 	    updateCounter(cnt);
-	    Log(TLog(EInfo, this) + ">>> Update [" + to_string(cnt) + "]");
+	    Log(TLog(EDbg, this) + ">>> Update [" + to_string(cnt) + "]");
 	    update();
 	    if (!mUpdated.empty()) {
-		Log(TLog(EInfo, this) + ">>> Confirm [" + to_string(cnt) + "]");
+		Log(TLog(EDbg, this) + ">>> Confirm [" + to_string(cnt) + "]");
 		outputCounter(cnt);
 		confirm();
 	    }
@@ -997,6 +1380,7 @@ bool DesLauncher::Run(int aCount, int aIdleCount)
 	    idlecnt++;
 	}
     }
+    Log(TLog(EInfo, this) + "END");
     return res;
 }
 

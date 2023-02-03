@@ -53,21 +53,10 @@ class MDVarGet: public MIface
 	virtual MIface* DoGetDObj(const char *aName) = 0;
 	/** @brief Gets an iface id. Is used for type negotiation from root to leafs */
 	virtual string VarGetIfid() const = 0;
-};
-
-/** @brief Interface of getter of variable type data
- * */
-class MDVarSet: public MIface
-{
-    public:
-	static const char* Type() { return "MDVarSet";};
-	// From MIface
-	virtual string Uid() const override { return MDVarSet_Uid();}
-	virtual string MDVarSet_Uid() const = 0;
-	// Local
-	virtual MIface *DoGetSDObj(const char *aName) { return NULL;};
-	// Get iface id. Is used for type negotiation from root to leafs
-	virtual string VarGetSIfid() = 0;
+	/** @brief Gets data by type
+	 * */
+	virtual bool VDtGet(const DtBase& aData) { return false;}
+	virtual DtBase* VDtGet(const string& aType) { return nullptr;}
 };
 
 

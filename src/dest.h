@@ -86,6 +86,21 @@ class TrAddVar: public TrVar
 	virtual int GetInpCpsCount() const override {return 2;}
 };
 
+/** @brief Agent function "Addition of Var data"
+ * */
+class TrAddVar2: public TrVar
+{
+    public:
+	static const char* Type() { return "TrAddVar2";};
+	TrAddVar2(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From TrVar
+	virtual void Init(const string& aIfaceName) override;
+	virtual string GetInpUri(int aId) const override;
+	virtual int GetInpCpsCount() const override {return 2;}
+	virtual DtBase* VDtGet(const string& aType) override;
+};
+
+
 
 /** @brief Transition "Multiplication of Var data"
  * */

@@ -36,6 +36,7 @@ class Factory: public MProvider
 	virtual void getNodesInfo(vector<string>& aInfo);
 	virtual const string& modulesPath() const;
 	virtual void setEnv(MEnv* aEnv);
+	virtual DtBase* createData(const string& aType) override;
     protected:
 	static int FilterPlgDirEntries(const struct dirent *aEntry);
     protected:

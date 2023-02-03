@@ -15,6 +15,8 @@ class MChromo;
 
 using namespace std;
 
+class DtBase;
+
 /** @brief Interface of native agents provicer
  *
  * */
@@ -44,6 +46,9 @@ class MProvider: public MIface
 	virtual void getNodesInfo(vector<string>& aInfo) = 0;
 	virtual const string& modulesPath() const = 0;
 	virtual void setEnv(MEnv* aEnv) = 0;
+	/** @brief Creates data instnce by the type info
+	 * */
+	virtual DtBase* createData(const string& aType) {return nullptr;}
 };
 
 

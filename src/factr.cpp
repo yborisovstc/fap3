@@ -158,3 +158,14 @@ void Factory::setEnv(MEnv* aEnv)
     assert(iEnv == NULL || aEnv == NULL);
     iEnv = aEnv;
 }
+
+DtBase* Factory::createData(const string& aType)
+{
+    DtBase* res = NULL;
+    for (TProviders::iterator it = iProviders.begin(); it != iProviders.end() && res == NULL; it++) {
+	auto* prov = it->second;
+	res = prov->createData(aType);
+    }
+    return res;
+
+}

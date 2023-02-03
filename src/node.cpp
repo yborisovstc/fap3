@@ -332,7 +332,9 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
 		    }
 		    */
 		    MutCtx mctx(this, root_ns);
-		    targ->mutate(rno, aUpdOnly, mctx, true);
+		    if (targ) {
+			targ->mutate(rno, aUpdOnly, mctx, true);
+		    }
 		}
 	    } else if (rnotype == ENt_Change) {
 		//ChangeAttr(rno, aRunTime, aCheckSafety, aTrialMode, mctx);

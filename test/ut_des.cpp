@@ -17,11 +17,12 @@ class Ut_des : public CPPUNIT_NS::TestFixture
 //    CPPUNIT_TEST(test_des_ades_1);
     //CPPUNIT_TEST(test_des_dmc_1);
 //    CPPUNIT_TEST(test_des_ifr_inval_1);
-    CPPUNIT_TEST(test_des_tr_1);
+//    CPPUNIT_TEST(test_des_tr_1);
 //    CPPUNIT_TEST(test_des_asr_1);
 //    CPPUNIT_TEST(test_des_asr_2);
 //    CPPUNIT_TEST(test_des_utl_1);
 //    CPPUNIT_TEST(test_des_utl_2);
+    CPPUNIT_TEST(test_des2_1);
     CPPUNIT_TEST_SUITE_END();
     public:
     virtual void setUp();
@@ -38,6 +39,7 @@ class Ut_des : public CPPUNIT_NS::TestFixture
     void test_des_asr_2();
     void test_des_utl_1();
     void test_des_utl_2();
+    void test_des2_1();
     private:
     Env* mEnv;
 };
@@ -508,6 +510,34 @@ void Ut_des::test_des_utl_2()
     int maxval = 0;
     res = GetSData(maxn, maxval);
     CPPUNIT_ASSERT_MESSAGE("Wrong Max value", res && (maxval == 10));
+
+    delete mEnv;
+}
+
+void Ut_des::test_des2_1()
+{
+    cout << endl << "=== Test of DES State2  ===" << endl;
+
+    MNode* root = constructSystem("ut_des2_1");
+    MNode* launcher = root->getNode("Launcher");
+    CPPUNIT_ASSERT_MESSAGE("Failed getting launcher", launcher);
+
+    // Run
+#if 0
+    bool res = mEnv->RunSystem(5, 2);
+    MNode* c1n = launcher->getNode("Ds1.Const_1");
+    MVert* c1v = c1n->lIf(c1v);
+    MNode* ainpn = launcher->getNode("Ds1.Add.Inp");
+    MVert* ainpv = ainpn->lIf(ainpv);
+    c1v->disconnect(ainpv);
+    ainpv->disconnect(c1v);
+    res = mEnv->RunSystem(5, 2);
+    c1v->connect(ainpv);
+    ainpv->connect(c1v);
+    res = mEnv->RunSystem(5, 2);
+#endif
+    bool res = mEnv->RunSystem(10000, 2);
+    CPPUNIT_ASSERT_MESSAGE("Failed running system", res);
 
     delete mEnv;
 }

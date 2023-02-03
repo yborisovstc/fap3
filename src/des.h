@@ -109,10 +109,8 @@ class CpStateMnodeOutp: public CpState
 /** @brief State, non-inhritable, monolitic, using host unit base organs, combined chain
  *
  * Ref ds_uac for unit based orgars, ds_mae for monolitic agents, ds_mae_scc for combined chain design
- * TODO It is not obvious solution to expose MDVarSet iface, but I don't find more proper solution ATM. To redesign?
  * */
-class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesInpObserver, public MBdVarHost, public MDVarSet,
-      public Cnt::Host
+class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesInpObserver, public MBdVarHost, public Cnt::Host
 {
 #ifdef STATE_DIOR
     public:
@@ -191,10 +189,6 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 	virtual MDVarGet* HGetInp(const void* aRmt) override;
 	virtual void HOnDataChanged(const void* aRmt) override;
 	virtual string GetDvarUid(const MDVar* aComp) const;
-	// From MDVarSet
-	virtual string MDVarSet_Uid() const override {return getUid<MDVarSet>();}
-	virtual string VarGetSIfid();
-	virtual MIface *DoGetSDObj(const char *aName) override;
 	// From Cnt.Host
 	virtual string getCntUid(const string& aName, const string& aIfName) const override { return getUid(aName, aIfName);}
 	virtual MContentOwner* cntOwner() override { return this;}
@@ -228,6 +222,111 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 	SDior* mDior;       //<! MDesInpObserver resolver
 #endif
 };
+
+/** @brief State, ver. 2, non-inhritable, monolitic, direct data, switching updated-confirmed
+ * */
+class State2: public Vertu, public MConnPoint, public MDesSyncable, public MDesInpObserver, public MDVarGet, public Cnt::Host
+{
+    public:
+	using TInpIc = vector<MDVarGet*>;
+	/** @brief Pseudo content */
+	class SCont : public MContent {
+	    public:
+	    SCont(State2& aHost, const string& aName) : mName(aName), mHost(aHost), mUpdated(false) {}
+	    // From MContent
+	    virtual string MContent_Uid() const override { return mHost.getCntUid(mName, MContent::Type());}
+	    virtual MIface* MContent_getLif(const char *aType) override { return nullptr;}
+	    virtual void MContent_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+	    virtual string contName() const override { return mName;}
+	    public:
+	    bool mUpdated;
+	    string mValue;
+	    protected:
+	    string mName;
+	    State2& mHost;
+	};
+	/** @brief Value content */
+	class SContValue : public SCont {
+	    public:
+	    SContValue(State2& aHost, const string& aName): SCont(aHost, aName) {}
+	    // From MContent
+	    virtual bool getData(string& aData) const override;
+	    virtual bool setData(const string& aData) override;
+	};
+    public:
+	static const char* Type() { return "State2";};
+	State2(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	virtual ~State2();
+	// From Node.MIface
+	virtual MIface* MNode_getLif(const char *aType) override;
+	// From Node
+	virtual MIface* MOwner_getLif(const char *aType) override;
+	// From Unit.MIfProvOwner
+	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	// From Node.MContentOwner
+	virtual void onContentChanged(const MContent* aCont) override;
+	// From MVert
+	virtual MIface *MVert_getLif(const char *aType) override;
+	virtual bool isCompatible(MVert* aPair, bool aExt) override;
+	virtual TDir getDir() const override { return EOut;}
+	// From MDesSyncable
+	virtual string MDesSyncable_Uid() const override {return getUid<MDesSyncable>();}
+	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+	virtual MIface* MDesSyncable_getLif(const char *aType) override { return nullptr; }
+	virtual void update() override;
+	virtual void confirm() override;
+	virtual void setUpdated() override;
+	virtual void setActivated() override;
+	// From MDesInpObserver
+	virtual string MDesInpObserver_Uid() const {return getUid<MDesInpObserver>();}
+	virtual void MDesInpObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+	virtual void onInpUpdated() override;
+	// From MConnPoint
+	virtual string MConnPoint_Uid() const {return getUid<MDesInpObserver>();}
+	virtual string provName() const override;
+	virtual string reqName() const override;
+	// From Cnt.Host
+	virtual string getCntUid(const string& aName, const string& aIfName) const override { return getUid(aName, aIfName);}
+	virtual MContentOwner* cntOwner() override { return this;}
+	// From Node.MContentOwner
+	virtual int contCount() const override { return 1 + Node::contCount();}
+	virtual MContent* getCont(int aIdx) override;
+	virtual const MContent* getCont(int aIdx) const override;
+	virtual bool getContent(const GUri& aCuri, string& aRes) const override;
+	virtual bool setContent(const GUri& aCuri, const string& aData) override;
+	// From MDVarGet
+	virtual string MDVarGet_Uid() const override {return getUid<MDVarGet>();}
+	virtual string VarGetIfid() const override;
+	virtual MIface* DoGetDObj(const char *aName) override {return nullptr;}
+	virtual DtBase* VDtGet(const string& aType) override;
+    public:
+	static const string KCont_Value;
+    protected:
+	MDVarGet* GetInp();
+	TInpIc* GetInps();
+	bool updateWithContValue(const string& aCnt);
+    protected:
+	/** @brief Notifies dependencies of input updated */
+	void NotifyInpsUpdated();
+	// From MNode
+	virtual MIface* MOwned_getLif(const char *aType) override;
+	// From MUnit
+	virtual void onIfpInvalidated(MIfProv* aProv) override;
+	// From Vertu
+	virtual void onConnected() override;
+	virtual void onDisconnected() override;
+	// Local
+	void refreshInpObsIfr();
+	DtBase* CreateData(const string& aSrc);
+    protected:
+	DtBase* mPdata;   //<! Preparing (updating) phase data, not owned
+	DtBase* mCdata;   //<! Confirming phase data
+	SContValue mValue = SContValue(*this, KCont_Value);
+	bool mUpdNotified;  //<! Sign of that State notified observers on Update
+	bool mActNotified;  //<! Sign of that State notified observers on Activation
+	TInpIc* mInpIc;
+};
+
 
 
 /** @brief DES system

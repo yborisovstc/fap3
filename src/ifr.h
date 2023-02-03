@@ -97,6 +97,7 @@ class IfrNodeRoot : public IfrNode
 	virtual void onProvInvalidated() override;
     protected:
 	void updateIcache();
+	void cleanIcache();
     protected:
 	string mName;
 	TIfaces mIcache;  /*!< Cache of ifaces, ref ds_irm_cr */
