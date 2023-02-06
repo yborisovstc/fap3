@@ -122,45 +122,60 @@ static const int KStatecDlog_Obs = 6;  // Observers
 static const int KStatecDlog_ObsIfr = 7;  // Observers ifaces routing
 
 
+// State, ver. 2, non-inhritable, monolitic, direct data, switching updated-confirmed
+
 const string State::KCont_Value = "";
 
-#ifdef STATE_DIOR
-void State::SDior::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+bool State::SContValue::getData(string& aData) const
 {
-    if (aName == MDesInpObserver::Type()) {
-	for (auto pair : mHost->mPairs) {
-	    MUnit* pe = pair->lIf(pe);
-	    pe->resolveIface(aName, aReq);
-	}
-    }
+    aData = mHost.mCdata->ToString();
+    return true;
 }
 
-void State::SDior::onIfpInvalidated(MIfProv* aProv)
+#ifdef STATE2_DATA_REF
+bool State::SContValue::setData(const string& aData)
 {
-    Unit::onIfpInvalidated(aProv);
-    mHost->setActivated();
-    mHost->NotifyInpsUpdated();
+    return mHost.updateWithContValue(aData);
+}
+#else
+bool State::SContValue::setData(const string& aData)
+{
+    bool res = false;
+    mHost.mPdata->FromString(aData);
+    mHost.mCdata->FromString(aData);
+    if (mHost.mPdata->IsValid() && mHost.mCdata->IsValid()) {
+	if (res) {
+	    mHost.NotifyInpsUpdated();
+	}
+    }  else {
+	if (!mHost.mPdata->IsValid() && mHost.mPdata->IsDsError()) {
+	    mHost.Log(TLog(EErr, &mHost) + "Error on applying content [" + mName + "] value [" + aData + "]");
+	    mHost.mPdata->FromString(aData);
+	}
+    }
+    return mHost.mCdata->IsChanged();
 }
 #endif
 
 State::State(const string &aType, const string& aName, MEnv* aEnv): Vertu(aType, aName, aEnv),
-    mPdata(NULL), mCdata(NULL), mUpdNotified(false), mActNotified(false)
-#ifdef STATE_DIOR
-								    , mDior(nullptr)
-#endif
+    mPdata(NULL), mCdata(NULL), mUpdNotified(false), mActNotified(false), mInpIc(nullptr)
 {
-    mPdata = new BdVar(this);
-    mCdata = new BdVar(this);
     MNode* cp = Provider()->createNode(CpStateInp::Type(), "Inp", mEnv);
     assert(cp);
     bool res = attachOwned(cp);
     assert(res);
-#ifdef STATE_DIOR
-    mDior = new SDior(SDior::Type(), "Dior", mEnv, this);
-    assert(mDior);
-    res = attachOwned(mDior);
-    assert(res);
+}
+
+State::~State()
+{
+#ifndef STATE2_DATA_REF
+    if (mPdata) {
+	delete mPdata;
+    }
 #endif
+    if (mCdata) {
+	delete mCdata;
+    }
 }
 
 MIface* State::MNode_getLif(const char *aType)
@@ -169,146 +184,8 @@ MIface* State::MNode_getLif(const char *aType)
     if (res = checkLif<MDesSyncable>(aType));
     else if (res = checkLif<MDesInpObserver>(aType));
     else if (res = checkLif<MConnPoint>(aType));
-    else if (res = checkLifs<MDVarGet>(aType, dynamic_cast<MDVarGet*>(mCdata)));
+    else if (res = checkLif<MDVarGet>(aType));
     else res = Vertu::MNode_getLif(aType);
-    return res;
-}
-
-void State::setActivated()
-{
-    if (!mActNotified) {
-	// Propagate activation to owner
-	MUnit* ownu = Owner()->lIf(ownu);
-	MDesObserver* obs = ownu ? ownu->getSif(obs) : nullptr;
-	if (obs) {
-	    obs->onActivated(this);
-	    mActNotified = true;
-	}
-    }
-}
-
-void State::update()
-{
-    mActNotified = false;
-    if (mPdata) {
-	try {
-	    mPdata->update(); // set updated in HOnDataChanged
-	} catch (std::exception e) {
-	    Logger()->Write(EErr, this, "Unspecified error on update");
-	}
-    }
-}
-
-void State::NotifyInpsUpdated()
-{
-#ifndef STATE_DIOR 
-    // It would be better to request MDesInpObserver interface from self. But there is the problem
-    // with using this approach because self implements this iface. So accoriding to iface resolution
-    // rules UpdateIfi has to try local ifaces first, so self will be selected. Solution here could be
-    // not following this rule and try pairs first for MDesObserver. But we choose another solution ATM -
-    // to request pairs directly.
-    for (auto pair : mPairs) {
-	MUnit* pe = pair->lIf(pe);
-	auto ifcs = pe->getIfs<MDesInpObserver>();
-	if (ifcs) for (auto ifc : *ifcs) {
-	    MDesInpObserver* obs = static_cast<MDesInpObserver*>(ifc);
-	    obs->onInpUpdated();
-	}
-
-    }
-#else
-    auto ifcs = mDior->getIfs<MDesInpObserver>();
-    if (ifcs) for (auto ifc : *ifcs) {
-	MDesInpObserver* obs = static_cast<MDesInpObserver*>(ifc);
-	if (obs) obs->onInpUpdated();
-	else {
-	    obs = ifc->lIf(obs);
-	}
-    }
-#endif
-}
-
-void State::confirm()
-{
-    mUpdNotified = false;
-    if (mCdata) {
-	string old_value;
-	if (isLogLevel(EDbg)) {
-	    mCdata->ToString(old_value);
-	}
-	if (mCdata->update()) {
-	    NotifyInpsUpdated();
-	    if (isLogLevel(EDbg)) {
-		string new_value;
-		mCdata->ToString(new_value);
-		Logger()->Write(EInfo, this, "Updated [%s <- %s]", new_value.c_str(), old_value.c_str());
-	    }
-	} else {
-	    // State is not changed. No need to notify connected inps. But we still need to make IFR paths to inps
-	    // actual. Ref ds_asr.
-	    // TODO PERF
-	    refreshInpObsIfr();
-	}
-    }
-}
-
-void State::setUpdated()
-{
-    //MDesObserver* obs = Owner() ? Owner()->lIf(obs) : nullptr;
-    MUnit* ownu = Owner()->lIf(ownu);
-    MDesObserver* obs = ownu->getSif(obs);
-    if (obs && !mUpdNotified) {
-	obs->onUpdated(this);
-	mUpdNotified = true;
-    }
-}
-
-void State::onInpUpdated()
-{
-    setActivated();
-}
-
-MDVarGet* State::HGetInp(const void* aRmt)
-{
-    MDVarGet* res = NULL;
-    if (aRmt == mPdata) {
-	MNode* inpn = getNode("Inp");
-	MUnit* inpu = inpn->lIf(inpu);
-	MIfProv* difp = inpu->defaultIfProv(MDVarGet::Type());
-	MIfProv* ifp = difp ? difp->first() : nullptr;
-	if (ifp) {
-	    res = dynamic_cast<MDVarGet*>(ifp->iface());
-	} else {
-	    Log(TLog(EDbg, this) + "Cannot get input");
-	}
-    } else {
-	res = mPdata->MDVar::lIf(res);
-    }
-    return res;
-}
-
-void State::HOnDataChanged(const void* aRmt)
-{
-    if (aRmt == mPdata) {
-	setUpdated();
-    }
-}
-
-string State::provName() const
-{
-    return MDVarGet::Type();
-}
-
-string State::reqName() const
-{
-    return MDesInpObserver::Type();
-}
-
-MIface* State::MOwned_getLif(const char *aType)
-{
-    MIface* res = nullptr;
-    if (res = checkLif<MDesSyncable>(aType));
-    else res = Unit::MOwned_getLif(aType);
     return res;
 }
 
@@ -319,6 +196,26 @@ MIface* State::MOwner_getLif(const char *aType)
     else if(res = checkLif<MUnit>(aType));  // IFR from inputs
     else res = Vertu::MOwner_getLif(aType);
     return res;
+}
+
+MIface* State::MOwned_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MDesSyncable>(aType));
+    else res = Unit::MOwned_getLif(aType);
+    return res;
+}
+
+void State::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+{
+    if (aName == provName()) {
+	MIface* ifr = MNode_getLif(aName.c_str());
+	if (ifr && !aReq->binded()->provided()->findIface(ifr)) {
+	    addIfpLeaf(ifr, aReq);
+	}
+    } else {
+	Vertu::resolveIfc(aName, aReq);
+    }
 }
 
 MContent* State::getCont(int aIdx)
@@ -359,18 +256,6 @@ bool State::setContent(const GUri& aCuri, const string& aData)
 void State::onContentChanged(const MContent* aCont)
 {
     Vertu::onContentChanged(aCont);
-}
-
-void State::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
-{
-    if (aName == provName()) {
-	MIface* ifr = mCdata->MDVar_getLif(aName.c_str());
-	if (ifr && !aReq->binded()->provided()->findIface(ifr)) {
-	    addIfpLeaf(ifr, aReq);
-	}
-    } else {
-	Vertu::resolveIfc(aName, aReq);
-    }
 }
 
 MIface* State::MVert_getLif(const char *aType)
@@ -414,34 +299,186 @@ bool State::isCompatible(MVert* aPair, bool aExt)
     return res;
 }
 
-string State::GetDvarUid(const MDVar* aComp) const
+void State::setActivated()
 {
-    string name =  (aComp == mPdata) ? "Pdata" : "Cdata";
-    return getUid(name, MDVar::Type()); 
-}
-
-
-bool State::SContValue::getData(string& aData) const
-{
-    mHost.mCdata->ToString(aData);
-    return true;
-}
-
-bool State::SContValue::setData(const string& aData)
-{
-    bool res = mHost.mPdata->FromString(aData);
-    res = res && mHost.mCdata->FromString(aData);
-    if (mHost.mPdata->IsValid() && mHost.mCdata->IsValid()) {
-	if (res) {
-	    mHost.NotifyInpsUpdated();
-	}
-    }  else {
-	if (!mHost.mPdata->IsValid() && mHost.mPdata->IsDsError()) {
-	    mHost.Log(TLog(EErr, &mHost) + "Error on applying content [" + mName + "] value [" + aData + "]");
-	    res = mHost.mPdata->FromString(aData);
+    if (!mActNotified) {
+	// Propagate activation to owner
+	MUnit* ownu = Owner()->lIf(ownu);
+	MDesObserver* obs = ownu ? ownu->getSif(obs) : nullptr;
+	if (obs) {
+	    obs->onActivated(this);
+	    mActNotified = true;
 	}
     }
+}
+
+#if 0
+void State::update()
+{
+    mActNotified = false;
+    if (mCdata) {
+	MDVarGet* vget = GetInp();
+	if (vget) {
+	    try {
+		mPdata = vget->VDtGet(mCdata->GetTypeSig());
+	    } catch (std::exception e) {
+		Logger()->Write(EErr, this, "Unspecified error on update");
+	    }
+	} else {
+	    Log(TLog(EDbg, this) + "Cannot get input");
+	}
+	setUpdated();
+    }
+}
+#endif
+
+void State::update()
+{
+    mActNotified = false;
+    if (mCdata) {
+	if (!mInpIc) mInpIc = GetInps();
+	if (mInpIc && mInpIc->size() == 1) {
+	    mInpValid = true;
+	    MDVarGet* vget = mInpIc->at(0);
+	    try {
+		mPdata = vget->VDtGet(mCdata->GetTypeSig());
+	    } catch (std::exception e) {
+		Logger()->Write(EErr, this, "Unspecified error on update");
+	    }
+	} else {
+	    mInpValid = false;
+	    Log(TLog(EDbg, this) + "Cannot get input");
+	}
+	setUpdated();
+    }
+}
+
+void State::NotifyInpsUpdated()
+{
+    for (auto pair : mPairs) {
+	MUnit* pe = pair->lIf(pe);
+	auto ifcs = pe->getIfs<MDesInpObserver>();
+	if (ifcs) for (auto ifc : *ifcs) {
+	    MDesInpObserver* obs = static_cast<MDesInpObserver*>(ifc);
+	    obs->onInpUpdated();
+	}
+    }
+}
+
+void State::confirm()
+{
+    mUpdNotified = false;
+    bool changed = false;
+    if (mCdata) {
+	string old_value;
+	if (isLogLevel(EDbg)) {
+	    old_value = mCdata->ToString();
+	}
+	if (mInpValid) {
+	    if (mPdata) {
+		if (*mCdata != *mPdata) {
+		    *mCdata = *mPdata;
+		    NotifyInpsUpdated();
+		    changed = true;
+		}
+	    } else {
+		if (mCdata->IsValid()) {
+		    mCdata->mValid = false;
+		    changed = true;
+		}
+	    }
+	}
+	if (changed) {
+	    if (isLogLevel(EDbg)) {
+		string new_value = mCdata->ToString();
+		Logger()->Write(EInfo, this, "Updated [%s <- %s]", new_value.c_str(), old_value.c_str());
+	    }
+	} else {
+	    // State is not changed. No need to notify connected inps. But we still need to make IFR paths to inps
+	    // actual. Ref ds_asr.
+	    // TODO PERF
+	    refreshInpObsIfr();
+	}
+    } else {
+	Logger()->Write(EInfo, this, "Not initialized");
+    }
+}
+
+void State::setUpdated()
+{
+    MUnit* ownu = Owner()->lIf(ownu);
+    MDesObserver* obs = ownu->getSif(obs);
+    if (obs && !mUpdNotified) {
+	obs->onUpdated(this);
+	mUpdNotified = true;
+    }
+}
+
+void State::onInpUpdated()
+{
+    setActivated();
+}
+
+
+MDVarGet* State::GetInp()
+{
+    MDVarGet* res = NULL;
+    MNode* inpn = getNode("Inp");
+    MUnit* inpu = inpn->lIf(inpu);
+    MIfProv* difp = inpu->defaultIfProv(MDVarGet::Type());
+    MIfProv* ifp = difp ? difp->first() : nullptr;
+    if (ifp) {
+	res = dynamic_cast<MDVarGet*>(ifp->iface());
+    } else {
+	Log(TLog(EDbg, this) + "Cannot get input");
+    }
     return res;
+}
+
+State::TInpIc* State::GetInps()
+{
+    MIfProv::TIfaces* res = nullptr;  
+    MNode* inp = getNode("Inp");
+    if (inp) {
+	MUnit* inpu = inp->lIf(inpu);
+	MIfProv* ifp = inpu ? inpu->defaultIfProv(MDVarGet::Type()) : nullptr;
+	res = ifp ? ifp->ifaces() : nullptr;
+    } else {
+	Log(TLog(EDbg, this) + "Cannot get input");
+    }
+    return reinterpret_cast<TInpIc*>(res);
+}
+
+string State::provName() const
+{
+    return MDVarGet::Type();
+}
+
+string State::reqName() const
+{
+    return MDesInpObserver::Type();
+}
+
+string State::VarGetIfid() const
+{
+    return mCdata ? mCdata->GetTypeSig() : string();
+}
+
+DtBase* State::CreateData(const string& aType)
+{
+   return Provider()->createData(aType);
+}
+
+void State::onConnected()
+{
+    Vertu::onConnected();
+    NotifyInpsUpdated();
+}
+
+void State::onDisconnected()
+{
+    Vertu::onDisconnected();
+    NotifyInpsUpdated();
 }
 
 void State::onIfpInvalidated(MIfProv* aProv)
@@ -461,385 +498,7 @@ void State::refreshInpObsIfr()
     }
 }
 
-void State::onConnected()
-{
-    Vertu::onConnected();
-#ifdef STATE_DIOR
-    mDior->onHostConnectionChange();
-#endif
-    NotifyInpsUpdated();
-}
-
-void State::onDisconnected()
-{
-    Vertu::onDisconnected();
-#ifdef STATE_DIOR
-    mDior->onHostConnectionChange();
-#endif
-    NotifyInpsUpdated();
-}
-
-
-// State, ver. 2, non-inhritable, monolitic, direct data, switching updated-confirmed
-
-const string State2::KCont_Value = "";
-
-bool State2::SContValue::getData(string& aData) const
-{
-    aData = mHost.mCdata->ToString();
-    return true;
-}
-
-#ifdef STATE2_DATA_REF
-bool State2::SContValue::setData(const string& aData)
-{
-    return mHost.updateWithContValue(aData);
-}
-#else
-bool State2::SContValue::setData(const string& aData)
-{
-    bool res = false;
-    mHost.mPdata->FromString(aData);
-    mHost.mCdata->FromString(aData);
-    if (mHost.mPdata->IsValid() && mHost.mCdata->IsValid()) {
-	if (res) {
-	    mHost.NotifyInpsUpdated();
-	}
-    }  else {
-	if (!mHost.mPdata->IsValid() && mHost.mPdata->IsDsError()) {
-	    mHost.Log(TLog(EErr, &mHost) + "Error on applying content [" + mName + "] value [" + aData + "]");
-	    mHost.mPdata->FromString(aData);
-	}
-    }
-    return mHost.mCdata->IsChanged();
-}
-#endif
-
-State2::State2(const string &aType, const string& aName, MEnv* aEnv): Vertu(aType, aName, aEnv),
-    mPdata(NULL), mCdata(NULL), mUpdNotified(false), mActNotified(false), mInpIc(nullptr)
-{
-    MNode* cp = Provider()->createNode(CpStateInp::Type(), "Inp", mEnv);
-    assert(cp);
-    bool res = attachOwned(cp);
-    assert(res);
-}
-
-State2::~State2()
-{
-#ifndef STATE2_DATA_REF
-    if (mPdata) {
-	delete mPdata;
-    }
-#endif
-    if (mCdata) {
-	delete mCdata;
-    }
-}
-
-MIface* State2::MNode_getLif(const char *aType)
-{
-    MIface* res = NULL;
-    if (res = checkLif<MDesSyncable>(aType));
-    else if (res = checkLif<MDesInpObserver>(aType));
-    else if (res = checkLif<MConnPoint>(aType));
-    else if (res = checkLif<MDVarGet>(aType));
-    else res = Vertu::MNode_getLif(aType);
-    return res;
-}
-
-MIface* State2::MOwner_getLif(const char *aType)
-{
-    MIface* res = NULL;
-    if (res = checkLif<MDesSyncable>(aType)); // ??
-    else if(res = checkLif<MUnit>(aType));  // IFR from inputs
-    else res = Vertu::MOwner_getLif(aType);
-    return res;
-}
-
-MIface* State2::MOwned_getLif(const char *aType)
-{
-    MIface* res = nullptr;
-    if (res = checkLif<MDesSyncable>(aType));
-    else res = Unit::MOwned_getLif(aType);
-    return res;
-}
-
-void State2::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
-{
-    if (aName == provName()) {
-	MIface* ifr = MNode_getLif(aName.c_str());
-	if (ifr && !aReq->binded()->provided()->findIface(ifr)) {
-	    addIfpLeaf(ifr, aReq);
-	}
-    } else {
-	Vertu::resolveIfc(aName, aReq);
-    }
-}
-
-MContent* State2::getCont(int aIdx)
-{
-    return const_cast<MContent*>(const_cast<const State2*>(this)->getCont(aIdx));
-}
-
-const MContent* State2::getCont(int aIdx) const
-{
-    const MContent* res = nullptr;
-    if (aIdx == 0) res = &mValue;
-    else if (aIdx == 1) res = Node::getCont(aIdx - 1);
-    return res;
-}
-
-bool State2::getContent(const GUri& aCuri, string& aRes) const
-{
-    bool res = true;
-    string name = aCuri;
-    if (name == KCont_Value)
-	res = mValue.getData(aRes);
-    else
-	res = Vertu::getContent(aCuri, aRes);
-    return res;
-}
-
-bool State2::setContent(const GUri& aCuri, const string& aData)
-{
-    bool res = true;
-    string name = aCuri;
-    if (name == KCont_Value)
-	res = mValue.setData(aData);
-    else
-	res = Vertu::setContent(aCuri, aData);
-    return res;
-}
-
-void State2::onContentChanged(const MContent* aCont)
-{
-    Vertu::onContentChanged(aCont);
-}
-
-MIface* State2::MVert_getLif(const char *aType)
-{
-    MIface* res = nullptr;
-    if (res = checkLif<MConnPoint>(aType));
-    else res = Vertu::MVert_getLif(aType);
-    return res;
-}
-
-bool State2::isCompatible(MVert* aPair, bool aExt)
-{
-    bool res = false;
-    bool ext = aExt;
-    MVert* cp = aPair;
-    // Checking if the pair is Extender
-    if (aPair != this) {
-	MVert* ecp = cp->getExtd(); 
-	if (ecp) {
-	    ext = !ext;
-	    cp = ecp;
-	}
-	if (cp) {
-	    // Check roles conformance
-	    string prov = provName();
-	    string req = reqName();
-	    MConnPoint* mcp = cp->lIf(mcp);
-	    if (mcp) {
-		string pprov = mcp->provName();
-		string preq = mcp->reqName();
-		if (ext) {
-		    res = prov == pprov && req == preq;
-		} else {
-		    res = prov == preq && req == pprov;
-		}
-	    }
-	}
-    } else {
-	res = aExt;
-    }
-    return res;
-}
-
-void State2::setActivated()
-{
-    if (!mActNotified) {
-	// Propagate activation to owner
-	MUnit* ownu = Owner()->lIf(ownu);
-	MDesObserver* obs = ownu ? ownu->getSif(obs) : nullptr;
-	if (obs) {
-	    obs->onActivated(this);
-	    mActNotified = true;
-	}
-    }
-}
-
-#if 0
-void State2::update()
-{
-    mActNotified = false;
-    if (mCdata) {
-	MDVarGet* vget = GetInp();
-	if (vget) {
-	    try {
-		mPdata = vget->VDtGet(mCdata->GetTypeSig());
-	    } catch (std::exception e) {
-		Logger()->Write(EErr, this, "Unspecified error on update");
-	    }
-	} else {
-	    Log(TLog(EDbg, this) + "Cannot get input");
-	}
-	setUpdated();
-    }
-}
-#endif
-
-void State2::update()
-{
-    mActNotified = false;
-    if (mCdata) {
-	if (!mInpIc) mInpIc = GetInps();
-	if (mInpIc->size() == 1) {
-	    MDVarGet* vget = mInpIc->at(0);
-	    try {
-		mPdata = vget->VDtGet(mCdata->GetTypeSig());
-	    } catch (std::exception e) {
-		Logger()->Write(EErr, this, "Unspecified error on update");
-	    }
-	} else {
-	    Log(TLog(EDbg, this) + "Cannot get input");
-	}
-	setUpdated();
-    }
-}
-
-void State2::NotifyInpsUpdated()
-{
-    for (auto pair : mPairs) {
-	MUnit* pe = pair->lIf(pe);
-	auto ifcs = pe->getIfs<MDesInpObserver>();
-	if (ifcs) for (auto ifc : *ifcs) {
-	    MDesInpObserver* obs = static_cast<MDesInpObserver*>(ifc);
-	    obs->onInpUpdated();
-	}
-    }
-}
-
-void State2::confirm()
-{
-    mUpdNotified = false;
-    if (mCdata && mPdata) {
-	string old_value;
-	if (isLogLevel(EDbg)) {
-	    old_value = mCdata->ToString();
-	}
-	if (*mCdata != *mPdata) {
-	    *mCdata = *mPdata;
-	    NotifyInpsUpdated();
-	    if (isLogLevel(EDbg)) {
-		string new_value = mCdata->ToString();
-		Logger()->Write(EInfo, this, "Updated [%s <- %s]", new_value.c_str(), old_value.c_str());
-	    }
-	} else {
-	    // State is not changed. No need to notify connected inps. But we still need to make IFR paths to inps
-	    // actual. Ref ds_asr.
-	    // TODO PERF
-	    refreshInpObsIfr();
-	}
-    }
-}
-
-void State2::setUpdated()
-{
-    MUnit* ownu = Owner()->lIf(ownu);
-    MDesObserver* obs = ownu->getSif(obs);
-    if (obs && !mUpdNotified) {
-	obs->onUpdated(this);
-	mUpdNotified = true;
-    }
-}
-
-void State2::onInpUpdated()
-{
-    setActivated();
-}
-
-
-MDVarGet* State2::GetInp()
-{
-    MDVarGet* res = NULL;
-    MNode* inpn = getNode("Inp");
-    MUnit* inpu = inpn->lIf(inpu);
-    MIfProv* difp = inpu->defaultIfProv(MDVarGet::Type());
-    MIfProv* ifp = difp ? difp->first() : nullptr;
-    if (ifp) {
-	res = dynamic_cast<MDVarGet*>(ifp->iface());
-    } else {
-	Log(TLog(EDbg, this) + "Cannot get input");
-    }
-    return res;
-}
-
-State2::TInpIc* State2::GetInps()
-{
-    MIfProv::TIfaces* res = nullptr;  
-    MNode* inp = getNode("Inp");
-    if (inp) {
-	MUnit* inpu = inp->lIf(inpu);
-	MIfProv* ifp = inpu ? inpu->defaultIfProv(MDVarGet::Type()) : nullptr;
-	res = ifp ? ifp->ifaces() : nullptr;
-    } else {
-	Log(TLog(EDbg, this) + "Cannot get input");
-    }
-    return reinterpret_cast<TInpIc*>(res);
-}
-
-string State2::provName() const
-{
-    return MDVarGet::Type();
-}
-
-string State2::reqName() const
-{
-    return MDesInpObserver::Type();
-}
-
-string State2::VarGetIfid() const
-{
-    return mCdata ? mCdata->GetTypeSig() : string();
-}
-
-DtBase* State2::CreateData(const string& aType)
-{
-   return Provider()->createData(aType);
-}
-
-void State2::onConnected()
-{
-    Vertu::onConnected();
-    NotifyInpsUpdated();
-}
-
-void State2::onDisconnected()
-{
-    Vertu::onDisconnected();
-    NotifyInpsUpdated();
-}
-
-void State2::onIfpInvalidated(MIfProv* aProv)
-{
-    Vertu::onIfpInvalidated(aProv);
-    setActivated();
-    NotifyInpsUpdated();
-}
-
-void State2::refreshInpObsIfr()
-{
-    for (auto pair : mPairs) {
-	MUnit* pe = pair->lIf(pe);
-	// Don't add self to if request context to enable routing back to self
-	MIfProv* ifp = pe->defaultIfProv(MDesInpObserver::Type());
-	MIfProv* prov = ifp->first();
-    }
-}
-
-bool State2::updateWithContValue(const string& aData)
+bool State::updateWithContValue(const string& aData)
 {
     bool res = false;
     if (!mCdata) {
@@ -864,9 +523,10 @@ bool State2::updateWithContValue(const string& aData)
     return res;
 }
 
-DtBase* State2::VDtGet(const string& aType)
+DtBase* State::VDtGet(const string& aType)
 {
-    return (mCdata && aType == mCdata->GetTypeSig()) ? mCdata : nullptr;
+    // Enable getting base data
+    return (mCdata && (aType == mCdata->GetTypeSig() || aType.empty())) ? mCdata : nullptr;
 }
 
 

@@ -2573,7 +2573,7 @@
 		elem->FromString(isv);
 	    </programlisting>
 	</sect2>
-	<sect2><title>Data copied from transition output. To use data reference instead.</title>
+	<sect2 id="ds_desopt_udr"><title>Data copied from transition output. To use data reference instead.</title>
 	    <sect3><title>Intro</title>
 		<simpara>Many transition data "receivers" just copied data from its inputs and then use it. We need to avoid copying data but use refs instead.</simpara>
 		<simpara>Hm. This copying seems the correct in general - function creates new data (result) and copy it to "receiver". The only problem here is that function
@@ -2649,7 +2649,7 @@
 		<simpara>The root-cause is that row-data has only one mValid flag that covers both undefined data and the data that gets erroneous because of wrong text representation.</simpara>
 		<simpara>The solution would be have separate flags for these two cases.</simpara>
 	    </sect3>
-	    <sect3><title>Row data support of container components access interfaces</title>
+	    <sect3><title>Row data supporting of container components access interfaces</title>
 		<simpara>This would be much more effective then copy container and then get compoments from it. Refer FAtVect&lt;T&gt;::DtGet():</simpara>
 		<programlisting>
 		    ||          Vector&lt;T&gt; arg;
@@ -2686,6 +2686,12 @@
 	</sect2>
 	<sect2><title>[STATUS]</title>
 	    <simpara>20230109 Initial implementation. Tested with modnav.</simpara>
+	</sect2>
+	<sect2 id="ds_rdr_cnt"><title>Containers of non-typed data</title>
+	    <sect3><title>Intro</title>
+		<simpara>In the current design the containers are used where the elements are typed data. The only exception is Tuple.
+		    It contains non-typed DtBase elements. It makes sense to propagate Tuple approach to other containers.</simpara>
+	    </sect3>
 	</sect2>
     </sect1>
 

@@ -39,7 +39,7 @@ const string KChromRarg_Chs = "chs";
 const ProvDef::TFReg ProvDef::mReg ( {
 	Item<Node>(), Item<Unit>(), Item<Import>(), Item<Elem>(), Item<Content>(), Item<Vertu>(), Item<Vert>(), Item<Link>(),
 	Item<Syst>(), Item<ConnPointu>(), Item<CpMnodeOutp>(), Item<CpMnodeInp>(),
-	Item<Extd>(), Item<State>(), Item<State2>(), Item<Des>(), Item<TrAddVar>(), Item<TrAddVar2>(),
+	Item<Extd>(), Item<State>(), Item<Des>(), Item<TrAddVar>(),
 	Item<CpStateInp>(), Item<CpStateOutp>(), Item<ExtdStateInp>(), Item<ExtdStateOutp>(), Item<ExtdStateMnodeOutp>(),
 	Item<CpStateMnodeInp>(),  Item<CpStateMnodeOutp>(),
 	Item<DesLauncher>(), Item<Sout>(), Item<ADes>(), Item<Socket>(),
@@ -65,7 +65,12 @@ const ProvDef::TFReg ProvDef::mReg ( {
 
 /** Data factory registry */
 const ProvDef::TDtFReg ProvDef::mDtReg ( {
-	DItem<Sdata<int>>()
+	DItem<DGuri>(), 
+	DItem<Sdata<int>>(), DItem<Sdata<bool>>(), DItem<Sdata<string>>(),
+	DItem<Pair<string>>(), DItem<Pair<Sdata<int>>>(), DItem<Pair<Sdata<string>>>(), DItem<Pair<DGuri>>(),
+	DItem<Vector<string>>(), DItem<Vector<DGuri>>(), DItem<Vector<Pair<DGuri>>>(), DItem<Vector<Pair<string>>>(), 
+	DItem<NTuple>(), 
+	DItem<DChr2>(), DItem<DMut>()
 	});
 
 

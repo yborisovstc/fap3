@@ -17,18 +17,19 @@ class Ut_des : public CPPUNIT_NS::TestFixture
 //    CPPUNIT_TEST(test_des_ades_1);
     //CPPUNIT_TEST(test_des_dmc_1);
 //    CPPUNIT_TEST(test_des_ifr_inval_1);
-//    CPPUNIT_TEST(test_des_tr_1);
+    CPPUNIT_TEST(test_des_tr_1);
 //    CPPUNIT_TEST(test_des_asr_1);
 //    CPPUNIT_TEST(test_des_asr_2);
 //    CPPUNIT_TEST(test_des_utl_1);
-//    CPPUNIT_TEST(test_des_utl_2);
-    CPPUNIT_TEST(test_des2_1);
     CPPUNIT_TEST_SUITE_END();
     public:
     virtual void setUp();
     virtual void tearDown();
     private:
     MNode* constructSystem(const string& aFname);
+    /** @brief Helper. Get state data string 
+     * */
+    string getStateDstr(const string& aUri);
     private:
     void test_des_1();
     void test_des_ades_1();
@@ -39,13 +40,20 @@ class Ut_des : public CPPUNIT_NS::TestFixture
     void test_des_asr_2();
     void test_des_utl_1();
     void test_des_utl_2();
-    void test_des2_1();
     private:
     Env* mEnv;
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION( Ut_des );
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(Ut_des, "Ut_des");
+
+string Ut_des::getStateDstr(const string& aUri)
+{
+    MNode* st = mEnv->Root()->getNode(aUri);
+    MDVarGet* stg = st ? st->lIf(stg) : nullptr;
+    const DtBase* data = stg ? stg->VDtGet(string()) : nullptr;
+    return data ? data->ToString(true) : string();
+}
 
 MNode* Ut_des::constructSystem(const string& aSpecn)
 {
@@ -73,56 +81,6 @@ void Ut_des::tearDown()
 {
     //    delete iEnv;
     CPPUNIT_ASSERT_EQUAL_MESSAGE("tearDown", 0, 0);
-}
-
-
-/** @brief Test of creating of simple DES
- * */
-void Ut_des::test_des_1()
-{
-    cout << endl << "=== Test of creating of simple DES ===" << endl;
-
-    const string specn("ut_des_1");
-    string ext = "chs";
-    string spec = specn + string(".") + "chs";
-    string log = specn + "_" + ext + ".log";
-    mEnv = new Env(spec, log);
-    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv);
-    //mEnv->ImpsMgr()->ResetImportsPaths();
-    //mEnv->ImpsMgr()->AddImportsPaths("../modules");
-    mEnv->constructSystem();
-    MNode* root = mEnv->Root();
-    MElem* eroot = root ? root->lIf(eroot) : nullptr;
-    CPPUNIT_ASSERT_MESSAGE("Fail to get root", eroot);
-    GUri ruri;
-    root->getUri(ruri);
-    string ruris = ruri.toString();
-    root->dump(Ifu::EDM_Base | Ifu::EDM_Comps | Ifu::EDM_Recursive,0);
-    // Save root chromoe
-    eroot->Chromos().Save(specn + "_saved." + ext);
-
-    MNode* launcher = root->getNode("Launcher");
-    MElem* lre = launcher->lIf(lre);
-    MNode* ds1 = root->getNode("Launcher.Ds1");
-    MElem* ds1e = ds1->lIf(ds1e);
-    cout << endl << "= Ds1 chromo dump =" << endl;
-    ds1e->Chromos().Root().Dump();
-
-    // Run
-    bool res = mEnv->RunSystem(4);
-    CPPUNIT_ASSERT_MESSAGE("Failed running system", eroot);
-    // Verify the state
-    MNode* stn = root->getNode("Launcher.Ds1.St1");
-    CPPUNIT_ASSERT_MESSAGE("Fail to get stn", stn);
-    MDVarGet* vg = stn->lIf(vg);
-    CPPUNIT_ASSERT_MESSAGE("Fail to get stn vg", vg);
-    MDtGet<Sdata<int>>* dgi = vg->GetDObj(dgi);
-    CPPUNIT_ASSERT_MESSAGE("Fail to get stn dgi", dgi);
-    Sdata<int> val;
-    dgi->DtGet(val);
-    CPPUNIT_ASSERT_MESSAGE("Wrong final state valud", val.mData == 4);
-    
-    delete mEnv;
 }
 
 
@@ -174,6 +132,7 @@ void Ut_des::test_des_tr_1()
 {
     cout << endl << "=== Test of DES transisions ===" << endl;
 
+#if 0
     DChr2 sc;
     sc.FromString("CHR2 { Text = \\\"Button 3\\\";  BgColor < { R = \\\"0.0\\\"; G = \\\"0.0\\\"; B = \\\"1.0\\\"; } }");
     cout << sc.ToString() << endl;
@@ -184,10 +143,12 @@ void Ut_des::test_des_tr_1()
     ostringstream oss;
     oss << ss << endl;
     cout << oss.str();
+#endif
 
     MNode* root = constructSystem("ut_des_tr_1");
     MElem* eroot = root ? root->lIf(eroot) : nullptr;
 
+#if 0
     // Verifiy chromo2 data
     cout << "Verifiy chromo2 data" << endl;
     MNode* chrdn = root->getNode("Launcher.Ds1.ChrD");
@@ -197,38 +158,69 @@ void Ut_des::test_des_tr_1()
     Chromo2& cdc = data.mData;
     cout << "chromo2 data root dump:" << endl;
     cdc.Root().Dump();
+#endif
 
     // Run
     bool res = mEnv->RunSystem(3, 3);
     CPPUNIT_ASSERT_MESSAGE("Failed running system", eroot);
-    // Verify the state
-    MNode* stn = root->getNode("Launcher.Ds1.St1");
-    CPPUNIT_ASSERT_MESSAGE("Fail to get stn", stn);
-    MDVarGet* vg = stn->lIf(vg);
-    CPPUNIT_ASSERT_MESSAGE("Fail to get stn vg", vg);
-    MDtGet<Sdata<bool>>* dgb = vg->GetDObj(dgb);
-    CPPUNIT_ASSERT_MESSAGE("Fail to get stn dgb", dgb);
-    Sdata<bool> val;
-    dgb->DtGet(val);
-    CPPUNIT_ASSERT_MESSAGE("Wrong final state valud", val.mData == false);
-    // Verify getting item of vector
-    MNode* st4 = root->getNode("Launcher.Ds1.St4");
-    MDVarGet* st4vg = st4->lIf(st4vg);
-    MDtGet<Sdata<string>>* st4dgs = st4vg->GetDObj(st4dgs);
-    Sdata<string> st4val;
-    st4dgs->DtGet(st4val);
-    CPPUNIT_ASSERT_MESSAGE("Wrong value of St4", st4val.mData == "Item_3");
-
-    // Verify TupleRes2
-    MNode* tr2 = root->getNode("Launcher.Ds1.TupleRes2");
-    MDVarGet* tr2dg = tr2 ? tr2->lIf(tr2dg) : nullptr;
-    CPPUNIT_ASSERT_MESSAGE("Cannot get TupleRes2 MDVarGet", tr2dg);
-    MDtGet<NTuple>* tr2si = tr2dg->GetDObj(tr2si);
-    CPPUNIT_ASSERT_MESSAGE("Cannot get TupleRes2 MDtGet<NTuple>", tr2si);
-    NTuple tr2_data;
-    tr2si->DtGet(tr2_data);
-    CPPUNIT_ASSERT_MESSAGE("Cannot get TupleRes2 data", tr2_data.IsValid());
-    CPPUNIT_ASSERT_MESSAGE("Wrong TupleRes2 --value-- data", tr2_data.mData.at(1).second->ToString(true) == "SI 7");
+    // Verify
+    CPPUNIT_ASSERT_MESSAGE("St1 failed", getStateDstr("Launcher.Ds1.St1") == "SB false");
+    CPPUNIT_ASSERT_MESSAGE("StSS failed", getStateDstr("Launcher.Ds1.StSS") == "SS 'Hello World!'");
+    CPPUNIT_ASSERT_MESSAGE("StPS failed", getStateDstr("Launcher.Ds1.StPS") == "PS (First,Second)");
+    CPPUNIT_ASSERT_MESSAGE("StPSS failed", getStateDstr("Launcher.Ds1.StPSS") == "PSS (SS 'First elem',SS 'Second elem')");
+    CPPUNIT_ASSERT_MESSAGE("StPU failed", getStateDstr("Launcher.Ds1.StPU") == "PDU (URI first1.first2,URI second1.second2)");
+    CPPUNIT_ASSERT_MESSAGE("StVS failed", getStateDstr("Launcher.Ds1.StVS") == "VS (elem1,elem2,elem3)");
+    CPPUNIT_ASSERT_MESSAGE("StVDU failed", getStateDstr("Launcher.Ds1.StVDU") == "VDU (URI e1_f1.e1_f2,URI e2_f1.e2_f2)");
+    CPPUNIT_ASSERT_MESSAGE("StVPU failed", getStateDstr("Launcher.Ds1.StVPU") == "VPDU (PDU (URI e1f1.e1f2,URI e1s1.e1s2),PDU (URI e2f1.e2f2,URI e2s1.e2s2))");
+    CPPUNIT_ASSERT_MESSAGE("StVPS failed", getStateDstr("Launcher.Ds1.StVPS") == "VPS (PS (e1_first,e1_second),PS (e2_first,e2_second))");
+    CPPUNIT_ASSERT_MESSAGE("StUri failed", getStateDstr("Launcher.Ds1.StUri") == "URI State1.State2");
+    CPPUNIT_ASSERT_MESSAGE("SSizeOfVect failed", getStateDstr("Launcher.Ds1.SSizeOfVect") == "SI 3");
+    CPPUNIT_ASSERT_MESSAGE("SSwitch failed", getStateDstr("Launcher.Ds1.SSwitch") == "SI 2");
+    CPPUNIT_ASSERT_MESSAGE("SAddInt failed", getStateDstr("Launcher.Ds1.SAddInt") == "SI 7");
+    CPPUNIT_ASSERT_MESSAGE("SMplInt failed", getStateDstr("Launcher.Ds1.SMplInt") == "SI 10");
+    CPPUNIT_ASSERT_MESSAGE("SDivInt failed", getStateDstr("Launcher.Ds1.SDivInt") == "SI 5");
+    CPPUNIT_ASSERT_MESSAGE("SMinInt failed", getStateDstr("Launcher.Ds1.SMinInt") == "SI 1");
+    CPPUNIT_ASSERT_MESSAGE("SMaxInt failed", getStateDstr("Launcher.Ds1.SMaxInt") == "SI 10");
+    CPPUNIT_ASSERT_MESSAGE("SAnd failed", getStateDstr("Launcher.Ds1.SAnd") == "SB true");
+    CPPUNIT_ASSERT_MESSAGE("SOr failed", getStateDstr("Launcher.Ds1.SOr") == "SB true");
+    CPPUNIT_ASSERT_MESSAGE("SNeg failed", getStateDstr("Launcher.Ds1.SNeg") == "SB true");
+    CPPUNIT_ASSERT_MESSAGE("SUri failed", getStateDstr("Launcher.Ds1.SUri") == "URI elem1.elem2.elem3");
+    CPPUNIT_ASSERT_MESSAGE("SMutConn failed", getStateDstr("Launcher.Ds1.SMutConn") == "MUT conn,p:Cp1,q:Cp2");
+    CPPUNIT_ASSERT_MESSAGE("SMutDisconn failed", getStateDstr("Launcher.Ds1.SMutDisconn") == "MUT disconn,p:Cp1,q:Cp2");
+    CPPUNIT_ASSERT_MESSAGE("SVectItm failed", getStateDstr("Launcher.Ds1.SVectItm") == "SS 'Item_3'");
+    CPPUNIT_ASSERT_MESSAGE("SAtgVdu failed", getStateDstr("Launcher.Ds1.SAtgVdu") == "URI b1.b2");
+    CPPUNIT_ASSERT_MESSAGE("TupleRes failed", getStateDstr("Launcher.Ds1.TupleRes") == "TPL,SS:name,SI:value 'Test_name' 24");
+    CPPUNIT_ASSERT_MESSAGE("TupleRes2 failed", getStateDstr("Launcher.Ds1.TupleRes2") == "TPL,SI:data,SI:value 5 7");
+    CPPUNIT_ASSERT_MESSAGE("TupleRes3 failed", getStateDstr("Launcher.Ds1.TupleRes3") == "TPL,SI:data,SI:value <ERR> 2");
+    CPPUNIT_ASSERT_MESSAGE("SCmpLt failed", getStateDstr("Launcher.Ds1.SCmpLt") == "SB true");
+    CPPUNIT_ASSERT_MESSAGE("TupleSelIfaceG failed", getStateDstr("Launcher.Ds1.TupleSelIfaceG") == "SB true");
+    CPPUNIT_ASSERT_MESSAGE("InpCntRes failed", getStateDstr("Launcher.Ds1.InpCntRes") == "SI 3");
+    CPPUNIT_ASSERT_MESSAGE("InpSelRes failed", getStateDstr("Launcher.Ds1.InpSelRes") == "SS 'Inp3'");
+    string sr = "CHR2 {\n    Text = \"Button 3\"\n    BgColor <  {\n        R = \"0.0\"\n        G = \"0.0\"\n        B = \"1.0\"\n    }\n}";
+    CPPUNIT_ASSERT_MESSAGE("SChrD failed", getStateDstr("Launcher.Ds1.SChrD") == sr);
+    sr = "CHR2 {\n    Test_Node : Node\n    Test_Node2 : Test_Node\n}";
+    CPPUNIT_ASSERT_MESSAGE("ChromoRes failed", getStateDstr("Launcher.Ds1.ChromoRes") == sr);
+    sr = "CHR2 {\n    {\n        Node : TestNode\n    }\n    {\n        Node2 : TestNode\n    }\n}";
+    CPPUNIT_ASSERT_MESSAGE("StrApndRes failed", getStateDstr("Launcher.Ds1.StrApndRes") == "SS 'Part1_Part2'");
+    CPPUNIT_ASSERT_MESSAGE("UriApndRes failed", getStateDstr("Launcher.Ds1.UriApndRes") == "URI Node1.Node2.Node3");
+    CPPUNIT_ASSERT_MESSAGE("IntToStr failed", getStateDstr("Launcher.Ds1.IntToStr") == "SS '34'");
+    CPPUNIT_ASSERT_MESSAGE("SUriToStr failed", getStateDstr("Launcher.Ds1.SUriToStr") == "SS 'bla1.bla2.bla3'");
+    CPPUNIT_ASSERT_MESSAGE("SUriToStr2 failed", getStateDstr("Launcher.Ds1.SUriToStr2") == "SS 'part1.part2'");
+    sr = "CHR2 {\n    SModelUri < = \"test.elem1\"\n}";
+    CPPUNIT_ASSERT_MESSAGE("SMutCont2 failed", getStateDstr("Launcher.Ds1.SMutCont2") == sr);
+    CPPUNIT_ASSERT_MESSAGE("SIsValid1 failed", getStateDstr("Launcher.Ds1.SIsValid1") == "SB false");
+    CPPUNIT_ASSERT_MESSAGE("SIsValid2 failed", getStateDstr("Launcher.Ds1.SIsValid2") == "SB true");
+    CPPUNIT_ASSERT_MESSAGE("SSelValid1 failed", getStateDstr("Launcher.Ds1.SSelValid1") == "URI Hello");
+    CPPUNIT_ASSERT_MESSAGE("SSelValid2 failed", getStateDstr("Launcher.Ds1.SSelValid2") == "URI Hello");
+    CPPUNIT_ASSERT_MESSAGE("SSelValidS1 failed", getStateDstr("Launcher.Ds1.SSelValidS1") == "SS 'Hello'");
+    CPPUNIT_ASSERT_MESSAGE("SSelValidS2 failed", getStateDstr("Launcher.Ds1.SSelValidS2") == "SS 'Hello'");
+    CPPUNIT_ASSERT_MESSAGE("SUriTail failed", getStateDstr("Launcher.Ds1.SUriTail") == "URI elem2.elem3");
+    CPPUNIT_ASSERT_MESSAGE("SUriHead failed", getStateDstr("Launcher.Ds1.SUriHead") == "URI elem1.elem2");
+    CPPUNIT_ASSERT_MESSAGE("SUriTailn failed", getStateDstr("Launcher.Ds1.SUriTailn") == "URI elem3");
+    CPPUNIT_ASSERT_MESSAGE("SHashStr failed", getStateDstr("Launcher.Ds1.SHashStr") == "SI 877266171");
+    CPPUNIT_ASSERT_MESSAGE("SPair1 failed", getStateDstr("Launcher.Ds1.SPair1") == "PSI (SI 11,SI 22)");
+    CPPUNIT_ASSERT_MESSAGE("SPair2 failed", getStateDstr("Launcher.Ds1.SPair2") == "SI 11");
+    CPPUNIT_ASSERT_MESSAGE("SPair2 failed", getStateDstr("Launcher.Ds1.SPair2") == "SI 11");
 
     delete mEnv;
 }
@@ -514,17 +506,24 @@ void Ut_des::test_des_utl_2()
     delete mEnv;
 }
 
-void Ut_des::test_des2_1()
+void Ut_des::test_des_1()
 {
-    cout << endl << "=== Test of DES State2  ===" << endl;
+    cout << endl << "=== Test of simple DES ===" << endl;
 
-    MNode* root = constructSystem("ut_des2_1");
+    MNode* root = constructSystem("ut_des_1");
     MNode* launcher = root->getNode("Launcher");
     CPPUNIT_ASSERT_MESSAGE("Failed getting launcher", launcher);
 
     // Run
-#if 0
+    // Verifying iface cache updata, ref ds_desopt_uic 
+    MNode* st1 = launcher->getNode("Ds1.St1");
+    MDVarGet* st1g = st1 ? st1->lIf(st1g) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Failed getting St1 MDVarGet", st1g);
+    const Sdata<int>* sdata = st1g->DtGet(sdata);
+    auto* sdata2 = st1g->DtGet<Sdata<int>>();
+    CPPUNIT_ASSERT_MESSAGE("Failed getting St1 data on phase 1", sdata && sdata2);
     bool res = mEnv->RunSystem(5, 2);
+    CPPUNIT_ASSERT_MESSAGE("Wrong St1 data", sdata->mData == 5);
     MNode* c1n = launcher->getNode("Ds1.Const_1");
     MVert* c1v = c1n->lIf(c1v);
     MNode* ainpn = launcher->getNode("Ds1.Add.Inp");
@@ -532,11 +531,15 @@ void Ut_des::test_des2_1()
     c1v->disconnect(ainpv);
     ainpv->disconnect(c1v);
     res = mEnv->RunSystem(5, 2);
+    sdata = st1g->DtGet(sdata);
+    CPPUNIT_ASSERT_MESSAGE("Wrong St1 data on phase 2", sdata->mData == 5);
     c1v->connect(ainpv);
     ainpv->connect(c1v);
     res = mEnv->RunSystem(5, 2);
-#endif
-    bool res = mEnv->RunSystem(10000, 2);
+    sdata = st1g->DtGet(sdata);
+    CPPUNIT_ASSERT_MESSAGE("Wrong St1 data on phase 3", sdata->mData == 10);
+    // Benchmarking
+    //bool res = mEnv->RunSystem(10000, 2);
     CPPUNIT_ASSERT_MESSAGE("Failed running system", res);
 
     delete mEnv;

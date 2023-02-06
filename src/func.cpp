@@ -5,7 +5,7 @@
 static int KDbgLog_Value = 9;
 
 
-///// FAddDt
+///// FAddDt v.2
 
 template<class T> Func* FAddDt<T>::Create(Host* aHost, const string& aString)
 {
@@ -13,171 +13,63 @@ template<class T> Func* FAddDt<T>::Create(Host* aHost, const string& aString)
     if (aString.empty()) {
 	// Weak negotiation, basing on inputs only
 	bool inpok = true;
-	MIfProv::TIfaces* inps = aHost->GetInps(EInp, MDVarGet::Type(), false);
-	for (auto dgeti : *inps) {
-	    MDVarGet* dget = dynamic_cast<MDVarGet*>(dgeti);
-	    MDtGet<T>* dfget = dget->GetDObj(dfget);
-	    if (!dfget) { inpok = false; break; }
-	}
-	if (inpok) {
-	    res = new FAddDt<T>(*aHost);
-	}
-    } else if (aString == MDtGet<T>::Type()) {
-	    res = new FAddDt<T>(*aHost);
-	}
-    return res;
-}
-
-template<class T> MIface *FAddDt<T>::getLif(const char *aName)
-{
-    MIface* res = NULL;
-    if (strcmp(aName, MDtGet<T>::Type()) == 0) res = dynamic_cast<MDtGet<T>*>(this);
-    return res;
-}
-
-template<class T> void FAddDt<T>::DtGet(T& aData)
-{
-    bool res = true;
-    MIfProv::TIfaces* inps = mHost.GetInps(EInp, MDVarGet::Type(), false);
-    bool first = true;
-    if (inps) for (auto dgeti : *inps) {
-	MDVarGet* dget = dynamic_cast<MDVarGet*>(dgeti);
-	MDtGet<T>* dfget = dget->GetDObj(dfget);
-	if (dfget) {
-	    T arg = aData;
-	    dfget->DtGet(arg);
-	    if (arg.mValid) {
-		if (first) { aData = arg; first = false;
-		} else { aData += arg; }
-	    } else {
-		mHost.log(EDbg, "Invalid argument [" + mHost.GetInpUri(EInp) + "]");
-		res = false; break;
-	    }
-	} else {
-	    mHost.log(EErr, "Incorrect argument [" + mHost.GetInpUri(EInp) + "]");
-	    res = false; break;
-	}
-    }
-    inps = mHost.GetInps(EInpN, MDVarGet::Type(), false);
-    if (inps) for (auto dgeti : *inps) {
-	MDVarGet* dget = dynamic_cast<MDVarGet*>(dgeti);
-	MDtGet<T>* dfget = dget->GetDObj(dfget);
-	if (dfget) {
-	    T arg = aData;
-	    dfget->DtGet(arg);
-	    if (arg.mValid) {
-		aData -= arg;
-	    } else {
-		mHost.log(EDbg, "Invalid argument [" + mHost.GetInpUri(EInp) + "]");
-		res = false; break;
-	    }
-	} else {
-	    mHost.log(EErr, "Incorrect argument [" + mHost.GetInpUri(EInp) + "]");
-	    res = false; break;
-	}
-    }
-    aData.mValid = res;
-    if (mRes != aData) {
-	mRes = aData;
-	mHost.OnFuncContentChanged();
-	mHost.log(EDbg, string("Result: ") + (mRes.mValid ? to_string(aData.mData) : "err"));
-    }
-}
-
-template<class T> void FAddDt<T>::GetResult(string& aResult) const
-{
-    ostringstream oss;
-    mRes.ToString(oss);
-    aResult = oss.str();
-}
-
-template <class T> string FAddDt<T>::GetInpExpType(int aId) const
-{
-    string res;
-    if (aId == EInp) {
-	res = MDtGet<T>::Type();
-    }
-    return res;
-}
-
-template <class T>
-void FAddDt<T>::MDtGet_doDump(int aLevel, int aIdt, ostream& aOs) const
-{
-    auto self = const_cast<FAddDt<T>*>(this);
-    T data;
-    self->DtGet(data);
-    string str = data.ToString();
-    aOs << "Data: " << str << endl;
-}
-
-
-///// FAddDt v.2
-
-template<class T> Func* FAddDt2<T>::Create(Host* aHost, const string& aString)
-{
-    Func* res = NULL;
-    if (aString.empty()) {
-	// Weak negotiation, basing on inputs only
-	bool inpok = true;
-	MIfProv::TIfaces* inps = aHost->GetInps(EInp, MDVarGet::Type(), false);
-	for (auto dgeti : *inps) {
-	    MDVarGet* dget = dynamic_cast<MDVarGet*>(dgeti);
+	auto* inps = aHost->GetInps(EInp);
+	for (auto dget : *inps) {
 	    inpok = dget->VarGetIfid() == T::TypeSig();
 	    if (!inpok) { break; }
 	}
 	if (inpok) {
-	    res = new FAddDt2<T>(*aHost);
+	    res = new FAddDt<T>(*aHost);
 	}
     } else if (aString == T::TypeSig()) {
-	    res = new FAddDt2<T>(*aHost);
+	    res = new FAddDt<T>(*aHost);
 	}
     return res;
 }
 
-template<class T> DtBase* FAddDt2<T>::FDtGet()
+template<class T> const DtBase* FAddDt<T>::FDtGet()
 {
-    bool res = true;
+    mRes.mValid = true;
     bool resSet = false;
-    if (!mInpIc) mInpIc = reinterpret_cast<TInpIc*>(mHost.GetInps(EInp, MDVarGet::Type(), false));
+    if (!mInpIc) mInpIc = mHost.GetInps(EInp);
     bool first = true;
-    if (mInpIc) for (auto dget : *mInpIc) {
-	T* arg = reinterpret_cast<T*>(dget->VDtGet(T::TypeSig()));
-	if (arg && arg->mValid) {
-	    if (first) { mRes = *arg; first = false;
-	    } else { mRes += *arg; }
-	    resSet = true;
-	} else {
-	    mHost.log(EDbg, "Invalid argument [" + mHost.GetInpUri(EInp) + "]");
-	    res = false; break;
+    if (mInpIc && mInpIc->size() > 0) {
+	for (auto dget : *mInpIc) {
+	    const T* arg = dget->DtGet(arg);
+	    if (arg && arg->mValid) {
+		if (first) { mRes.mData = arg->mData; first = false;
+		} else { mRes.mData = mRes.mData + arg->mData; }
+		resSet = true;
+	    } else {
+		mRes.mValid = false; break;
+	    }
 	}
+    } else {
+	mHost.log(EWarn, "Cannot get input [" + mHost.GetInpUri(EInp) + "]");
     }
-    if (!mInpNIc) mInpNIc = reinterpret_cast<TInpIc*>(mHost.GetInps(EInpN, MDVarGet::Type(), false));
+    if (!mInpNIc) mInpNIc = mHost.GetInps(EInpN);
     if (mInpNIc) for (auto dget : *mInpNIc) {
-	T* arg = reinterpret_cast<T*>(dget->VDtGet(T::TypeSig()));
+	const T* arg = dget->DtGet(arg);
 	if (arg && arg->mValid) {
 	    if (resSet) {
-		mRes -= *arg;
+		mRes.mData = -arg->mData;
 	    } else {
-		//mRes = -(*arg);
+		mRes.mData = mRes.mData - arg->mData;
 	    }
+	    resSet = true;
 	} else {
-	    mHost.log(EDbg, "Invalid argument [" + mHost.GetInpUri(EInpN) + "]");
-	    res = false; break;
+	    mRes.mValid = false; break;
 	}
+    } else {
+	mHost.log(EWarn, "Cannot get input [" + mHost.GetInpUri(EInpN) + "]");
     }
-    mRes.mValid = res;
+    if (!resSet) {
+	mRes.mValid = false;
+    }
     return &mRes;
 }
 
-
-template<class T> void FAddDt2<T>::GetResult(string& aResult) const
-{
-    ostringstream oss;
-    mRes.ToString(oss);
-    aResult = oss.str();
-}
-
-template <class T> string FAddDt2<T>::GetInpExpType(int aId) const
+template <class T> string FAddDt<T>::GetInpExpType(int aId) const
 {
     string res;
     if (aId == EInp) {
@@ -195,84 +87,39 @@ template<class T> Func* FMplDt<T>::Create(Host* aHost, const string& aString)
     if (aString.empty()) {
 	// Weak negotiation, basing on inputs only
 	bool inpok = true;
-	MIfProv::TIfaces* inps = aHost->GetInps(EInp, MDVarGet::Type(), false);
-	for (auto dgeti : *inps) {
-	    MDVarGet* dget = dynamic_cast<MDVarGet*>(dgeti);
-	    MDtGet<T>* dfget = dget->GetDObj(dfget);
-	    if (!dfget) { inpok = false; break; }
+	auto* inps = aHost->GetInps(EInp);
+	for (auto get : *inps) {
+	    auto* idata = get->VDtGet(T::TypeSig());
+	    if (!idata) { inpok = false; break; }
 	}
 	if (inpok) {
 	    res = new FMplDt<T>(*aHost);
 	}
-    } else if (aString == MDtGet<T>::Type()) {
+    } else if (aString == T::TypeSig()) {
 	    res = new FMplDt<T>(*aHost);
 	}
     return res;
 }
 
-template<class T> MIface *FMplDt<T>::getLif(const char *aName)
+template<class T> const DtBase* FMplDt<T>::FDtGet()
 {
-    MIface* res = NULL;
-    if (strcmp(aName, MDtGet<T>::Type()) == 0) res = dynamic_cast<MDtGet<T>*>(this);
-    return res;
-}
-
-template<class T> void FMplDt<T>::DtGet(T& aData)
-{
-    bool res = true;
-    MIfProv::TIfaces* inps = mHost.GetInps(EInp, MDVarGet::Type(), false);
+    mRes.mValid = true;
+    if (!mInpIc) mInpIc = mHost.GetInps(EInp);
     bool first = true;
-    if (inps) for (auto dgeti : *inps) {
-	MDVarGet* dget = dynamic_cast<MDVarGet*>(dgeti);
-	MDtGet<T>* dfget = dget->GetDObj(dfget);
-	if (dfget) {
-	    T arg = aData;
-	    dfget->DtGet(arg);
-	    if (arg.mValid) {
-		if (first) { aData = arg; first = false;
-		} else { aData *= arg; }
-	    } else {
-		mHost.log(EDbg, "Invalid argument [" + mHost.GetInpUri(EInp) + "]");
-		res = false; break;
-	    }
+    if (mInpIc) for (auto dget : *mInpIc) {
+	const T* arg = dget->DtGet(arg);
+	if (arg && arg->mValid) {
+	    if (first) { mRes = *arg; first = false;
+	    } else { mRes.mData = mRes.mData * arg->mData; }
 	} else {
-	    mHost.log(EErr, "Incorrect argument [" + mHost.GetInpUri(EInp) + "]");
-	    res = false; break;
+	    mRes.mValid = false; break;
 	}
+    } else {
+	mHost.log(EWarn, "Cannot get input [" + mHost.GetInpUri(EInp) + "]");
     }
-    aData.mValid = res;
-    if (mRes != aData) {
-	mRes = aData;
-	mHost.OnFuncContentChanged();
-	mHost.log(EDbg, string("Result: ") + (mRes.mValid ? to_string(aData.mData) : "err"));
-    }
+    return &mRes;
 }
 
-template<class T> void FMplDt<T>::GetResult(string& aResult) const
-{
-    ostringstream oss;
-    mRes.ToString(oss);
-    aResult = oss.str();
-}
-
-template <class T> string FMplDt<T>::GetInpExpType(int aId) const
-{
-    string res;
-    if (aId == EInp) {
-	res = MDtGet<T>::Type();
-    }
-    return res;
-}
-
-template <class T>
-void FMplDt<T>::MDtGet_doDump(int aLevel, int aIdt, ostream& aOs) const
-{
-    auto self = const_cast<FMplDt<T>*>(this);
-    T data;
-    self->DtGet(data);
-    string str = data.ToString();
-    aOs << "Data: " << str << endl;
-}
 
 ///// FDivDt
 
@@ -281,297 +128,33 @@ template<class T> Func* FDivDt<T>::Create(Host* aHost, const string& aString)
     Func* res = NULL;
     if (aString.empty()) {
 	// Weak negotiation, basing on inputs only
-	bool inpok = true;
-	MIfProv::TIfaces* inps = aHost->GetInps(EInp, MDVarGet::Type(), false);
-	for (auto dgeti : *inps) {
-	    MDVarGet* dget = dynamic_cast<MDVarGet*>(dgeti);
-	    MDtGet<T>* dfget = dget->GetDObj(dfget);
-	    if (!dfget) { inpok = false; break; }
-	}
-	if (inpok) {
-	    res = new FMplDt<T>(*aHost);
-	}
-    } else if (aString == MDtGet<T>::Type()) {
-	    res = new FDivDt<T>(*aHost);
-	}
+    } else if (aString == T::TypeSig()) {
+	res = new FDivDt<T>(*aHost);
+    }
     return res;
 }
 
-template<class T> MIface *FDivDt<T>::getLif(const char *aName)
+template<class T> const DtBase* FDivDt<T>::FDtGet()
 {
-    MIface* res = NULL;
-    if (strcmp(aName, MDtGet<T>::Type()) == 0) res = dynamic_cast<MDtGet<T>*>(this);
-    return res;
-}
-
-template<class T> void FDivDt<T>::DtGet(T& aData)
-{
-    bool res = true;
-    // Inp1
-    MDVarGet* dget1 = mHost.GetInp(EInp);
-    MDtGet<T>* dfget1 = dget1 ? dget1->GetDObj(dfget1) : nullptr;
-    if (dfget1) {
-	T arg1;
-	dfget1->DtGet(arg1);
-	if (arg1.mValid) {
-	    // Inp2
-	    MDVarGet* dget2 = mHost.GetInp(EInp2);
-	    MDtGet<T>* dfget2 = dget2 ? dget2->GetDObj(dfget2) : nullptr;
-	    if (dfget2) {
-		T arg2;
-		dfget2->DtGet(arg2);
-		if (arg2.mValid) {
-		    aData = arg1.mData/arg2.mData;
-		    aData.mValid = true;
-		} else {
-		    mHost.log(EDbg, "Invalid Inp2 data");
-		    dfget2->DtGet(arg2);
-		    res = false;
+    mRes.mValid = false;
+    const T* arg1 = GetInpData(mInpIc, EInp, arg1);
+    if (arg1) {
+	if (arg1->IsValid()) {
+	    mRes.mData = arg1->mData;
+	    const T* arg2 = GetInpData(mInp2Ic, EInp2, arg2);
+	    if (arg2) {
+		if (arg2->IsValid()) {
+		    mRes.mData = arg1->mData / arg2->mData;
+		    mRes.mValid = true;
 		}
 	    } else {
 		mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp2) + "]");
-		res = false;
 	    }
-	} else {
-	    mHost.log(EDbg, "Invalid Inp1 data");
-	    res = false;
 	}
     } else {
-	mHost.log(EWarn, "Cannot get input [" + mHost.GetInpUri(EInp1) + "]");
-	res = false;
+	mHost.log(EWarn, "Cannot get input [" + mHost.GetInpUri(EInp) + "]");
     }
-    aData.mValid = res;
-    if (mRes != aData) {
-	mRes = aData;
-	mHost.OnFuncContentChanged();
-    }
-}
-
-template<class T> void FDivDt<T>::GetResult(string& aResult) const
-{
-    ostringstream oss;
-    mRes.ToString(oss);
-    aResult = oss.str();
-}
-
-template <class T> string FDivDt<T>::GetInpExpType(int aId) const
-{
-    string res;
-    if (aId == EInp) {
-	res = MDtGet<T>::Type();
-    }
-    return res;
-}
-
-template <class T>
-void FDivDt<T>::MDtGet_doDump(int aLevel, int aIdt, ostream& aOs) const
-{
-    auto self = const_cast<FDivDt<T>*>(this);
-    T data;
-    self->DtGet(data);
-    string str = data.ToString();
-    aOs << "Data: " << str << endl;
-}
-
-
-
-/// Boolean AND
-
-Func* FBAndDt::Create(Host* aHost, const string& aString)
-{
-    return new FBAndDt(*aHost);
-}
-
-MIface* FBAndDt::getLif(const char *aName)
-{
-    MIface* res = NULL;
-    if (res = checkLif<MDtGet<Sdata<bool>>>(aName));
-    return res;
-}
-
-void FBAndDt::DtGet(Sdata<bool>& aData)
-{
-    bool res = true;
-
-    MIfProv::TIfaces* inps = mHost.GetInps(EInp, MDVarGet::Type(), false);
-    bool first = true;
-    if (inps) for (auto dgeti : *inps) {
-	MDVarGet* dget = dynamic_cast<MDVarGet*>(dgeti);
-	MDtGet<Sdata<bool>>* dfget = dget->GetDObj(dfget);
-	if (dfget) {
-	    Sdata<bool> arg = aData;
-	    dfget->DtGet(arg);
-	    if (arg.mValid) {
-		if (first) {
-		    aData = arg;
-		    first = false;
-		} else {
-		    aData.mData = aData.mData && arg.mData;
-		}
-		mHost.log(EDbg, "Arg [" + mHost.GetInpUri(EInp) + " (" + dget->Uid() + ")]: " + arg.ToString());
-	    } else {
-		mHost.log(EDbg, "Invalid arg [" + mHost.GetInpUri(EInp) + " (" + dget->Uid() + ")]");
-		res = false; break;
-	    }
-	} else {
-	    mHost.log(EErr, "Incompatible arg [" + mHost.GetInpUri(EInp) + " (" + dget->Uid() + ")]");
-	    dfget = dget->GetDObj(dfget);
-	    res = false; break;
-	}
-    }
-    aData.mValid = res;
-    if (mRes != aData) {
-	mRes = aData;
-	mHost.OnFuncContentChanged();
-	mHost.log(EDbg, string("Result: ") + (res ? (aData.mData ? "true" : "false") : "err"));
-    }
-}
-
-string FBAndDt::GetInpExpType(int aId) const
-{
-    string res;
-    if (aId == EInp) {
-	res = MDtGet<Sdata<bool>>::Type();
-    }
-    return res;
-}
-
-void FBAndDt::GetResult(string& aResult) const
-{
-    ostringstream oss;
-    mRes.ToString(oss);
-    aResult = oss.str();
-}
-
-
-/// Boolean Base
-
-MIface* FBBase::getLif(const char *aName)
-{
-    MIface* res = NULL;
-    if (res = checkLif<MDtGet<Sdata<bool>>>(aName));
-    return res;
-}
-
-string FBBase::GetInpExpType(int aId) const
-{
-    return  MDtGet<Sdata<bool>>::Type();
-}
-
-void FBBase::GetResult(string& aResult) const
-{
-    ostringstream oss;
-    mRes.ToString(oss);
-    aResult = oss.str();
-}
-
-
-
-
-/// Boolean OR
-
-Func* FBOrDt::Create(Host* aHost, const string& aString)
-{
-    return new FBOrDt(*aHost);
-}
-
-void FBOrDt::DtGet(Sdata<bool>& aData)
-{
-    bool res = true;
-
-    MIfProv::TIfaces* inps = mHost.GetInps(EInp, MDVarGet::Type(), false);
-    bool first = true;
-    if (inps) for (auto dgeti : *inps) {
-	MDVarGet* dget = dynamic_cast<MDVarGet*>(dgeti);
-	MDtGet<Sdata<bool>>* dfget = dget->GetDObj(dfget);
-	if (dfget != NULL) {
-	    Sdata<bool> arg = aData;
-	    dfget->DtGet(arg);
-	    if (arg.mValid) {
-		if (first) {
-		    aData = arg;
-		    first = false;
-		} else {
-		    aData.mData = aData.mData || arg.mData;
-		}
-	    } else {
-		mHost.log(EErr, "Incorrect argument [" + mHost.GetInpUri(EInp) + "]");
-		res = false; break;
-	    }
-	} else {
-	    mHost.log(EErr, "Incompatible argument [" + mHost.GetInpUri(EInp) + "]");
-	    dfget = dget->GetDObj(dfget);
-	    res = false; break;
-	}
-    }
-    aData.mValid = res;
-    if (mRes != aData) {
-	mRes = aData;
-	mHost.OnFuncContentChanged();
-	mHost.log(EDbg, string("Result: ") + (res ? (aData.mData ? "true" : "false") : "err"));
-    }
-}
-
-
-
-/// Converting to GUri
-
-Func* FUri::Create(Host* aHost, const string& aOutIid, const string& aInpIid)
-{
-    Func* res = NULL;
-    if (!aOutIid.empty()) {
-	if (aOutIid == MDtGet<TData>::Type() && aInpIid == MDtGet<TInpData>::Type()) {
-	    res = new FUri(*aHost);
-	}
-    } else {
-	// Weak negotiation - wrong case here
-	//mHost.log(EErr, "Creating instance, wrong outp [" + aOutIid + "] or inp [" + aInpIid + "] types");
-    }
-    return res;
-}
-
-MIface* FUri::getLif(const char *aName)
-{
-    MIface* res = NULL;
-    if (res = checkLif<MDtGet<DGuri>>(aName));
-    return res;
-}
-
-void FUri::DtGet(TData& aData)
-{
-    bool res = true;
-    MDVarGet* dget = mHost.GetInp(EInp);
-    MDtGet<TInpData>* dfget = dget ? dget->GetDObj(dfget) : nullptr;
-    if (dfget) {
-	TInpData arg;
-	dfget->DtGet(arg);
-	if (arg.mValid) {
-	    aData.mData = GUri(arg.mData);
-	    aData.mValid = true;
-	} else {
-	    mHost.log(EErr, "Incorrect input data");
-	    TInpData arg;
-	    dfget->DtGet(arg);
-	    res = false;
-	}
-    } else {
-	mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp) + "]");
-	res = false;
-    }
-    aData.mValid = res;
-    if (mRes != aData) {
-	mRes = aData;
-	mHost.OnFuncContentChanged();
-    }
-}
-
-string FUri::GetInpExpType(int aId) const
-{
-    string res;
-    if (aId == EInp) {
-	res = MDtGet<TInpData>::Type();
-    }
-    return res;
+    return &mRes;
 }
 
 
@@ -582,12 +165,12 @@ Func* FApnd<T>::Create(Host* aHost, const string& aOutIid, const string& aInpIid
 {
     Func* res = NULL;
     if (!aOutIid.empty()) {
-	if (aOutIid == MDtGet<TData>::Type() && aInpIid == MDtGet<TInpData>::Type()) {
+	if (aOutIid == T::TypeSig() && aInpIid == T::TypeSig()) {
 	    res = new FApnd<T>(*aHost);
 	}
     } else if (!aInpIid.empty()) {
 	// TODO Resolution basing only on input type. Is this acceptable?
-	if (aInpIid == MDtGet<TInpData>::Type()) {
+	if (aInpIid == T::TypeSig()) {
 	    res = new FApnd<T>(*aHost);
 	}
     } else {
@@ -597,58 +180,27 @@ Func* FApnd<T>::Create(Host* aHost, const string& aOutIid, const string& aInpIid
     return res;
 }
 
-template<class T>
-MIface* FApnd<T>::getLif(const char *aName)
+template<class T> const DtBase* FApnd<T>::FDtGet()
 {
-    MIface* res = NULL;
-    if (res = checkLif<MDtGet<TData>>(aName));
-    return res;
-}
-
-template<class T>
-void FApnd<T>::DtGet(TData& aData)
-{
-    bool res = true;
-    // Inp1
-    MDVarGet* dget1 = mHost.GetInp(EInp1);
-    MDtGet<TInpData>* dfget1 = dget1 ? dget1->GetDObj(dfget1) : nullptr;
-    if (dfget1) {
-	TInpData arg1;
-	dfget1->DtGet(arg1);
-	if (arg1.mValid) {
-	    aData.mData = arg1.mData;
-	    aData.mValid = true;
-	    // Inp2
-	    MDVarGet* dget2 = mHost.GetInp(EInp2);
-	    MDtGet<TInpData>* dfget2 = dget2 ? dget2->GetDObj(dfget2) : nullptr;
-	    if (dfget2) {
-		TInpData arg2;
-		dfget2->DtGet(arg2);
-		if (arg2.mValid) {
-		    aData += arg2;
-		    aData.mValid = true;
-		} else {
-		    mHost.log(EDbg, "Invalid Inp2 data");
-		    dfget2->DtGet(arg2);
-		    res = false;
+    mRes.mValid = false;
+    const T* arg1 = GetInpData(mInp1Ic, EInp1, arg1);
+    if (arg1) {
+	if (arg1->IsValid()) {
+	    mRes.mData = arg1->mData;
+	    const T* arg2 = GetInpData(mInp2Ic, EInp2, arg2);
+	    if (arg2) {
+		if (arg2->IsValid()) {
+		    mRes.mData += arg2->mData;
+		    mRes.mValid = true;
 		}
 	    } else {
 		mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp2) + "]");
-		res = false;
 	    }
-	} else {
-	    mHost.log(EDbg, "Invalid Inp1 data");
-	    res = false;
 	}
     } else {
 	mHost.log(EWarn, "Cannot get input [" + mHost.GetInpUri(EInp1) + "]");
-	res = false;
     }
-    aData.mValid = res;
-    if (mRes != aData) {
-	mRes = aData;
-	mHost.OnFuncContentChanged();
-    }
+    return &mRes;
 }
 
 template<class T>
@@ -656,86 +208,10 @@ string FApnd<T>::GetInpExpType(int aId) const
 {
     string res;
     if (aId == EInp1 || aId == EInp2) {
-	res = MDtGet<TInpData>::Type();
+	res = T::TypeSig();
     }
     return res;
 }
-
-
-/// Select valid data
-
-template<class T>
-Func* FSvld<T>::Create(Host* aHost, const string& aOutIid, const string& aInpIid)
-{
-    Func* res = NULL;
-    if (!aOutIid.empty()) {
-	if (aOutIid == MDtGet<TData>::Type() && aInpIid == MDtGet<TInpData>::Type()) {
-	    res = new FSvld<T>(*aHost);
-	}
-    } else if (!aInpIid.empty()) {
-	// TODO Resolution basing only on input type. Is this acceptable?
-	if (aInpIid == MDtGet<TInpData>::Type()) {
-	    res = new FSvld<T>(*aHost);
-	}
-    } else {
-	// Weak negotiation - wrong case here
-	//mHost.log(EErr, "Creating instance, wrong outp [" + aOutIid + "] or inp [" + aInpIid + "] types");
-    }
-    return res;
-}
-
-template<class T>
-MIface* FSvld<T>::getLif(const char *aName)
-{
-    MIface* res = NULL;
-    if (res = checkLif<MDtGet<TData>>(aName));
-    return res;
-}
-
-template<class T>
-void FSvld<T>::DtGet(TData& aData)
-{
-    bool res = true;
-    // Inp1
-    MDVarGet* dget1 = mHost.GetInp(EInp1);
-    MDtGet<TInpData>* dfget1 = dget1 ? dget1->GetDObj(dfget1) : nullptr;
-    MDVarGet* dget2 = mHost.GetInp(EInp2);
-    MDtGet<TInpData>* dfget2 = dget2 ? dget2->GetDObj(dfget2) : nullptr;
-    if (dfget1 && dfget2) {
-	TInpData arg1;
-	dfget1->DtGet(arg1);
-	TInpData arg2;
-	dfget2->DtGet(arg2);
-	if (!arg1.mValid && !arg2.mValid) {
-	    res = false;
-	} else if (arg1.mValid && arg2.mValid) {
-	    aData = arg1;
-	} else if (arg1.mValid) {
-	    aData = arg1;
-	} else if (arg2.mValid) {
-	    aData = arg2;
-	}
-    } else {
-	mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(dfget1 ? EInp2 : EInp1) + "]");
-	res = false;
-    }
-    aData.mValid = res;
-    if (mRes != aData) {
-	mRes = aData;
-	mHost.OnFuncContentChanged();
-    }
-}
-
-template<class T>
-string FSvld<T>::GetInpExpType(int aId) const
-{
-    string res;
-    if (aId == EInp1 || aId == EInp2) {
-	res = MDtGet<TInpData>::Type();
-    }
-    return res;
-}
-
 
 
 
@@ -744,60 +220,34 @@ string FSvld<T>::GetInpExpType(int aId) const
 template<class T> Func* FMinDt<T>::Create(Host* aHost, const string& aString)
 {
     Func* res = NULL;
-    if (aString == MDtGet<T>::Type()) {
+    if (aString == T::TypeSig()) {
 	res = new FMinDt<T>(*aHost);
     }
     return res;
 }
 
-template<class T> MIface *FMinDt<T>::getLif(const char *aName)
+template<class T> const DtBase* FMinDt<T>::FDtGet()
 {
-    MIface* res = NULL;
-    if (strcmp(aName, MDtGet<T>::Type()) == 0) res = dynamic_cast<MDtGet<T>*>(this);
-    return res;
-}
-
-template<class T> void FMinDt<T>::DtGet(T& aData)
-{
-    bool res = true;
-    MIfProv::TIfaces* inps = mHost.GetInps(EInp, MDVarGet::Type(), false);
+    mRes.mValid = true;
+    if (!mInpIc) mInpIc = mHost.GetInps(EInp);
     bool first = true;
-    if (inps) for (auto dgeti : *inps) {
-	MDVarGet* dget = dynamic_cast<MDVarGet*>(dgeti);
-	MDtGet<T>* dfget = dget->GetDObj(dfget);
-	if (dfget != NULL) {
-	    T arg = aData;
-	    dfget->DtGet(arg);
-	    if (arg.mValid) {
-		if (first) {
-		    aData = arg;
-		    first = false;
-		} else {
-		    if (arg.mData < aData.mData) {
-			aData = arg;
-		    }
-		}
+    if (mInpIc && mInpIc->size() > 0) {
+	for (auto dget : *mInpIc) {
+	    const T* arg = dget->DtGet(arg);
+	    if (arg && arg->mValid) {
+		if (first) { mRes.mData = arg->mData; first = false;
+		} else { if (arg->mData < mRes.mData)  mRes.mData = arg->mData; }
 	    } else {
-		mHost.log(EDbg, "Invalid argument [" + mHost.GetInpUri(EInp) + "]");
-		res = false; break;
+		mRes.mValid = false; break;
 	    }
-	} else {
-	    mHost.log(EErr, "Incompatible argument [" + mHost.GetInpUri(EInp) + "]");
-	    res = false; break;
 	}
+    } else {
+	mHost.log(EWarn, "Cannot get input [" + mHost.GetInpUri(EInp) + "]");
     }
-    aData.mValid = res;
-    if (mRes != aData) {
-	mRes = aData;
-	mHost.OnFuncContentChanged();
-    }
+    return &mRes;
 }
 
-template<class T> void FMinDt<T>::GetResult(string& aResult) const
-{
-    ostringstream oss;
-    mRes.ToString(oss);
-}
+
 
 static void FMinDtFact() {
     FMinDt<Sdata<int>>::Create(NULL, "");
@@ -812,59 +262,31 @@ static void FMinDtFact() {
 template<class T> Func* FMaxDt<T>::Create(Host* aHost, const string& aString)
 {
     Func* res = NULL;
-    if (aString == MDtGet<T>::Type()) {
+    if (aString == T::TypeSig()) {
 	res = new FMaxDt<T>(*aHost);
     }
     return res;
 }
 
-template<class T> MIface *FMaxDt<T>::getLif(const char *aName)
+template<class T> const DtBase* FMaxDt<T>::FDtGet()
 {
-    MIface* res = NULL;
-    if (strcmp(aName, MDtGet<T>::Type()) == 0) res = dynamic_cast<MDtGet<T>*>(this);
-    return res;
-}
-
-template<class T> void FMaxDt<T>::DtGet(T& aData)
-{
-    bool res = true;
-    MIfProv::TIfaces* inps = mHost.GetInps(EInp, MDVarGet::Type(), false);
+    mRes.mValid = true;
+    if (!mInpIc) mInpIc = mHost.GetInps(EInp);
     bool first = true;
-    if (inps) for (auto dgeti : *inps) {
-	MDVarGet* dget = dynamic_cast<MDVarGet*>(dgeti);
-	MDtGet<T>* dfget = dget->GetDObj(dfget);
-	if (dfget != NULL) {
-	    T arg = aData;
-	    dfget->DtGet(arg);
-	    if (arg.mValid) {
-		if (first) {
-		    aData = arg;
-		    first = false;
-		} else {
-		    if (arg.mData > aData.mData) {
-			aData = arg;
-		    }
-		}
+    if (mInpIc && mInpIc->size() > 0) {
+	for (auto dget : *mInpIc) {
+	    const T* arg = dget->DtGet(arg);
+	    if (arg && arg->mValid) {
+		if (first) { mRes.mData = arg->mData; first = false;
+		} else { if (arg->mData > mRes.mData)  mRes.mData = arg->mData; }
 	    } else {
-		mHost.log(EDbg, "Invalid argument [" + mHost.GetInpUri(EInp) + "]");
-		res = false; break;
+		mRes.mValid = false; break;
 	    }
-	} else {
-	    mHost.log(EErr, "Incompatible argument [" + mHost.GetInpUri(EInp) + "]");
-	    res = false; break;
 	}
+    } else {
+	mHost.log(EWarn, "Cannot get input [" + mHost.GetInpUri(EInp) + "]");
     }
-    aData.mValid = res;
-    if (mRes != aData) {
-	mRes = aData;
-	mHost.OnFuncContentChanged();
-    }
-}
-
-template<class T> void FMaxDt<T>::GetResult(string& aResult) const
-{
-    ostringstream oss;
-    mRes.ToString(oss);
+    return &mRes;
 }
 
 static void FMaxDtFact() {
@@ -881,195 +303,50 @@ FCmpBase::~FCmpBase()
 
 string FCmpBase::IfaceGetId() const
 { 
-    return MDtGet<Sdata<bool> >::Type();
+    return Sdata<bool>::TypeSig();
 }
 
-void FCmpBase::GetResult(string& aResult) const
-{
-    ostringstream oss;
-    mRes.ToString(oss);
-    aResult = oss.str();
-}
-
-void FCmpBase::DtGet(Sdata<bool>& aData)
-{
-    aData.Set(true);
-}
 
 template <class T> Func* FCmp<T>::Create(Host* aHost, const string& aInp1Iid, const string& aInp2Iid, FCmpBase::TFType aFType)
 {
     Func* res = NULL;
-    if (aInp1Iid == MDtGet<T>::Type() && aInp2Iid == MDtGet<T>::Type()) {
+    if (aInp1Iid == T::TypeSig() && aInp2Iid == T::TypeSig()) {
 	res = new FCmp<T>(*aHost, aFType);
     }
     return res;
 }
 
-template <class T> void FCmp<T>::DtGet(Sdata<bool>& aData)
+template <class T> const DtBase* FCmp<T>::FDtGet()
 {
-    bool res = true;
-    MDVarGet* av1 = mHost.GetInp(EInp1);
-    MDVarGet* av2 = mHost.GetInp(EInp2);
+    mRes.mValid = false;
+    if (!mInpIc) mInpIc = mHost.GetInps(EInp1);
+    if (!mInp2Ic) mInp2Ic = mHost.GetInps(EInp2);
+    auto* av1 = (mInpIc && mInpIc->size() == 1) ? mInpIc->at(0) : nullptr;
+    auto* av2 = (mInp2Ic && mInp2Ic->size() == 1) ? mInp2Ic->at(0) : nullptr;
     if (av1 != NULL && av2 != NULL) {
-	MDtGet<T>* a1 = av1->GetDObj(a1);
-	MDtGet<T>* a2 = av2->GetDObj(a2);
-	if (a1 != NULL && a2 != NULL) {
-	    T arg1, arg2;
-	    a1->DtGet(arg1);
-	    a2->DtGet(arg2);
-	    if (arg1.IsCompatible(arg2)) {
-		if (arg1.mValid && arg2.mValid) {
-		    bool sres;
-		    if (mFType == ELt) sres = arg1 < arg2;
-		    else if (mFType == ELe) sres = arg1 <= arg2;
-		    else if (mFType == EEq) sres = arg1 == arg2;
-		    else if (mFType == ENeq) sres = arg1 != arg2;
-		    else if (mFType == EGt) sres = arg1 > arg2;
-		    else if (mFType == EGe) sres = arg1 >= arg2;
-		    aData.Set(sres);
-		} else {
-		    // Enable comparing invalid data
-		    if (mFType == EEq) aData.Set(arg1 == arg2);
-		    else if (mFType == ENeq) aData.Set(arg1 != arg2);
-		    else { res = false; }
-		}
+	const T* arg1 = av1->DtGet(arg1);
+	const T* arg2 = av2->DtGet(arg2);
+	if (arg1->IsCompatible(*arg2)) {
+	    if (arg1->mValid && arg2->mValid) {
+		bool sres;
+		if (mFType == ELt) sres = arg1 < arg2;
+		else if (mFType == ELe) sres = *arg1 <= *arg2;
+		else if (mFType == EEq) sres = *arg1 == *arg2;
+		else if (mFType == ENeq) sres = *arg1 != *arg2;
+		else if (mFType == EGt) sres = *arg1 > *arg2;
+		else if (mFType == EGe) sres = *arg1 >= *arg2;
+		mRes.mData = sres;
+		mRes.mValid = true;
 	    } else {
-		res = false;
+		// Enable comparing invalid data
+		if (mFType == EEq) mRes.mData = (*arg1 == *arg2);
+		else if (mFType == ENeq) mRes.mData = (*arg1 != *arg2);
 	    }
 	}
     }
-    aData.mValid = res;
-    if (mRes != aData) {
-	mRes = aData;
-	mHost.log(EDbg, string("Result: ") +  (res ? (aData.mData ? "true" : "false") : "err"));
-	mHost.OnFuncContentChanged();
-    }
+    return &mRes;
 }
 
-MIface *FCmpBase::getLif(const char *aName)
-{
-    MIface* res = NULL;
-    if (strcmp(aName, MDtGet<Sdata<bool> >::Type()) == 0) res = (MDtGet<Sdata<bool> >*) this;
-    return res;
-}
-
-
-////    FSwitchBool
-
-Func* FSwitchBool::Create(Host* aHost, const string& aOutIid, const string& aInpIid)
-{
-    Func* res = NULL;
-    if (aInpIid == MDtGet<Sdata<bool> >::Type()) {
-	res = new FSwitchBool(*aHost);
-    }
-    return res;
-}
-
-MIface *FSwitchBool::getLif(const char *aName)
-{
-    MIface* res = NULL;
-    // There are two approach of commutation. The first one is to commutate MDVarGet ifase, i.e.
-    // that switcher result is this iface of selected case. The second is that switcher 
-    // implements MDVarGet by itselt and does commutation in this iface methods.
-    // The first approach requires iface cache refresh any time the swithcher ctrl is changed.
-    // This is not what the cache is intended for and makes overhead. So let's select approach#2 for now.
-    if (strcmp(aName, MDVarGet::Type()) == 0) res = (MDVarGet*) this;
-    // if (strcmp(aName, MDVarGet::Type()) == 0) res = GetCase();
-    return res;
-}
-
-// TODO Incorrect Sel error handling - in case of error just returns false
-// i.e. selects "false" case. This behaviour is not reasonable.
-bool FSwitchBool::GetCtrl() const
-{
-    bool res = false;
-    MDVarGet* iv = mHost.GetInp(EInp1);
-    if (iv != NULL) {
-	MDtGet<Sdata<bool> >* getif= iv->GetDObj(getif);
-	if (getif != NULL) {
-	    Sdata<bool> data;
-	    getif->DtGet(data);
-	    if (data.mValid) {
-		res = data.mData;
-	    }
-	}
-    }
-    return res;
-}
-
-MDVarGet* FSwitchBool::GetCase() const
-{
-    MDVarGet* res = NULL;
-    bool case_id = GetCtrl();
-    res = mHost.GetInp(case_id ? 2 : 1);
-    return res;
-}
-
-string FSwitchBool::VarGetIfid() const
-{
-    MDVarGet* cs = GetCase();
-    return cs->VarGetIfid();
-}
-
-MIface* FSwitchBool::DoGetDObj(const char *aName)
-{
-    MDVarGet* cs = GetCase();
-    return cs ? cs->DoGetDObj(aName) : nullptr;
-}
-
-string FSwitchBool::GetInpExpType(int aId) const
-{
-    string res;
-    if (aId == EInp_Sel) {
-	res = MDtGet<Sdata<bool> >::Type();
-    } else {
-	res = "<any>";
-    }
-    return res;
-}
-
-/// Boolean negation
-
-Func* FBnegDt::Create(Host* aHost, const string& aString)
-{
-    return new FBnegDt(*aHost);
-}
-
-MIface* FBnegDt::getLif(const char *aName)
-{
-    MIface* res = NULL;
-    if (res = checkLif<MDtGet<Sdata<bool>>>(aName));
-    return res;
-}
-
-void FBnegDt::DtGet(Sdata<bool>& aData)
-{
-    bool res = true;
-    MDVarGet* dget = mHost.GetInp(EInp1);
-    if (dget != NULL) {
-	MDtGet<Sdata<bool> >* dfget = dget->GetDObj(dfget);
-	if (dfget != NULL) {
-	    Sdata<bool> arg;
-	    dfget->DtGet(arg);
-	    aData = !arg;
-	}
-    } else {
-	dget = mHost.GetInp(EInp1);
-	res = false;
-    }
-    aData.mValid = res;
-    if (mRes != aData) {
-	mRes = aData;
-	mHost.OnFuncContentChanged();
-    }
-}
-
-void FBnegDt::GetResult(string& aResult) const
-{
-    ostringstream oss;
-    mRes.ToString(oss);
-    aResult = oss.str();
-}
 
 
 // Getting size of container: vector
@@ -1078,56 +355,42 @@ template <class T> Func* FSizeVect<T>::Create(Host* aHost, const string& aOutIid
 {
     Func* res = NULL;
     if (!aOutIid.empty()) {
-	if (aOutIid == MDtGet<Sdata<int>>::Type() && aInpIid == MDtGet<Vector<T>>::Type()) {
+	if (aOutIid == Sdata<int>::TypeSig() && aInpIid == Vector<T>::TypeSig()) {
 	    res = new FSizeVect<T>(*aHost);
 	}
     } else {
 	// Weak negotiation - just base on input type
-	if (aInpIid == MDtGet<Vector<T>>::Type()) {
+	if (aInpIid == Vector<T>::TypeSig()) {
 	    res = new FSizeVect<T>(*aHost);
 	}
     }
     return res;
 }
 
-template<class T> MIface *FSizeVect<T>::getLif(const char *aName)
+template <class T> const DtBase* FSizeVect<T>::FDtGet()
 {
-    MIface* res = NULL;
-    if (strcmp(aName, MDtGet<TOutp>::Type()) == 0) res = (MDtGet<TOutp>*) this;
-    return res;
-}
-
-template <class T> void FSizeVect<T>::DtGet(TOutp& aData)
-{
-    bool res = true;
-    MDVarGet* dget = mHost.GetInp(EInp1);
-    MDtGet<Vector<T>>* dfget = dget->GetDObj(dfget);
+    mRes.mValid = false;
+    if (!mInpIc) mInpIc = mHost.GetInps(EInp1);
+    auto* dfget = (mInpIc && mInpIc->size() == 1) ? mInpIc->at(0) : nullptr;
     if (dfget) {
-	Vector<T> arg;
-	dfget->DtGet(arg);
-	if (arg.mValid) {
-	    aData.mData = arg.Size();
-	    aData.mValid = true;
+	const Vector<T>* arg = dfget->DtGet(arg);
+	if (arg->mValid) {
+	    mRes.mData = arg->Size();
+	    mRes.mValid = true;
 	} else {
 	    mHost.log(EDbg, "Invalid input data");
-	    res = false;
 	}
     } else {
 	mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp1) + "]");
-	res = false;
     }
-    aData.mValid = res;
-    if (mRes != aData) {
-	mRes = aData;
-	mHost.OnFuncContentChanged();
-    }
+    return &mRes;
 }
 
 template <class T> string FSizeVect<T>::GetInpExpType(int aId) const
 {
     string res;
     if (aId == EInp1) {
-	res = MDtGet<Vector<T>>::Type();
+	res = Vector<T>::TypeSig();
     }
     return res;
 }
@@ -1140,45 +403,33 @@ Func* FAtVect<T>::Create(Host* aHost, const string& aOutIid, const string& aInpI
 {
     Func* res = NULL;
     if (!aOutIid.empty()) {
-	if (aOutIid == MDtGet<Sdata<T>>::Type() && aInpIid == MDtGet<Vector<T>>::Type()) {
+	if (aOutIid == Sdata<T>::TypeSig() && aInpIid == Vector<T>::TypeSig()) {
 	    res = new FAtVect<T>(*aHost);
 	}
     } else {
 	// Weak negotiation - just base on input type
-	if (aInpIid == MDtGet<Vector<T>>::Type()) {
+	if (aInpIid == Vector<T>::TypeSig()) {
 	    res = new FAtVect<T>(*aHost);
 	}
     }
     return res;
 }
 
-template<class T>
-MIface *FAtVect<T>::getLif(const char *aName)
+template <class T> const DtBase* FAtVect<T>::FDtGet()
 {
-    MIface* res = NULL;
-    if (strcmp(aName, MDtGet<Sdata<T>>::Type()) == 0) res = (MDtGet<Sdata<T>>*) this;
-    return res;
-}
-
-template <class T>
-void FAtVect<T>::DtGet(Sdata<T>& aData)
-{
-    bool res = false;
-    MDVarGet* dget = mHost.GetInp(EInp1);
-    MDtGet<Vector<T>>* dfget = dget->GetDObj(dfget);
-    dget = mHost.GetInp(EInp2);
-    MDtGet<Sdata<int>>* diget = dget->GetDObj(diget);
+    mRes.mValid = false;
+    if (!mInpIc) mInpIc = mHost.GetInps(EInp1);
+    if (!mInp2Ic) mInp2Ic = mHost.GetInps(EInp2);
+    auto* dfget = (mInpIc && mInpIc->size() == 1) ? mInpIc->at(0) : nullptr;
+    auto* diget = (mInp2Ic && mInp2Ic->size() == 1) ? mInp2Ic->at(0) : nullptr;
     if (dfget && diget) {
-	Vector<T> arg;
-	dfget->DtGet(arg);
-	Sdata<int> ind;
-	diget->DtGet(ind);
-	if (arg.mValid && ind.mValid ) {
-	    if (ind.mData < arg.Size()) {
-		aData.mValid = arg.GetElem(ind.mData, aData.mData);
-		res = true;
+	const Vector<T>* arg = dfget->DtGet(arg);
+	const Sdata<int>* ind = diget->DtGet(ind);
+	if (arg->mValid && ind->mValid ) {
+	    if (ind->mData < arg->Size()) {
+		mRes.mValid = arg->GetElem(ind->mData, mRes.mData);
 	    } else {
-		string inds = ind.ToString(false);
+		string inds = ind->ToString(false);
 		mHost.log(EWarn, "Index is exceeded: " + inds);
 	    }
 	} else {
@@ -1189,20 +440,16 @@ void FAtVect<T>::DtGet(Sdata<T>& aData)
     } else if (!diget) {
 	mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp2) + "]");
     }
-    aData.mValid = res;
-    if (mRes != aData) {
-	mRes = aData;
-	mHost.OnFuncContentChanged();
-    }
+    return &mRes;
 }
 
 template <class T> string FAtVect<T>::GetInpExpType(int aId) const
 {
     string res;
     if (aId == EInp1) {
-	res = MDtGet<Vector<T>>::Type();
+	res = Vector<T>::TypeSig();
     } else if (aId == EInp2) {
-	res = MDtGet<Sdata<int>>::Type();
+	res = Sdata<int>::TypeSig();
     }
     return res;
 }
@@ -1215,45 +462,33 @@ Func* FAtgVect<T>::Create(Host* aHost, const string& aOutIid, const string& aInp
 {
     Func* res = NULL;
     if (!aOutIid.empty()) {
-	if (aOutIid == MDtGet<T>::Type() && aInpIid == MDtGet<Vector<T>>::Type()) {
+	if (aOutIid == T::TypeSig() && aInpIid == Vector<T>::TypeSig()) {
 	    res = new FAtgVect<T>(*aHost);
 	}
     } else {
 	// Weak negotiation - just base on input type
-	if (aInpIid == MDtGet<Vector<T>>::Type()) {
+	if (aInpIid == Vector<T>::TypeSig()) {
 	    res = new FAtgVect<T>(*aHost);
 	}
     }
     return res;
 }
 
-template<class T>
-MIface *FAtgVect<T>::getLif(const char *aName)
+template <class T> const DtBase* FAtgVect<T>::FDtGet()
 {
-    MIface* res = NULL;
-    if (strcmp(aName, MDtGet<T>::Type()) == 0) res = (MDtGet<T>*) this;
-    return res;
-}
-
-template <class T>
-void FAtgVect<T>::DtGet(T& aData)
-{
-    bool res = false;
-    MDVarGet* dget = mHost.GetInp(EInp1);
-    MDtGet<Vector<T>>* dfget = dget->GetDObj(dfget);
-    dget = mHost.GetInp(EInp2);
-    MDtGet<Sdata<int>>* diget = dget->GetDObj(diget);
+    mRes.mValid = false;
+    if (!mInpIc) mInpIc = mHost.GetInps(EInp1);
+    if (!mInp2Ic) mInp2Ic = mHost.GetInps(EInp2);
+    auto* dfget = (mInpIc && mInpIc->size() == 1) ? mInpIc->at(0) : nullptr;
+    auto* diget = (mInp2Ic && mInp2Ic->size() == 1) ? mInp2Ic->at(0) : nullptr;
     if (dfget && diget) {
-	Vector<T> arg;
-	dfget->DtGet(arg);
-	Sdata<int> ind;
-	diget->DtGet(ind);
-	if (arg.mValid && ind.mValid ) {
-	    if (ind.mData < arg.Size()) {
-		aData.mValid = arg.GetElem(ind.mData, aData);
-		res = true;
+	const Vector<T>* arg = dfget->DtGet(arg);
+	const Sdata<int>* ind = diget->DtGet(ind);
+	if (arg->mValid && ind->mValid ) {
+	    if (ind->mData < arg->Size()) {
+		mRes.mValid = arg->GetElem(ind->mData, mRes);
 	    } else {
-		string inds = ind.ToString(false);
+		string inds = ind->ToString(false);
 		mHost.log(EWarn, "Index is exceeded: " + inds);
 	    }
 	} else {
@@ -1264,20 +499,16 @@ void FAtgVect<T>::DtGet(T& aData)
     } else if (!diget) {
 	mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp2) + "]");
     }
-    aData.mValid = res;
-    if (mRes != aData) {
-	mRes = aData;
-	mHost.OnFuncContentChanged();
-    }
+    return &mRes;
 }
 
 template <class T> string FAtgVect<T>::GetInpExpType(int aId) const
 {
     string res;
     if (aId == EInp1) {
-	res = MDtGet<Vector<T>>::Type();
+	res = Vector<T>::TypeSig();
     } else if (aId == EInp2) {
-	res = MDtGet<Sdata<int>>::Type();
+	res = Sdata<int>::TypeSig();
     }
     return res;
 }
@@ -1289,48 +520,37 @@ Func* FAtgPair<T>::Create(Host* aHost, const string& aOutIid, const string& aInp
 {
     Func* res = NULL;
     if (!aOutIid.empty()) {
-	if (aOutIid == MDtGet<T>::Type() && aInpIid == MDtGet<Pair<T>>::Type()) {
+	if (aOutIid == T::TypeSig() && aInpIid == Pair<T>::TypeSig()) {
 	    res = new FAtgPair<T>(*aHost);
 	}
     } else {
 	// Weak negotiation - just base on input type
-	if (aInpIid == MDtGet<Pair<T>>::Type()) {
+	if (aInpIid == Pair<T>::TypeSig()) {
 	    res = new FAtgPair<T>(*aHost);
 	}
     }
     return res;
 }
 
-template<class T>
-MIface *FAtgPair<T>::getLif(const char *aName)
+template <class T> const DtBase* FAtgPair<T>::FDtGet()
 {
-    MIface* res = NULL;
-    if (strcmp(aName, MDtGet<T>::Type()) == 0) res = (MDtGet<T>*) this;
-    return res;
-}
-
-template <class T>
-void FAtgPair<T>::DtGet(T& aData)
-{
-    bool res = false;
-    MDVarGet* dget = mHost.GetInp(EInp1);
-    MDtGet<Pair<T>>* dfget = dget->GetDObj(dfget);
-    dget = mHost.GetInp(EInp2);
-    MDtGet<Sdata<int>>* diget = dget->GetDObj(diget);
+    mRes.mValid = false;
+    if (!mInpIc) mInpIc = mHost.GetInps(EInp1);
+    if (!mInp2Ic) mInp2Ic = mHost.GetInps(EInp2);
+    auto* dfget = (mInpIc && mInpIc->size() == 1) ? mInpIc->at(0) : nullptr;
+    auto* diget = (mInp2Ic && mInp2Ic->size() == 1) ? mInp2Ic->at(0) : nullptr;
     if (dfget && diget) {
-	Pair<T> arg;
-	dfget->DtGet(arg);
-	Sdata<int> ind;
-	diget->DtGet(ind);
-	if (arg.mValid && ind.mValid ) {
-	    if (ind.mData == 0) {
-		aData = arg.mData.first;
-		res = true;
-	    } else if (ind.mData == 1) {
-		aData = arg.mData.second;
-		res = true;
+	const Pair<T>* arg = dfget->DtGet(arg);
+	const Sdata<int>* ind = diget->DtGet(ind);
+	if (arg->mValid && ind->mValid ) {
+	    if (ind->mData == 0) {
+		mRes = arg->mData.first;
+		mRes.mValid = true;
+	    } else if (ind->mData == 1) {
+		mRes = arg->mData.second;
+		mRes.mValid = true;
 	    } else {
-		string inds = ind.ToString(false);
+		string inds = ind->ToString(false);
 		mHost.log(EWarn, "Index is exceeded: " + inds);
 	    }
 	} else {
@@ -1341,190 +561,18 @@ void FAtgPair<T>::DtGet(T& aData)
     } else if (!diget) {
 	mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp2) + "]");
     }
-    aData.mValid = res;
-    if (mRes != aData) {
-	mRes = aData;
-	mHost.OnFuncContentChanged();
-    }
+    return &mRes;
 }
 
 template <class T> string FAtgPair<T>::GetInpExpType(int aId) const
 {
     string res;
     if (aId == EInp1) {
-	res = MDtGet<Pair<T>>::Type();
+	res = Pair<T>::TypeSig();
     } else if (aId == EInp2) {
-	res = MDtGet<Sdata<int>>::Type();
+	res = Sdata<int>::TypeSig();
     }
     return res;
-}
-
-
-
-/// Conversion to string base
-
-MIface* FToStrBase::getLif(const char *aName)
-{
-    MIface* res = NULL;
-    if (res = checkLif<MDtGet<Sdata<string>>>(aName));
-    return res;
-}
-
-void FToStrBase::GetResult(string& aResult) const
-{
-    ostringstream oss;
-    mRes.ToString(oss);
-    aResult = oss.str();
-}
-
-
-/// Conversion to string
-
-template <class T>
-Func* FSToStr<T>::Create(Host* aHost, const string& aOutIid, const string& aInpTSig)
-{
-    Func* res = nullptr;
-    if (!aOutIid.empty()) {
-	if (aOutIid == MDtGet<Sdata<string>>::Type() && aInpTSig == MDtGet<Sdata<T>>::Type()) {
-	    res = new FSToStr<T>(*aHost);
-	}
-    } else {
-	// Weak negotiation
-	if (aInpTSig == MDtGet<Sdata<T>>::Type()) {
-	    res = new FSToStr<T>(*aHost);
-	}
-    }
-    return res;
-}
-
-    template <class T>
-void FSToStr<T>::DtGet(Sdata<string>& aData)
-{
-    bool res = true;
-    MDVarGet* dget = mHost.GetInp(EInp1);
-    if (dget) {
-	MDtGet<Sdata<T>>* dfget = dget->GetDObj(dfget);
-	if (dfget) {
-	    Sdata<T> arg;
-	    dfget->DtGet(arg);
-	    aData.mData = arg.ToString(false);
-	    aData.mValid = true;
-	}
-    } else {
-	dget = mHost.GetInp(EInp1);
-	res = false;
-    }
-    aData.mValid = res;
-    if (mRes != aData) {
-	mRes = aData;
-	mHost.OnFuncContentChanged();
-    }
-}
-
-
-/// Converting Uri to Sdata<string>
-
-Func* FUriToStr::Create(Host* aHost, const string& aOutIid, const string& aInpIid)
-{
-    Func* res = NULL;
-    if (!aOutIid.empty()) {
-	if (aOutIid == MDtGet<TData>::Type() && aInpIid == MDtGet<TInpData>::Type()) {
-	    res = new FUriToStr(*aHost);
-	}
-    } else {
-	// Weak negotiation
-	if (aInpIid == MDtGet<TInpData>::Type()) {
-	    res = new FUriToStr(*aHost);
-	}
-	//mHost.log(EErr, "Creating instance, wrong outp [" + aOutIid + "] or inp [" + aInpIid + "] types");
-    }
-    return res;
-}
-
-void FUriToStr::DtGet(TData& aData)
-{
-    bool res = true;
-    MDVarGet* dget = mHost.GetInp(EInp);
-    MDtGet<TInpData>* dfget = dget ? dget->GetDObj(dfget) : nullptr;
-    if (dfget) {
-	TInpData arg;
-	dfget->DtGet(arg);
-	if (arg.mValid) {
-	    aData.mData = arg.ToString(false);
-	    aData.mValid = true;
-	} else {
-	    mHost.log(EDbg, "Invalid input data");
-	    TInpData arg;
-	    dfget->DtGet(arg);
-	    res = false;
-	}
-    } else {
-	mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp) + "]");
-	res = false;
-    }
-    aData.mValid = res;
-    if (mRes != aData) {
-	mRes = aData;
-	mHost.OnFuncContentChanged();
-    }
-}
-
-string FUriToStr::GetInpExpType(int aId) const
-{
-    string res;
-    if (aId == EInp) {
-	res = MDtGet<TInpData>::Type();
-    }
-    return res;
-}
-
-
-
-/// Indication that data is valid
-
-void FIsValidBase::GetResult(string& aResult) const
-{
-    ostringstream oss;
-    mRes.ToString(oss);
-    aResult = oss.str();
-}
-
-MIface *FIsValidBase::getLif(const char *aName)
-{
-    MIface* res = NULL;
-    if (strcmp(aName, TOGetData::Type()) == 0) res = (TOGetData*) this;
-    return res;
-}
-
-
-template <class T> Func* FIsValid<T>::Create(Host* aHost, const string& aInp1Iid)
-{
-    Func* res = NULL;
-    if (aInp1Iid == MDtGet<T>::Type()) {
-	res = new FIsValid<T>(*aHost);
-    }
-    return res;
-}
-
-template <class T> void FIsValid<T>::DtGet(Sdata<bool>& aData)
-{
-    bool res = true;
-    MDVarGet* av1 = mHost.GetInp(EInp1);
-    if (av1) {
-	MDtGet<T>* a = av1->GetDObj(a);
-	if (a) {
-	    T data;
-	    a->DtGet(data);
-	    aData.mData = data.IsValid();
-	    aData.mValid = true;
-	}
-    }
-    aData.mValid = res;
-    if (mRes != aData) {
-	mRes = aData;
-	mHost.log(EDbg, string("Result: ") +  (res ? (aData.mData ? "true" : "false") : "err"));
-	mHost.OnFuncContentChanged();
-    }
 }
 
 
@@ -1533,49 +581,30 @@ template <class T> void FIsValid<T>::DtGet(Sdata<bool>& aData)
 Func* FTailUri::Create(Host* aHost, const string& aOutId)
 {
     Func* res = NULL;
-    if (aOutId == TDget::Type()) {
+    if (aOutId == TData::TypeSig()) {
 	res = new FTailUri(*aHost);
     }
     return res;
 }
 
-void FTailUri::DtGet(TData& aData)
+const DtBase* FTailUri::FDtGet()
 {
-    bool res = true;
-    MDVarGet* dget = mHost.GetInp(EInp);
-    TDget* dfget = dget ? dget->GetDObj(dfget) : nullptr;
-    if (dfget) {
-	TData arg;
-	dfget->DtGet(arg);
-	if (arg.mValid) {
-	    dget = mHost.GetInp(EHead);
-	    dfget = dget ? dget->GetDObj(dfget) : nullptr;
-	    if (dfget) {
-		TData head;
-		dfget->DtGet(head);
-		if (head.mValid) {
-		    res = arg.mData.getTail(head.mData, aData.mData);
-		} else {
-		    mHost.log(EDbg, "Invalid input data [" + mHost.GetInpUri(EHead) + "]");
-		    res = false;
-		}
-	    } else {
-		mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EHead) + "]");
-		res = false;
+    mRes.mValid = false;
+    const TData* inp = GetInpData(mInpIc, EInp, inp);
+    if (inp) {
+	const TData* head = GetInpData(mInpHeadIc, EHead, head);
+	if (head) {
+	    if (inp->IsValid() && head->IsValid()) {
+		bool res = inp->mData.getTail(head->mData, mRes.mData);
+		mRes.mValid = res;
 	    }
 	} else {
-	    mHost.log(EDbg, "Invalid input data");
-	    res = false;
+	    mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EHead) + "]");
 	}
     } else {
 	mHost.log(EWarn, "Cannot get input [" + mHost.GetInpUri(EInp) + "]");
-	res = false;
     }
-    aData.mValid = res;
-    if (mRes != aData) {
-	mRes = aData;
-	mHost.OnFuncContentChanged();
-    }
+    return &mRes;
 }
 
 
@@ -1584,49 +613,30 @@ void FTailUri::DtGet(TData& aData)
 Func* FHeadUri::Create(Host* aHost, const string& aOutId)
 {
     Func* res = NULL;
-    if (aOutId == TDget::Type()) {
+    if (aOutId == TData::TypeSig()) {
 	res = new FHeadUri(*aHost);
     }
     return res;
 }
 
-void FHeadUri::DtGet(TData& aData)
+const DtBase* FHeadUri::FDtGet()
 {
-    bool res = true;
-    MDVarGet* dget = mHost.GetInp(EInp);
-    TDget* dfget = dget ? dget->GetDObj(dfget) : nullptr;
-    if (dfget) {
-	TData arg;
-	dfget->DtGet(arg);
-	if (arg.mValid) {
-	    dget = mHost.GetInp(ETail);
-	    dfget = dget ? dget->GetDObj(dfget) : nullptr;
-	    if (dfget) {
-		TData tail;
-		dfget->DtGet(tail);
-		if (tail.mValid) {
-		    res = arg.mData.getHead(tail.mData, aData.mData);
-		} else {
-		    mHost.log(EDbg, "Invalid input data [" + mHost.GetInpUri(ETail) + "]");
-		    res = false;
-		}
-	    } else {
-		mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(ETail) + "]");
-		res = false;
+    mRes.mValid = false;
+    const TData* inp = GetInpData(mInpIc, EInp, inp);
+    if (inp) {
+	const TData* tail = GetInpData(mInpTailIc, ETail, tail);
+	if (tail) {
+	    if (inp->IsValid() && tail->IsValid()) {
+		bool res = inp->mData.getHead(tail->mData, mRes.mData);
+		mRes.mValid = res;
 	    }
 	} else {
-	    mHost.log(EDbg, "Invalid input data");
-	    res = false;
+	    mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(ETail) + "]");
 	}
     } else {
 	mHost.log(EWarn, "Cannot get input [" + mHost.GetInpUri(EInp) + "]");
-	res = false;
     }
-    aData.mValid = res;
-    if (mRes != aData) {
-	mRes = aData;
-	mHost.OnFuncContentChanged();
-    }
+    return &mRes;
 }
 
 
@@ -1635,110 +645,32 @@ void FHeadUri::DtGet(TData& aData)
 Func* FTailnUri::Create(Host* aHost, const string& aOutId)
 {
     Func* res = NULL;
-    if (aOutId == TDget::Type()) {
+    if (aOutId == TData::TypeSig()) {
 	res = new FTailnUri(*aHost);
     }
     return res;
 }
 
-void FTailnUri::DtGet(TData& aData)
+const DtBase* FTailnUri::FDtGet()
 {
-    bool res = true;
-    MDVarGet* dget = mHost.GetInp(EInp);
-    TDget* dfget = dget ? dget->GetDObj(dfget) : nullptr;
-    if (dfget) {
-	TData arg;
-	dfget->DtGet(arg);
-	if (arg.mValid) {
-	    dget = mHost.GetInp(ENum);
-	    TNumGet* dnget = dget ? dget->GetDObj(dnget) : nullptr;
-	    if (dnget) {
-		TNum num;
-		dnget->DtGet(num);
-		if (num.mValid) {
-		    aData.mData = arg.mData.tailn(num.mData);
-		} else {
-		    mHost.log(EDbg, "Invalid input data [" + mHost.GetInpUri(ENum) + "]");
-		    res = false;
-		}
-	    } else {
-		mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(ENum) + "]");
-		res = false;
+    mRes.mValid = false;
+    const TData* inp = GetInpData(mInpIc, EInp, inp);
+    if (inp) {
+	const TNum* num = GetInpData(mInpNumIc, ENum, num);
+	if (num) {
+	    if (inp->IsValid() && num->IsValid()) {
+		mRes.mData = inp->mData.tailn(num->mData);
+		mRes.mValid = mRes.mData.isValid();
 	    }
 	} else {
-	    mHost.log(EDbg, "Invalid input data");
-	    res = false;
+	    mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(ENum) + "]");
 	}
     } else {
 	mHost.log(EWarn, "Cannot get input [" + mHost.GetInpUri(EInp) + "]");
-	res = false;
     }
-    aData.mValid = res;
-    if (mRes != aData) {
-	mRes = aData;
-	mHost.OnFuncContentChanged();
-    }
+    return &mRes;
 }
 
-
-// Getting component of tuple
-//
-template <class T>
-Func* FTupleSel<T>::Create(Host* aHost, const string& aOutIid)
-{
-    Func* res = NULL;
-    if (!aOutIid.empty() && aOutIid == MDtGet<T>::Type()) {
-	res = new FTupleSel<T>(*aHost);
-    }
-    return res;
-}
-
-template<class T>
-MIface *FTupleSel<T>::getLif(const char *aName)
-{
-    MIface* res = NULL;
-    if (strcmp(aName, MDtGet<T>::Type()) == 0) res = (MDtGet<T>*) this;
-    return res;
-}
-
-template <class T>
-void FTupleSel<T>::DtGet(T& aData)
-{
-    MDVarGet* dget = mHost.GetInp(EInp1);
-    MDtGet<NTuple>* dfget = dget ? dget->GetDObj(dfget) : nullptr;
-    dget = mHost.GetInp(EInp2);
-    MDtGet<Sdata<string>>* diget = dget ? dget->GetDObj(diget) : nullptr;
-    if (dfget && diget) {
-	NTuple arg;
-	dfget->DtGet(arg);
-	Sdata<string> ind;
-	diget->DtGet(ind);
-	if (arg.mValid && ind.mValid ) {
-	    DtBase* elem = arg.GetElem(ind.mData);
-	    T* telem = dynamic_cast<T*>(elem);
-	    if (telem) {
-		aData = *telem;
-	    } else {
-		mHost.log(EWarn, "Tuple comp [" + ind.mData + "] isn't that requested");
-	    }
-	} else {
-	    mHost.log(EDbg, "Invalid argument");
-	}
-    } else if (!dfget) {
-	mHost.log(EDbg, "Invalid input [" + mHost.GetInpUri(EInp1) + "]");
-    } else if (!diget) {
-	mHost.log(EDbg, "Invalid input [" + mHost.GetInpUri(EInp2) + "]");
-    }
-    if (mRes != aData) {
-	mRes = aData;
-	mHost.OnFuncContentChanged();
-    }
-}
-
-template <class T> string FTupleSel<T>::GetInpExpType(int aId) const
-{
-    return string();
-}
 
 /// Compose Pair
 //
@@ -1747,79 +679,36 @@ Func* FPair<T>::Create(Host* aHost, const string& aOutIid, const string& aInpId)
 {
     Func* res = NULL;
     if (!aOutIid.empty()) {
-	if (aOutIid == MDtGet<TData>::Type()) {
+	if (aOutIid == TData::TypeSig()) {
 	    res = new FPair<T>(*aHost);
 	}
     } else if (!aInpId.empty()) {
-	if (aInpId == MDtGet<TInpData>::Type()) {
+	if (aInpId == TInpData::TypeSig()) {
 	    res = new FPair<T>(*aHost);
 	}
     }
     return res;
 }
 
-template<class T>
-MIface* FPair<T>::getLif(const char *aName)
+template<class T> const DtBase* FPair<T>::FDtGet()
 {
-    MIface* res = NULL;
-    if (res = checkLif<MDtGet<TData>>(aName));
-    return res;
-}
-
-template<class T>
-void FPair<T>::DtGet(TData& aData)
-{
-    bool res = true;
-    // Inp1
-    MDVarGet* dget1 = mHost.GetInp(EInp1);
-    MDtGet<TInpData>* dfget1 = dget1 ? dget1->GetDObj(dfget1) : nullptr;
-    if (dfget1) {
-	TInpData arg1;
-	dfget1->DtGet(arg1);
-	if (arg1.mValid) {
-	    aData.mData.first = arg1;
-	    // Inp2
-	    MDVarGet* dget2 = mHost.GetInp(EInp2);
-	    MDtGet<TInpData>* dfget2 = dget2 ? dget2->GetDObj(dfget2) : nullptr;
-	    if (dfget2) {
-		TInpData arg2;
-		dfget2->DtGet(arg2);
-		if (arg2.mValid) {
-		    aData.mData.second = arg2;
-		} else {
-		    mHost.log(EDbg, "Invalid Inp2 data");
-		    dfget2->DtGet(arg2);
-		    res = false;
-		}
-	    } else {
-		mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp2) + "]");
-		res = false;
-	    }
+    mRes.mValid = true;
+    const TInpData* inp1 = GetInpData(mInp1Ic, EInp1, inp1);
+    if (inp1) {
+	mRes.mData.first = *inp1;
+	const TInpData* inp2 = GetInpData(mInp2Ic, EInp2, inp2);
+	if (inp2) {
+	    mRes.mData.second = *inp2;
 	} else {
-	    mHost.log(EDbg, "Invalid Inp1 data");
-	    res = false;
+	    mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp2) + "]");
+	    mRes.mData.second.mValid = false;
 	}
     } else {
 	mHost.log(EWarn, "Cannot get input [" + mHost.GetInpUri(EInp1) + "]");
-	res = false;
+	mRes.mData.first.mValid = false;
     }
-    aData.mValid = res;
-    if (mRes != aData) {
-	mRes = aData;
-	mHost.OnFuncContentChanged();
-    }
+    return &mRes;
 }
-
-template<class T>
-string FPair<T>::GetInpExpType(int aId) const
-{
-    string res;
-    if (aId == EInp1 || aId == EInp2) {
-	res = MDtGet<TInpData>::Type();
-    }
-    return res;
-}
-
 
 
 
@@ -1831,7 +720,6 @@ void Init()
 {
     Fhost* host = nullptr;
     FAddDt<Sdata<int>>::Create(host, "");
-    FAddDt2<Sdata<int>>::Create(host, "");
     FMplDt<Sdata<int>>::Create(host, "");
     FDivDt<Sdata<int>>::Create(host, "");
     FMaxDt<Sdata<int>>::Create(host, "");
@@ -1849,14 +737,6 @@ void Init()
     FAtgPair<Sdata<int>>::Create(host, string(), string());
     FApnd<Sdata<string>>::Create(host, string(), string());
     FApnd<DGuri>::Create(host, string(), string());
-    FSToStr<int>::Create(host, string(), string());
-    FIsValid<DGuri>::Create(host, "");
-    FIsValid<Sdata<string>>::Create(host, "");
-    FIsValid<Sdata<int>>::Create(host, "");
-    FSvld<DGuri>::Create(host, "", "");
-    FSvld<Sdata<string>>::Create(host, "", "");
-    FTupleSel<Sdata<int>>::Create(host, "");
-    FTupleSel<Sdata<string>>::Create(host, "");
     FPair<DGuri>::Create(host, "", "");
     FPair<Sdata<int>>::Create(host, "", "");
 }

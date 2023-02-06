@@ -675,6 +675,22 @@ DtBase* NTuple::GetElem(const string& aName)
     return res;
 }
 
+DtBase& NTuple::operator=(const DtBase& b)
+{
+    if (IsCompatible(b) && b.IsValid()) {
+	this->DtBase::operator=(b);
+	const NTuple& bp = reinterpret_cast<const NTuple&>(b);
+	for (int i = 0; i < mData.size(); i++) {
+	    auto comp = mData.at(i);
+	    auto bcomp = bp.mData.at(i);
+	    *(comp.second) = *(bcomp.second);
+	}
+    } else {
+	mValid = false;
+    }
+    return *this;
+}
+
 bool NTuple::operator==(const MDtBase& sb) const
 {
     const NTuple& b = dynamic_cast<const NTuple&>(sb);

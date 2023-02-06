@@ -1,18 +1,23 @@
 MyRoot : Elem {
     Launcher : DesLauncher {
         Ds1 : Des {
-            St1 : State {
-                = "SB true"
-                Debug.LogLevel = "Dbg"
+            _ <  {
+                # "<<< Hidden"
             }
-            Neg : TrNegVar
-            St1.Inp ~ Neg
-            Neg.Inp ~ St1
+            St1 : State @  {
+                _@ <  {
+                    = "SB true"
+                    Debug.LogLevel = "Dbg"
+                }
+                Inp ~ Neg : TrNegVar @  {
+                    Inp ~ St1
+                }
+            }
             # "Data: Scalar: string"
             StSS : State @  {
                 _@ <  {
                     Debug.LogLevel = "Dbg"
-                    = "SS _INV"
+                    = "SS"
                 }
                 Inp ~ : State {
                     = "SS 'Hello World!'"
@@ -22,7 +27,7 @@ MyRoot : Elem {
             StPS : State @  {
                 _@ <  {
                     Debug.LogLevel = "Dbg"
-                    = "PS "
+                    = "PS"
                 }
                 Inp ~ : State {
                     = "PS ( First , Second )"
@@ -32,7 +37,7 @@ MyRoot : Elem {
             StPSS : State @  {
                 _@ <  {
                     Debug.LogLevel = "Dbg"
-                    = "PSS "
+                    = "PSS"
                 }
                 Inp ~ : State {
                     = "PSS ( SS 'First elem' , SS 'Second elem' )"
@@ -89,47 +94,220 @@ MyRoot : Elem {
                 }
             }
             # "URI"
-            Const_1 : State {
-                = "URI State1"
+            # "Data: URI"
+            StUri : State @  {
+                _@ <  {
+                    Debug.LogLevel = "Dbg"
+                    = "URI"
+                }
+                Inp ~ : State {
+                    = "URI State1.State2"
+                }
             }
-            # "Size of vector"
+            # "Transitions"
             St2 : State {
                 = "VS ( Item_1 , Item_2 , Item_3 )"
             }
-            St3 : State {
-                = "SI -1"
-                Debug.LogLevel = "Dbg"
+            # "Size of vector"
+            SSizeOfVect : State @  {
+                _@ <  {
+                    = "SI -1"
+                    Debug.LogLevel = "Dbg"
+                }
+                Inp ~ : TrSizeVar @  {
+                    Inp ~ St2
+                }
             }
-            St3.Inp ~ : TrSizeVar @  {
-                Inp ~ St2
+            # "Switch"
+            SSwitch : State @  {
+                _@ <  {
+                    = "SI"
+                    Debug.LogLevel = "Dbg"
+                }
+                Inp ~ : TrSwitchBool @  {
+                    Inp1 ~ : State {
+                        = "SI 5"
+                    }
+                    Inp2 ~ : State {
+                        = "SI 2"
+                    }
+                    Sel ~ : State {
+                        = "SB true"
+                    }
+                }
+            }
+            # "Add int"
+            SAddInt : State @  {
+                _@ <  {
+                    = "SI"
+                    Debug.LogLevel = "Dbg"
+                }
+                Inp ~ : TrAddVar @  {
+                    Inp ~ : State {
+                        = "SI 5"
+                    }
+                    Inp ~ : State {
+                        = "SI 2"
+                    }
+                }
+            }
+            # "Mpl int"
+            SMplInt : State @  {
+                _@ <  {
+                    = "SI"
+                    Debug.LogLevel = "Dbg"
+                }
+                Inp ~ : TrMplVar @  {
+                    Inp ~ : State {
+                        = "SI 5"
+                    }
+                    Inp ~ : State {
+                        = "SI 2"
+                    }
+                }
+            }
+            # "Div int"
+            SDivInt : State @  {
+                _@ <  {
+                    = "SI"
+                    Debug.LogLevel = "Dbg"
+                }
+                Inp ~ : TrDivVar @  {
+                    Inp ~ : State {
+                        = "SI 10"
+                    }
+                    Inp2 ~ : State {
+                        = "SI 2"
+                    }
+                }
+            }
+            # "Min int"
+            SMinInt : State @  {
+                _@ <  {
+                    = "SI"
+                    Debug.LogLevel = "Dbg"
+                }
+                Inp ~ : TrMinVar @  {
+                    Inp ~ : State {
+                        = "SI 10"
+                    }
+                    Inp ~ : State {
+                        = "SI 5"
+                    }
+                    Inp ~ : State {
+                        = "SI 1"
+                    }
+                }
+            }
+            # "Max int"
+            SMaxInt : State @  {
+                _@ <  {
+                    = "SI"
+                    Debug.LogLevel = "Dbg"
+                }
+                Inp ~ : TrMaxVar @  {
+                    Inp ~ : State {
+                        = "SI 10"
+                    }
+                    Inp ~ : State {
+                        = "SI 5"
+                    }
+                    Inp ~ : State {
+                        = "SI 1"
+                    }
+                }
+            }
+            # "And"
+            SAnd : State @  {
+                _@ <  {
+                    = "SB"
+                    Debug.LogLevel = "Dbg"
+                }
+                Inp ~ : TrAndVar @  {
+                    Inp ~ : State {
+                        = "SB true"
+                    }
+                    Inp ~ : State {
+                        = "SB true"
+                    }
+                    Inp ~ : State {
+                        = "SB true"
+                    }
+                }
+            }
+            # "Or"
+            SOr : State @  {
+                _@ <  {
+                    = "SB"
+                    Debug.LogLevel = "Dbg"
+                }
+                Inp ~ : TrOrVar @  {
+                    Inp ~ : State {
+                        = "SB false"
+                    }
+                    Inp ~ : State {
+                        = "SB true"
+                    }
+                    Inp ~ : State {
+                        = "SB false"
+                    }
+                }
+            }
+            # "Neg"
+            SNeg : State @  {
+                _@ <  {
+                    = "SB"
+                    Debug.LogLevel = "Dbg"
+                }
+                Inp ~ : TrNegVar @  {
+                    Inp ~ : State {
+                        = "SB false"
+                    }
+                }
+            }
+            # "Uri"
+            SUri : State @  {
+                _@ <  {
+                    = "URI"
+                    Debug.LogLevel = "Dbg"
+                }
+                Inp ~ : TrToUriVar @  {
+                    Inp ~ : State {
+                        = "SS elem1.elem2.elem3"
+                    }
+                }
             }
             # "Item of vector, wrapped by Sdata"
-            St4 : State {
-                = "SS "
-                Debug.LogLevel = "Dbg"
-            }
-            St4.Inp ~ : TrAtVar @  {
-                Inp ~ St2
-                Index ~ : State {
-                    = "SI 2"
+            SVectItm : State @  {
+                _@ <  {
+                    = "SS"
+                    Debug.LogLevel = "Dbg"
+                }
+                Inp ~ : TrAtVar @  {
+                    Inp ~ St2
+                    Index ~ : State {
+                        = "SI 2"
+                    }
                 }
             }
             # "Item of vector, generic: not wrapped by Sdata"
-            SAtgVdu : State {
-                = "URI "
-                Debug.LogLevel = "Dbg"
-            }
-            SAtgVdu.Inp ~ : TrAtgVar @  {
-                Inp ~ : State {
-                    = "VDU ( URI a1.a2 , URI b1.b2 )"
+            SAtgVdu : State @  {
+                _@ <  {
+                    = "URI "
+                    Debug.LogLevel = "Dbg"
                 }
-                Index ~ : State {
-                    = "SI 1"
+                Inp ~ : TrAtgVar @  {
+                    Inp ~ : State {
+                        = "VDU ( URI a1.a2 , URI b1.b2 )"
+                    }
+                    Index ~ : State {
+                        = "SI 1"
+                    }
                 }
             }
             # "Item of Pair, generic: not wrapped by Sdata"
             SAtgPu : State {
-                = "URI "
+                = "URI"
                 Debug.LogLevel = "Dbg"
             }
             SAtgPu.Inp ~ : TrAtgVar @  {
@@ -224,11 +402,26 @@ MyRoot : Elem {
                     }
                 }
             }
+            # "Comparition"
+            SCmpLt : State @  {
+                _@ <  {
+                    Debug.LogLevel = "Dbg"
+                    = "SB"
+                }
+                Inp ~ CmpLt_Lt : TrCmpVar @  {
+                    Inp ~ : State {
+                        = "SI 5"
+                    }
+                    Inp2 ~ : State {
+                        = "SI 7"
+                    }
+                }
+            }
             # "Tuple component selector iface guessing"
             TupleSelIfaceG : State @  {
                 _@ <  {
                     Debug.LogLevel = "Dbg"
-                    = "SB "
+                    = "SB"
                 }
                 Inp ~ ColPos_Lt : TrCmpVar @  {
                     Inp ~ : TrTupleSel @  {
@@ -285,8 +478,14 @@ MyRoot : Elem {
                 }
             }
             # "Chromo data"
-            ChrD : State {
-                = "CHR2 '{ Text = \\\"Button 3\\\";  BgColor < { R = \\\"0.0\\\"; G = \\\"0.0\\\"; B = \\\"1.0\\\"; } }'"
+            SChrD : State @  {
+                _@ <  {
+                    = "CHR2"
+                    Debug.LogLevel = "Dbg"
+                }
+                Inp ~ ChrD : State {
+                    = "CHR2 '{ Text = \\\"Button 3\\\";  BgColor < { R = \\\"0.0\\\"; G = \\\"0.0\\\"; B = \\\"1.0\\\"; } }'"
+                }
             }
             # "Chromo composer"
             ChromoRes : State @  {
@@ -361,7 +560,7 @@ MyRoot : Elem {
             # "Conversion int to string"
             IntToStr : State @  {
                 _@ <  {
-                    = "SS 0"
+                    = "SS"
                     Debug.LogLevel = "Dbg"
                 }
                 Inp ~ : TrTostrVar @  {
@@ -411,11 +610,41 @@ MyRoot : Elem {
                             = "SS SModelUri"
                         }
                         Name ~ : State {
-                            = "SS "
+                            = "SS ''"
                         }
                         Value ~ : State {
                             = "SS test.elem1"
                         }
+                    }
+                }
+            }
+            # "Mutation Connect"
+            SMutConn : State @  {
+                _@ <  {
+                    Debug.LogLevel = "Dbg"
+                    = "MUT"
+                }
+                Inp ~ : TrMutConn @  {
+                    Cp1 ~ : State {
+                        = "SS Cp1"
+                    }
+                    Cp2 ~ : State {
+                        = "SS Cp2"
+                    }
+                }
+            }
+            # "Mutation Disonnect"
+            SMutDisconn : State @  {
+                _@ <  {
+                    Debug.LogLevel = "Dbg"
+                    = "MUT"
+                }
+                Inp ~ : TrMutDisconn @  {
+                    Cp1 ~ : State {
+                        = "SS Cp1"
+                    }
+                    Cp2 ~ : State {
+                        = "SS Cp2"
                     }
                 }
             }
@@ -446,23 +675,16 @@ MyRoot : Elem {
             SSelValid1 : State @  {
                 _@ <  {
                     Debug.LogLevel = "Dbg"
-                    = "URI "
+                    = "URI"
                 }
                 Inp ~ TSv1 : TrSvldVar @  {
                     Inp1 ~ : State {
-                        = "URI "
+                        = "URI"
                     }
                     Inp2 ~ : State {
                         = "URI Hello"
                     }
                 }
-            }
-            SSelValid1d : State @  {
-                _@ <  {
-                    Debug.LogLevel = "Dbg"
-                    = "URI "
-                }
-                Inp ~ TSv1
             }
             SSelValid2 : State @  {
                 _@ <  {
@@ -556,7 +778,7 @@ MyRoot : Elem {
             SHashInt : State @  {
                 _@ <  {
                     Debug.LogLevel = "Dbg"
-                    = "SI "
+                    = "SI"
                 }
                 Inp ~ : TrHash @  {
                     Inp ~ : State {
@@ -571,7 +793,7 @@ MyRoot : Elem {
             SHashStr : State @  {
                 _@ <  {
                     Debug.LogLevel = "Dbg"
-                    = "SI "
+                    = "SI"
                 }
                 Inp ~ : TrHash @  {
                     Inp ~ : State {
@@ -631,6 +853,9 @@ MyRoot : Elem {
                         = "SI 0"
                     }
                 }
+            }
+            _ <  {
+                # "<<< End Hidden"
             }
         }
     }

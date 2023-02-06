@@ -1,15 +1,20 @@
 MyRoot : Elem {
-    Launcher :  DesLauncher {
+    Launcher : DesLauncher {
+        Debug.LogLevel = "Info"
         Ds1 : Des {
-            St1 : State {
-                = "SI 0";
-                Debug.LogLevel = "Dbg";
+            Const_1 : State {
+                = "SI 1"
             }
-            Const_1 : State { = "SI 1"; }
-            Add : TrAddVar;
-            St1.Inp ~ Add;
-            Add.Inp ~ St1;
-            Add.Inp ~ Const_1;
+            St1 : State @  {
+                _@ <  {
+                    = "SI 0"
+                    Debug.LogLevel = "Dbg"
+                }
+                Inp ~ Add : TrAddVar @  {
+                    Inp ~ St1
+                    Inp ~ Const_1
+                }
+            }
         }
     }
 }

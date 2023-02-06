@@ -46,6 +46,7 @@ class MDtBase
 class DtBase : public MDtBase
 {
     public:
+	static const char* TypeSig() { return ""; }
 	DtBase(): mValid(false), mChanged(false), mSigTypeOK(false), mDsErr(false) {};
 	DtBase(const DtBase& d): mValid(d.mValid), mChanged(d.mChanged), mSigTypeOK(d.mSigTypeOK) {};
 	virtual ~DtBase();
@@ -113,7 +114,7 @@ template<class T> class Sdata: public DtBase
 	Sdata<T>& operator+=(const Sdata<T>& b) { mData += b.mData; return *this;};
 	Sdata<T>& operator-=(const Sdata<T>& b) { mData -= b.mData; return *this;};
 	Sdata<T>& operator*=(const Sdata<T>& b) { mData *= b.mData; return *this;};
-	Sdata<T>& operator!() { mData = !mData; return *this;};
+	bool operator!() { return !mData;};
 	bool Set(const T& aData) { bool res = aData != mData; mData = aData; mValid = true; return res; };
 	virtual int Hash() const override { std::hash<T> h; std::hash<bool> hv; return h(mData) + hv(mValid);}
     protected:
@@ -304,6 +305,10 @@ class NTuple: public DtBase
 	virtual void ToString(ostringstream& aOs, bool aSig = true) const override;
 	void FromString(istringstream& aStream) override;
 	DtBase* GetElem(const string& aName);
+	const DtBase* GetElem(const string& aName) const {
+	    return const_cast<NTuple*>(this)->GetElem(aName);
+	}
+	virtual DtBase& operator=(const DtBase& b) override;
 	virtual bool operator==(const MDtBase& sb) const override;
 	virtual bool operator!=(const MDtBase& b) const override { return !NTuple::operator==(b);}
 	NTuple& operator=(const NTuple& b);
@@ -409,6 +414,16 @@ class Vector : public VectorBase
 		mChanged = true;
 	    }
 	}
+	virtual DtBase& operator=(const DtBase& b) override {
+	    if (IsCompatible(b) && b.IsValid()) {
+		this->DtBase::operator=(b);
+		const Vector<T>& bp = reinterpret_cast<const Vector<T>&>(b);
+		mData = bp.mData;
+	    } else {
+		mValid = false;
+	    }
+	    return *this;
+	}
 	virtual bool operator==(const MDtBase& b) const override {
 	    if (!IsCompatible(b)) return false;
 	    const Vector<T>* vb = dynamic_cast<const Vector<T>*>(&b);
@@ -450,6 +465,7 @@ class PairBase : public DtBase
 
 /** @brief Typed pair
  * TODO to intro unityped pair, ref Tuple
+ * The pair actually is the tuple with fixed size and fields names
  * */
 template <typename T>
 class Pair : public PairBase
@@ -469,6 +485,16 @@ class Pair : public PairBase
 	virtual void ElemFromString(TElemId aId, istringstream& aStream) override {
 	    if (aId == E_P) aStream >> mData.first;
 	    else aStream >> mData.second;
+	}
+	virtual DtBase& operator=(const DtBase& b) override {
+	    if (IsCompatible(b) && b.IsValid()) {
+		this->DtBase::operator=(b);
+		const Pair<T>& bp = reinterpret_cast<const Pair<T>&>(b);
+		mData = bp.mData;
+	    } else {
+		mValid = false;
+	    }
+	    return *this;
 	}
 	virtual bool operator==(const MDtBase& b) const override {
 	    if (!IsCompatible(b)) return false;

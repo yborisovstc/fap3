@@ -22,6 +22,16 @@ class DGuri: public DtBase
 	virtual string GetTypeSig() const override { return TypeSig();};
 	virtual void DataFromString(istringstream& aStream) override;
 	virtual void DataToString(ostringstream& aStream) const override;
+	virtual DtBase& operator=(const DtBase& b) override {
+	    if (IsCompatible(b) && b.IsValid()) {
+		this->DtBase::operator=(b);
+		const DGuri& bp = reinterpret_cast<const DGuri&>(b);
+		mData = bp.mData;
+	    } else {
+		mValid = false;
+	    }
+	    return *this;
+	}
 	DGuri& operator+=(const DGuri& b) { mData.append(b.mData); return *this;}
 	virtual bool operator==(const MDtBase& b) const override {
 	    return this->DtBase::operator==(b) && (mData == dynamic_cast<const DGuri&>(b).mData);}

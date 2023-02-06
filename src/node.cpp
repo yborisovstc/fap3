@@ -267,7 +267,11 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
     if (!aTreatAsChromo && exs_targ && !aLocal) {
 	starg = rno.Attr(ENa_Targ);
 	if (starg == K_SpName_Ns) {
-	    targ = root_ns.back();
+	    if (root_ns.size()) {
+		targ = root_ns.back();
+	    } else {
+		Logger()->Write(EErr, this, "No namespace defined");
+	    }
 	} else if (starg == K_SpName_Nil) {
 	    targ_nil = true;
 	} else {

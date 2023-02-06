@@ -25,6 +25,16 @@ class DMut: public DtBase
 	    return this->DtBase::operator==(b) && (mData == dynamic_cast<const DMut&>(b).mData);}
 	virtual bool operator!=(const MDtBase& b) const override { return !DMut::operator==(b);}
 	//virtual bool IsCompatible(const DtBase& aSrc) override;
+	virtual DtBase& operator=(const DtBase& b) override {
+	    if (IsCompatible(b) && b.IsValid()) {
+		this->DtBase::operator=(b);
+		auto bp = reinterpret_cast<const DMut&>(b);
+		mData = bp.mData;
+	    } else {
+		mValid = false;
+	    }
+	    return *this;
+	}
     public:
 	TMut mData;
 };
@@ -44,11 +54,12 @@ class DChr2: public DtBase
 	static bool IsSrepFit(const string& aString);
 	static bool IsDataFit(const DChr2& aData);
     public:
-	DChr2& operator=(const DChr2& b) { this->DtBase::operator=(b); mData = b.mData; return *this;};
+	//DChr2& operator=(const DChr2& b) { this->DtBase::operator=(b); mData = b.mData; return *this;};
 	// From DtBase
 	virtual string GetTypeSig() const override { return TypeSig();};
 	virtual void DataFromString(istringstream& aStream) override;
 	virtual void DataToString(ostringstream& aStream) const override;
+	virtual DtBase& operator=(const DtBase& b) override;
 	virtual bool operator==(const MDtBase& b) const override {
 	    return this->DtBase::operator==(b) && (mData == dynamic_cast<const DChr2&>(b).mData);}
 	virtual bool operator!=(const MDtBase& b) const override { return !DChr2::operator==(b);}

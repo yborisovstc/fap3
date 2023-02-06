@@ -16,12 +16,10 @@ void Sout::update()
 void Sout::confirm()
 {
     State::confirm();
-    MDVarGet* vget = dynamic_cast<MDVarGet*>(mPdata->MDVar_getLif(MDVarGet::Type()));
-    MDtGet<Sdata<string>>* dget = vget ? vget->GetDObj(dget) : nullptr;
-    if (dget) {
-	Sdata<string> data;
-	dget->DtGet(data);
-	cout << data.mData << endl;
+
+    const Sdata<string>* data = reinterpret_cast<const Sdata<string>*>(mPdata);
+    if (data) {
+	cout << data->mData << endl;
     }
 }
 

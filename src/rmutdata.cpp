@@ -69,6 +69,19 @@ void DChr2::DataToString(ostringstream& aStream) const
     aStream << spec;
 }
 
+DtBase& DChr2::operator=(const DtBase& b)
+{
+    if (IsCompatible(b) && b.IsValid()) {
+	this->DtBase::operator=(b);
+	const DChr2& bp = reinterpret_cast<const DChr2&>(b);
+	mData = bp.mData;
+    } else {
+	mValid = false;
+    }
+    return *this;
+}
+
+
 
 #if 0
 

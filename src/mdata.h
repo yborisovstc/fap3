@@ -56,7 +56,9 @@ class MDVarGet: public MIface
 	/** @brief Gets data by type
 	 * */
 	virtual bool VDtGet(const DtBase& aData) { return false;}
-	virtual DtBase* VDtGet(const string& aType) { return nullptr;}
+	virtual const DtBase* VDtGet(const string& aType) { return nullptr;}
+	template<class T> const T* DtGet(const T* aDType) { return reinterpret_cast<const T*>(VDtGet(aDType->TypeSig()));}
+	template<class T> const T* DtGet() { return reinterpret_cast<const T*>(VDtGet(T::TypeSig()));}
 };
 
 
