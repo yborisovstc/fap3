@@ -5,7 +5,7 @@
 static int KDbgLog_Value = 9;
 
 
-///// FAddDt v.2
+///// FAddDt
 
 template<class T> Func* FAddDt<T>::Create(Host* aHost, const string& aString)
 {
@@ -31,10 +31,10 @@ template<class T> const DtBase* FAddDt<T>::FDtGet()
 {
     mRes.mValid = true;
     bool resSet = false;
-    if (!mInpIc) mInpIc = mHost.GetInps(EInp);
+    TInpIc* InpIc = mHost.GetInps(EInp);
     bool first = true;
-    if (mInpIc && mInpIc->size() > 0) {
-	for (auto dget : *mInpIc) {
+    if (InpIc && InpIc->size() > 0) {
+	for (auto dget : *InpIc) {
 	    const T* arg = dget->DtGet(arg);
 	    if (arg && arg->mValid) {
 		if (first) { mRes.mData = arg->mData; first = false;
@@ -44,24 +44,20 @@ template<class T> const DtBase* FAddDt<T>::FDtGet()
 		mRes.mValid = false; break;
 	    }
 	}
-    } else {
-	mHost.log(EWarn, "Cannot get input [" + mHost.GetInpUri(EInp) + "]");
     }
-    if (!mInpNIc) mInpNIc = mHost.GetInps(EInpN);
-    if (mInpNIc) for (auto dget : *mInpNIc) {
+    TInpIc* InpNIc = mHost.GetInps(EInpN);
+    if (InpNIc) for (auto dget : *InpNIc) {
 	const T* arg = dget->DtGet(arg);
 	if (arg && arg->mValid) {
 	    if (resSet) {
-		mRes.mData = -arg->mData;
-	    } else {
 		mRes.mData = mRes.mData - arg->mData;
+	    } else {
+		mRes.mData = -arg->mData;
 	    }
 	    resSet = true;
 	} else {
 	    mRes.mValid = false; break;
 	}
-    } else {
-	mHost.log(EWarn, "Cannot get input [" + mHost.GetInpUri(EInpN) + "]");
     }
     if (!resSet) {
 	mRes.mValid = false;
@@ -104,18 +100,20 @@ template<class T> Func* FMplDt<T>::Create(Host* aHost, const string& aString)
 template<class T> const DtBase* FMplDt<T>::FDtGet()
 {
     mRes.mValid = true;
-    if (!mInpIc) mInpIc = mHost.GetInps(EInp);
+    TInpIc* InpIc = mHost.GetInps(EInp);
     bool first = true;
-    if (mInpIc) for (auto dget : *mInpIc) {
-	const T* arg = dget->DtGet(arg);
-	if (arg && arg->mValid) {
-	    if (first) { mRes = *arg; first = false;
-	    } else { mRes.mData = mRes.mData * arg->mData; }
-	} else {
-	    mRes.mValid = false; break;
+    if (InpIc && InpIc->size() > 0) {
+	for (auto dget : *InpIc) {
+	    const T* arg = dget->DtGet(arg);
+	    if (arg && arg->mValid) {
+		if (first) { mRes = *arg; first = false;
+		} else { mRes.mData = mRes.mData * arg->mData; }
+	    } else {
+		mRes.mValid = false; break;
+	    }
 	}
     } else {
-	mHost.log(EWarn, "Cannot get input [" + mHost.GetInpUri(EInp) + "]");
+	mRes.mValid = false;
     }
     return &mRes;
 }
@@ -137,22 +135,11 @@ template<class T> Func* FDivDt<T>::Create(Host* aHost, const string& aString)
 template<class T> const DtBase* FDivDt<T>::FDtGet()
 {
     mRes.mValid = false;
-    const T* arg1 = GetInpData(mInpIc, EInp, arg1);
-    if (arg1) {
-	if (arg1->IsValid()) {
-	    mRes.mData = arg1->mData;
-	    const T* arg2 = GetInpData(mInp2Ic, EInp2, arg2);
-	    if (arg2) {
-		if (arg2->IsValid()) {
-		    mRes.mData = arg1->mData / arg2->mData;
-		    mRes.mValid = true;
-		}
-	    } else {
-		mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp2) + "]");
-	    }
-	}
-    } else {
-	mHost.log(EWarn, "Cannot get input [" + mHost.GetInpUri(EInp) + "]");
+    const T* arg1 = GetInpData(EInp, arg1);
+    const T* arg2 = GetInpData(EInp2, arg2);
+    if (arg1 && arg2 && arg1->IsValid() && arg2->IsValid()) {
+	mRes.mData = arg1->mData / arg2->mData;
+	mRes.mValid = true;
     }
     return &mRes;
 }
@@ -183,22 +170,11 @@ Func* FApnd<T>::Create(Host* aHost, const string& aOutIid, const string& aInpIid
 template<class T> const DtBase* FApnd<T>::FDtGet()
 {
     mRes.mValid = false;
-    const T* arg1 = GetInpData(mInp1Ic, EInp1, arg1);
-    if (arg1) {
-	if (arg1->IsValid()) {
-	    mRes.mData = arg1->mData;
-	    const T* arg2 = GetInpData(mInp2Ic, EInp2, arg2);
-	    if (arg2) {
-		if (arg2->IsValid()) {
-		    mRes.mData += arg2->mData;
-		    mRes.mValid = true;
-		}
-	    } else {
-		mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp2) + "]");
-	    }
-	}
-    } else {
-	mHost.log(EWarn, "Cannot get input [" + mHost.GetInpUri(EInp1) + "]");
+    const T* arg1 = GetInpData(EInp1, arg1);
+    const T* arg2 = GetInpData(EInp2, arg2);
+    if (arg1 && arg1->IsValid() && arg2 && arg2->IsValid()) {
+	mRes.mData = arg1->mData + arg2->mData;
+	mRes.mValid = true;
     }
     return &mRes;
 }
@@ -229,10 +205,10 @@ template<class T> Func* FMinDt<T>::Create(Host* aHost, const string& aString)
 template<class T> const DtBase* FMinDt<T>::FDtGet()
 {
     mRes.mValid = true;
-    if (!mInpIc) mInpIc = mHost.GetInps(EInp);
+    TInpIc* InpIc = mHost.GetInps(EInp);
     bool first = true;
-    if (mInpIc && mInpIc->size() > 0) {
-	for (auto dget : *mInpIc) {
+    if (InpIc && InpIc->size() > 0) {
+	for (auto dget : *InpIc) {
 	    const T* arg = dget->DtGet(arg);
 	    if (arg && arg->mValid) {
 		if (first) { mRes.mData = arg->mData; first = false;
@@ -241,13 +217,9 @@ template<class T> const DtBase* FMinDt<T>::FDtGet()
 		mRes.mValid = false; break;
 	    }
 	}
-    } else {
-	mHost.log(EWarn, "Cannot get input [" + mHost.GetInpUri(EInp) + "]");
     }
     return &mRes;
 }
-
-
 
 static void FMinDtFact() {
     FMinDt<Sdata<int>>::Create(NULL, "");
@@ -271,10 +243,10 @@ template<class T> Func* FMaxDt<T>::Create(Host* aHost, const string& aString)
 template<class T> const DtBase* FMaxDt<T>::FDtGet()
 {
     mRes.mValid = true;
-    if (!mInpIc) mInpIc = mHost.GetInps(EInp);
+    TInpIc* InpIc = mHost.GetInps(EInp);
     bool first = true;
-    if (mInpIc && mInpIc->size() > 0) {
-	for (auto dget : *mInpIc) {
+    if (InpIc && InpIc->size() > 0) {
+	for (auto dget : *InpIc) {
 	    const T* arg = dget->DtGet(arg);
 	    if (arg && arg->mValid) {
 		if (first) { mRes.mData = arg->mData; first = false;
@@ -283,8 +255,6 @@ template<class T> const DtBase* FMaxDt<T>::FDtGet()
 		mRes.mValid = false; break;
 	    }
 	}
-    } else {
-	mHost.log(EWarn, "Cannot get input [" + mHost.GetInpUri(EInp) + "]");
     }
     return &mRes;
 }
@@ -296,10 +266,6 @@ static void FMaxDtFact() {
 
 
 // Comparition  function
-
-FCmpBase::~FCmpBase()
-{
-}
 
 string FCmpBase::IfaceGetId() const
 { 
@@ -319,17 +285,13 @@ template <class T> Func* FCmp<T>::Create(Host* aHost, const string& aInp1Iid, co
 template <class T> const DtBase* FCmp<T>::FDtGet()
 {
     mRes.mValid = false;
-    if (!mInpIc) mInpIc = mHost.GetInps(EInp1);
-    if (!mInp2Ic) mInp2Ic = mHost.GetInps(EInp2);
-    auto* av1 = (mInpIc && mInpIc->size() == 1) ? mInpIc->at(0) : nullptr;
-    auto* av2 = (mInp2Ic && mInp2Ic->size() == 1) ? mInp2Ic->at(0) : nullptr;
-    if (av1 != NULL && av2 != NULL) {
-	const T* arg1 = av1->DtGet(arg1);
-	const T* arg2 = av2->DtGet(arg2);
+    const T* arg1 = GetInpData(EInp1, arg1);
+    const T* arg2 = GetInpData(EInp2, arg2);
+    if (arg1 && arg2) {
 	if (arg1->IsCompatible(*arg2)) {
 	    if (arg1->mValid && arg2->mValid) {
 		bool sres;
-		if (mFType == ELt) sres = arg1 < arg2;
+		if (mFType == ELt) sres = *arg1 < *arg2;
 		else if (mFType == ELe) sres = *arg1 <= *arg2;
 		else if (mFType == EEq) sres = *arg1 == *arg2;
 		else if (mFType == ENeq) sres = *arg1 != *arg2;
@@ -339,8 +301,8 @@ template <class T> const DtBase* FCmp<T>::FDtGet()
 		mRes.mValid = true;
 	    } else {
 		// Enable comparing invalid data
-		if (mFType == EEq) mRes.mData = (*arg1 == *arg2);
-		else if (mFType == ENeq) mRes.mData = (*arg1 != *arg2);
+		if (mFType == EEq) { mRes.mData = (*arg1 == *arg2); mRes.mValid = true;}
+		else if (mFType == ENeq) { mRes.mData = (*arg1 != *arg2); mRes.mValid = true;}
 	    }
 	}
     }
@@ -370,18 +332,10 @@ template <class T> Func* FSizeVect<T>::Create(Host* aHost, const string& aOutIid
 template <class T> const DtBase* FSizeVect<T>::FDtGet()
 {
     mRes.mValid = false;
-    if (!mInpIc) mInpIc = mHost.GetInps(EInp1);
-    auto* dfget = (mInpIc && mInpIc->size() == 1) ? mInpIc->at(0) : nullptr;
-    if (dfget) {
-	const Vector<T>* arg = dfget->DtGet(arg);
-	if (arg->mValid) {
-	    mRes.mData = arg->Size();
-	    mRes.mValid = true;
-	} else {
-	    mHost.log(EDbg, "Invalid input data");
-	}
-    } else {
-	mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp1) + "]");
+    const Vector<T>* arg = GetInpData(EInp1, arg);
+    if (arg && arg->IsValid()) {
+	mRes.mData = arg->Size();
+	mRes.mValid = true;
     }
     return &mRes;
 }
@@ -418,27 +372,14 @@ Func* FAtVect<T>::Create(Host* aHost, const string& aOutIid, const string& aInpI
 template <class T> const DtBase* FAtVect<T>::FDtGet()
 {
     mRes.mValid = false;
-    if (!mInpIc) mInpIc = mHost.GetInps(EInp1);
-    if (!mInp2Ic) mInp2Ic = mHost.GetInps(EInp2);
-    auto* dfget = (mInpIc && mInpIc->size() == 1) ? mInpIc->at(0) : nullptr;
-    auto* diget = (mInp2Ic && mInp2Ic->size() == 1) ? mInp2Ic->at(0) : nullptr;
-    if (dfget && diget) {
-	const Vector<T>* arg = dfget->DtGet(arg);
-	const Sdata<int>* ind = diget->DtGet(ind);
-	if (arg->mValid && ind->mValid ) {
-	    if (ind->mData < arg->Size()) {
-		mRes.mValid = arg->GetElem(ind->mData, mRes.mData);
-	    } else {
-		string inds = ind->ToString(false);
-		mHost.log(EWarn, "Index is exceeded: " + inds);
-	    }
+    const Vector<T>* inp = GetInpData(EInp1, inp);
+    const Sdata<int>* ind = GetInpData(EInp2, ind);
+    if (inp && ind && inp->IsValid() && ind->IsValid()) {
+	if (ind->mData < inp->Size()) {
+	    mRes.mValid = inp->GetElem(ind->mData, mRes.mData);
 	} else {
-	    mHost.log(EDbg, "Invalid argument");
+	    mHost.log(EWarn, "Index is exceeded: " + ind->ToString(false));
 	}
-    } else if (!dfget) {
-	mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp1) + "]");
-    } else if (!diget) {
-	mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp2) + "]");
     }
     return &mRes;
 }
@@ -477,27 +418,14 @@ Func* FAtgVect<T>::Create(Host* aHost, const string& aOutIid, const string& aInp
 template <class T> const DtBase* FAtgVect<T>::FDtGet()
 {
     mRes.mValid = false;
-    if (!mInpIc) mInpIc = mHost.GetInps(EInp1);
-    if (!mInp2Ic) mInp2Ic = mHost.GetInps(EInp2);
-    auto* dfget = (mInpIc && mInpIc->size() == 1) ? mInpIc->at(0) : nullptr;
-    auto* diget = (mInp2Ic && mInp2Ic->size() == 1) ? mInp2Ic->at(0) : nullptr;
-    if (dfget && diget) {
-	const Vector<T>* arg = dfget->DtGet(arg);
-	const Sdata<int>* ind = diget->DtGet(ind);
-	if (arg->mValid && ind->mValid ) {
-	    if (ind->mData < arg->Size()) {
-		mRes.mValid = arg->GetElem(ind->mData, mRes);
-	    } else {
-		string inds = ind->ToString(false);
-		mHost.log(EWarn, "Index is exceeded: " + inds);
-	    }
+    const Vector<T>* inp = GetInpData(EInp1, inp);
+    const Sdata<int>* ind = GetInpData(EInp2, ind);
+    if (inp && ind && inp->IsValid() && ind->IsValid()) {
+	if (ind->mData < inp->Size()) {
+	    mRes.mValid = inp->GetElem(ind->mData, mRes);
 	} else {
-	    mHost.log(EDbg, "Invalid argument");
+	    mHost.log(EWarn, "Index is exceeded: " + ind->ToString(false));
 	}
-    } else if (!dfget) {
-	mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp1) + "]");
-    } else if (!diget) {
-	mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp2) + "]");
     }
     return &mRes;
 }
@@ -535,31 +463,19 @@ Func* FAtgPair<T>::Create(Host* aHost, const string& aOutIid, const string& aInp
 template <class T> const DtBase* FAtgPair<T>::FDtGet()
 {
     mRes.mValid = false;
-    if (!mInpIc) mInpIc = mHost.GetInps(EInp1);
-    if (!mInp2Ic) mInp2Ic = mHost.GetInps(EInp2);
-    auto* dfget = (mInpIc && mInpIc->size() == 1) ? mInpIc->at(0) : nullptr;
-    auto* diget = (mInp2Ic && mInp2Ic->size() == 1) ? mInp2Ic->at(0) : nullptr;
-    if (dfget && diget) {
-	const Pair<T>* arg = dfget->DtGet(arg);
-	const Sdata<int>* ind = diget->DtGet(ind);
-	if (arg->mValid && ind->mValid ) {
-	    if (ind->mData == 0) {
-		mRes = arg->mData.first;
-		mRes.mValid = true;
-	    } else if (ind->mData == 1) {
-		mRes = arg->mData.second;
-		mRes.mValid = true;
-	    } else {
-		string inds = ind->ToString(false);
-		mHost.log(EWarn, "Index is exceeded: " + inds);
-	    }
+    const Pair<T>* inp = GetInpData(EInp1, inp);
+    const Sdata<int>* ind = GetInpData(EInp2, ind);
+    if (inp && ind && inp->IsValid() && ind->IsValid()) {
+	if (ind->mData == 0) {
+	    mRes = inp->mData.first;
+	    mRes.mValid = true;
+	} else if (ind->mData == 1) {
+	    mRes = inp->mData.second;
+	    mRes.mValid = true;
 	} else {
-	    mHost.log(EDbg, "Invalid argument");
+	    string inds = ind->ToString(false);
+	    mHost.log(EWarn, "Index is exceeded: " + inds);
 	}
-    } else if (!dfget) {
-	mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp1) + "]");
-    } else if (!diget) {
-	mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp2) + "]");
     }
     return &mRes;
 }
@@ -590,19 +506,10 @@ Func* FTailUri::Create(Host* aHost, const string& aOutId)
 const DtBase* FTailUri::FDtGet()
 {
     mRes.mValid = false;
-    const TData* inp = GetInpData(mInpIc, EInp, inp);
-    if (inp) {
-	const TData* head = GetInpData(mInpHeadIc, EHead, head);
-	if (head) {
-	    if (inp->IsValid() && head->IsValid()) {
-		bool res = inp->mData.getTail(head->mData, mRes.mData);
-		mRes.mValid = res;
-	    }
-	} else {
-	    mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EHead) + "]");
-	}
-    } else {
-	mHost.log(EWarn, "Cannot get input [" + mHost.GetInpUri(EInp) + "]");
+    const TData* inp = GetInpData(EInp, inp);
+    const TData* head = GetInpData(EHead, head);
+    if (inp && head && inp->IsValid() && head->IsValid()) {
+	mRes.mValid = inp->mData.getTail(head->mData, mRes.mData);
     }
     return &mRes;
 }
@@ -622,19 +529,10 @@ Func* FHeadUri::Create(Host* aHost, const string& aOutId)
 const DtBase* FHeadUri::FDtGet()
 {
     mRes.mValid = false;
-    const TData* inp = GetInpData(mInpIc, EInp, inp);
-    if (inp) {
-	const TData* tail = GetInpData(mInpTailIc, ETail, tail);
-	if (tail) {
-	    if (inp->IsValid() && tail->IsValid()) {
-		bool res = inp->mData.getHead(tail->mData, mRes.mData);
-		mRes.mValid = res;
-	    }
-	} else {
-	    mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(ETail) + "]");
-	}
-    } else {
-	mHost.log(EWarn, "Cannot get input [" + mHost.GetInpUri(EInp) + "]");
+    const TData* inp = GetInpData(EInp, inp);
+    const TData* tail = GetInpData(ETail, tail);
+    if (inp && tail && inp->IsValid() && tail->IsValid()) {
+	mRes.mValid = inp->mData.getHead(tail->mData, mRes.mData);
     }
     return &mRes;
 }
@@ -654,19 +552,11 @@ Func* FTailnUri::Create(Host* aHost, const string& aOutId)
 const DtBase* FTailnUri::FDtGet()
 {
     mRes.mValid = false;
-    const TData* inp = GetInpData(mInpIc, EInp, inp);
-    if (inp) {
-	const TNum* num = GetInpData(mInpNumIc, ENum, num);
-	if (num) {
-	    if (inp->IsValid() && num->IsValid()) {
-		mRes.mData = inp->mData.tailn(num->mData);
-		mRes.mValid = mRes.mData.isValid();
-	    }
-	} else {
-	    mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(ENum) + "]");
-	}
-    } else {
-	mHost.log(EWarn, "Cannot get input [" + mHost.GetInpUri(EInp) + "]");
+    const TData* inp = GetInpData(EInp, inp);
+    const TNum* num = GetInpData(ENum, num);
+    if (inp && num && inp->IsValid() && num->IsValid()) {
+	mRes.mData = inp->mData.tailn(num->mData);
+	mRes.mValid = mRes.mData.isValid();
     }
     return &mRes;
 }
@@ -693,18 +583,16 @@ Func* FPair<T>::Create(Host* aHost, const string& aOutIid, const string& aInpId)
 template<class T> const DtBase* FPair<T>::FDtGet()
 {
     mRes.mValid = true;
-    const TInpData* inp1 = GetInpData(mInp1Ic, EInp1, inp1);
+    const TInpData* inp1 = GetInpData(EInp1, inp1);
     if (inp1) {
 	mRes.mData.first = *inp1;
-	const TInpData* inp2 = GetInpData(mInp2Ic, EInp2, inp2);
+	const TInpData* inp2 = GetInpData(EInp2, inp2);
 	if (inp2) {
 	    mRes.mData.second = *inp2;
 	} else {
-	    mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(EInp2) + "]");
 	    mRes.mData.second.mValid = false;
 	}
     } else {
-	mHost.log(EWarn, "Cannot get input [" + mHost.GetInpUri(EInp1) + "]");
 	mRes.mData.first.mValid = false;
     }
     return &mRes;

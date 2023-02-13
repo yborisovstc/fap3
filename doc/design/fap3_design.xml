@@ -2597,6 +2597,13 @@
 	    <sect3><title>How caching output approach affect distributed DES design.</title>
 		<simpara>Distributed DES design is based on iface proxy. How modified MDtGet (returning the ref) proxy will be implemented? </simpara>
 	    </sect3>
+	    <sect3><title>Use-case where using ouput data reference does't work.</title>
+		<simpara>The is when state S2 input is connected to another state S1 input. Indeed, S2 gets S1 outp data ref on update phase. But
+		    on confirm phase this ref can change or cannot, it depends on what state confirm gets done first.</simpara>
+		<simpara>This use-case shows that "using ouput data reference" approach is not correct.</simpara>
+		<simpara>Potentially we can keep this approach with disabling such state-to-state connection. However this solution is very hard to
+		    implement. It is more simpler to apply update/confirm data swap, ref <xref linkend="ds_desopt_ums"/>.</simpara>
+	    </sect3>
 	</sect2>
 	<sect2 id="ds_desopt_uic"><title>Getting inputs involves getting input node/unit - can we use iface cache directly.</title>
 	    <sect3><title>Intro</title>

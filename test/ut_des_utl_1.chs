@@ -2,6 +2,7 @@ MyRoot : Elem {
     + DesUtils
     # "CP of object of ordering"
     Launcher : DesLauncher {
+        Debug.LogLevel = "Dbg"
         StInp : State {
             = "SB true"
         }
@@ -22,14 +23,14 @@ MyRoot : Elem {
         SDPulse : State @  {
             _@ <  {
                 Debug.LogLevel = "Dbg"
-                = "URI _INV"
+                = "URI"
             }
             Dp : DesUtils.DPulse @  {
                 InpD ~ : State {
                     = "URI Hello.World"
                 }
                 InpE ~ : State {
-                    = "URI _INV"
+                    = "URI"
                 }
             }
             Dp.Delay < = "URI"
@@ -40,11 +41,16 @@ MyRoot : Elem {
             = "VDU (URI a1.a2 , URI b1.b2 , URI c1.c2 )"
         }
         VectIter : DesUtils.IdxItr @  {
+            _@ < Debug.LogLevel = "Dbg"
+            Sw1 < Debug.LogLevel = "Dbg"
             InpCnt ~ : TrSizeVar @  {
                 Inp ~ SVect
             }
             InpDone ~ : State {
                 = "SB true"
+            }
+            InpReset ~ : State {
+                = "SB false"
             }
         }
         VectIter_Dbg : State @  {

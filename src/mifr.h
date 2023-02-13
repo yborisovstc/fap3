@@ -16,6 +16,7 @@ class MIfProv: public MIface
     public:
 	using TCp = MNcpp<MIfProv, MIfReq>; /*!< Connpoint type */
 	using TIfaces = vector<MIface*>;
+	template <class T> using TTIfaces = vector<T*>;
     public:
 	static const char* Type() { return "MIfProv";}
 	// From MIface

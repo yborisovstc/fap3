@@ -8,51 +8,6 @@ TrBase::TrBase(const string &aType, const string& aName, MEnv* aEnv): CpStateOut
 {
 }
 
-#if 0
-string TrBase::provName() const
-{
-    return MDVarGet::Type();
-}
-
-string TrBase::reqName() const
-{
-    return MDesInpObserver::Type();
-}
-
-bool TrBase::isCompatible(MVert* aPair, bool aExt)
-{
-    bool res = false;
-    bool ext = aExt;
-    MVert* cp = aPair;
-    // Checking if the pair is Extender
-    if (aPair != this) {
-	MVert* ecp = cp->getExtd(); 
-	if (ecp) {
-	    ext = !ext;
-	    cp = ecp;
-	}
-	if (cp) {
-	    // Check roles conformance
-	    string prov = provName();
-	    string req = reqName();
-	    MConnPoint* mcp = cp->lIf(mcp);
-	    if (mcp) {
-		string pprov = mcp->provName();
-		string preq = mcp->reqName();
-		if (ext) {
-		    res = prov == pprov && req == preq;
-		} else {
-		    res = prov == preq && req == pprov;
-		}
-	    }
-	}
-    } else {
-	res = aExt;
-    }
-    return res;
-}
-#endif
-
 MIface* TrBase::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
@@ -83,30 +38,6 @@ void TrBase::AddInput(const string& aName)
     assert(cp);
     bool res = attachOwned(cp);
     assert(res);
-}
-
-template<typename T> bool TrBase::GetInpSdata(int aId, T& aRes)
-{
-    bool res = false;
-    MNode* inp = getNode(GetInpUri(aId));
-    if (inp) {
-	res =  GetSData(inp, aRes);
-    } else {
-	Logger()->Write(EDbg, this, "Cannot get input [%s]", GetInpUri(aId).c_str());
-    }
-    return res;
-}
-
-template<typename T> bool TrBase::GetInpData(int aId, T& aRes)
-{
-    bool res = false;
-    MNode* inp = getNode(GetInpUri(aId));
-    if (inp) {
-	res =  GetGData(inp, aRes);
-    } else {
-	Logger()->Write(EDbg, this, "Cannot get input [%s]", GetInpUri(aId).c_str());
-    }
-    return res;
 }
 
 void TrBase::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
@@ -146,23 +77,20 @@ void TrBase::onInpUpdated()
     }
 }
 
-Func::TInpIc* TrBase::GetInps(const string& aInpName, bool aOpt)
+Func::TInpIc* TrBase::GetInps(FInp& aInp)
 {
     MIfProv::TIfaces* res = nullptr;  
-    MNode* inp = getNode(aInpName);
-    if (inp) {
-	MUnit* inpu = inp->lIf(inpu);
-	MIfProv* ifp = inpu ? inpu->defaultIfProv(MDVarGet::Type()) : nullptr;
-	res = ifp ? ifp->ifaces() : nullptr;
-    } else if (!aOpt) {
-	Log(TLog(EDbg, this) + "Cannot get input  [" + aInpName + "]");
+    if (!aInp.mIfp) {
+	MNode* inp = getNode(aInp.mName);
+	MUnit* inpu = inp ? inp->lIf(inpu) : nullptr;
+	aInp.mIfp = inpu ? inpu->defaultIfProv(MDVarGet::Type()) : nullptr;
+    }
+    res = aInp.mIfp ? aInp.mIfp->ifaces() : nullptr;
+    if (!res || res->size() == 0) {
+	Log(TLog(EDbg, this) + "Cannot get input  [" + aInp.mName + "]");
     }
     return reinterpret_cast<Func::TInpIc*>(res);
 }
-
-
-
-
 
 
 
@@ -182,48 +110,9 @@ string TrVar::VarGetIfid() const
     return mFunc ? mFunc->IfaceGetId() : string();
 }
 
-string TrVar::GetInpUri(int aId) const 
+Func::TInpIc* TrVar::GetInps(int aInpId)
 {
-    if (aId == Func::EInp1) return "Inp1";
-    else if (aId == Func::EInp2) return "Inp2";
-    else if (aId == Func::EInp3) return "Inp3";
-    else if (aId == Func::EInp4) return "Inp4";
-    else return string();
-}
-
-MIfProv::TIfaces* TrVar::GetInps(int aId, const string& aIfName, bool aOpt)
-{
-    MIfProv::TIfaces* res = nullptr;  
-    MNode* inp = getNode(GetInpUri(aId));
-    if (inp) {
-	MUnit* inpu = inp->lIf(inpu);
-	MIfProv* ifp = inpu ? inpu->defaultIfProv(aIfName) : nullptr;
-	res = ifp ? ifp->ifaces() : nullptr;
-    } else if (!aOpt) {
-	Log(TLog(EDbg, this) + "Cannot get input  [" + GetInpUri(aId) + "]");
-    }
-    return res;
-}
-
-Func::TInpIc* TrVar::GetInps(int aId, bool aOpt)
-{
-    MIfProv::TIfaces* res = nullptr;  
-    MNode* inp = getNode(GetInpUri(aId));
-    if (inp) {
-	MUnit* inpu = inp->lIf(inpu);
-	MIfProv* ifp = inpu ? inpu->defaultIfProv(MDVarGet::Type()) : nullptr;
-	res = ifp ? ifp->ifaces() : nullptr;
-    } else if (!aOpt) {
-	Log(TLog(EDbg, this) + "Cannot get input  [" + GetInpUri(aId) + "]");
-    }
-    return reinterpret_cast<Func::TInpIc*>(res);
-}
-
-
-
-void TrVar::OnFuncContentChanged()
-{
-    //OnChanged(this);
+    return TrBase::GetInps(*GetFinp(aInpId));
 }
 
 void TrVar::Init(const string& aIfaceName)
@@ -232,6 +121,13 @@ void TrVar::Init(const string& aIfaceName)
 	delete mFunc;
 	mFunc = NULL;
     }
+}
+
+string TrVar::GetInpUri(int aId) const
+{
+    FInp* inp = const_cast<TrVar*>(this)->GetFinp(aId);
+    assert(inp);
+    return inp->mName;
 }
 
 void TrVar::log(int aCtg, const string& aMsg)
@@ -251,13 +147,22 @@ const DtBase* TrVar::VDtGet(const string& aType)
     return res;
 }
 
+MDVarGet* TrVar::GetInp(int aInpId) {
+    MDVarGet* res = nullptr;
+    auto inps = GetInps(aInpId);
+    if (inps && !inps->empty()) {
+	res = inps->at(0);
+    }
+    return res;
+}
+
 void TrVar::MDVarGet_doDump(int aLevel, int aIdt, ostream& aOs) const
 {
     auto self = const_cast<TrVar*>(this);
     int icnt = GetInpCpsCount();
     aOs << "Inputs [" << icnt << "]" << endl;
     for (auto ii = 0; ii < icnt; ii++) {
-	MIfProv::TIfaces* ifaces = self->GetInps(ii, MDVarGet::Type(), false);
+	auto* ifaces = self->GetInps(ii);
 	aOs << "Inp [" << GetInpUri(ii) << "]" << endl;
 	for (auto iface : *ifaces) {
 	    Ifu::offset(aIdt, aOs); aOs << "Iface " << iface->Uid() << endl;
@@ -276,10 +181,14 @@ void TrVar::MDVarGet_doDump(int aLevel, int aIdt, ostream& aOs) const
 
 ///// TrAddVar, ver.2
 
-TrAddVar::TrAddVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+const string TrAddVar::K_InpInp = "Inp";
+const string TrAddVar::K_InpInpN = "InpN";
+
+TrAddVar::TrAddVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv),
+    mInp(K_InpInp), mInpN(K_InpInpN)
 {
-    AddInput("Inp");
-    AddInput("InpN");
+    AddInput(K_InpInp);
+    AddInput(K_InpInpN);
 }
 
 void TrAddVar::Init(const string& aIfaceName)
@@ -289,20 +198,26 @@ void TrAddVar::Init(const string& aIfaceName)
 	mFunc = NULL;
     }
     if ((mFunc = FAddDt<Sdata<int>>::Create(this, aIfaceName)) != NULL);
+    else {
+	Log(TLog(EErr, this) + "Failed init, outp [" + aIfaceName + "]");
+    }
 }
 
-string TrAddVar::GetInpUri(int aId) const 
+FInp* TrAddVar::GetFinp(int aId)
 {
-    if (aId == FAddBase::EInp) return "Inp";
-    else if (aId == FAddBase::EInpN) return "InpN";
-    else return string();
+    if (aId == FAddBase::EInp) return &mInp;
+    else if (aId == FAddBase::EInpN) return &mInpN;
+    else return nullptr;
 }
 
 ///// TrMplVar
 
-TrMplVar::TrMplVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+const string TrMplVar::K_InpInp = "Inp";
+
+TrMplVar::TrMplVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv),
+    mInp(K_InpInp)
 {
-    AddInput("Inp");
+    AddInput(K_InpInp);
 }
 
 void TrMplVar::Init(const string& aIfaceName)
@@ -314,17 +229,21 @@ void TrMplVar::Init(const string& aIfaceName)
     if ((mFunc = FMplDt<Sdata<int>>::Create(this, aIfaceName)) != NULL);
 }
 
-string TrMplVar::GetInpUri(int aId) const 
+FInp* TrMplVar::GetFinp(int aId)
 {
-    if (aId == FMplBase::EInp) return "Inp"; else return string();
+    if (aId == FMplBase::EInp) return &mInp; else return nullptr;
 }
 
 ///// TrDivVar
 
-TrDivVar::TrDivVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+const string TrDivVar::K_InpInp = "Inp";
+const string TrDivVar::K_InpInp2 = "Inp2";
+
+TrDivVar::TrDivVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv),
+    mInp(K_InpInp), mInp2(K_InpInp2)
 {
-    AddInput(GetInpUri(FDivBase::EInp));
-    AddInput(GetInpUri(FDivBase::EInp2));
+    AddInput(K_InpInp);
+    AddInput(K_InpInp2);
 }
 
 void TrDivVar::Init(const string& aIfaceName)
@@ -336,20 +255,24 @@ void TrDivVar::Init(const string& aIfaceName)
     if ((mFunc = FDivDt<Sdata<int>>::Create(this, aIfaceName)) != NULL);
 }
 
-string TrDivVar::GetInpUri(int aId) const 
+FInp* TrDivVar::GetFinp(int aId)
 {
-    if (aId == FDivBase::EInp) return "Inp";
-    else if (aId == FDivBase::EInp2) return "Inp2";
-    else return string();
+    if (aId == FDivBase::EInp) return &mInp;
+    else if (aId == FDivBase::EInp2) return &mInp2;
+    else return nullptr;
 }
+
 
 
 
 ///// TrMinVar
 
-TrMinVar::TrMinVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+const string TrMinVar::K_InpInp = "Inp";
+
+TrMinVar::TrMinVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv),
+    mInp(K_InpInp)
 {
-    AddInput("Inp");
+    AddInput(K_InpInp);
 }
 
 void TrMinVar::Init(const string& aIfaceName)
@@ -361,19 +284,22 @@ void TrMinVar::Init(const string& aIfaceName)
     if ((mFunc = FMinDt<Sdata<int>>::Create(this, aIfaceName)) != NULL);
 }
 
-string TrMinVar::GetInpUri(int aId) const
+FInp* TrMinVar::GetFinp(int aId)
 {
-    if (aId == FMaxBase::EInp) return "Inp";
-    else return string();
+    if (aId == FMaxBase::EInp) return &mInp;
+    else return nullptr;
 }
 
 
 
 ///// TrMaxVar
 
-TrMaxVar::TrMaxVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+const string TrMaxVar::K_InpInp = "Inp";
+
+TrMaxVar::TrMaxVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv),
+    mInp(K_InpInp)
 {
-    AddInput("Inp");
+    AddInput(K_InpInp);
 }
 
 void TrMaxVar::Init(const string& aIfaceName)
@@ -385,19 +311,23 @@ void TrMaxVar::Init(const string& aIfaceName)
     if ((mFunc = FMaxDt<Sdata<int>>::Create(this, aIfaceName)) != NULL);
 }
 
-string TrMaxVar::GetInpUri(int aId) const
+FInp* TrMaxVar::GetFinp(int aId)
 {
-    if (aId == FMaxBase::EInp) return "Inp";
-    else return string();
+    if (aId == FMaxBase::EInp) return &mInp;
+    else return nullptr;
 }
 
 
 ////    TrCmpVar
 
-TrCmpVar::TrCmpVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+const string TrCmpVar::K_InpInp = "Inp";
+const string TrCmpVar::K_InpInp2 = "Inp2";
+
+TrCmpVar::TrCmpVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv),
+    mInp(K_InpInp), mInp2(K_InpInp2)
 {
-    AddInput("Inp");
-    AddInput("Inp2");
+    AddInput(K_InpInp);
+    AddInput(K_InpInp2);
 }
 
 void TrCmpVar::Init(const string& aIfaceName)
@@ -419,11 +349,11 @@ void TrCmpVar::Init(const string& aIfaceName)
     }
 }
 
-string TrCmpVar::GetInpUri(int aId) const 
+FInp* TrCmpVar::GetFinp(int aId)
 {
-    if (aId == Func::EInp1) return "Inp";
-    else if (aId == Func::EInp2) return "Inp2";
-    else return string();
+    if (aId == Func::EInp1) return &mInp;
+    else if (aId == Func::EInp2) return &mInp2;
+    else return nullptr;
 }
 
 FCmpBase::TFType TrCmpVar::GetFType()
@@ -449,7 +379,7 @@ const string TrSwitchBool::K_InpInp2 = "Inp2";
 const string TrSwitchBool::K_InpSel = "Sel";
 
 TrSwitchBool::TrSwitchBool(const string &aType, const string& aName, MEnv* aEnv): TrBase(aType, aName, aEnv),
-    mInpInp1Ic(nullptr), mInpInp2Ic(nullptr), mInpSelIc(nullptr)
+    mInp1(K_InpInp1), mInp2(K_InpInp2), mSel(K_InpSel)
 {
     AddInput(K_InpInp1);
     AddInput(K_InpInp2);
@@ -459,25 +389,15 @@ TrSwitchBool::TrSwitchBool(const string &aType, const string& aName, MEnv* aEnv)
 const DtBase* TrSwitchBool::VDtGet(const string& aType)
 {
     const DtBase* res = nullptr;
-    const Sdata<bool>* sel = GetInpData(mInpSelIc, K_InpSel, sel);
-    if (sel) {
-	const DtBase* inp1 = GetInpData(mInpInp1Ic, K_InpInp1, inp1);
-	if (inp1) {
-	    const DtBase* inp2 = GetInpData(mInpInp2Ic, K_InpInp2, inp2);
-	    if (inp2) {
-		if (sel->IsValid()) {
-		    res = sel->mData ? inp2 : inp1;
-		} else {
-		    Log(TLog(EErr, this) + "Invalid sel");
-		}
-	    } else {
-		Log(TLog(EDbg, this) + "Cannot get input  [" + K_InpInp2 + "]");
-	    }
-	} else {
-	    Log(TLog(EDbg, this) + "Cannot get input  [" + K_InpInp1 + "]");
+    const Sdata<bool>* sel = GetInpData(mSel, sel);
+    const DtBase* inp1 = GetInpData(mInp1, inp1);
+    const DtBase* inp2 = GetInpData(mInp2, inp2);
+    if (sel && inp1 && inp2)
+    {
+	Log(TLog(EDbg, this) + "Sel: " + sel->ToString(true) + ", Inp1: " + inp1->ToString(true) + ", Inp2: " + inp2->ToString(true));
+	if (sel->IsValid()) {
+	    res = sel->mData ? inp2 : inp1;
 	}
-    } else {
-	Log(TLog(EDbg, this) + "Cannot get input  [" + K_InpSel + "]");
     }
     return res;
 }
@@ -494,7 +414,7 @@ string TrSwitchBool::VarGetIfid() const
 const string TrBool::K_InpInp = "Inp";
 
 TrBool::TrBool(const string &aType, const string& aName, MEnv* aEnv): TrBase(aType, aName, aEnv),
-    mInpIc(nullptr)
+    mInp(K_InpInp)
 {
     AddInput(K_InpInp);
 }
@@ -506,10 +426,10 @@ TrBool::TrBool(const string &aType, const string& aName, MEnv* aEnv): TrBase(aTy
 const DtBase* TrAndVar::VDtGet(const string& aType)
 {
     mRes.mValid = true;
-    if (!mInpIc) mInpIc = GetInps(K_InpInp);
     bool first = true;
-    if (mInpIc && mInpIc->size() > 0) {
-	for (auto dget : *mInpIc) {
+    auto* Ic = GetInps(mInp);
+    if (Ic && Ic->size() > 0) {
+	for (auto dget : *Ic) {
 	    const TData* arg = dget->DtGet(arg);
 	    if (arg && arg->mValid) {
 		if (first) { mRes = *arg; first = false;
@@ -518,8 +438,6 @@ const DtBase* TrAndVar::VDtGet(const string& aType)
 		mRes.mValid = false; break;
 	    }
 	}
-    } else {
-	Log(TLog(EDbg, this) + "Cannot get input  [" + K_InpInp + "]");
     }
     return &mRes;
 }
@@ -531,10 +449,10 @@ const DtBase* TrAndVar::VDtGet(const string& aType)
 const DtBase* TrOrVar::VDtGet(const string& aType)
 {
     mRes.mValid = true;
-    if (!mInpIc) mInpIc = GetInps(K_InpInp);
+    auto* Ic = GetInps(mInp);
     bool first = true;
-    if (mInpIc && mInpIc->size() > 0) {
-	for (auto dget : *mInpIc) {
+    if (Ic && Ic->size() > 0) {
+	for (auto dget : *Ic) {
 	    const TData* arg = dget->DtGet(arg);
 	    if (arg && arg->mValid) {
 		if (first) { mRes = *arg; first = false;
@@ -543,8 +461,6 @@ const DtBase* TrOrVar::VDtGet(const string& aType)
 		mRes.mValid = false; break;
 	    }
 	}
-    } else {
-	Log(TLog(EDbg, this) + "Cannot get input  [" + K_InpInp + "]");
     }
     return &mRes;
 }
@@ -556,14 +472,10 @@ const DtBase* TrOrVar::VDtGet(const string& aType)
 const DtBase* TrNegVar::VDtGet(const string& aType)
 {
     mRes.mValid = false;
-    const TData* inp = GetInpData(mInpIc, K_InpInp, inp);
-    if (inp) {
-	if (inp->IsValid()) {
-	    mRes.mData = !inp->mData;
-	    mRes.mValid = true;
-	}
-    } else {
-	Log(TLog(EDbg, this) + "Cannot get input  [" + K_InpInp + "]");
+    const TData* inp = GetInpData(mInp, inp);
+    if (inp && inp->IsValid()) {
+	mRes.mData = !inp->mData;
+	mRes.mValid = true;
     }
     return &mRes;
 }
@@ -575,7 +487,7 @@ const DtBase* TrNegVar::VDtGet(const string& aType)
 const string TrToUriVar::K_InpInp = "Inp";
 
 TrToUriVar::TrToUriVar(const string &aType, const string& aName, MEnv* aEnv): TrBase(aType, aName, aEnv),
-    mInpIc(nullptr)
+    mInp(K_InpInp)
 
 {
     AddInput(K_InpInp);
@@ -584,14 +496,10 @@ TrToUriVar::TrToUriVar(const string &aType, const string& aName, MEnv* aEnv): Tr
 const DtBase* TrToUriVar::VDtGet(const string& aType)
 {
     mRes.mValid = false;
-    const TInp* inp = GetInpData(mInpIc, K_InpInp, inp);
-    if (inp) {
-	if (inp->IsValid()) {
-	    mRes.mData = GUri(inp->mData);
-	    mRes.mValid = true;
-	}
-    } else {
-	Log(TLog(EDbg, this) + "Cannot get input  [" + K_InpInp + "]");
+    const TInp* inp = GetInpData(mInp, inp);
+    if (inp && inp->IsValid()) {
+	mRes.mData = GUri(inp->mData);
+	mRes.mValid = true;
     }
     return &mRes;
 }
@@ -599,10 +507,14 @@ const DtBase* TrToUriVar::VDtGet(const string& aType)
 
 ///// Append
 
-TrApndVar::TrApndVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+const string TrApndVar::K_InpInp1 = "Inp1";
+const string TrApndVar::K_InpInp2 = "Inp2";
+
+TrApndVar::TrApndVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv),
+    mInp1(K_InpInp1), mInp2(K_InpInp2)
 {
-    AddInput(GetInpUri(Func::EInp1));
-    AddInput(GetInpUri(Func::EInp2));
+    AddInput(K_InpInp1);
+    AddInput(K_InpInp2);
 }
 
 void TrApndVar::Init(const string& aIfaceName)
@@ -622,12 +534,13 @@ void TrApndVar::Init(const string& aIfaceName)
     }
 }
 
-string TrApndVar::GetInpUri(int aId) const
+FInp* TrApndVar::GetFinp(int aId)
 {
-    if (aId == Func::EInp1) return "Inp1";
-    else if (aId == Func::EInp2) return "Inp2";
-    else return string();
+    if (aId == Func::EInp1) return &mInp1;
+    else if (aId == Func::EInp2) return &mInp2;
+    else return nullptr;
 }
+
 
 
 // Transition "Select valid"
@@ -636,7 +549,7 @@ const string TrSvldVar::K_InpInp1 = "Inp1";
 const string TrSvldVar::K_InpInp2 = "Inp2";
 
 TrSvldVar::TrSvldVar(const string& aType, const string& aName, MEnv* aEnv): TrBase(aType, aName, aEnv),
-    mInp1Ic(nullptr), mInp2Ic(nullptr)
+    mInp1(K_InpInp1), mInp2(K_InpInp2)
 {
     AddInput(K_InpInp1);
     AddInput(K_InpInp2);
@@ -653,22 +566,16 @@ string TrSvldVar::VarGetIfid() const
 const DtBase* TrSvldVar::VDtGet(const string& aType)
 {
     const DtBase* res = nullptr;
-    const DtBase* inp1 = GetInpData(mInp1Ic, K_InpInp1, inp1);
-    if (inp1) {
-	const DtBase* inp2 = GetInpData(mInp2Ic, K_InpInp2, inp2);
-	if (inp2) {
-	    if (inp1->IsValid() && inp2->IsValid()) {
-		res = inp1;
-	    } else if (inp1->IsValid()) {
-		res = inp1;
-	    } else if (inp2->IsValid()) {
-		res = inp2;
-	    }
-	} else {
-	    Log(TLog(EDbg, this) + "Cannot get input  [" + K_InpInp2 + "]");
+    const DtBase* inp1 = GetInpData(mInp1, inp1);
+    const DtBase* inp2 = GetInpData(mInp2, inp2);
+    if (inp1 && inp2) {
+	if (inp1->IsValid() && inp2->IsValid()) {
+	    res = inp1;
+	} else if (inp1->IsValid()) {
+	    res = inp1;
+	} else if (inp2->IsValid()) {
+	    res = inp2;
 	}
-    } else {
-	Log(TLog(EDbg, this) + "Cannot get input  [" + K_InpInp1 + "]");
     }
     return res;
 }
@@ -676,10 +583,14 @@ const DtBase* TrSvldVar::VDtGet(const string& aType)
 
 ///// Tail
 
-TrTailVar::TrTailVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+const string TrTailVar::K_InpInp = "Inp";
+const string TrTailVar::K_InpHead = "Head";
+
+TrTailVar::TrTailVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv),
+    mInpInp(K_InpInp), mInpHead(K_InpHead)
 {
-    AddInput(GetInpUri(FTailBase::EInp));
-    AddInput(GetInpUri(FTailBase::EHead));
+    AddInput(K_InpInp);
+    AddInput(K_InpHead);
 }
 
 void TrTailVar::Init(const string& aIfaceName)
@@ -694,20 +605,25 @@ void TrTailVar::Init(const string& aIfaceName)
     }
 }
 
-string TrTailVar::GetInpUri(int aId) const
+FInp* TrTailVar::GetFinp(int aId)
 {
-    if (aId == FTailBase::EInp) return "Inp";
-    else if (aId == FTailBase::EHead) return "Head";
-    else return string();
+    if (aId == FTailBase::EInp) return &mInpInp;
+    else if (aId == FTailBase::EHead) return &mInpHead;
+    else return nullptr;
 }
+
 
 
 ///// Head
 
-TrHeadVar::TrHeadVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+const string TrHeadVar::K_InpInp = "Inp";
+const string TrHeadVar::K_InpTail = "Tail";
+
+TrHeadVar::TrHeadVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv),
+    mInpInp(K_InpInp), mInpTail(K_InpTail)
 {
-    AddInput(GetInpUri(FHeadBase::EInp));
-    AddInput(GetInpUri(FHeadBase::ETail));
+    AddInput(K_InpInp);
+    AddInput(K_InpTail);
 }
 
 void TrHeadVar::Init(const string& aIfaceName)
@@ -722,19 +638,24 @@ void TrHeadVar::Init(const string& aIfaceName)
     }
 }
 
-string TrHeadVar::GetInpUri(int aId) const
+FInp* TrHeadVar::GetFinp(int aId)
 {
-    if (aId == FHeadBase::EInp) return "Inp";
-    else if (aId == FHeadBase::ETail) return "Tail";
-    else return string();
+    if (aId == FHeadBase::EInp) return &mInpInp;
+    else if (aId == FHeadBase::ETail) return &mInpTail;
+    else return nullptr;
 }
+
 
 ///// Tail as num of elems
 
-TrTailnVar::TrTailnVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+const string TrTailnVar::K_InpInp = "Inp";
+const string TrTailnVar::K_InpNum = "Num";
+
+TrTailnVar::TrTailnVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv),
+    mInpInp(K_InpInp), mInpNum(K_InpNum)
 {
-    AddInput(GetInpUri(FTailnBase::EInp));
-    AddInput(GetInpUri(FTailnBase::ENum));
+    AddInput(K_InpInp);
+    AddInput(K_InpNum);
 }
 
 void TrTailnVar::Init(const string& aIfaceName)
@@ -756,11 +677,11 @@ void TrTailnVar::Init(const string& aIfaceName)
     }
 }
 
-string TrTailnVar::GetInpUri(int aId) const
+FInp* TrTailnVar::GetFinp(int aId)
 {
-    if (aId == FTailnBase::EInp) return "Inp";
-    else if (aId == FTailnBase::ENum) return "Num";
-    else return string();
+    if (aId == FTailnBase::EInp) return &mInpInp;
+    else if (aId == FTailnBase::ENum) return &mInpNum;
+    else return nullptr;
 }
 
 
@@ -769,9 +690,12 @@ string TrTailnVar::GetInpUri(int aId) const
 
 // Transition agent "Getting container size"
 
-TrSizeVar::TrSizeVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+const string TrSizeVar::K_InpInp = "Inp";
+
+TrSizeVar::TrSizeVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv),
+    mInpInp(K_InpInp)
 {
-    AddInput("Inp");
+    AddInput(K_InpInp);
 }
 
 void TrSizeVar::Init(const string& aIfaceName)
@@ -790,24 +714,28 @@ void TrSizeVar::Init(const string& aIfaceName)
     }
 }
 
-string TrSizeVar::GetInpUri(int aId) const
+FInp* TrSizeVar::GetFinp(int aId)
 {
-    if (aId == Func::EInp1) return "Inp";
-    else return string();
+    if (aId == Func::EInp1) return &mInpInp;
+    else return nullptr;
 }
 
 string TrSizeVar::VarGetIfid() const
 {
-    return MDtGet<Sdata<int>>::Type();
+    return Sdata<int>::TypeSig();
 }
 
 
 // Agent transition "Get n-coord of Vector, wrapping it by Sdata"
 
-TrAtVar::TrAtVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+const string TrAtVar::K_InpInp = "Inp";
+const string TrAtVar::K_InpIndex = "Index";
+
+TrAtVar::TrAtVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv),
+    mInpInp(K_InpInp), mInpIndex(K_InpIndex)
 {
-    AddInput("Inp");
-    AddInput("Index");
+    AddInput(K_InpInp);
+    AddInput(K_InpIndex);
 }
 
 void TrAtVar::Init(const string& aIfaceName)
@@ -824,20 +752,24 @@ void TrAtVar::Init(const string& aIfaceName)
     }
 }
 
-string TrAtVar::GetInpUri(int aId) const
+FInp* TrAtVar::GetFinp(int aId)
 {
-    if (aId == Func::EInp2) return "Index";
-    else if (aId == Func::EInp1) return "Inp";
-    else return string();
+    if (aId == Func::EInp1) return &mInpInp;
+    else if (aId == Func::EInp2) return &mInpIndex;
+    else return nullptr;
 }
 
 
 // Agent transition "Get n-coord of Vector, generic, no wrapping by Sdata"
 
-TrAtgVar::TrAtgVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+const string TrAtgVar::K_InpInp = "Inp";
+const string TrAtgVar::K_InpIndex = "Index";
+
+TrAtgVar::TrAtgVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv),
+    mInpInp(K_InpInp), mInpIndex(K_InpIndex)
 {
-    AddInput("Inp");
-    AddInput("Index");
+    AddInput(K_InpInp);
+    AddInput(K_InpIndex);
 }
 
 void TrAtgVar::Init(const string& aIfaceName)
@@ -858,23 +790,23 @@ void TrAtgVar::Init(const string& aIfaceName)
     }
 }
 
-string TrAtgVar::GetInpUri(int aId) const
+FInp* TrAtgVar::GetFinp(int aId)
 {
-    if (aId == Func::EInp2) return "Index";
-    else if (aId == Func::EInp1) return "Inp";
-    else return string();
+    if (aId == Func::EInp1) return &mInpInp;
+    else if (aId == Func::EInp2) return &mInpIndex;
+    else return nullptr;
 }
 
 
 
 // Agent functions "Tuple composer"
 //
-const string TrTuple::K_InpName = "Inp";
+const string TrTuple::K_InpInp = "Inp";
 
 TrTuple::TrTuple(const string& aType, const string& aName, MEnv* aEnv): TrBase(aType, aName, aEnv), 
-	mInpIc(nullptr)
+	mInpInp(K_InpInp)
 {
-    AddInput(K_InpName);
+    AddInput(K_InpInp);
 }
 
 string TrTuple::VarGetIfid() const
@@ -886,16 +818,14 @@ string TrTuple::VarGetIfid() const
 const DtBase* TrTuple::VDtGet(const string& aType)
 {
     mRes.mValid = true;
-    if (!mInpIc) mInpIc = GetInps(K_InpName);
-    auto* dfget = (mInpIc && mInpIc->size() == 1) ? mInpIc->at(0) : nullptr;
-    if (dfget) {
-	const NTuple* arg = dfget->DtGet(arg);
+    const NTuple* arg = GetInpData(mInpInp, arg);
+    if (arg) {
 	mRes = *arg;
 	auto compo = owner()->firstPair();
 	while (compo) {
 	    MNode* compn = compo->provided()->lIf(compn);
 	    assert(compn);
-	    if (compn->name() != K_InpName) {
+	    if (compn->name() != K_InpInp) {
 		DtBase* elem = mRes.GetElem(compn->name());
 		if (elem) {
 		    MUnit* inpu = compn->lIf(inpu);
@@ -919,7 +849,6 @@ const DtBase* TrTuple::VDtGet(const string& aType)
 	    compo = owner()->nextPair(compo);
 	}
     } else {
-	Log(TLog(EDbg, this) + "Cannot get input  [" + K_InpName + "]");
 	mRes.mValid = false;
     }
     return &mRes;
@@ -928,33 +857,23 @@ const DtBase* TrTuple::VDtGet(const string& aType)
 
 // Agent transition "Tuple component selector"
 //
-const string TrTupleSel::K_InpName = "Inp";
-const string TrTupleSel::K_InpCompName = "Comp";
+const string TrTupleSel::K_InpInp = "Inp";
+const string TrTupleSel::K_InpComp= "Comp";
 
 TrTupleSel::TrTupleSel(const string& aType, const string& aName, MEnv* aEnv): TrBase(aType, aName, aEnv),
-    mInpIc(nullptr), mInpCIc(nullptr)
+    mInpInp(K_InpInp), mInpComp(K_InpComp)
 {
-    AddInput(K_InpName);
-    AddInput(K_InpCompName);
+    AddInput(K_InpInp);
+    AddInput(K_InpComp);
 }
 
 const DtBase* TrTupleSel::VDtGet(const string& aType)
 {
     const DtBase* res = nullptr;
-    if (!mInpIc) mInpIc = GetInps(K_InpName);
-    auto* dfget = (mInpIc && mInpIc->size() == 1) ? mInpIc->at(0) : nullptr;
-    if (dfget) {
-	const NTuple* arg = dfget->DtGet(arg);
-	if (!mInpCIc) mInpCIc = GetInps(K_InpCompName);
-	auto* dcget = (mInpCIc && mInpCIc->size() == 1) ? mInpCIc->at(0) : nullptr;
-	if (dcget) {
-	    const Sdata<string>* idx = dcget->DtGet(idx);
-	    res = arg->GetElem(idx->mData);
-	} else {
-	    Log(TLog(EDbg, this) + "Cannot get input  [" + K_InpCompName + "]");
-	}
-    } else {
-	Log(TLog(EDbg, this) + "Cannot get input  [" + K_InpName + "]");
+    const NTuple* arg = GetInpData(mInpInp, arg);
+    const Sdata<string>* idx = GetInpData(mInpComp, idx);
+    if (arg && arg->IsValid() && idx && idx->IsValid()) {
+	res = arg->GetElem(idx->mData);
     }
     return res;
 }
@@ -972,10 +891,14 @@ string TrTupleSel::VarGetIfid() const
 
 // Pair composer
 
-TrPair::TrPair(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv)
+const string TrPair::K_InpFirst = "First";
+const string TrPair::K_InpSecond = "Second";
+
+TrPair::TrPair(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv),
+    mInpFirst(K_InpFirst), mInpSecond(K_InpSecond)
 {
-    AddInput(GetInpUri(Func::EInp1));
-    AddInput(GetInpUri(Func::EInp2));
+    AddInput(K_InpFirst);
+    AddInput(K_InpSecond);
 }
 
 void TrPair::Init(const string& aIfaceName)
@@ -1003,12 +926,13 @@ void TrPair::Init(const string& aIfaceName)
     }
 }
 
-string TrPair::GetInpUri(int aId) const
+FInp* TrPair::GetFinp(int aId)
 {
-    if (aId == Func::EInp1) return "First";
-    else if (aId == Func::EInp2) return "Second";
-    else return string();
+    if (aId == Func::EInp1) return &mInpFirst;
+    else if (aId == Func::EInp2) return &mInpSecond;
+    else return nullptr;
 }
+
 
 
 
@@ -1018,7 +942,7 @@ string TrPair::GetInpUri(int aId) const
 const string TrTostrVar::K_InpInp = "Inp";
 
 TrTostrVar::TrTostrVar(const string& aType, const string& aName, MEnv* aEnv): TrBase(aType, aName, aEnv),
-    mInpIc(nullptr)
+    mInpInp(K_InpInp)
 {
     AddInput(K_InpInp);
 }
@@ -1026,14 +950,10 @@ TrTostrVar::TrTostrVar(const string& aType, const string& aName, MEnv* aEnv): Tr
 const DtBase* TrTostrVar::VDtGet(const string& aType)
 {
     mRes.mValid = false;
-    const DtBase* inp = GetInpData(mInpIc, K_InpInp, inp);
-    if (inp) {
-	if (inp->IsValid()) {
-	    mRes.mData = inp->ToString(false);
-	    mRes.mValid = true;
-	}
-    } else {
-	Log(TLog(EDbg, this) + "Cannot get input  [" + K_InpInp + "]");
+    const DtBase* inp = GetInpData(mInpInp, inp);
+    if (inp && inp->IsValid()) {
+	mRes.mData = inp->ToString(false);
+	mRes.mValid = true;
     }
     return &mRes;
 }
@@ -1044,7 +964,7 @@ const DtBase* TrTostrVar::VDtGet(const string& aType)
 const string TrInpCnt::K_InpInp = "Inp";
 
 TrInpCnt::TrInpCnt(const string& aType, const string& aName, MEnv* aEnv): TrBase(aType, aName, aEnv),
-    mInpIc(nullptr)
+    mInpInp(K_InpInp)
 {
     AddInput(K_InpInp);
 }
@@ -1057,14 +977,12 @@ string TrInpCnt::VarGetIfid() const
 const DtBase* TrInpCnt::VDtGet(const string& aType)
 {
     // TODO Make optimisation to not check type each cycle
-    if (aType == Sdata<int>::TypeSig()) {
-	if (!mInpIc) mInpIc = GetInps(K_InpInp);
-	if (mInpIc) {
-	    mRes.mData = mInpIc->size();
+    if (aType == TRes::TypeSig()) {
+	mRes.mValid = false;
+	auto* Ic = GetInps(mInpInp);
+	if (Ic) {
+	    mRes.mData = Ic->size();
 	    mRes.mValid = true;
-	} else {
-	    mRes.mValid = false;
-	    Log(TLog(EDbg, this) + "Cannot get input  [" + K_InpInp + "]");
 	}
 	return &mRes;
     } else {
@@ -1079,7 +997,7 @@ const string TrInpSel::K_InpInp = "Inp";
 const string TrInpSel::K_InpIdx = "Idx";
 
 TrInpSel::TrInpSel(const string& aType, const string& aName, MEnv* aEnv): TrBase(aType, aName, aEnv),
-    mInpIc(nullptr), mInpIdxIc(nullptr)
+    mInpInp(K_InpInp), mInpIdx(K_InpIdx)
 {
     AddInput(K_InpInp);
     AddInput(K_InpIdx);
@@ -1096,24 +1014,16 @@ string TrInpSel::VarGetIfid() const
 MDVarGet* TrInpSel::GetInp()
 {
     MDVarGet* res = nullptr;
-    if (!mInpIdxIc) mInpIdxIc = GetInps(K_InpIdx);
-    auto* idxget = (mInpIdxIc && mInpIdxIc->size() == 1) ? mInpIdxIc->at(0) : nullptr;
-    const Sdata<int>* idx = idxget ? idxget->DtGet(idx) : nullptr;
-    if (idx) {
-	if (!mInpIc) mInpIc = GetInps(K_InpInp);
-	if (mInpIc) {
-	    if (idx->IsValid()) {
-		if (idx->mData >= 0 || idx->mData < mInpIc->size()) {
-		    res = mInpIc->at(idx->mData);
-		} else {
-		    Log(TLog(EErr, this) + "Incorrect index  [" + to_string(idx->mData) + "], inps num: " + to_string(mInpIc->size()));
-		}
+    const Sdata<int>* idx = GetInpData(mInpIdx, idx);
+    if (idx && idx->IsValid()) {
+	auto* Ic = GetInps(mInpInp);
+	if (Ic) {
+	    if (idx->mData >= 0 || idx->mData < Ic->size()) {
+		res = Ic->at(idx->mData);
+	    } else {
+		Log(TLog(EErr, this) + "Incorrect index  [" + to_string(idx->mData) + "], inps num: " + to_string(Ic->size()));
 	    }
-	} else {
-	    Log(TLog(EDbg, this) + "Cannot get input  [" + K_InpInp + "]");
 	}
-    } else {
-	Log(TLog(EDbg, this) + "Cannot get input  [" + K_InpIdx + "]");
     }
     return res;
 }
@@ -1147,7 +1057,7 @@ const string TrMutNode::K_InpParent = "Parent";
 const string TrMutNode::K_InpName = "Name";
 
 TrMutNode::TrMutNode(const string& aType, const string& aName, MEnv* aEnv): TrMut(aType, aName, aEnv),
-    mInpParentIc(nullptr), mInpNameIc(nullptr)
+    mInpParent(K_InpParent), mInpName(K_InpName)
 {
     AddInput(K_InpParent);
     AddInput(K_InpName);
@@ -1156,17 +1066,11 @@ TrMutNode::TrMutNode(const string& aType, const string& aName, MEnv* aEnv): TrMu
 const DtBase* TrMutNode::VDtGet(const string& aType)
 {
     mRes.mValid = false;
-    const Sdata<string>* name = GetInpData(mInpNameIc, K_InpName, name);
-    if (name) {
-	const Sdata<string>* parent = GetInpData(mInpParentIc, K_InpParent, parent);
-	if (parent) {
-	    mRes.mData = TMut(ENt_Node, ENa_Parent, parent->mData, ENa_Id, name->mData);
-	    mRes.mValid = true;
-	} else {
-	    Log(TLog(EDbg, this) + "Cannot get input  [" + K_InpParent + "]");
-	}
-    } else {
-	Log(TLog(EDbg, this) + "Cannot get input  [" + K_InpName + "]");
+    const Sdata<string>* name = GetInpData(mInpName, name);
+    const Sdata<string>* parent = GetInpData(mInpParent, parent);
+    if (name && name->IsValid() && parent && parent->IsValid()) {
+	mRes.mData = TMut(ENt_Node, ENa_Parent, parent->mData, ENa_Id, name->mData);
+	mRes.mValid = true;
     }
     return &mRes;
 }
@@ -1178,7 +1082,7 @@ const string TrMutConn::K_InpCp1 = "Cp1";
 const string TrMutConn::K_InpCp2 = "Cp2";
 
 TrMutConn::TrMutConn(const string& aType, const string& aName, MEnv* aEnv): TrMut(aType, aName, aEnv),
-    mInpCp1Ic(nullptr), mInpCp2Ic(nullptr)
+    mInpCp1(K_InpCp1), mInpCp2(K_InpCp2)
 {
     AddInput(K_InpCp1);
     AddInput(K_InpCp2);
@@ -1187,19 +1091,11 @@ TrMutConn::TrMutConn(const string& aType, const string& aName, MEnv* aEnv): TrMu
 const DtBase* TrMutConn::VDtGet(const string& aType)
 {
     mRes.mValid = false;
-    const TInp* cp1 = GetInpData(mInpCp1Ic, K_InpCp1, cp1);
-    if (cp1) {
-	const TInp* cp2 = GetInpData(mInpCp2Ic, K_InpCp2, cp2);
-	if (cp2) {
-	    if (cp1->IsValid() && cp2->IsValid()) {
-		mRes.mData = TMut(ENt_Conn, ENa_P, cp1->mData, ENa_Q, cp2->mData);
-		mRes.mValid = true;
-	    }
-	} else {
-	    Log(TLog(EDbg, this) + "Cannot get input  [" + K_InpCp2 + "]");
-	}
-    } else {
-	Log(TLog(EDbg, this) + "Cannot get input  [" + K_InpCp1 + "]");
+    const TInp* cp1 = GetInpData(mInpCp1, cp1);
+    const TInp* cp2 = GetInpData(mInpCp2, cp2);
+    if (cp1 && cp2 && cp1->IsValid() && cp2->IsValid()) {
+	mRes.mData = TMut(ENt_Conn, ENa_P, cp1->mData, ENa_Q, cp2->mData);
+	mRes.mValid = true;
     }
     return &mRes;
 }
@@ -1212,7 +1108,7 @@ const string TrMutCont::K_InpValue = "Value";
 const string TrMutCont::K_InpTarget = "Target";
 
 TrMutCont::TrMutCont(const string& aType, const string& aName, MEnv* aEnv): TrMut(aType, aName, aEnv),
-    mInpNameIc(nullptr), mInpValueIc(nullptr), mInpTargetIc(nullptr)
+    mInpName(K_InpName), mInpValue(K_InpValue), mInpTarget(K_InpTarget)
 {
     AddInput(K_InpName);
     AddInput(K_InpValue);
@@ -1222,26 +1118,20 @@ TrMutCont::TrMutCont(const string& aType, const string& aName, MEnv* aEnv): TrMu
 const DtBase* TrMutCont::VDtGet(const string& aType)
 {
     mRes.mValid = false;
-    const Sdata<string>* name = GetInpData(mInpNameIc, K_InpName, name);
-    if (name && name->IsValid()) {
-	const Sdata<string>* value = GetInpData(mInpValueIc, K_InpValue, value);
-	if (value && value->IsValid()) {
-	    const Sdata<string>* target = GetInpData(mInpTargetIc, K_InpTarget, target);
-	    // Target is optional
-	    if (target) {
-		if (target->IsValid()) {
-		    mRes.mData = TMut(ENt_Cont, ENa_Targ, target->mData, ENa_Id, name->mData, ENa_MutVal, value->mData);
-		    mRes.mValid = true;
-		}
-	    } else {
-		mRes.mData = TMut(ENt_Cont, ENa_Id, name->mData, ENa_MutVal, value->mData);
+    const Sdata<string>* name = GetInpData(mInpName, name);
+    const Sdata<string>* value = GetInpData(mInpValue, value);
+    if (name && value && name->IsValid() && value->IsValid()) {
+	const Sdata<string>* target = GetInpData(mInpTarget, target);
+	// Target is optional
+	if (target) {
+	    if (target->IsValid()) {
+		mRes.mData = TMut(ENt_Cont, ENa_Targ, target->mData, ENa_Id, name->mData, ENa_MutVal, value->mData);
 		mRes.mValid = true;
 	    }
 	} else {
-	    Log(TLog(EDbg, this) + "Cannot get input  [" + K_InpValue + "]");
+	    mRes.mData = TMut(ENt_Cont, ENa_Id, name->mData, ENa_MutVal, value->mData);
+	    mRes.mValid = true;
 	}
-    } else {
-	Log(TLog(EDbg, this) + "Cannot get input  [" + K_InpName + "]");
     }
     return &mRes;
 }
@@ -1254,7 +1144,7 @@ const string TrMutDisconn::K_InpCp1 = "Cp1";
 const string TrMutDisconn::K_InpCp2 = "Cp2";
 
 TrMutDisconn::TrMutDisconn(const string& aType, const string& aName, MEnv* aEnv): TrMut(aType, aName, aEnv),
-    mInpCp1Ic(nullptr), mInpCp2Ic(nullptr)
+    mInpCp1(K_InpCp1), mInpCp2(K_InpCp2)
 {
     AddInput(K_InpCp1);
     AddInput(K_InpCp2);
@@ -1263,19 +1153,11 @@ TrMutDisconn::TrMutDisconn(const string& aType, const string& aName, MEnv* aEnv)
 const DtBase* TrMutDisconn::VDtGet(const string& aType)
 {
     mRes.mValid = false;
-    const TInp* cp1 = GetInpData(mInpCp1Ic, K_InpCp1, cp1);
-    if (cp1) {
-	const TInp* cp2 = GetInpData(mInpCp2Ic, K_InpCp2, cp2);
-	if (cp2) {
-	    if (cp1->IsValid() && cp2->IsValid()) {
-		mRes.mData = TMut(ENt_Disconn, ENa_P, cp1->mData, ENa_Q, cp2->mData);
-		mRes.mValid = true;
-	    }
-	} else {
-	    Log(TLog(EDbg, this) + "Cannot get input  [" + K_InpCp2 + "]");
-	}
-    } else {
-	Log(TLog(EDbg, this) + "Cannot get input  [" + K_InpCp1 + "]");
+    const TInp* cp1 = GetInpData(mInpCp1, cp1);
+    const TInp* cp2 = GetInpData(mInpCp2, cp2);
+    if (cp1 && cp2 && cp1->IsValid() && cp2->IsValid()) {
+	mRes.mData = TMut(ENt_Disconn, ENa_P, cp1->mData, ENa_Q, cp2->mData);
+	mRes.mValid = true;
     }
     return &mRes;
 }
@@ -1288,7 +1170,7 @@ const string TrChr::K_InpBase = "Base";
 const string TrChr::K_InpMut = "Mut";
 
 TrChr::TrChr(const string& aType, const string& aName, MEnv* aEnv): TrBase(aType, aName, aEnv),
-    mInpBaseIc(nullptr), mInpMutIc(nullptr)
+    mInpBase(K_InpBase), mInpMut(K_InpMut)
 {
     AddInput(K_InpBase);
     AddInput(K_InpMut);
@@ -1303,16 +1185,16 @@ const DtBase* TrChr::VDtGet(const string& aType)
 {
     mRes.mValid = true;
     // Base
-    const DChr2* base = GetInpData(mInpBaseIc, K_InpBase, base);
+    const DChr2* base = GetInpData(mInpBase, base);
     // Enable the base is optional
     if (base) {
 	mRes = *base;
     }
     if (mRes.IsValid()) {
 	// Mut
-	if (!mInpMutIc) mInpMutIc = GetInps(K_InpMut);
-	if (mInpMutIc && mInpMutIc->size() > 0) {
-	    for (auto mutget: *mInpMutIc) {
+	auto* MutIc = GetInps(mInpMut);
+	if (MutIc && MutIc->size() > 0) {
+	    for (auto mutget: *MutIc) {
 		const DMut* mut = mutget ? mutget->DtGet(mut) : nullptr;
 		if (mut) {
 		    if (mut->mValid) {
@@ -1327,7 +1209,6 @@ const DtBase* TrChr::VDtGet(const string& aType)
 		}
 	    }
 	} else {
-	    Log(TLog(EDbg, this) + "Cannot get input  [" + K_InpMut + "]");
 	    mRes.mValid = false;
 	}
     }
@@ -1341,7 +1222,7 @@ const DtBase* TrChr::VDtGet(const string& aType)
 const string TrChrc::K_InpInp = "Inp";
 
 TrChrc::TrChrc(const string& aType, const string& aName, MEnv* aEnv): TrBase(aType, aName, aEnv),
-    mInpIc(nullptr)
+    mInpInp(K_InpInp)
 {
     AddInput(K_InpInp);
 }
@@ -1353,10 +1234,10 @@ string TrChrc::VarGetIfid() const
 
 const DtBase* TrChrc::VDtGet(const string& aType)
 {
-    if (!mInpIc) mInpIc = GetInps(K_InpInp);
-    if (mInpIc && mInpIc->size() > 0) {
+    auto* InpIc = GetInps(mInpInp);
+    if (InpIc && InpIc->size() > 0) {
 	mRes.mValid = true;
-	for (auto* get : *mInpIc) {
+	for (auto* get : *InpIc) {
 	    const DChr2* item = get->DtGet(item);
 	    if (item && item->IsValid()) {
 		mRes.mData.Root().AddChild(item->mData.Root());
@@ -1366,7 +1247,6 @@ const DtBase* TrChrc::VDtGet(const string& aType)
 	    }
 	}
     } else {
-	Log(TLog(EDbg, this) + "Cannot get input  [" + K_InpInp + "]");
 	mRes.mValid = false;
     }
     return &mRes;
@@ -1378,7 +1258,7 @@ const DtBase* TrChrc::VDtGet(const string& aType)
 const string TrIsValid::K_InpInp = "Inp";
 
 TrIsValid::TrIsValid(const string& aType, const string& aName, MEnv* aEnv): TrBase(aType, aName, aEnv),
-    mInpIc(nullptr)
+    mInpInp(K_InpInp)
 {
     AddInput(K_InpInp);
 }
@@ -1386,12 +1266,10 @@ TrIsValid::TrIsValid(const string& aType, const string& aName, MEnv* aEnv): TrBa
 const DtBase* TrIsValid::VDtGet(const string& aType)
 {
     mRes.mValid = false;
-    const DtBase* inp = GetInpData(mInpIc, K_InpInp, inp);
+    const DtBase* inp = GetInpData(mInpInp, inp);
     if (inp) {
 	mRes.mData = inp->IsValid();
 	mRes.mValid = true;
-    } else {
-	Log(TLog(EDbg, this) + "Cannot get input  [" + K_InpInp + "]");
     }
     return &mRes;
 }
@@ -1399,30 +1277,11 @@ const DtBase* TrIsValid::VDtGet(const string& aType)
 
 // Transition "Type enforcing"
 
+const string TrType::K_InpInp = "Inp";
+
 TrType::TrType(const string& aType, const string& aName, MEnv* aEnv): TrBase(aType, aName, aEnv)
 {
-    AddInput(GetInpUri(EInp));
-}
-
-MIface* TrType::MNode_getLif(const char *aType)
-{
-    MIface* res = nullptr;
-    if (res = checkLif<MDVarGet>(aType));
-    else res = TrBase::MNode_getLif(aType);
-    return res;
-}
-
-string TrType::GetInpUri(int aId) const
-{
-    if (aId == EInp) return "Inp";
-    else return string();
-}
-
-MIface* TrType::DoGetDObj(const char *aName)
-{
-    MIface* res = NULL;
-    // TODO Implement
-    return res;
+    AddInput(K_InpInp);
 }
 
 string TrType::VarGetIfid() const
@@ -1438,7 +1297,7 @@ string TrType::VarGetIfid() const
 const string TrHash::K_InpInp = "Inp";
 
 TrHash::TrHash(const string& aType, const string& aName, MEnv* aEnv): TrBase(aType, aName, aEnv),
-    mInpIc(nullptr)
+    mInpInp(K_InpInp)
 {
     AddInput(K_InpInp);
 }
@@ -1446,17 +1305,15 @@ TrHash::TrHash(const string& aType, const string& aName, MEnv* aEnv): TrBase(aTy
 const DtBase* TrHash::VDtGet(const string& aType)
 {
     mRes.mValid = false;
-    if (!mInpIc) mInpIc = GetInps(K_InpInp);
-    if (mInpIc && mInpIc->size() > 0) {
+    auto* InpIc = GetInps(mInpInp);
+    if (InpIc && InpIc->size() > 0) {
 	int hash = 0;
-	for (auto inp : *mInpIc) {
+	for (auto inp : *InpIc) {
 	    const DtBase* data = inp->VDtGet(string());
 	    hash += data->Hash();
 	}
 	mRes.mData = hash;
 	mRes.mValid = true;
-    } else {
-	Log(TLog(EDbg, this) + "Cannot get input  [" + GetInpUri(EInp) + "]");
     }
     return &mRes;
 }

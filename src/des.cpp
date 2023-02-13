@@ -7,10 +7,11 @@
 
 #define DES_RGS_VERIFY
 
-#define STATE2_DATA_REF
 
 const string KCont_Provided = "Provided";
 const string KCont_Required = "Required";
+
+#define STATE2_DATA_SWAP
 
 CpState::CpState(const string &aType, const string& aName, MEnv* aEnv): ConnPointu(aType, aName, aEnv)
 {
@@ -132,33 +133,13 @@ bool State::SContValue::getData(string& aData) const
     return true;
 }
 
-#ifdef STATE2_DATA_REF
 bool State::SContValue::setData(const string& aData)
 {
     return mHost.updateWithContValue(aData);
 }
-#else
-bool State::SContValue::setData(const string& aData)
-{
-    bool res = false;
-    mHost.mPdata->FromString(aData);
-    mHost.mCdata->FromString(aData);
-    if (mHost.mPdata->IsValid() && mHost.mCdata->IsValid()) {
-	if (res) {
-	    mHost.NotifyInpsUpdated();
-	}
-    }  else {
-	if (!mHost.mPdata->IsValid() && mHost.mPdata->IsDsError()) {
-	    mHost.Log(TLog(EErr, &mHost) + "Error on applying content [" + mName + "] value [" + aData + "]");
-	    mHost.mPdata->FromString(aData);
-	}
-    }
-    return mHost.mCdata->IsChanged();
-}
-#endif
 
 State::State(const string &aType, const string& aName, MEnv* aEnv): Vertu(aType, aName, aEnv),
-    mPdata(NULL), mCdata(NULL), mUpdNotified(false), mActNotified(false), mInpIc(nullptr)
+    mPdata(NULL), mCdata(NULL), mUpdNotified(false), mActNotified(false), mInpProv(nullptr)
 {
     MNode* cp = Provider()->createNode(CpStateInp::Type(), "Inp", mEnv);
     assert(cp);
@@ -168,11 +149,9 @@ State::State(const string &aType, const string& aName, MEnv* aEnv): Vertu(aType,
 
 State::~State()
 {
-#ifndef STATE2_DATA_REF
     if (mPdata) {
 	delete mPdata;
     }
-#endif
     if (mCdata) {
 	delete mCdata;
     }
@@ -312,45 +291,34 @@ void State::setActivated()
     }
 }
 
-#if 0
 void State::update()
 {
     mActNotified = false;
+    string dtype;
     if (mCdata) {
-	MDVarGet* vget = GetInp();
-	if (vget) {
-	    try {
-		mPdata = vget->VDtGet(mCdata->GetTypeSig());
-	    } catch (std::exception e) {
-		Logger()->Write(EErr, this, "Unspecified error on update");
-	    }
-	} else {
-	    Log(TLog(EDbg, this) + "Cannot get input");
-	}
-	setUpdated();
+	dtype = mCdata->GetTypeSig();
     }
-}
-#endif
-
-void State::update()
-{
-    mActNotified = false;
-    if (mCdata) {
-	if (!mInpIc) mInpIc = GetInps();
-	if (mInpIc && mInpIc->size() == 1) {
-	    mInpValid = true;
-	    MDVarGet* vget = mInpIc->at(0);
-	    try {
-		mPdata = vget->VDtGet(mCdata->GetTypeSig());
-	    } catch (std::exception e) {
-		Logger()->Write(EErr, this, "Unspecified error on update");
-	    }
-	} else {
-	    mInpValid = false;
-	    Log(TLog(EDbg, this) + "Cannot get input");
+    MDVarGet* vget = GetInp();
+    if (vget) {
+	mInpValid = true;
+	const DtBase* pdata = nullptr;
+	try {
+	    pdata = vget->VDtGet(dtype);
+	} catch (std::exception e) {
+	    Logger()->Write(EErr, this, "Unspecified error on update");
 	}
-	setUpdated();
+	if (pdata) {
+	    if (!mPdata) {
+		mPdata = CreateData(pdata->GetTypeSig());
+	    }
+	    if (mPdata) {
+		*mPdata = *pdata;
+	    }
+	}
+    } else {
+	mInpValid = false;
     }
+    setUpdated();
 }
 
 void State::NotifyInpsUpdated()
@@ -377,7 +345,14 @@ void State::confirm()
 	if (mInpValid) {
 	    if (mPdata) {
 		if (*mCdata != *mPdata) {
+#ifdef STATE2_DATA_SWAP
+		    // Swap the data
+		    auto ptr = mCdata;
+		    mCdata = mPdata;
+		    mPdata = ptr;
+#else
 		    *mCdata = *mPdata;
+#endif
 		    NotifyInpsUpdated();
 		    changed = true;
 		}
@@ -400,7 +375,16 @@ void State::confirm()
 	    refreshInpObsIfr();
 	}
     } else {
-	Logger()->Write(EInfo, this, "Not initialized");
+	if (mPdata) {
+	    mCdata = CreateData(mPdata->GetTypeSig());
+	}
+	if (mCdata) {
+	    *mCdata = *mPdata;
+	    NotifyInpsUpdated();
+	    Logger()->Write(EInfo, this, "Updated [%s]", mCdata->ToString().c_str());
+	} else {
+	    Logger()->Write(EInfo, this, "Not initialized");
+	}
     }
 }
 
@@ -419,34 +403,24 @@ void State::onInpUpdated()
     setActivated();
 }
 
-
 MDVarGet* State::GetInp()
 {
-    MDVarGet* res = NULL;
-    MNode* inpn = getNode("Inp");
-    MUnit* inpu = inpn->lIf(inpu);
-    MIfProv* difp = inpu->defaultIfProv(MDVarGet::Type());
-    MIfProv* ifp = difp ? difp->first() : nullptr;
-    if (ifp) {
-	res = dynamic_cast<MDVarGet*>(ifp->iface());
+    MDVarGet* res = nullptr;
+    MIfProv::TIfaces* ifcs = nullptr;
+    if (!mInpProv) {
+	MNode* inp = getNode("Inp");
+	MUnit* inpu = inp ? inp->lIf(inpu) : nullptr;
+	mInpProv = inpu ? inpu->defaultIfProv(MDVarGet::Type()) : nullptr;
+	ifcs = mInpProv ? mInpProv->ifaces() : nullptr;
+    } else {
+	ifcs = mInpProv->ifaces();
+    }
+    if (ifcs && ifcs->size() == 1) {
+	res = reinterpret_cast<MDVarGet*>(ifcs->at(0));
     } else {
 	Log(TLog(EDbg, this) + "Cannot get input");
     }
     return res;
-}
-
-State::TInpIc* State::GetInps()
-{
-    MIfProv::TIfaces* res = nullptr;  
-    MNode* inp = getNode("Inp");
-    if (inp) {
-	MUnit* inpu = inp->lIf(inpu);
-	MIfProv* ifp = inpu ? inpu->defaultIfProv(MDVarGet::Type()) : nullptr;
-	res = ifp ? ifp->ifaces() : nullptr;
-    } else {
-	Log(TLog(EDbg, this) + "Cannot get input");
-    }
-    return reinterpret_cast<TInpIc*>(res);
 }
 
 string State::provName() const
@@ -505,12 +479,15 @@ bool State::updateWithContValue(const string& aData)
 	string type;
 	DtBase::ParseSigPars(aData, type);
 	mCdata = CreateData(type);
+	mPdata = CreateData(type);
     }
     if (mCdata) {
 	res = true;
 	mCdata->FromString(aData);
+	mPdata->FromString(aData);
 	if (mCdata->IsValid()) {
 	    if (mCdata->IsChanged()) {
+		//Log(TLog(EDbg, this) + "Initialized:  " + mCdata->ToString(true) + "]");
 		NotifyInpsUpdated();
 	    }
 	}  else {

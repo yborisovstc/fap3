@@ -1,6 +1,6 @@
 MyRoot : Elem {
     Launcher : DesLauncher {
-        Debug.LogLevel = "Info"
+        Debug.LogLevel = "Dbg"
         Ds1 : Des {
             Const_1 : State {
                 = "SI 1"

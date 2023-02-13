@@ -136,6 +136,25 @@ MyRoot : Elem {
                     }
                 }
             }
+            # "Switch with unselected channel invalid"
+            SSwitchUsInv : State @  {
+                _@ <  {
+                    = "SI"
+                    Debug.LogLevel = "Dbg"
+                }
+                Inp ~ : TrSwitchBool @  {
+                    Inp1 ~ : State {
+                        = "SI"
+                    }
+                    Inp2 ~ : State {
+                        = "SI 2"
+                    }
+                    Sel ~ : State {
+                        = "SB true"
+                    }
+                }
+            }
+
             # "Add int"
             SAddInt : State @  {
                 _@ <  {
@@ -414,6 +433,20 @@ MyRoot : Elem {
                     }
                     Inp2 ~ : State {
                         = "SI 7"
+                    }
+                }
+            }
+            SCmpNeqInv : State @  {
+                _@ <  {
+                    Debug.LogLevel = "Dbg"
+                    = "SB"
+                }
+                Inp ~ Cmp_Neq_1 : TrCmpVar @  {
+                    Inp ~ : State {
+                        = "SI 5"
+                    }
+                    Inp2 ~ : State {
+                        = "SI"
                     }
                 }
             }

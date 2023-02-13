@@ -13,14 +13,16 @@
 class Ut_des : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_des);
-//    CPPUNIT_TEST(test_des_1);
-//    CPPUNIT_TEST(test_des_ades_1);
-    //CPPUNIT_TEST(test_des_dmc_1);
-//    CPPUNIT_TEST(test_des_ifr_inval_1);
+    CPPUNIT_TEST(test_des_1);
+    CPPUNIT_TEST(test_des_ades_1);
+    CPPUNIT_TEST(test_des_dmc_1);
+    CPPUNIT_TEST(test_des_ifr_inval_1);
     CPPUNIT_TEST(test_des_tr_1);
-//    CPPUNIT_TEST(test_des_asr_1);
-//    CPPUNIT_TEST(test_des_asr_2);
-//    CPPUNIT_TEST(test_des_utl_1);
+    CPPUNIT_TEST(test_des_tr_tres_1);
+    CPPUNIT_TEST(test_des_asr_1);
+    CPPUNIT_TEST(test_des_asr_2);
+    CPPUNIT_TEST(test_des_utl_1);
+    CPPUNIT_TEST(test_des_utl_2);
     CPPUNIT_TEST_SUITE_END();
     public:
     virtual void setUp();
@@ -36,6 +38,7 @@ class Ut_des : public CPPUNIT_NS::TestFixture
     void test_des_dmc_1();
     void test_des_ifr_inval_1();
     void test_des_tr_1();
+    void test_des_tr_tres_1();
     void test_des_asr_1();
     void test_des_asr_2();
     void test_des_utl_1();
@@ -89,39 +92,21 @@ void Ut_des::tearDown()
 void Ut_des::test_des_ades_1()
 {
     cout << endl << "=== Test of creating of simple system managed by ADES ===" << endl;
-
-    const string specn("ut_des_ades_1");
-    string ext = "chs";
-    string spec = specn + string(".") + "chs";
-    string log = specn + "_" + ext + ".log";
-    mEnv = new Env(spec, log);
-    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv);
-    //mEnv->ImpsMgr()->ResetImportsPaths();
-    //mEnv->ImpsMgr()->AddImportsPaths("../modules");
-    mEnv->constructSystem();
-    MNode* root = mEnv->Root();
+    const string specn = "ut_des_ades_1";
+    MNode* root = constructSystem(specn);
     MElem* eroot = root ? root->lIf(eroot) : nullptr;
     CPPUNIT_ASSERT_MESSAGE("Fail to get root", eroot);
-    GUri ruri;
-    root->getUri(ruri);
-    string ruris = ruri.toString();
+
+    // Dump root
     root->dump(Ifu::EDM_Base | Ifu::EDM_Comps | Ifu::EDM_Recursive,0);
     // Save root chromoe
-    eroot->Chromos().Save(specn + "_saved." + ext);
-
+    eroot->Chromos().Save(specn + "_saved.chs");
     // Run 
     bool res = mEnv->RunSystem(4);
     CPPUNIT_ASSERT_MESSAGE("Failed running system", eroot);
+
     // Verify the state
-    MNode* stn = root->getNode("Launcher.Ds1.St1");
-    CPPUNIT_ASSERT_MESSAGE("Fail to get stn", stn);
-    MDVarGet* vg = stn->lIf(vg);
-    CPPUNIT_ASSERT_MESSAGE("Fail to get stn vg", vg);
-    MDtGet<Sdata<int>>* dgi = vg->GetDObj(dgi);
-    CPPUNIT_ASSERT_MESSAGE("Fail to get stn dgi", dgi);
-    Sdata<int> val;
-    dgi->DtGet(val);
-    CPPUNIT_ASSERT_MESSAGE("Wrong final state valud", val.mData == 4);
+    CPPUNIT_ASSERT_MESSAGE("St1 failed", getStateDstr("Launcher.Ds1.St1") == "SI 4");
 
     delete mEnv;
 }
@@ -176,6 +161,7 @@ void Ut_des::test_des_tr_1()
     CPPUNIT_ASSERT_MESSAGE("StUri failed", getStateDstr("Launcher.Ds1.StUri") == "URI State1.State2");
     CPPUNIT_ASSERT_MESSAGE("SSizeOfVect failed", getStateDstr("Launcher.Ds1.SSizeOfVect") == "SI 3");
     CPPUNIT_ASSERT_MESSAGE("SSwitch failed", getStateDstr("Launcher.Ds1.SSwitch") == "SI 2");
+    CPPUNIT_ASSERT_MESSAGE("SSwitchUsInv failed", getStateDstr("Launcher.Ds1.SSwitchUsInv") == "SI 2");
     CPPUNIT_ASSERT_MESSAGE("SAddInt failed", getStateDstr("Launcher.Ds1.SAddInt") == "SI 7");
     CPPUNIT_ASSERT_MESSAGE("SMplInt failed", getStateDstr("Launcher.Ds1.SMplInt") == "SI 10");
     CPPUNIT_ASSERT_MESSAGE("SDivInt failed", getStateDstr("Launcher.Ds1.SDivInt") == "SI 5");
@@ -193,6 +179,7 @@ void Ut_des::test_des_tr_1()
     CPPUNIT_ASSERT_MESSAGE("TupleRes2 failed", getStateDstr("Launcher.Ds1.TupleRes2") == "TPL,SI:data,SI:value 5 7");
     CPPUNIT_ASSERT_MESSAGE("TupleRes3 failed", getStateDstr("Launcher.Ds1.TupleRes3") == "TPL,SI:data,SI:value <ERR> 2");
     CPPUNIT_ASSERT_MESSAGE("SCmpLt failed", getStateDstr("Launcher.Ds1.SCmpLt") == "SB true");
+    CPPUNIT_ASSERT_MESSAGE("SCmpNeqInv failed", getStateDstr("Launcher.Ds1.SCmpNeqInv") == "SB true");
     CPPUNIT_ASSERT_MESSAGE("TupleSelIfaceG failed", getStateDstr("Launcher.Ds1.TupleSelIfaceG") == "SB true");
     CPPUNIT_ASSERT_MESSAGE("InpCntRes failed", getStateDstr("Launcher.Ds1.InpCntRes") == "SI 3");
     CPPUNIT_ASSERT_MESSAGE("InpSelRes failed", getStateDstr("Launcher.Ds1.InpSelRes") == "SS 'Inp3'");
@@ -235,19 +222,10 @@ void Ut_des::test_des_dmc_1()
 
     string specn("ut_des_dmc_1");
     string ext = "chs";
-    string spec = specn + string(".") + "chs";
-    string log = specn + "_" + ext + ".log";
-    mEnv = new Env(spec, log);
-    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv);
-    //mEnv->ImpsMgr()->ResetImportsPaths();
-    //mEnv->ImpsMgr()->AddImportsPaths("../modules");
-    mEnv->constructSystem();
-    MNode* root = mEnv->Root();
+    MNode* root = constructSystem(specn);
     MElem* eroot = root ? root->lIf(eroot) : nullptr;
     CPPUNIT_ASSERT_MESSAGE("Fail to get root", eroot);
-    GUri ruri;
-    root->getUri(ruri);
-    string ruris = ruri.toString();
+
     root->dump(Ifu::EDM_Base | Ifu::EDM_Comps | Ifu::EDM_Recursive,0);
     // Verify DS1 chromo
     MNode* ds1n = root->getNode("Launcher.Ds1");
@@ -255,22 +233,14 @@ void Ut_des::test_des_dmc_1()
     CPPUNIT_ASSERT_MESSAGE("Fail to get Ds1", ds1e);
     // Save ds1e chromo
     ds1e->Chromos().Save(specn + "ds1n_chromo_saved." + ext);
-
     // Save root chromo
     eroot->Chromos().Save(specn + "_saved." + ext);
     // Run 
     bool res = mEnv->RunSystem(4);
     CPPUNIT_ASSERT_MESSAGE("Failed running system", eroot);
+
     // Verify the state
-    MNode* stn = root->getNode("Launcher.Ds1.St1");
-    CPPUNIT_ASSERT_MESSAGE("Fail to get stn", stn);
-    MDVarGet* vg = stn->lIf(vg);
-    CPPUNIT_ASSERT_MESSAGE("Fail to get stn vg", vg);
-    MDtGet<Sdata<int>>* dgi = vg->GetDObj(dgi);
-    CPPUNIT_ASSERT_MESSAGE("Fail to get stn dgi", dgi);
-    Sdata<int> val;
-    dgi->DtGet(val);
-    CPPUNIT_ASSERT_MESSAGE("Wrong final state valud", val.mData == 4);
+    CPPUNIT_ASSERT_MESSAGE("St1 failed", getStateDstr("Launcher.Ds1.St1") == "SI 4");
 
     delete mEnv;
 
@@ -278,40 +248,21 @@ void Ut_des::test_des_dmc_1()
     // Test with saved chromo
     //
     cout << endl << "= Test with saved chromo =" << endl;
-
-    specn = "ut_des_dmc_1_saved";
-    spec = specn + string(".") + "chs";
-    log = specn + "_" + ext + ".log";
-    mEnv = new Env(spec, log);
-    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv);
-    //mEnv->ImpsMgr()->ResetImportsPaths();
-    //mEnv->ImpsMgr()->AddImportsPaths("../modules");
-    mEnv->constructSystem();
-    root = mEnv->Root();
+    root = constructSystem(specn);
     eroot = root ? root->lIf(eroot) : nullptr;
     CPPUNIT_ASSERT_MESSAGE("Fail to get root", eroot);
-    ruri;
-    root->getUri(ruri);
-    ruris = ruri.toString();
+
     root->dump(Ifu::EDM_Base | Ifu::EDM_Comps | Ifu::EDM_Recursive,0);
     // Save root chromoe
     eroot->Chromos().Save(specn + "_saved." + ext);
     // Run 
     res = mEnv->RunSystem(4);
     CPPUNIT_ASSERT_MESSAGE("Failed running system", eroot);
+
     // Verify the state
-    stn = root->getNode("Launcher.Ds1.St1");
-    CPPUNIT_ASSERT_MESSAGE("Fail to get stn", stn);
-    vg = stn->lIf(vg);
-    CPPUNIT_ASSERT_MESSAGE("Fail to get stn vg", vg);
-    dgi = vg->GetDObj(dgi);
-    CPPUNIT_ASSERT_MESSAGE("Fail to get stn dgi", dgi);
-    dgi->DtGet(val);
-    CPPUNIT_ASSERT_MESSAGE("Wrong final state valud", val.mData == 4);
+    CPPUNIT_ASSERT_MESSAGE("St1 failed", getStateDstr("Launcher.Ds1.St1") == "SI 4");
 
     delete mEnv;
-
-
 }
 
 
@@ -324,45 +275,30 @@ void Ut_des::test_des_ifr_inval_1()
 
     const string specn("ut_des_if_inval_1");
     string ext = "chs";
-    string spec = specn + string(".") + "chs";
-    string log = specn + "_" + ext + ".log";
-    mEnv = new Env(spec, log);
-    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv);
-    //mEnv->ImpsMgr()->ResetImportsPaths();
-    //mEnv->ImpsMgr()->AddImportsPaths("../modules");
-    mEnv->constructSystem();
-    MNode* root = mEnv->Root();
+    MNode* root = constructSystem(specn);
     MElem* eroot = root ? root->lIf(eroot) : nullptr;
     CPPUNIT_ASSERT_MESSAGE("Fail to get root", eroot);
-    GUri ruri;
-    root->getUri(ruri);
-    string ruris = ruri.toString();
+
     root->dump(Ifu::EDM_Base | Ifu::EDM_Comps | Ifu::EDM_Recursive,0);
     // Save root chromoe
     eroot->Chromos().Save(specn + "_saved." + ext);
     // Run 
     bool res = mEnv->RunSystem(2);
     CPPUNIT_ASSERT_MESSAGE("Failed running system", eroot);
+
     // Connect St1 to Add2.Inp and check the connection works
     MChromo* chr = mEnv->provider()->createChromo();
     chr->SetFromSpec("e : Elem { Add2.Inp ~ St1; }");
     MNode* ds1 = root->getNode("Launcher.Ds1");
-    CPPUNIT_ASSERT_MESSAGE("Fail to get da1", ds1);
+    CPPUNIT_ASSERT_MESSAGE("Fail to get ds1", ds1);
     cout << endl << "Connecting Add2.Inp ~ St1" << endl;
     mEnv->Logger()->Write(EInfo, nullptr, "=== Connecting Add2.Inp ~ St1 ===");
     ds1->mutate(chr->Root(), false, MutCtx(), true);
     delete chr;
+
     res = mEnv->RunSystem(2);
     // Verify the state
-    MNode* stn = root->getNode("Launcher.Ds1.St2");
-    CPPUNIT_ASSERT_MESSAGE("Fail to get stn", stn);
-    MDVarGet* vg = stn->lIf(vg);
-    CPPUNIT_ASSERT_MESSAGE("Fail to get stn vg", vg);
-    MDtGet<Sdata<int>>* dgi = vg->GetDObj(dgi);
-    CPPUNIT_ASSERT_MESSAGE("Fail to get stn dgi", dgi);
-    Sdata<int> val;
-    dgi->DtGet(val);
-    CPPUNIT_ASSERT_MESSAGE("Wrong final state valud", val.mData == 20);
+    CPPUNIT_ASSERT_MESSAGE("St1 failed", getStateDstr("Launcher.Ds1.St2") == "SI 20");
 
     delete mEnv;
 }
@@ -375,16 +311,13 @@ void Ut_des::test_des_asr_1()
 
     const string specn("ut_des_asr_1");
     string ext = "chs";
-    string spec = specn + string(".") + "chs";
-    string log = specn + "_" + ext + ".log";
-    mEnv = new Env(spec, log);
-    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv);
-    mEnv->constructSystem();
-    MNode* root = mEnv->Root();
+    MNode* root = constructSystem(specn);
     MElem* eroot = root ? root->lIf(eroot) : nullptr;
     CPPUNIT_ASSERT_MESSAGE("Fail to get root", eroot);
+
     // Run 
     bool res = mEnv->RunSystem(2, 2);
+
     CPPUNIT_ASSERT_MESSAGE("Failed running system", eroot);
     MNode* ds1 = root->getNode("Launcher.Ds1");
     CPPUNIT_ASSERT_MESSAGE("Fail to get Ds1", ds1);
@@ -400,14 +333,9 @@ void Ut_des::test_des_asr_1()
     delete chr;
 
     res = mEnv->RunSystem(2, 2);
+
     // Verify the state
-    MDVarGet* vg = stn->lIf(vg);
-    CPPUNIT_ASSERT_MESSAGE("Fail to get stn vg", vg);
-    MDtGet<Sdata<int>>* dgi = vg->GetDObj(dgi);
-    CPPUNIT_ASSERT_MESSAGE("Fail to get stn dgi", dgi);
-    Sdata<int> val;
-    dgi->DtGet(val);
-    CPPUNIT_ASSERT_MESSAGE("Wrong final state valud", val.mData == 2);
+    CPPUNIT_ASSERT_MESSAGE("St1 failed", getStateDstr("Launcher.Ds1.St1") == "SI 2");
 
     delete mEnv;
 }
@@ -420,14 +348,10 @@ void Ut_des::test_des_asr_2()
 
     const string specn("ut_des_asr_2");
     string ext = "chs";
-    string spec = specn + string(".") + "chs";
-    string log = specn + "_" + ext + ".log";
-    mEnv = new Env(spec, log);
-    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv);
-    mEnv->constructSystem();
-    MNode* root = mEnv->Root();
+    MNode* root = constructSystem(specn);
     MElem* eroot = root ? root->lIf(eroot) : nullptr;
     CPPUNIT_ASSERT_MESSAGE("Fail to get root", eroot);
+
     // Run
     bool res = mEnv->RunSystem(2, 2);
     CPPUNIT_ASSERT_MESSAGE("Failed running system", eroot);
@@ -446,16 +370,31 @@ void Ut_des::test_des_asr_2()
 
     res = mEnv->RunSystem(2, 2);
     // Verify the state
-    MDVarGet* vg = stn->lIf(vg);
-    CPPUNIT_ASSERT_MESSAGE("Fail to get stn vg", vg);
-    MDtGet<Sdata<int>>* dgi = vg->GetDObj(dgi);
-    CPPUNIT_ASSERT_MESSAGE("Fail to get stn dgi", dgi);
-    Sdata<int> val;
-    dgi->DtGet(val);
-    CPPUNIT_ASSERT_MESSAGE("Wrong final state valud", val.mData == 2);
+    CPPUNIT_ASSERT_MESSAGE("St1 failed", getStateDstr("Launcher.Ds1.St1") == "SI 2");
 
     delete mEnv;
 }
+
+/** @brief Test of transitions type resolution #1
+ * */
+void Ut_des::test_des_tr_tres_1()
+{
+    cout << endl << "=== Test of transitions type resolution  ===" << endl;
+
+    MNode* root = constructSystem("ut_des_tr_tres_1");
+    MNode* launcher = root->getNode("Launcher");
+    CPPUNIT_ASSERT_MESSAGE("Failed getting launcher", launcher);
+
+    // Run
+    bool res = mEnv->RunSystem(15, 2);
+    CPPUNIT_ASSERT_MESSAGE("Failed running system", res);
+
+    // Verify
+    CPPUNIT_ASSERT_MESSAGE("S1 failed", getStateDstr("Launcher.S1") == "SB false");
+
+    delete mEnv;
+}
+
 
 
 /** @brief Test of ifr activation on DES reconfiguration
@@ -466,21 +405,21 @@ void Ut_des::test_des_utl_1()
 
     const string specn("ut_des_utl_1");
     string ext = "chs";
-    string spec = specn + string(".") + "chs";
-    string log = specn + "_" + ext + ".log";
-    mEnv = new Env(spec, log);
-    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv);
-    mEnv->constructSystem();
-    MNode* root = mEnv->Root();
+    MNode* root = constructSystem(specn);
     MElem* eroot = root ? root->lIf(eroot) : nullptr;
     CPPUNIT_ASSERT_MESSAGE("Fail to get root", eroot);
     // Run
-    bool res = mEnv->RunSystem(10, 2);
+    bool res = mEnv->RunSystem(1, 2);
     CPPUNIT_ASSERT_MESSAGE("Failed running system", eroot);
-    MNode* launcher = root->getNode("Launcher");
-    CPPUNIT_ASSERT_MESSAGE("Failed getting launcher", launcher);
-    MDesSyncable* ls = launcher->lIf(ls);
-    CPPUNIT_ASSERT_MESSAGE("Failed getting launcher syncable", ls);
+
+    // Verifying #1
+    CPPUNIT_ASSERT_MESSAGE("BChange_Dbg failed", getStateDstr("Launcher.BChange_Dbg") == "SB true");
+    CPPUNIT_ASSERT_MESSAGE("SDPulse failed", getStateDstr("Launcher.SDPulse") == "URI Hello.World");
+
+    res = mEnv->RunSystem(1, 2);
+    // Verifying #2
+    CPPUNIT_ASSERT_MESSAGE("SDPulse failed", getStateDstr("Launcher.SDPulse") == "URI <ERR>");
+    CPPUNIT_ASSERT_MESSAGE("VectIter.SIdx failed", getStateDstr("Launcher.VectIter.SIdx") == "SI 2");
 
     delete mEnv;
 }
@@ -497,11 +436,8 @@ void Ut_des::test_des_utl_2()
     bool res = mEnv->RunSystem(15, 2);
     CPPUNIT_ASSERT_MESSAGE("Failed running system", res);
 
-    MNode* maxn = launcher->getNode("Max");
-    CPPUNIT_ASSERT_MESSAGE("Failed getting Max node", maxn);
-    int maxval = 0;
-    res = GetSData(maxn, maxval);
-    CPPUNIT_ASSERT_MESSAGE("Wrong Max value", res && (maxval == 10));
+    // Verifying
+    CPPUNIT_ASSERT_MESSAGE("Max failed", getStateDstr("Launcher.Max") == "SI 10");
 
     delete mEnv;
 }
@@ -515,15 +451,10 @@ void Ut_des::test_des_1()
     CPPUNIT_ASSERT_MESSAGE("Failed getting launcher", launcher);
 
     // Run
-    // Verifying iface cache updata, ref ds_desopt_uic 
-    MNode* st1 = launcher->getNode("Ds1.St1");
-    MDVarGet* st1g = st1 ? st1->lIf(st1g) : nullptr;
-    CPPUNIT_ASSERT_MESSAGE("Failed getting St1 MDVarGet", st1g);
-    const Sdata<int>* sdata = st1g->DtGet(sdata);
-    auto* sdata2 = st1g->DtGet<Sdata<int>>();
-    CPPUNIT_ASSERT_MESSAGE("Failed getting St1 data on phase 1", sdata && sdata2);
+    // Verifying iface cache update, ref ds_desopt_uic 
     bool res = mEnv->RunSystem(5, 2);
-    CPPUNIT_ASSERT_MESSAGE("Wrong St1 data", sdata->mData == 5);
+    CPPUNIT_ASSERT_MESSAGE("Ds1.St1 failed on phase 1", getStateDstr("Launcher.Ds1.St1") == "SI 5");
+
     MNode* c1n = launcher->getNode("Ds1.Const_1");
     MVert* c1v = c1n->lIf(c1v);
     MNode* ainpn = launcher->getNode("Ds1.Add.Inp");
@@ -531,13 +462,13 @@ void Ut_des::test_des_1()
     c1v->disconnect(ainpv);
     ainpv->disconnect(c1v);
     res = mEnv->RunSystem(5, 2);
-    sdata = st1g->DtGet(sdata);
-    CPPUNIT_ASSERT_MESSAGE("Wrong St1 data on phase 2", sdata->mData == 5);
+
+    CPPUNIT_ASSERT_MESSAGE("Ds1.St1 failed on phase 2", getStateDstr("Launcher.Ds1.St1") == "SI 5");
     c1v->connect(ainpv);
     ainpv->connect(c1v);
+
     res = mEnv->RunSystem(5, 2);
-    sdata = st1g->DtGet(sdata);
-    CPPUNIT_ASSERT_MESSAGE("Wrong St1 data on phase 3", sdata->mData == 10);
+    CPPUNIT_ASSERT_MESSAGE("Ds1.St1 failed on phase 3", getStateDstr("Launcher.Ds1.St1") == "SI 10");
     // Benchmarking
     //bool res = mEnv->RunSystem(10000, 2);
     CPPUNIT_ASSERT_MESSAGE("Failed running system", res);

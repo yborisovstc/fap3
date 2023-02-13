@@ -17,19 +17,7 @@ class Func
     public:
 	class Host {
 	    public: 
-	    MDVarGet* GetInp(int aInpId, bool aOpt = false) {
-		MDVarGet* res = nullptr;
-		auto inps = GetInps(aInpId, MDVarGet::Type(), aOpt);
-		if (inps && !inps->empty()) {
-		    res = dynamic_cast<MDVarGet*>(inps->at(0));
-		}
-		return res;
-	    }
-	    // TODO is aIfName needed, it is always MDVarGet
-	    virtual MIfProv::TIfaces* GetInps(int aId, const string& aIfName, bool aOpt) = 0;
-	    virtual TInpIc* GetInps(int aInpId, bool aOpt = false) = 0;
-	    // TODO is it needed?
-	    virtual void OnFuncContentChanged() = 0;
+	    virtual TInpIc* GetInps(int aInpId) = 0;
 	    virtual string GetInpUri(int aId) const = 0;
 	    virtual void log(int aCtg, const string& aMsg) = 0;
 	    virtual string getHostUri() const = 0;
@@ -37,25 +25,28 @@ class Func
     public:
 	Func(Host& aHost): mHost(aHost) {};
 	virtual ~Func() {}
-	virtual MIface* getLif(const char *aName) { return nullptr;}
-	template<class T> MIface* checkLif(const char* aType) { return (strcmp(aType, T::Type()) == 0) ? dynamic_cast<T*>(this) : nullptr;}
 	virtual string IfaceGetId() const = 0;
 	virtual string GetInpExpType(int aId) const { return "<?>";};
 	virtual const DtBase* FDtGet() { return nullptr;}
-	/** @brief Helper. Gets value from MDVarGet */
-	template <typename T> static bool GetData(MDVarGet* aDvget, T& aData);
-	template <class T> inline const T* GetInpData(TInpIc*& aIc, int aInpId, const T* aData);
+	template <class T> inline const T* GetInpData(int aInpId, const T* aData);
     protected:
 	Host& mHost;
 };
 
-template <class T> inline const T* Func::GetInpData(TInpIc*& aIc, int aInpId, const T* aData)
+template <class T> inline const T* Func::GetInpData(int aInpId, const T* aData)
 {
-    if (!aIc) aIc = mHost.GetInps(aInpId);
-    auto* get = (aIc && aIc->size() == 1) ? aIc->at(0) : nullptr;
-    const T* data = get ? get->DtGet(data) : nullptr;
+    const T* data = nullptr;
+    TInpIc* Ic = mHost.GetInps(aInpId);
+    if (Ic) {
+	auto* get = (Ic->size() == 1) ? Ic->at(0) : nullptr;
+	data = get ? get->DtGet(data) : nullptr;
+	if (!data) {
+	    mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(aInpId) + "]");
+	}
+    }
     return data;
 }
+
 
 
 class FAddBase: public Func {
@@ -70,13 +61,11 @@ template <class T> class FAddDt: public FAddBase
 {
     public:
 	static Func* Create(Host* aHost, const string& aOutId);
-	FAddDt(Host& aHost): FAddBase(aHost), mInpIc(nullptr), mInpNIc(nullptr) {};
-	virtual string IfaceGetId() const { return string();}
+	FAddDt(Host& aHost): FAddBase(aHost) {};
+	virtual string IfaceGetId() const { return T::TypeSig();}
 	virtual string GetInpExpType(int aId) const;
 	virtual const DtBase* FDtGet() override;
 	T mRes;
-	TInpIc* mInpIc;
-	TInpIc* mInpNIc;
 };
 
 
@@ -86,9 +75,7 @@ template <class T> class FAddDt: public FAddBase
 class FMplBase: public Func {
     public:
 	enum { EInp = EInp1 };
-	FMplBase(Host& aHost): Func(aHost), mInpIc(nullptr) {};
-    protected:
-	TInpIc* mInpIc;
+	FMplBase(Host& aHost): Func(aHost) {};
 };
 
 /** @brief Multiplication, generic data
@@ -110,10 +97,7 @@ template <class T> class FMplDt: public FMplBase {
 class FDivBase: public Func {
     public:
 	enum { EInp = EInp1, EInp2 = EInp2 };
-	FDivBase(Host& aHost): Func(aHost), mInpIc(nullptr), mInp2Ic(nullptr) {};
-    protected:
-	TInpIc* mInpIc;
-	TInpIc* mInp2Ic;
+	FDivBase(Host& aHost): Func(aHost) {};
 };
 
 /** @brief Division, generic data
@@ -137,14 +121,12 @@ template <class T>
 class FApnd: public Func {
     public:
 	static Func* Create(Host* aHost, const string& aOutIid, const string& aInp1Id);
-	FApnd(Host& aHost): Func(aHost), mInp1Ic(nullptr), mInp2Ic(nullptr) {}
+	FApnd(Host& aHost): Func(aHost) {}
 	virtual string IfaceGetId() const { return T::TypeSig();}
 	virtual const DtBase* FDtGet() override;
 	virtual string GetInpExpType(int aId) const;
     protected:
 	T mRes;
-	TInpIc* mInp1Ic;
-	TInpIc* mInp2Ic;
 };
 
 
@@ -153,9 +135,7 @@ class FApnd: public Func {
 class FMinBase: public Func {
     public:
 	enum { EInp = Func::EInp1 };
-	FMinBase(Host& aHost): Func(aHost), mInpIc(nullptr) {};
-    protected:
-	TInpIc* mInpIc;
+	FMinBase(Host& aHost): Func(aHost) {};
 };
 
 /** @brief Getting minimum, generic data
@@ -179,9 +159,7 @@ template <class T> class FMinDt: public FMinBase
 class FMaxBase: public Func {
     public:
 	enum { EInp = Func::EInp1 };
-	FMaxBase(Host& aHost): Func(aHost), mInpIc(nullptr) {};
-    protected:
-	TInpIc* mInpIc;
+	FMaxBase(Host& aHost): Func(aHost) {};
 };
 
 /** @brief Getting maximum, generic data
@@ -206,16 +184,11 @@ class FCmpBase: public Func
     public:
 	enum TFType {ELt, ELe, EEq, ENeq, EGe, EGt};
     public:
-	FCmpBase(Host& aHost, TFType aFType): Func(aHost), mFType(aFType), mInpIc(nullptr), mInp2Ic(nullptr) {};
-	virtual ~FCmpBase();
+	FCmpBase(Host& aHost, TFType aFType): Func(aHost), mFType(aFType) {};
 	// From Func
 	virtual string IfaceGetId() const override;
-	// From MDtGet
-	virtual const DtBase* FDtGet() override { return nullptr;}
     protected:
 	TFType mFType;
-	TInpIc* mInpIc;
-	TInpIc* mInp2Ic;
 	Sdata<bool> mRes;
 };
 
@@ -241,12 +214,11 @@ class FSizeVect: public Func {
 	using TOutp = Sdata<int>;
     public:
 	static Func* Create(Host* aHost, const string& aOutIid, const string& aInp1Id);
-	FSizeVect(Host& aHost): Func(aHost), mInpIc(nullptr) {};
+	FSizeVect(Host& aHost): Func(aHost) {};
 	virtual string IfaceGetId() const override { return TOutp::TypeSig();}
 	virtual const DtBase* FDtGet() override;
 	virtual string GetInpExpType(int aId) const override;
     protected:
-	TInpIc* mInpIc;
 	TOutp mRes;
 };
 
@@ -255,10 +227,7 @@ class FSizeVect: public Func {
 class FAtBase: public Func
 {
     public:
-	FAtBase(Host& aHost): Func(aHost), mInpIc(nullptr), mInp2Ic(nullptr) {};
-    protected:
-	TInpIc* mInpIc;
-	TInpIc* mInp2Ic;
+	FAtBase(Host& aHost): Func(aHost) {};
 };
 
 
@@ -285,7 +254,7 @@ class FAtgVect: public FAtBase {
     public:
 	static Func* Create(Host* aHost, const string& aOutIid, const string& aInp1Id);
 	FAtgVect(Host& aHost): FAtBase(aHost) {};
-	virtual string IfaceGetId() const override { return MDtGet<T>::Type();}
+	virtual string IfaceGetId() const override { return T::TypeSig();}
 	virtual const DtBase* FDtGet() override;
 	virtual string GetInpExpType(int aId) const override;
     protected:
@@ -300,7 +269,7 @@ class FAtgPair: public FAtBase {
     public:
 	static Func* Create(Host* aHost, const string& aOutIid, const string& aInp1Id);
 	FAtgPair(Host& aHost): FAtBase(aHost)  {};
-	virtual string IfaceGetId() const override { return MDtGet<T>::Type();}
+	virtual string IfaceGetId() const override { return T::TypeSig();}
 	virtual const DtBase* FDtGet() override;
 	virtual string GetInpExpType(int aId) const override;
     protected:
@@ -324,12 +293,10 @@ class FTail: public FTailBase {
     public:
         using TData = T;
     public:
-	FTail(Host& aHost): FTailBase(aHost), mInpIc(nullptr), mInpHeadIc(nullptr) {};
+	FTail(Host& aHost): FTailBase(aHost) {};
 	virtual string GetInpExpType(int aId) const override { return TData::TypeSig(); }
 	virtual string IfaceGetId() const { return TData::TypeSig();}
     public:
-	TInpIc* mInpIc;
-	TInpIc* mInpHeadIc;
 	TData mRes;
 };
 
@@ -358,12 +325,10 @@ class FHead: public FHeadBase {
     public:
 	using TData = T;
     public:
-	FHead(Host& aHost): FHeadBase(aHost), mInpIc(nullptr), mInpTailIc(nullptr) {};
+	FHead(Host& aHost): FHeadBase(aHost) {};
 	virtual string GetInpExpType(int aId) const override { return TData::TypeSig(); }
 	virtual string IfaceGetId() const { return TData::TypeSig();}
     public:
-	TInpIc* mInpIc;
-	TInpIc* mInpTailIc;
 	TData mRes;
 };
 
@@ -395,12 +360,10 @@ class FTailn: public FTailnBase {
 	using TData = T;
 	using TNum = Sdata<int>;
     public:
-	FTailn(Host& aHost): FTailnBase(aHost), mInpIc(nullptr), mInpNumIc(nullptr) {};
+	FTailn(Host& aHost): FTailnBase(aHost) {};
 	virtual string GetInpExpType(int aId) const override { return TData::TypeSig(); }
 	virtual string IfaceGetId() const { return TData::TypeSig();}
     public:
-	TInpIc* mInpIc;
-	TInpIc* mInpNumIc;
 	TData mRes;
 };
 
@@ -424,13 +387,11 @@ class FPair: public Func {
 	using TInpData = T;
     public:
 	static Func* Create(Host* aHost, const string& aOutIid, const string& aInp1Id);
-	FPair(Host& aHost): Func(aHost), mInp1Ic(nullptr), mInp2Ic(nullptr) {}
+	FPair(Host& aHost): Func(aHost) {}
 	virtual string IfaceGetId() const override { return TData::TypeSig();}
 	virtual const DtBase* FDtGet() override;
 	virtual string GetInpExpType(int aId) const override { return TInpData::TypeSig();}
     protected:
-	TInpIc* mInp1Ic;
-	TInpIc* mInp2Ic;
 	TData mRes;
 };
 

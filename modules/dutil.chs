@@ -141,9 +141,8 @@ DesUtils : Elem {
                 = "SI 0"
                 Debug.LogLevel = "Dbg"
             }
-            Inp ~ : TrSwitchBool @  {
-                Inp1 ~ : TrSwitchBool @  {
-                    _@ < Debug.LogLevel = "Dbg"
+            Inp ~ Sw1 : TrSwitchBool @  {
+                Inp1 ~ Sw2 : TrSwitchBool @  {
                     Sel ~ CidxAnd1 : TrAndVar @  {
                         Inp ~ Cmp_Gt : TrCmpVar @  {
                             Inp ~ : TrAddVar @  {

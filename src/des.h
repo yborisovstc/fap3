@@ -13,6 +13,7 @@
 #include "syst.h"
 #include "content.h"
 
+
 /** @brief State Connection point
  * */
 class CpState: public ConnPointu
@@ -104,7 +105,6 @@ class CpStateMnodeOutp: public CpState
 class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesInpObserver, public MDVarGet, public Cnt::Host
 {
     public:
-	using TInpIc = vector<MDVarGet*>;
 	/** @brief Pseudo content */
 	class SCont : public MContent {
 	    public:
@@ -179,7 +179,6 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 	static const string KCont_Value;
     protected:
 	MDVarGet* GetInp();
-	TInpIc* GetInps();
 	bool updateWithContValue(const string& aCnt);
     protected:
 	/** @brief Notifies dependencies of input updated */
@@ -195,12 +194,12 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 	void refreshInpObsIfr();
 	DtBase* CreateData(const string& aSrc);
     protected:
-	const DtBase* mPdata;   //<! Preparing (updating) phase data, not owned
+	DtBase* mPdata;   //<! Preparing (updating) phase data
 	DtBase* mCdata;   //<! Confirming phase data
 	SContValue mValue = SContValue(*this, KCont_Value);
 	bool mUpdNotified;  //<! Sign of that State notified observers on Update
 	bool mActNotified;  //<! Sign of that State notified observers on Activation
-	TInpIc* mInpIc;
+	MIfProv* mInpProv;
 	bool mInpValid;
 };
 

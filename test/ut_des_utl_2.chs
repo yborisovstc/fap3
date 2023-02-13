@@ -5,6 +5,7 @@ MyRoot : Elem {
     # "So it completes iteration as soon as inputs get stable."
     + DesUtils
     Launcher : DesLauncher {
+        Debug.LogLevel = "Dbg"
         S1 : State {
             = "SI 3"
         }
