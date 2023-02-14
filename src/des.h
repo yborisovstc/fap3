@@ -350,38 +350,37 @@ class DesAs: public DesLauncher
 
 
 // Helpers
+
 template <typename T> bool GetSData(MNode* aDvget, T& aData)
 {
     bool res = false;
     MUnit* vgetu = aDvget->lIf(vgetu);
     MDVarGet* vget = vgetu ? vgetu->getSif(vget) : nullptr;
     if (vget) {
-	MDtGet<Sdata<T>>* gsd = vget->GetDObj(gsd);
-	if (gsd) {
-	    Sdata<T> st;
-	    gsd->DtGet(st);
-	    aData = st.mData;
-	    res = true;
+	const Sdata<T>* data = vget->DtGet(data);
+	if (data) {
+	    aData = data->mData;
+	    res = data->IsValid();
 	}
     }
     return res;
 }
 
+// TODO get rid of returned data
 template <typename T> bool GetGData(MNode* aDvget, T& aData)
 {
     bool res = false;
     MUnit* vgetu = aDvget->lIf(vgetu);
     MDVarGet* vget = vgetu->getSif(vget);
     if (vget) {
-	MDtGet<T>* gsd = vget->GetDObj(gsd);
-	if (gsd) {
-	    gsd->DtGet(aData);
-	    res = true;
+	const T* data = vget->DtGet(data);
+	if (data) {
+	    aData = *data;
+	    res = data->IsValid();
 	}
     }
     return res;
 }
-
 
 ///// Embedded DES elements support
 
@@ -469,6 +468,7 @@ template <typename T> void DesEIbt<T>::confirm()
 /** @brief Input buffered Sdata based
  * @param  T  data type 
  * */
+// TODO to migrate to base data buffered input 
 template <typename T> class DesEIbs: public DesEIbt<T>
 {
     public:
@@ -525,32 +525,19 @@ class DesEOstb: public MDVarGet {
 
 /** @brief Output state with Sdata
  * */
-template <typename T> class DesEOsts: public DesEOstb, public MDtGet<Sdata<T>> {
+template <typename T> class DesEOsts: public DesEOstb {
     public:
 	using Tdata = Sdata<T>;
 	DesEOsts(MNode* aHost, const string& aCpUri): DesEOstb(aHost, aCpUri) {}
 	// From MDVarGet
-	virtual string VarGetIfid() const override {return MDtGet<Tdata>::Type();}
-	virtual MIface* DoGetDObj(const char *aName) override;
-	// From MDtGet
-	virtual string MDtGet_Uid() const {return MDtGet<Tdata>::Type();}
-	virtual void DtGet(Sdata<T>& aData) override { aData = mData;}
+	virtual string VarGetIfid() const override {return Tdata::TypeSig();}
+	virtual MIface* DoGetDObj(const char *aName) override { return nullptr;}
+	virtual const DtBase* VDtGet(const string& aType) override { return &mData;}
 	// Local
 	void updateData(const T& aData);
     public:
 	Tdata mData;
 };
-
-template <typename T>
-MIface* DesEOsts<T>::DoGetDObj(const char *aName)
-{
-    MIface* res = NULL;
-    string tt = MDtGet<Tdata>::Type();
-    if (tt.compare(aName) == 0) {
-	res = dynamic_cast<MDtGet<Tdata>*>(this);
-    }
-    return res;
-}
 
 template <typename T>
 void DesEOsts<T>::updateData(const T& aData)
@@ -565,18 +552,14 @@ void DesEOsts<T>::updateData(const T& aData)
 
 /** @brief Output state with generic data
  * */
-template <typename T> class DesEOst: public DesEOstb, public MDtGet<T> {
+template <typename T> class DesEOst: public DesEOstb {
     public:
 	using Tdata = T;
-	using TDget = MDtGet<Tdata>;
 	DesEOst(MNode* aHost, const string& aCpUri): DesEOstb(aHost, aCpUri) {}
 	// From MDVarGet
-	virtual string VarGetIfid() const override {return TDget::Type();}
-	virtual MIface* DoGetDObj(const char *aName) override {
-	    return (string(TDget::Type()).compare(aName) == 0) ? dynamic_cast<TDget*>(this) : nullptr; }
-	// From MDtGet
-	virtual string MDtGet_Uid() const {return TDget::Type();}
-	virtual void DtGet(Tdata& aData) override { aData = mData; }
+	virtual string VarGetIfid() const override {return Tdata::TypeSig();}
+	virtual MIface* DoGetDObj(const char *aName) override { return nullptr;}
+	virtual const DtBase* VDtGet(const string& aType) override { return &mData;}
 	// Local
 	void updateData(const T& aData);
 	void updateInvalid();

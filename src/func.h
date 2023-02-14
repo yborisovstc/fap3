@@ -206,7 +206,7 @@ template <class T> class FCmp: public FCmpBase
  * @tparam T type of vector element
  * */
 // TODO YB Weak design. Size doesn't depend on container elem type, so better to have this class w/o template.
-// But the current design doesn't allow to do it. HDt returns the exact MDtGet iface of owned data.
+// But the current design doesn't allow to do it.
 // To consider the design improvement
 template <class T>
 class FSizeVect: public Func {

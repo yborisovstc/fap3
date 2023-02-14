@@ -18,6 +18,7 @@
  * */
 // TODO There is design weakness here. The relation ADP - managed_agent is implicit and one way only. So removing managed agent
 // will cause wrond ADB behaviour.
+// TODO obsolete, to be replaced by composite adapter
 class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesInpObserver, public MAgent, public MDVarGet, public MObserver
 {
     public:

@@ -78,81 +78,40 @@ class SdoBase : public CpStateOutp, public MDVarGet, public MObserver
 	MNode* mSue; /*!< System under exploring */
 };
 
-/** @brief SDO providing Sdata
- * */
-template <typename T> class Sdo : public SdoBase, public MDtGet<Sdata<T>>
-{
-    public:
-	using Stype = Sdata<T>;
-    public:
-	Sdo(const string &aType, const string& aName = string(), MEnv* aEnv = NULL): SdoBase(aType, aName, aEnv) {}
-	// From MDVarGet
-	virtual MIface* DoGetDObj(const char *aName) override;
-    	virtual string VarGetIfid() const override {return MDtGet<Stype>::Type();}
-	// From MDtGet
-	virtual void MDtGet_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
-    protected:
-	T mRes;
-};
-
-template <typename T> MIface* Sdo<T>::DoGetDObj(const char *aName)
-{
-    MIface* res = NULL;
-    if (strcmp(aName, MDtGet<Stype>::Type()) == 0) {
-	res = dynamic_cast<MDtGet<Stype>*>(this);
-    }
-    return res;
-}
-
 /** @brief SDO providing generic data
  * */
-template <typename T> class Sdog : public SdoBase, public MDtGet<T>
+template <typename T> class Sdog : public SdoBase
 {
     public:
 	using Stype = T;
     public:
 	Sdog(const string &aType, const string& aName = string(), MEnv* aEnv = NULL): SdoBase(aType, aName, aEnv) {}
 	// From MDVarGet
-	virtual MIface* DoGetDObj(const char *aName) override;
-    	virtual string VarGetIfid() const override {return MDtGet<Stype>::Type();}
-	// From MDtGet
-	virtual void MDtGet_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+	virtual const DtBase* VDtGet(const string& aType) override { return &mRes;}
+	virtual MIface* DoGetDObj(const char *aName) override {return nullptr;}
+    	virtual string VarGetIfid() const override {return T::TypeSig();}
     protected:
 	T mRes;
 };
 
-template <typename T> MIface* Sdog<T>::DoGetDObj(const char *aName)
-{
-    MIface* res = NULL;
-    if (strcmp(aName, MDtGet<Stype>::Type()) == 0) {
-	res = dynamic_cast<MDtGet<Stype>*>(this);
-    }
-    return res;
-}
-
-
 /** @brief SDO "Name"
  * */
-class SdoName : public Sdo<string>
+class SdoName : public Sdog<Sdata<string>>
 {
     public:
 	static const char* Type() { return "SdoName";};
 	SdoName(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
-    public:
-	// From MDtGet
-	virtual void DtGet(Stype& aData) override;
+	virtual const DtBase* VDtGet(const string& aType) override;
 };
 
 /** @brief SDO "Parent"
  * */
-class SdoParent : public Sdo<string>
+class SdoParent : public Sdog<Sdata<string>>
 {
     public:
 	static const char* Type() { return "SdoParent";};
 	SdoParent(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
-    public:
-	// From MDtGet
-	virtual void DtGet(Stype& aData) override;
+	virtual const DtBase* VDtGet(const string& aType) override;
 };
 
 /** @brief SDO "Comp Owner"
@@ -162,7 +121,7 @@ class SdoCompOwner : public Sdog<DGuri>
     public:
 	static const char* Type() { return "SdoCompOwner";};
 	SdoCompOwner(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
-	virtual void DtGet(Stype& aData) override;
+	virtual const DtBase* VDtGet(const string& aType) override;
     protected:
 	Inpg<DGuri> mInpCompUri;  //<! Comp URI
 };
@@ -174,7 +133,7 @@ class SdoCompComp : public Sdog<DGuri>
     public:
 	static const char* Type() { return "SdoCompComp";};
 	SdoCompComp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
-	virtual void DtGet(Stype& aData) override;
+	virtual const DtBase* VDtGet(const string& aType) override;
     protected:
 	Inpg<DGuri> mInpCompUri;  //<! Comp URI
 	Inpg<DGuri> mInpCompCompUri;  //<! Comp comp URI
@@ -186,28 +145,24 @@ class SdoCompComp : public Sdog<DGuri>
 
 /** @brief SDO "Component exists"
  * */
-class SdoComp : public Sdo<bool>
+class SdoComp : public Sdog<Sdata<bool>>
 {
     public:
 	static const char* Type() { return "SdoComp";};
 	SdoComp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
-    public:
-	// From MDtGet
-	virtual void DtGet(Stype& aData) override;
+	virtual const DtBase* VDtGet(const string& aType) override;
     protected:
 	Inp<string> mInpName;
 };
 
 /** @brief SDO "Component count"
  * */
-class SdoCompsCount : public Sdo<int>
+class SdoCompsCount : public Sdog<Sdata<int>>
 {
     public:
 	static const char* Type() { return "SdoCompsCount";};
 	SdoCompsCount(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
-    public:
-	// From MDtGet
-	virtual void DtGet(Stype& aData) override;
+	virtual const DtBase* VDtGet(const string& aType) override;
 };
 
 /** @brief SDO "Component count"
@@ -217,23 +172,19 @@ class SdoCompsNames : public Sdog<Vector<string>>
     public:
 	static const char* Type() { return "SdoCompsNames";};
 	SdoCompsNames(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
-    public:
-	// From MDtGet
-	virtual void DtGet(Stype& aData) override;
+	virtual const DtBase* VDtGet(const string& aType) override;
 };
 
 
 
 /** @brief SDO "Vertexes are connected"
  * */
-class SdoConn : public Sdo<bool>
+class SdoConn : public Sdog<Sdata<bool>>
 {
     public:
 	static const char* Type() { return "SdoConn";};
 	SdoConn(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
-    public:
-	// From MDtGet
-	virtual void DtGet(Stype& aData) override;
+	virtual const DtBase* VDtGet(const string& aType) override;
     protected:
 	Inp<string> mInpVp;
 	Inp<string> mInpVq;
@@ -241,14 +192,12 @@ class SdoConn : public Sdo<bool>
 
 /** @brief SDO "Vertex pairs count"
  * */
-class SdoPairsCount : public Sdo<int>
+class SdoPairsCount : public Sdog<Sdata<int>>
 {
     public:
 	static const char* Type() { return "SdoPairsCount";};
 	SdoPairsCount(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
-    public:
-	// From MDtGet
-	virtual void DtGet(Stype& aData) override;
+	virtual const DtBase* VDtGet(const string& aType) override;
     protected:
 	Inp<string> mInpVert;  //<! Vertex URI
 };
@@ -261,7 +210,7 @@ class SdoPair : public Sdog<DGuri>
     public:
 	static const char* Type() { return "SdoPair";};
 	SdoPair(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
-	virtual void DtGet(Stype& aData) override;
+	virtual const DtBase* VDtGet(const string& aType) override;
 	virtual void onObsChanged(MObservable* aObl) override;
     protected:
 	Inp<string> mInpTarg;  //<! Target Vertex URI
@@ -277,7 +226,7 @@ class SdoTcPair : public Sdog<DGuri>
     public:
 	static const char* Type() { return "SdoTcPair";};
 	SdoTcPair(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
-	virtual void DtGet(Stype& aData) override;
+	virtual const DtBase* VDtGet(const string& aType) override;
     protected:
 	Inpg<DGuri> mInpTarg;  //<! Target URI
 	Inpg<DGuri> mInpTargComp;  //<! Target comp vertex URI relative to target
@@ -291,9 +240,7 @@ class SdoPairs : public Sdog<Vector<DGuri>>
     public:
 	static const char* Type() { return "SdoPairs";};
 	SdoPairs(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
-    public:
-	// From MDtGet
-	virtual void DtGet(Stype& aData) override;
+	virtual const DtBase* VDtGet(const string& aType) override;
 };
 
 /** @brief SDO "Target Pairs"
@@ -303,9 +250,7 @@ class SdoTPairs : public Sdog<Vector<DGuri>>
     public:
 	static const char* Type() { return "SdoTPairs";};
 	SdoTPairs(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
-    public:
-	// From MDtGet
-	virtual void DtGet(Stype& aData) override;
+	virtual const DtBase* VDtGet(const string& aType) override;
     protected:
 	Inpg<DGuri> mInpTarg;  //<! Target URI
 };
@@ -317,9 +262,7 @@ class SdoEdges : public Sdog<Vector<Pair<DGuri>>>
     public:
 	static const char* Type() { return "SdoEdges";};
 	SdoEdges(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
-    public:
-	// From MDtGet
-	virtual void DtGet(Stype& aData) override;
+	virtual const DtBase* VDtGet(const string& aType) override;
 };
 
 

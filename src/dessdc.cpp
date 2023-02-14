@@ -109,19 +109,17 @@ bool ASdc::SdcIapEnb::updateData()
     if (ifaces && ifaces->size() >= inpv->pairsCount()) {
 	bool first = true;
 	if (ifaces) for (auto ifc : *ifaces) {
-	    MDVarGet* vget = dynamic_cast<MDVarGet*>(ifc);
-	    MDtGet<Sdata<bool>>* gsd = vget->GetDObj(gsd);
-	    if (gsd) {
-		Sdata<bool> st;
-		gsd->DtGet(st);
-		if (first) mUdt = st;
+	    MDVarGet* vget = reinterpret_cast<MDVarGet*>(ifc);
+	    const Sdata<bool>* st = vget->DtGet(st);
+	    if (st) {
+		if (first) mUdt = *st;
 		else {
-		    mUdt.mData &= st.mData;
-		    mUdt.mValid &= st.mValid;
+		    mUdt.mData &= st->mData;
+		    mUdt.mValid &= st->mValid;
 		}
 		first = false;
 		res = true;
-		if (!st.IsValid()) {
+		if (!st->IsValid()) {
 		    break;
 		}
 	    }
@@ -447,11 +445,14 @@ template<typename T> bool ASdc::GetInpData(const string aInpUri, T& aRes)
     bool res = false;
     MNode* inp = getNode(aInpUri);
     if (inp) {
+	/*
 	T data;
 	res =  GetGData(inp, data);
 	if (res) {
 	    aRes = data;
 	}
+	*/
+	GetGData(inp, aRes);
     } else {
 	Log(TLog(EDbg, this) + "Cannot get input [" + aInpUri + "]");
     }

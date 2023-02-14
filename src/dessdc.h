@@ -153,17 +153,15 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 
 	/** @brief Parameter access point, using Sdata
 	 * */
-	template <typename T> class SdcPap: public SdcPapb, public MDtGet<T> {
+	template <typename T> class SdcPap: public SdcPapb {
 	    public:
 		template<typename P> using TGetData = std::function<void (P&)>;
 	    public:
 		SdcPap(const string& aName, ASdc* aHost, const string& aCpUri, TGetData<T> aGetData): SdcPapb(aName, aHost, aCpUri), mGetData(aGetData) {}
 		// From MDVarGet
-		virtual string VarGetIfid() const override {return MDtGet<T>::Type();}
-		virtual MIface* DoGetDObj(const char *aName) override;
-		// From MDtGet
-		virtual string MDtGet_Uid() const {return MDtGet<T>::Type();}
-		virtual void DtGet(T& aData) override { mGetData(aData);}
+		virtual string VarGetIfid() const override {return T::TypeSig();}
+		virtual MIface* DoGetDObj(const char *aName) override { return nullptr;}
+		virtual const DtBase* VDtGet(const string& aType) override { mGetData(mData); return &mData;}
 	    public:
 		TGetData<T> mGetData;
 		T mData;
@@ -171,15 +169,13 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 
 	/** @brief Parameter access point, using cached Sdata
 	 * */
-	template <typename T> class SdcPapc: public SdcPapb, public MDtGet<T> {
+	template <typename T> class SdcPapc: public SdcPapb {
 	    public:
 		SdcPapc(const string& aName, ASdc* aHost, const string& aCpUri): SdcPapb(aName, aHost, aCpUri) {}
 		// From MDVarGet
-		virtual string VarGetIfid() const override {return MDtGet<T>::Type();}
-		virtual MIface* DoGetDObj(const char *aName) override;
-		// From MDtGet
-		virtual string MDtGet_Uid() const {return MDtGet<T>::Type();}
-		virtual void DtGet(T& aData) override { aData = mData; }
+		virtual string VarGetIfid() const override {return T::TypeSig();}
+		virtual MIface* DoGetDObj(const char *aName) override { return nullptr;}
+		virtual const DtBase* VDtGet(const string& aType) override { return &mData;}
 		// Local
 		void updateData(const T& aData);
 	    public:
@@ -316,27 +312,6 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 	bool mCdone;               /*!<  Sign that controlling was completed, ref ds_dcs_sdc_dsgn_cc */
 };
 
-template <typename T> MIface* ASdc::SdcPap<T>::DoGetDObj(const char *aName)
-{
-    MIface* res = NULL;
-    string tt = MDtGet<T>::Type();
-    if (tt.compare(aName) == 0) {
-	res = dynamic_cast<MDtGet<T>*>(this);
-    }
-    return res;
-}
-
-template <typename T>
-MIface* ASdc::SdcPapc<T>::DoGetDObj(const char *aName)
-{
-    MIface* res = NULL;
-    string tt = MDtGet<T>::Type();
-    if (tt.compare(aName) == 0) {
-	res = dynamic_cast<MDtGet<T>*>(this);
-    }
-    return res;
-}
-
 template <typename T>
 void ASdc::SdcPapc<T>::updateData(const T& aData)
 {
@@ -382,6 +357,7 @@ class ASdcComp : public ASdc
     protected:
 	ASdc::SdcIap<Sdata<string>> mIapName; /*!< "Name" input access point */
 	ASdc::SdcIap<Sdata<string>> mIapParent; /*!< "Parent" input access point */
+	// TODO not used
 	ASdc::SdcPapc<Sdata<string>> mOapName; /*!< Comps Name parameter point, Name pipelined, ref ds_dcs_sdc_dsgn_idp */
 };
 
@@ -401,6 +377,7 @@ class ASdcRm : public ASdc
 	virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override;
     protected:
 	ASdc::SdcIap<Sdata<string>> mIapName; /*!< "Name" input access point */
+	// TODO not used
 	ASdc::SdcPapc<Sdata<string>> mOapName; /*!< Comps Name parameter point, Name pipelined, ref ds_dcs_sdc_dsgn_idp */
 };
 

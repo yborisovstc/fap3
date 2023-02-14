@@ -103,30 +103,34 @@ void SdoBase::NotifyInpsUpdated()
 
 ///  SDO "Name"
 
-SdoName::SdoName(const string &aType, const string& aName, MEnv* aEnv): Sdo<string>(aType, aName, aEnv) { }
+SdoName::SdoName(const string &aType, const string& aName, MEnv* aEnv): Sdog<Sdata<string>>(aType, aName, aEnv) { }
 
-void SdoName::DtGet(Stype& aData)
+const DtBase* SdoName::VDtGet(const string& aType)
 {
+    mRes.mValid = false;
     if (!mSue)  {
 	Log(TLog(EWarn, this) + "Owner is not explorable");
     } else {
-	aData.mData = mSue->name();
-	aData.mValid = true;
+	mRes.mData = mSue->name();
+	mRes.mValid = true;
     }
+    return &mRes;
 }
 
 ///  SDO "Parent"
 
-SdoParent::SdoParent(const string &aType, const string& aName, MEnv* aEnv): Sdo<string>(aType, aName, aEnv) { }
+SdoParent::SdoParent(const string &aType, const string& aName, MEnv* aEnv): Sdog<Sdata<string>>(aType, aName, aEnv) { }
 
-void SdoParent::DtGet(Stype& aData)
+const DtBase* SdoParent::VDtGet(const string& aType)
 {
+    mRes.mValid = false;
     if (!mSue)  {
 	Log(TLog(EWarn, this) + "Owner is not explorable");
     } else {
-	aData.mData = mSue->parentName();
-	aData.mValid = true;
+	mRes.mData = mSue->parentName();
+	mRes.mValid = true;
     }
+    return &mRes;
 }
 
 
@@ -134,13 +138,14 @@ void SdoParent::DtGet(Stype& aData)
 
 ///  SDO "Component exists"
 
-SdoComp::SdoComp(const string &aType, const string& aName, MEnv* aEnv): Sdo<bool>(aType, aName, aEnv),
+SdoComp::SdoComp(const string &aType, const string& aName, MEnv* aEnv): Sdog<Sdata<bool>>(aType, aName, aEnv),
     mInpName(this, "Name")
 {
 }
 
-void SdoComp::DtGet(Stype& aData)
+const DtBase* SdoComp::VDtGet(const string& aType)
 {
+    mRes.mValid = false;
     string name;
     bool res = mInpName.getData(name);
     if (!res) {
@@ -148,19 +153,21 @@ void SdoComp::DtGet(Stype& aData)
     } else if (!mSue)  {
 	Log(TLog(EWarn, this) + "Owner is not explorable");
     } else {
-	aData.mData = mSue->getNode(name);
-	aData.mValid = true;
+	mRes.mData = mSue->getNode(name);
+	mRes.mValid = true;
     }
+    return &mRes;
 }
 
 
 ///  SDO "Components count"
 
-SdoCompsCount::SdoCompsCount(const string &aType, const string& aName, MEnv* aEnv): Sdo<int>(aType, aName, aEnv) { }
+SdoCompsCount::SdoCompsCount(const string &aType, const string& aName, MEnv* aEnv): Sdog<Sdata<int>>(aType, aName, aEnv) { }
 
-void SdoCompsCount::DtGet(Stype& aData)
+const DtBase* SdoCompsCount::VDtGet(const string& aType)
 {
     string name;
+    mRes.mValid = false;
     if (!mSue)  {
 	Log(TLog(EWarn, this) + "Owner is not explorable");
     } else {
@@ -171,18 +178,20 @@ void SdoCompsCount::DtGet(Stype& aData)
 	    count++;
 	    owdCp = mSue->owner()->nextPair(owdCp);
 	}
-	aData.mData = count;
-	aData.mValid = true;
+	mRes.mData = count;
+	mRes.mValid = true;
     }
+    return &mRes;
 }
 
 ///  SDO "Components names"
 
 SdoCompsNames::SdoCompsNames(const string &aType, const string& aName, MEnv* aEnv): Sdog<Vector<string>>(aType, aName, aEnv) { }
 
-void SdoCompsNames::DtGet(Stype& aData)
+const DtBase* SdoCompsNames::VDtGet(const string& aType)
 {
     string name;
+    mRes.mValid = false;
     if (!mSue)  {
 	Log(TLog(EWarn, this) + "Owner is not explorable");
     } else {
@@ -193,9 +202,10 @@ void SdoCompsNames::DtGet(Stype& aData)
 	    cnames.mData.push_back(osn->name());
 	    owdCp = mSue->owner()->nextPair(owdCp);
 	}
-	aData.mData = cnames.mData;
-	aData.mValid = true;
+	mRes.mData = cnames.mData;
+	mRes.mValid = true;
     }
+    return &mRes;
 }
 
 ///  SDO "Component owner"
@@ -205,9 +215,10 @@ SdoCompOwner::SdoCompOwner(const string &aType, const string& aName, MEnv* aEnv)
 {
 }
 
-void SdoCompOwner::DtGet(Stype& aData)
+const DtBase* SdoCompOwner::VDtGet(const string& aType)
 {
     DGuri curi;
+    mRes.mValid = false;
     bool res = mInpCompUri.getData(curi);
     if (!res) {
 	Log(TLog(EErr, this) + "Failed getting input [" + mInpCompUri.mName + "] data");
@@ -221,8 +232,8 @@ void SdoCompOwner::DtGet(Stype& aData)
 	    GUri ownerUri = curi.mData.head(curi.mData.size() - 1);
 	    MNode* owner = mSue->getNode(ownerUri);
 	    if (owner) {
-		aData.mData = ownerUri;
-		aData.mValid = true;
+		mRes.mData = ownerUri;
+		mRes.mValid = true;
 	    } else {
 		Log(TLog(EErr, this) + "Couldn't get component [" + mInpCompUri.mName + "] owner");
 	    }
@@ -230,6 +241,7 @@ void SdoCompOwner::DtGet(Stype& aData)
 	    Log(TLog(EErr, this) + "Couldn't get component [" + mInpCompUri.mName + "]");
 	}
     }
+    return &mRes;
 }
 
 
@@ -240,9 +252,10 @@ SdoCompComp::SdoCompComp(const string &aType, const string& aName, MEnv* aEnv): 
 {
 }
 
-void SdoCompComp::DtGet(Stype& aData)
+const DtBase* SdoCompComp::VDtGet(const string& aType)
 {
     DGuri curi, ccuri;
+    mRes.mValid = false;
     bool res = mInpCompUri.getData(curi);
     if (!res) {
 	Log(TLog(EErr, this) + "Failed getting input [" + mInpCompUri.mName + "] data");
@@ -257,9 +270,9 @@ void SdoCompComp::DtGet(Stype& aData)
 	    if (comp) {
 		MNode* ccomp = comp->getNode(ccuri.mData);
 		if (ccomp) {
-		    aData.mData.clear();
-		    ccomp->getUri(aData.mData, mSue);
-		    aData.mValid = true;
+		    mRes.mData.clear();
+		    ccomp->getUri(mRes.mData, mSue);
+		    mRes.mValid = true;
 		} else {
 		    Log(TLog(EErr, this) + "Couldn't get component [" + mInpCompCompUri.mName + "] owner");
 		}
@@ -268,6 +281,7 @@ void SdoCompComp::DtGet(Stype& aData)
 	    }
 	}
     }
+    return &mRes;
 }
 
 
@@ -275,13 +289,14 @@ void SdoCompComp::DtGet(Stype& aData)
 
 ///  SDO "Vertexes are connected"
 
-SdoConn::SdoConn(const string &aType, const string& aName, MEnv* aEnv): Sdo<bool>(aType, aName, aEnv),
+SdoConn::SdoConn(const string &aType, const string& aName, MEnv* aEnv): Sdog<Sdata<bool>>(aType, aName, aEnv),
     mInpVp(this, "Vp"), mInpVq(this, "Vq")
 {
 }
 
-void SdoConn::DtGet(Stype& aData)
+const DtBase* SdoConn::VDtGet(const string& aType)
 {
+    mRes.mValid = false;
     string vps, vqs;
     bool res = mInpVp.getData(vps);
     bool resq = mInpVq.getData(vqs) ;
@@ -296,22 +311,24 @@ void SdoConn::DtGet(Stype& aData)
 	    MVert* vpv = vpn->lIf(vpv);
 	    MVert* vqv = vqn->lIf(vqv);
 	    if (vpv && vqv) {
-		aData.mData = vpv->isConnected(vqv);
-		aData.mValid = true;
+		mRes.mData = vpv->isConnected(vqv);
+		mRes.mValid = true;
 	    }
 	}
     }
+    return &mRes;
 }
 
 ///  SDO "Vertex pairs count"
 
-SdoPairsCount::SdoPairsCount(const string &aType, const string& aName, MEnv* aEnv): Sdo<int>(aType, aName, aEnv),
+SdoPairsCount::SdoPairsCount(const string &aType, const string& aName, MEnv* aEnv): Sdog<Sdata<int>>(aType, aName, aEnv),
     mInpVert(this, "Vp")
 {
 }
 
-void SdoPairsCount::DtGet(Stype& aData)
+const DtBase* SdoPairsCount::VDtGet(const string& aType)
 {
+    mRes.mValid = false;
     string verts;
     bool res = mInpVert.getData(verts);
     if (!res) {
@@ -323,11 +340,12 @@ void SdoPairsCount::DtGet(Stype& aData)
 	if (vertn) {
 	    MVert* vertv = vertn->lIf(vertv);
 	    if (vertv) {
-		aData.mData = vertv->pairsCount();
-		aData.mValid = true;
+		mRes.mData = vertv->pairsCount();
+		mRes.mValid = true;
 	    }
 	}
     }
+    return &mRes;
 }
 
 ///  SDO "Vertex pair URI"
@@ -337,9 +355,10 @@ SdoPair::SdoPair(const string &aType, const string& aName, MEnv* aEnv): Sdog<DGu
 {
 }
 
-void SdoPair::DtGet(Stype& aData)
+const DtBase* SdoPair::VDtGet(const string& aType)
 {
     string verts;
+    mRes.mValid = false;
     bool res = mInpTarg.getData(verts);
     if (!res) {
 	Log(TLog(EErr, this) + "Failed getting input [" + mInpTarg.mName + "] data");
@@ -367,8 +386,8 @@ void SdoPair::DtGet(Stype& aData)
 		    MUnit* pairu = pair->lIf(pairu);
 		    MNode* pairn = pairu ? pairu->getSif(pairn) : nullptr;
 		    if (pairn) {
-			pairn->getUri(aData.mData, mSue);
-			aData.mValid = true;
+			pairn->getUri(mRes.mData, mSue);
+			mRes.mValid = true;
 		    }
 		}
 	    } else {
@@ -376,6 +395,7 @@ void SdoPair::DtGet(Stype& aData)
 	    }
 	}
     }
+    return &mRes;
 }
 
 
@@ -397,9 +417,10 @@ SdoTcPair::SdoTcPair(const string &aType, const string& aName, MEnv* aEnv): Sdog
 {
 }
 
-void SdoTcPair::DtGet(Stype& aData)
+const DtBase* SdoTcPair::VDtGet(const string& aType)
 {
     DGuri targUri;
+    mRes.mValid = false;
     bool res = mInpTarg.getData(targUri);
     if (!res) {
 	Log(TLog(EErr, this) + "Failed getting input [" + mInpTarg.mName + "] data");
@@ -424,8 +445,8 @@ void SdoTcPair::DtGet(Stype& aData)
 			if (pairn) {
 			    GUri uri;
 			    pairn->getUri(uri, mSue);
-			    aData.mData = uri;
-			    aData.mValid = true;
+			    mRes.mData = uri;
+			    mRes.mValid = true;
 			}
 		    }
 		} else {
@@ -434,6 +455,7 @@ void SdoTcPair::DtGet(Stype& aData)
 	    }
 	}
     }
+    return &mRes;
 }
 
 
@@ -441,7 +463,7 @@ void SdoTcPair::DtGet(Stype& aData)
 
 SdoPairs::SdoPairs(const string &aType, const string& aName, MEnv* aEnv): Sdog<Vector<DGuri>>(aType, aName, aEnv) { }
 
-void SdoPairs::DtGet(Stype& aData)
+const DtBase* SdoPairs::VDtGet(const string& aType)
 {
     if (!mSue)  {
 	Log(TLog(EErr, this) + "Owner is not explorable");
@@ -450,8 +472,8 @@ void SdoPairs::DtGet(Stype& aData)
 	if (!suev) {
 	    Log(TLog(EErr, this) + "Explorable isn't vertex");
 	} else {
-	    aData.mValid = true;
-	    aData.mData.clear();
+	    mRes.mValid = true;
+	    mRes.mData.clear();
 	    for (int ind = 0; ind < suev->pairsCount(); ind++) {
 		MVert* pair = suev->getPair(ind);
 		// TODO Workaround used, ref ds_dcs_sdo_gmn. Create solid solution.
@@ -459,18 +481,19 @@ void SdoPairs::DtGet(Stype& aData)
 		MNode* pairn = pairu ? pairu->getSif(pairn) : nullptr;
 		if (!pairn) {
 		    Log(TLog(EErr, this) + "Couldnt get URI for pair [" + pair->Uid() + "]");
-		    aData.mValid = false;
+		    mRes.mValid = false;
 		    break;
 		} else {
-		    aData.mValid = true;
+		    mRes.mValid = true;
 		    GUri puri;
 		    pairn->getUri(puri, mSue);
 		    DGuri purid(puri);
-		    aData.mData.push_back(purid);
+		    mRes.mData.push_back(purid);
 		}
 	    }
 	}
     }
+    return &mRes;
 }
 
 
@@ -479,9 +502,10 @@ void SdoPairs::DtGet(Stype& aData)
 SdoTPairs::SdoTPairs(const string &aType, const string& aName, MEnv* aEnv): Sdog<Vector<DGuri>>(aType, aName, aEnv),
     mInpTarg(this, "Targ") {}
 
-void SdoTPairs::DtGet(Stype& aData)
+const DtBase* SdoTPairs::VDtGet(const string& aType)
 {
     DGuri turi;
+    mRes.mValid = false;
     bool res = mInpTarg.getData(turi);
     if (!res) {
 	Log(TLog(EErr, this) + "Failed getting input [" + mInpTarg.mName + "] data");
@@ -496,7 +520,7 @@ void SdoTPairs::DtGet(Stype& aData)
 	    if (!targv) {
 		Log(TLog(EErr, this) + "Target [" + mInpTarg.mName + "] isn't a vertex");
 	    } else {
-		aData.mValid = true;
+		mRes.mValid = true;
 		for (int ind = 0; ind < targv->pairsCount(); ind++) {
 		    MVert* pair = targv->getPair(ind);
 		    // TODO Workaround used, ref ds_dcs_sdo_gmn. Create solid solution.
@@ -504,19 +528,20 @@ void SdoTPairs::DtGet(Stype& aData)
 		    MNode* pairn = pairu ? pairu->getSif(pairn) : nullptr;
 		    if (!pairn) {
 			Log(TLog(EErr, this) + "Couldnt get URI for pair [" + pair->Uid() + "]");
-			aData.mValid = false;
+			mRes.mValid = false;
 			break;
 		    } else {
-			aData.mValid = true;
+			mRes.mValid = true;
 			GUri puri;
 			pairn->getUri(puri, mSue);
 			DGuri purid(puri);
-			aData.mData.push_back(purid);
+			mRes.mData.push_back(purid);
 		    }
 		}
 	    }
 	}
     }
+    return &mRes;
 }
 
 
@@ -524,8 +549,9 @@ void SdoTPairs::DtGet(Stype& aData)
 
 SdoEdges::SdoEdges(const string &aType, const string& aName, MEnv* aEnv): Sdog<Vector<Pair<DGuri>>>(aType, aName, aEnv) { }
 
-void SdoEdges::DtGet(Stype& aData)
+const DtBase* SdoEdges::VDtGet(const string& aType)
 {
+    mRes.mValid = false;
     if (!mSue)  {
 	Log(TLog(EErr, this) + "Owner is not explorable");
     } else {
@@ -533,8 +559,8 @@ void SdoEdges::DtGet(Stype& aData)
 	if (!sues) {
 	    Log(TLog(EErr, this) + "Explorable isn't system");
 	} else {
-	    aData.mValid = true;
-	    aData.mData.clear();
+	    mRes.mValid = true;
+	    mRes.mData.clear();
 	    for (auto conn : sues->connections()) {
 		MVert* p = conn.first;
 		MUnit* pu = p->lIf(pu);
@@ -544,10 +570,10 @@ void SdoEdges::DtGet(Stype& aData)
 		MNode* qn = qu ? qu->getSif(qn) : nullptr;
 		if (!pn || !qn) {
 		    Log(TLog(EErr, this) + "Couldnt get URI for vert [" + (pn ? p->Uid(): q->Uid()) + "]");
-		    aData.mValid = false;
+		    mRes.mValid = false;
 		    break;
 		} else {
-		    aData.mValid = true;
+		    mRes.mValid = true;
 		    GUri puri;
 		    pn->getUri(puri, mSue);
 		    GUri quri;
@@ -558,11 +584,12 @@ void SdoEdges::DtGet(Stype& aData)
 		    elem.mData.first = purid;
 		    elem.mData.second = qurid;
 		    elem.mValid = true;
-		    aData.mData.push_back(elem);
+		    mRes.mData.push_back(elem);
 		}
 	    }
 	}
     }
+    return &mRes;
 }
 
 
