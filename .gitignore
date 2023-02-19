@@ -20,6 +20,7 @@ install-sh
 *.ex
 .deps
 .libs
+test/.libs
 *.la
 *.lo
 *.o
@@ -64,7 +65,7 @@ lcov_report
 *.info
 *-trunk
 install-root
-ut-grayb-lib
+test/ut-fap3-lib
 *.xml_
 *saved.xml
 *saved.chs

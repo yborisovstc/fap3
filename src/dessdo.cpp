@@ -13,7 +13,7 @@ SdoBase::InpBase::InpBase(SdoBase* aHost, const string& aName): mHost(aHost), mN
 }
 
 SdoBase::SdoBase(const string &aType, const string& aName, MEnv* aEnv): CpStateOutp(aType, aName, aEnv),
-    mObrCp(this), mSue(nullptr)
+    mObrCp(this), mEagObs(this), mSue(nullptr)
 {
 }
 
@@ -63,6 +63,10 @@ void SdoBase::UpdateMag()
 	if (mag != mSue) {
 	    mSue = mag;
 	    NotifyInpsUpdated();
+	    MObservable* obl = mSue->lIf(obl);
+	    if (obl) {
+		obl->addObserver(&mEagObs.mOcp);
+	    }
 	    Log(TLog(EInfo, this) + "Explorable is attached [" + mSue->Uid() + "]");
 	}
     }
@@ -184,6 +188,16 @@ const DtBase* SdoCompsCount::VDtGet(const string& aType)
     return &mRes;
 }
 
+void SdoCompsCount::onEagOwnedAttached(MOwned* aOwned)
+{
+    NotifyInpsUpdated();
+}
+
+void SdoCompsCount::onEagOwnedDetached(MOwned* aOwned)
+{
+    NotifyInpsUpdated();
+}
+
 ///  SDO "Components names"
 
 SdoCompsNames::SdoCompsNames(const string &aType, const string& aName, MEnv* aEnv): Sdog<Vector<string>>(aType, aName, aEnv) { }
@@ -206,6 +220,16 @@ const DtBase* SdoCompsNames::VDtGet(const string& aType)
 	mRes.mValid = true;
     }
     return &mRes;
+}
+
+void SdoCompsNames::onEagOwnedAttached(MOwned* aOwned)
+{
+    NotifyInpsUpdated();
+}
+
+void SdoCompsNames::onEagOwnedDetached(MOwned* aOwned)
+{
+    NotifyInpsUpdated();
 }
 
 ///  SDO "Component owner"

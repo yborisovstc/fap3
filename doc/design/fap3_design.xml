@@ -3011,6 +3011,32 @@
 	</sect2>
     </sect1>
 
+    <sect1><title>Tools</title>
+	<sect2><title>chs formatting in VIM</title>
+	    <sect3><title>Set-up .vimrc</title>
+	    <programlisting>
+		    "=====================================================
+		" vim-autoformat settings
+		    "=====================================================
+
+		    "let g:autoformat_verbosemode=1
+
+		let g:formatdef_yb_chs = '"/media/sf_vbx_shared/projects/fap/fap3/clm/fapm3 -f"'
+		let g:formatters_chs = ['yb_chs']
+
+		" Disable autoindenting, retab and removing trailing spaces
+		let g:autoformat_autoindent = 0
+		let g:autoformat_retab = 0
+		let g:autoformat_remove_trailing_spaces = 0
+
+		" map to &lt;Leader&gt;cf
+		    autocmd FileType chs nnoremap &lt;buffer&gt;&lt;Leader&gt;ff :&lt;C-u&gt;Autoformat&lt;CR&gt;
+
+		" vim-autoformat settings end
+	    </programlisting>
+	</sect3>
+    </sect2>
+</sect1>
 
 
 </article>

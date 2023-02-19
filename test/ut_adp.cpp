@@ -24,6 +24,7 @@ class Ut_adp : public CPPUNIT_NS::TestFixture
     virtual void tearDown();
     private:
     MNode* constructSystem(const string& aFname);
+    string getStateDstr(const string& aUri);
     private:
     void test_MnodeAdp_1();
     void test_MnodeAdp_2();
@@ -37,6 +38,14 @@ class Ut_adp : public CPPUNIT_NS::TestFixture
 CPPUNIT_TEST_SUITE_REGISTRATION( Ut_adp );
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(Ut_adp, "Ut_adp");
 
+
+string Ut_adp::getStateDstr(const string& aUri)
+{
+    MNode* st = mEnv->Root()->getNode(aUri);
+    MDVarGet* stg = st ? st->lIf(stg) : nullptr;
+    const DtBase* data = stg ? stg->VDtGet(string()) : nullptr;
+    return data ? data->ToString(true) : string();
+}
 
 MNode* Ut_adp::constructSystem(const string& aSpecn)
 {
@@ -243,7 +252,30 @@ void Ut_adp::test_Dadp_1()
 {
     printf("\n === Test of Adp: base\n");
     MNode* root = constructSystem("ut_adp_dadp_1");
-    bool res = mEnv->RunSystem(10, 2);
+
+    // Phase 1
+    bool res = mEnv->RunSystem(2);
+    CPPUNIT_ASSERT_MESSAGE("Phase1: Counter failed", getStateDstr("test.Controller.Counter") == "SI 2");
+    CPPUNIT_ASSERT_MESSAGE("Phase1: OutpMagUri_Dbg failed", getStateDstr("test.Controller.OutpMagUri_Dbg") == "SS 'Target2'");
+    CPPUNIT_ASSERT_MESSAGE("Phase1: CompsCount failed", getStateDstr("test.Controller.CompCount") == "SI 3");
+    CPPUNIT_ASSERT_MESSAGE("Phase1: CompsNames failed", getStateDstr("test.Controller.CompNames") == "VS (Cmp2_0,Cmp2_1,Cmp2_2)");
+    CPPUNIT_ASSERT_MESSAGE("Phase1: Name failed", getStateDstr("test.Controller.Name_Dbg") == "SS 'Target2'");
+    CPPUNIT_ASSERT_MESSAGE("Phase1: AddCompOutp_Dbg failed", getStateDstr("test.Controller.AddCompOutp_Dbg") == "SB false");
+
+
+    // Phase 2
+    res = mEnv->RunSystem(3);
+    CPPUNIT_ASSERT_MESSAGE("Phase2: Counter failed", getStateDstr("test.Controller.Counter") == "SI 5");
+    CPPUNIT_ASSERT_MESSAGE("Phase2: OutpMagUri_Dbg failed", getStateDstr("test.Controller.OutpMagUri_Dbg") == "SS 'Target3'");
+    CPPUNIT_ASSERT_MESSAGE("Phase2: CompsCount failed", getStateDstr("test.Controller.CompCount") == "SI 4");
+    CPPUNIT_ASSERT_MESSAGE("Phase2: CompsNames failed", getStateDstr("test.Controller.CompNames") == "VS (Cmp3_0,Cmp3_1,Cmp3_2,Cmp3_3)");
+    CPPUNIT_ASSERT_MESSAGE("Phase2: AddCompOutp_Dbg failed", getStateDstr("test.Controller.AddCompOutp_Dbg") == "SB false");
+
+    // Phase 3 - new comp added
+    res = mEnv->RunSystem(3);
+    CPPUNIT_ASSERT_MESSAGE("Phase3: AddCompOutp_Dbg failed", getStateDstr("test.Controller.AddCompOutp_Dbg") == "SB true");
+    CPPUNIT_ASSERT_MESSAGE("Phase3: CompsCount failed", getStateDstr("test.Controller.CompCount") == "SI 5");
+    CPPUNIT_ASSERT_MESSAGE("Phase3: CompsNames failed", getStateDstr("test.Controller.CompNames") == "VS (Cmp3_0,Cmp3_1,Cmp3_2,Cmp3_3,New_node)");
 
     delete mEnv;
 }

@@ -61,6 +61,22 @@ class MDVarGet: public MIface
 	template<class T> const T* DtGet() { return reinterpret_cast<const T*>(VDtGet(T::TypeSig()));}
 };
 
+/** @brief Interface of getter of variable type data
+ * */
+class MDVarSet: public MIface
+{
+    public:
+	static const char* Type() { return "MDVarSet";};
+	// From MIface
+	virtual string Uid() const override { return MDVarSet_Uid();}
+	virtual string MDVarSet_Uid() const = 0;
+	// Local
+	virtual const bool VDtSet(const DtBase& aData) { return false;}
+	// Get iface id. Is used for type negotiation from root to leafs
+	virtual string VarGetSIfid() = 0;
+};
+
+
 
 /** @brief Generic data getter base
  * Temporary solution for ds_rdi

@@ -920,6 +920,8 @@ void TrPair::Init(const string& aIfaceName)
 	    }
 	} else {
 	    Log(TLog(EErr, this) + "Failed init, incompatible inputs [" + t1 + "], [" + t2 + "]");
+	    t1 = inp1->VarGetIfid();
+	    t2 = inp2->VarGetIfid();
 	}
     } else {
 	Log(TLog(EErr, this) + "Missing input [" + (inp2 ? GetInpUri(Func::EInp1) : GetInpUri(Func::EInp1)) + "]");
@@ -1018,7 +1020,7 @@ MDVarGet* TrInpSel::GetInp()
     if (idx && idx->IsValid()) {
 	auto* Ic = GetInps(mInpInp);
 	if (Ic) {
-	    if (idx->mData >= 0 || idx->mData < Ic->size()) {
+	    if (idx->mData >= 0 && idx->mData < Ic->size()) {
 		res = Ic->at(idx->mData);
 	    } else {
 		Log(TLog(EErr, this) + "Incorrect index  [" + to_string(idx->mData) + "], inps num: " + to_string(Ic->size()));

@@ -164,6 +164,7 @@ MIface* State::MNode_getLif(const char *aType)
     else if (res = checkLif<MDesInpObserver>(aType));
     else if (res = checkLif<MConnPoint>(aType));
     else if (res = checkLif<MDVarGet>(aType));
+    else if (res = checkLif<MDVarSet>(aType));
     else res = Vertu::MNode_getLif(aType);
     return res;
 }
@@ -436,6 +437,24 @@ string State::reqName() const
 string State::VarGetIfid() const
 {
     return mCdata ? mCdata->GetTypeSig() : string();
+}
+
+string State::VarGetSIfid()
+{
+    return mCdata ? mCdata->GetTypeSig() : string();
+}
+
+const bool State::VDtSet(const DtBase& aData)
+{
+    bool res = false;
+    if (mCdata && mPdata) {
+	*mPdata = aData;
+	*mCdata = aData;
+	if (mCdata->IsChanged()) {
+	    NotifyInpsUpdated();
+	}
+    }
+    return res;
 }
 
 DtBase* State::CreateData(const string& aType)

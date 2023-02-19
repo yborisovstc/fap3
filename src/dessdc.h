@@ -27,6 +27,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 
  	/** @brief Mag access point base
 	 * */
+	// TODO unused?
 	class SdcMapb: public MDesSyncable {
 	    public:
 		SdcMapb(const string& aName, ASdc* aHost);
@@ -47,6 +48,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 
 	/** @brief Mag access point
 	 * */
+	// TODO unused?
 	template <typename T> class SdcMap: public SdcMapb {
 	    public:
 		template<typename P> using TGetData = std::function<void (P&)>;

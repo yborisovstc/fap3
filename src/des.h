@@ -102,7 +102,7 @@ class CpStateMnodeOutp: public CpState
 
 /** @brief State, ver. 2, non-inhritable, monolitic, direct data, switching updated-confirmed
  * */
-class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesInpObserver, public MDVarGet, public Cnt::Host
+class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesInpObserver, public MDVarGet, public MDVarSet, public Cnt::Host
 {
     public:
 	/** @brief Pseudo content */
@@ -175,6 +175,10 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 	virtual string VarGetIfid() const override;
 	virtual MIface* DoGetDObj(const char *aName) override {return nullptr;}
 	virtual DtBase* VDtGet(const string& aType) override;
+	// From MDVarSet
+	virtual string MDVarSet_Uid() const override {return getUid<MDVarSet>();}
+	virtual string VarGetSIfid();
+	virtual const bool VDtSet(const DtBase& aData) override;
     public:
 	static const string KCont_Value;
     protected:

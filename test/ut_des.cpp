@@ -469,6 +469,18 @@ void Ut_des::test_des_1()
 
     res = mEnv->RunSystem(5, 2);
     CPPUNIT_ASSERT_MESSAGE("Ds1.St1 failed on phase 3", getStateDstr("Launcher.Ds1.St1") == "SI 10");
+
+    // Set data to St1
+    MNode* ds1n = root->getNode("Launcher.Ds1.St1");
+    MDVarSet* ds1s = ds1n ? ds1n->lIf(ds1s) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Failed to get Ds1.St1 MDVarSet", ds1s);
+    Sdata<int> data;
+    data.FromString("SI 20");
+    ds1s->VDtSet(data);
+    res = mEnv->RunSystem(2, 2);
+    CPPUNIT_ASSERT_MESSAGE("Ds1.St1 failed on phase 3", getStateDstr("Launcher.Ds1.St1") == "SI 22");
+
+
     // Benchmarking
     //bool res = mEnv->RunSystem(10000, 2);
     CPPUNIT_ASSERT_MESSAGE("Failed running system", res);

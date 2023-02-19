@@ -52,6 +52,33 @@ class SdoBase : public CpStateOutp, public MDVarGet, public MObserver
 		}
 	};
 
+	/** @brief Explored agent observer
+	 * */
+	class EagObs : public MObserver {
+	    public:
+		EagObs(SdoBase* aHost): mHost(aHost), mOcp(this) {}
+		virtual ~EagObs() { }
+		// From MObserver
+		virtual string MObserver_Uid() const {return MObserver::Type();}
+		virtual MIface* MObserver_getLif(const char *aName) override { return nullptr;}
+		virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override {
+		    mHost->onEagOwnedAttached(aOwned);
+		}
+		virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override {
+		    mHost->onEagOwnedDetached(aOwned);
+		}
+		virtual void onObsContentChanged(MObservable* aObl, const MContent* aCont) override {
+		    mHost->onEagContentChanged(aCont);
+		}
+		virtual void onObsChanged(MObservable* aObl) override {
+		    mHost->onEagChanged();
+		}
+	    public:
+		TObserverCp mOcp;               /*!< Observer connpoint */
+	    private:
+		SdoBase* mHost;
+	};
+
     public:
 	static const char* Type() { return "SdoBase";};
 	SdoBase(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
@@ -73,8 +100,14 @@ class SdoBase : public CpStateOutp, public MDVarGet, public MObserver
     protected:
 	void UpdateMag();
 	void NotifyInpsUpdated();
+	// Local
+	virtual void onEagOwnedAttached(MOwned* aOwned) {}
+	virtual void onEagOwnedDetached(MOwned* aOwned) {}
+	virtual void onEagContentChanged(const MContent* aCont) {}
+	virtual void onEagChanged() {}
     protected:
 	TObserverCp mObrCp;               /*!< Observer connpoint */
+	EagObs mEagObs;  /*!< Explored agent observer */
 	MNode* mSue; /*!< System under exploring */
 };
 
@@ -163,6 +196,8 @@ class SdoCompsCount : public Sdog<Sdata<int>>
 	static const char* Type() { return "SdoCompsCount";};
 	SdoCompsCount(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual const DtBase* VDtGet(const string& aType) override;
+	virtual void onEagOwnedAttached(MOwned* aOwned) override;
+	virtual void onEagOwnedDetached(MOwned* aOwned) override;
 };
 
 /** @brief SDO "Component count"
@@ -173,6 +208,8 @@ class SdoCompsNames : public Sdog<Vector<string>>
 	static const char* Type() { return "SdoCompsNames";};
 	SdoCompsNames(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual const DtBase* VDtGet(const string& aType) override;
+	virtual void onEagOwnedAttached(MOwned* aOwned) override;
+	virtual void onEagOwnedDetached(MOwned* aOwned) override;
 };
 
 

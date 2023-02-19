@@ -126,6 +126,16 @@ template<class T> Func* FDivDt<T>::Create(Host* aHost, const string& aString)
     Func* res = NULL;
     if (aString.empty()) {
 	// Weak negotiation, basing on inputs only
+	bool inpok = true;
+	TInpIc* inps = aHost->GetInps(EInp);
+	for (auto dget : *inps) {
+	    inpok = dget->VarGetIfid() == T::TypeSig();
+	    if (!inpok) { break; }
+	}
+	if (inpok) {
+	    res = new FMplDt<T>(*aHost);
+	}
+
     } else if (aString == T::TypeSig()) {
 	res = new FDivDt<T>(*aHost);
     }
