@@ -29,9 +29,12 @@ class Func
 	virtual string GetInpExpType(int aId) const { return "<?>";};
 	virtual const DtBase* FDtGet() { return nullptr;}
 	template <class T> inline const T* GetInpData(int aInpId, const T* aData);
+	const MDVarGet* GetInp(int aInpId);
+	static const MDVarGet* GetInp(Host* aHost, int aInpId);
     protected:
 	Host& mHost;
 };
+
 
 template <class T> inline const T* Func::GetInpData(int aInpId, const T* aData)
 {

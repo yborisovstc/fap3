@@ -397,6 +397,7 @@ const DtBase* TrSwitchBool::VDtGet(const string& aType)
 	Log(TLog(EDbg, this) + "Sel: " + sel->ToString(true) + ", Inp1: " + inp1->ToString(true) + ", Inp2: " + inp2->ToString(true));
 	if (sel->IsValid()) {
 	    res = sel->mData ? inp2 : inp1;
+	    res = (aType.empty() || aType == res->GetTypeSig()) ? res : nullptr;
 	}
     }
     return res;
@@ -559,7 +560,9 @@ string TrSvldVar::VarGetIfid() const
 {
     string res;
     auto* inp = const_cast<TrSvldVar*>(this)->VDtGet(string());
-    res = inp->GetTypeSig();
+    if (inp) {
+	res = inp->GetTypeSig();
+    }
     return res;
 }
 
@@ -575,6 +578,9 @@ const DtBase* TrSvldVar::VDtGet(const string& aType)
 	    res = inp1;
 	} else if (inp2->IsValid()) {
 	    res = inp2;
+	} else {
+	    res = inp1;
+	    Log(TLog(EDbg, this) + "Both inputs are invalid");
 	}
     }
     return res;

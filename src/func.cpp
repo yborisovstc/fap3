@@ -4,6 +4,31 @@
 
 static int KDbgLog_Value = 9;
 
+const MDVarGet* Func::GetInp(Host* aHost, int aInpId)
+{
+    const MDVarGet* res = nullptr;
+    TInpIc* Ic = aHost->GetInps(aInpId);
+    if (Ic) {
+	res = (Ic->size() == 1) ? Ic->at(0) : nullptr;
+	if (!res) {
+	    aHost->log(EDbg, "Cannot get input [" + aHost->GetInpUri(aInpId) + "]");
+	}
+    }
+    return res;
+}
+
+const MDVarGet* Func::GetInp(int aInpId)
+{
+    const MDVarGet* res = nullptr;
+    TInpIc* Ic = mHost.GetInps(aInpId);
+    if (Ic) {
+	res = (Ic->size() == 1) ? Ic->at(0) : nullptr;
+	if (!res) {
+	    mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(aInpId) + "]");
+	}
+    }
+    return res;
+}
 
 ///// FAddDt
 
@@ -127,13 +152,11 @@ template<class T> Func* FDivDt<T>::Create(Host* aHost, const string& aString)
     if (aString.empty()) {
 	// Weak negotiation, basing on inputs only
 	bool inpok = true;
-	TInpIc* inps = aHost->GetInps(EInp);
-	for (auto dget : *inps) {
-	    inpok = dget->VarGetIfid() == T::TypeSig();
-	    if (!inpok) { break; }
-	}
+	auto* inpvg = GetInp(aHost, EInp);
+	auto* inp2vg = GetInp(aHost, EInp2);
+	inpok = inpvg->VarGetIfid() == T::TypeSig() && inp2vg->VarGetIfid() == T::TypeSig();
 	if (inpok) {
-	    res = new FMplDt<T>(*aHost);
+	    res = new FDivDt<T>(*aHost);
 	}
 
     } else if (aString == T::TypeSig()) {
@@ -186,6 +209,7 @@ template<class T> const DtBase* FApnd<T>::FDtGet()
 	mRes.mData = arg1->mData + arg2->mData;
 	mRes.mValid = true;
     }
+    mHost.log(EDbg, "Inp1 [" + (arg1 ? arg1->ToString(true) : "nil") + "], Inp2 [" + (arg2 ? arg2->ToString(true) : "nil")  + "], res [" + mRes.ToString(true) + "]");
     return &mRes;
 }
 

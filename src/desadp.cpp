@@ -20,7 +20,7 @@ const string K_MagOwnerLinkUri = "MagOwnerLink";
 
 AAdp::AAdp(const string &aType, const string& aName, MEnv* aEnv): Unit(aType, aName, aEnv),
    mMagOwner(nullptr), mMag(NULL), mObrCp(this), mAgtCp(this), mUpdNotified(false), mActNotified(false),
-    mMagUriValid(false), mSelfAsBase(false)
+    mSelfAsBase(false)
 {
 }
 
@@ -315,24 +315,24 @@ void AAdp::UpdateMag()
 bool AAdp::UpdateMag(const string& aMagUri)
 {
     bool res = false;
-    if (!mMagUriValid || aMagUri != mMagUri) {
-	mMagUri = aMagUri;
-	mMagUriValid = true;
+    if (!mMagUri.IsValid() || aMagUri != mMagUri.mData) {
+	mMagUri.mData = aMagUri;
+	mMagUri.mValid = true;
     }
-    if (mMagUriValid) {
+    if (mMagUri.IsValid()) {
 	MNode* mag = nullptr;
 	bool hasMagOwner = true;
 	if (mMagOwner) {
-	    mag = mMagOwner->getNode(mMagUri);
+	    mag = mMagOwner->getNode(mMagUri.mData);
 	} else if (mSelfAsBase) {
-	    mag = ahostGetNode(mMagUri);
+	    mag = ahostGetNode(mMagUri.mData);
 	} else {
 	    hasMagOwner = false;
 	}
 	if (mag) {
 	    UpdateMag(mag);
 	} else if (hasMagOwner) {
-	    Logger()->Write(EErr, this, "Cannot find managed agent [%s]", mMagUri.c_str());
+	    Logger()->Write(EErr, this, "Cannot find managed agent [%s]", mMagUri.mData.c_str());
 	}
     }
     return res;
@@ -379,10 +379,9 @@ bool AAdp::ApplyMagBase()
     return res;
 }
 
-void AAdp::GetMagUri(Sdata<string>& aData)
+const DtBase* AAdp::GetMagUri()
 {
-    aData.mData = mMagUri;
-    aData.mValid = true;
+    return  &mMagUri;
 }
 
 void AAdp::OnInpMagUri()
@@ -509,19 +508,19 @@ void AMnodeAdp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
     AAdp::resolveIfc(aName, aReq);
 }
 
-void AMnodeAdp::GetCompsCount(Sdata<int>& aData)
+const DtBase* AMnodeAdp::GetCompsCount()
 {
-    aData.mData = mCompNames.mValid ? mCompNames.mData.size() : -1;
-    aData.mValid = true;
+    mCompsCount = mCompNames.mData.size();
+    mCompsCount.mValid = mCompNames.mValid;
+    return &mCompsCount;
 }
 
-void AMnodeAdp::GetCompNames(TCmpNames& aData)
+const DtBase* AMnodeAdp::GetCompNames()
 {
-    aData = mCompNames;
-    aData.mValid = true;
+    return &mCompNames;
 }
 
-void AMnodeAdp::GetOwner(Sdata<string>& aData)
+const DtBase* AMnodeAdp::GetOwner()
 {
     if (mMag) {
 	MNode* base = mMagOwner ? mMagOwner : ahostNode();
@@ -529,23 +528,25 @@ void AMnodeAdp::GetOwner(Sdata<string>& aData)
 	GUri magUri;
 	mMag->getUri(magUri, base);
 	GUri ownUri = magUri.head(magUri.elems().size() - 1);
-	aData.mData = ownUri;
-	aData.mValid = true;
+	mOwner.mData = ownUri;
+	mOwner.mValid = true;
     } else {
-	aData.mData = GUri::nil;
-	aData.mValid = true;
+	mOwner.mData = GUri::nil;
+	mOwner.mValid = true;
     }
+    return &mOwner;
 }
 
-void AMnodeAdp::GetName(Sdata<string>& aData)
+const DtBase* AMnodeAdp::GetName()
 {
     if (mMag) {
-	aData.mData = mMag->name();
-	aData.mValid = true;
+	mName.mData = mMag->name();
+	mName.mValid = true;
     } else {
-	aData.mData = GUri::nil;
-	aData.mValid = true;
+	mName.mData = GUri::nil;
+	mName.mValid = true;
     }
+    return &mName;
 }
 
 void AMnodeAdp::confirm() {
@@ -625,11 +626,9 @@ void AMnodeAdp::ApplyMut()
 	MUnit* inpu = inp ? inp->lIf(inpu) : nullptr;
 	MDVarGet* vget = inpu ? inpu->getSif(vget) : nullptr;
 	if (vget) {
-	    MDtGet<DMut>* gsd = vget->GetDObj(gsd);
-	    if (gsd) {
-		DMut dmut;
-		gsd->DtGet(dmut);
-		TMut& mut = dmut.mData;
+	    const DMut* dmut = vget->DtGet(dmut);
+	    if (dmut) {
+		const TMut& mut = dmut->mData;
 		if (mut.IsValid() && mut.Type() != ENt_None && mut.Type() != ENt_Unknown) {
 		    TNs ns; MutCtx mutctx(NULL, ns);
 		    MChromo* chr = mEnv->provider()->createChromo();
@@ -643,12 +642,12 @@ void AMnodeAdp::ApplyMut()
 		    Logger()->Write(EErr, this, "Invalid mutation [%s]", mut.operator string().c_str());
 		}
 	    } else {
-		MDtGet<DChr2>* gsd = vget->GetDObj(gsd);
+		const DChr2* gsd = vget->DtGet(gsd);
 		if (gsd) {
 		    DChr2 data;
 		    istringstream is("CHR2 {  }");
 		    data.FromString(is);
-		    gsd->DtGet(data);
+		    data = *gsd;
 		    Chromo2& chromo = data.mData;
 		    if (data.IsValid()) {
 			TNs ns; MutCtx mutctx(NULL, ns);
@@ -715,11 +714,9 @@ void AMelemAdp::ApplyMut()
 	MUnit* inpu = inp ? inp->lIf(inpu) : nullptr;
 	MDVarGet* vget = inpu ? inpu->getSif(vget) : nullptr;
 	if (vget) {
-	    MDtGet<DMut>* gsd = vget->GetDObj(gsd);
-	    if (gsd) {
-		DMut dmut;
-		gsd->DtGet(dmut);
-		TMut& mut = dmut.mData;
+	    const DMut* dmut = vget->DtGet(dmut);
+	    if (dmut) {
+		const TMut& mut = dmut->mData;
 		MElem* mag = mMag->lIf(mag);
 		if (mag) {
 		    if (mut.IsValid() && mut.Type() != ENt_None && mut.Type() != ENt_Unknown) {
@@ -738,27 +735,24 @@ void AMelemAdp::ApplyMut()
 		    Logger()->Write(EErr, this, "Managed agent is not MElem");
 		}
 	    } else {
-		MDtGet<DChr2>* gsd = vget->GetDObj(gsd);
-		if (gsd) {
-		    DChr2 data;
-		    gsd->DtGet(data);
-		    Chromo2& chromo = data.mData;
-		    MElem* mag = mMag->lIf(mag);
-		    if (mag) {
-			if (data.IsValid()) {
-			    TNs ns; MutCtx mutctx(NULL, ns);
-			    mMag->mutate(chromo.Root(), false, mutctx);
-			    string datas = chromo.Root();
-			    Logger()->Write(EInfo, this, "Managed agent is mutated [%s]", datas.c_str());
-			} else {
-			    string datas = chromo.Root();
-			    Logger()->Write(EErr, this, "Invalid mutations [%s]", datas.c_str());
-			}
+		const DChr2* data = vget->DtGet(data);
+		if (data) {
+		const Chromo2& chromo = data->mData;
+		MElem* mag = mMag->lIf(mag);
+		if (mag) {
+		    if (data->IsValid()) {
+			TNs ns; MutCtx mutctx(NULL, ns);
+			mMag->mutate(chromo.Root(), false, mutctx);
+			string datas = chromo.Root();
+			Logger()->Write(EInfo, this, "Managed agent is mutated [%s]", datas.c_str());
 		    } else {
-			Logger()->Write(EErr, this, "Managed agent is not MElem");
+			string datas = chromo.Root();
+			Logger()->Write(EErr, this, "Invalid mutations [%s]", datas.c_str());
 		    }
-
-		} else  {
+		} else {
+		    Logger()->Write(EErr, this, "Managed agent is not MElem");
+		}
+		} else {
 		    Logger()->Write(EErr, this, "Cannot get data from Inp");
 		}
 	    }
@@ -927,7 +921,7 @@ void DAdp::UpdateMag()
 {
     bool res = false;
     if (mIbMagUri.mValid && mMagBase) {
-	MNode* magn = mMagBase->getNode(mIbMagUri.data());
+	MNode* magn = mMagBase->getNode(mIbMagUri.data().mData);
 	if (magn && magn != mMag) {
 	    if (mMag) {
 		// Rm observable

@@ -293,7 +293,7 @@ DesUtils : Elem {
         Subsys.InpPos ~ InpPos.Int
         Subsys.InpMagBase ~ InpMagLink.Outp
         Subsys.InpMagUri ~ : State {
-            = "SS ''"
+            = "URI _$"
         }
         OutpNode.Int ~ Subsys.Res
         # "<<< DES active subsystem. Getting node with given pos of list"

@@ -12,6 +12,7 @@
 #include "vert.h"
 #include "syst.h"
 #include "content.h"
+#include "rdatauri.h"
 
 
 /** @brief State Connection point
@@ -433,6 +434,8 @@ class DesEIbb: public MDesInpObserver, public MDesSyncable
 	template <typename S> string toStr(const S& aData) { return to_string(aData); }
 	string toStr(const string& aData) { return aData; }
 	string toStr(MNode*& aData) { return (aData ? aData->Uid() : "nil"); }
+	string toStr(const DtBase& aData) { return aData.ToString(true); }
+	string toStr(const DGuri& aData) { return aData.ToString(true); }
 	MDesSyncable* sHost() { MDesSyncable* ss = mHost->lIf(ss); return ss;}
 	IDesEmbHost* eHost() { return dynamic_cast<IDesEmbHost*>(mHost);}
     public:
@@ -468,6 +471,29 @@ template <typename T> void DesEIbt<T>::confirm()
     } else mChanged = false;
     mUpdated = false;
 }
+
+/** @brief Input buffered base data DtBase
+ * @param  T  data type
+ * */
+// TODO to migrate to base data buffered input
+template <typename T> class DesEIbd: public DesEIbt<T>
+{
+    public:
+	using TP = DesEIbb;
+	DesEIbd(MNode* aHost, const string& aInpUri): DesEIbt<T>(aHost, aInpUri) {}
+	// From MDesSyncable
+	virtual void update() override;
+};
+
+template <typename T> void DesEIbd<T>::update()
+{
+    DesEIbb::update();
+    MNode* inp = TP::mHost->getNode(TP::mUri);
+    if (inp) TP::mValid = GetGData(inp, this->mUdt);
+    if (!TP::mValid) this->eHost()->logEmb(TLog(TLogRecCtg::EDbg, TP::mHost) + "Cannot get input [" + this->mUri + "]");
+    else { this->mActivated = false; this->setUpdated(); }
+}
+
 
 /** @brief Input buffered Sdata based
  * @param  T  data type 
@@ -543,10 +569,11 @@ template <typename T> class DesEOsts: public DesEOstb {
 	Tdata mData;
 };
 
+// TODO to use Tdata as arg
 template <typename T>
 void DesEOsts<T>::updateData(const T& aData)
 {
-    if (aData != mData.mData) {
+    if (aData != mData.mData || !mData.IsValid()) {
 	Tdata newData(aData);
 	eHost()->logEmb(TLog(TLogRecCtg::EDbg, mHost) + "[" + mCpUri + "] Updated: [" + mData.ToString() + "] -> [" + newData.ToString() + "]");
 	mData.mData = aData; mData.mValid = true;

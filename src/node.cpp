@@ -156,6 +156,7 @@ const MNode* Node::getNode(const GUri& aUri) const
 
 void Node::getUri(GUri& aUri, MNode* aBase) const
 {
+    aUri.clear();
     if (mEnv && mEnv->provider() && mEnv->provider()->isProvided(this)) {
 	// Provided
 	aUri.appendElem(mName);

@@ -259,10 +259,10 @@ const DtBase* SdoCompOwner::VDtGet(const string& aType)
 		mRes.mData = ownerUri;
 		mRes.mValid = true;
 	    } else {
-		Log(TLog(EErr, this) + "Couldn't get component [" + mInpCompUri.mName + "] owner");
+		Log(TLog(EErr, this) + "Couldn't get component [" + curi.ToString(false) + "] owner");
 	    }
 	} else {
-	    Log(TLog(EErr, this) + "Couldn't get component [" + mInpCompUri.mName + "]");
+	    Log(TLog(EErr, this) + "Couldn't get component [" + curi.ToString(false) + "]");
 	}
     }
     return &mRes;

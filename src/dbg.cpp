@@ -35,5 +35,4 @@ static void init()
     Dbg::getIface<MDesSyncable>(nullptr);
     Dbg::getIface<MVert>(nullptr);
     Dbg::getIface<MDVarGet>(nullptr);
-    Dbg::getIface<MDtGet<Sdata<int>>>(nullptr);
 }

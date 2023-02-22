@@ -11,6 +11,7 @@
 #include "mlink.h"
 #include "unit.h"
 #include "des.h"
+#include "rdatauri.h"
 
 /** @brief DES adapter base
  * Internal "access points" are used to create required topology instead of
@@ -44,20 +45,18 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 	/** @brief Parameter access point, using Sdata
 	 * Acts as a binder of MDVarGet request to method of host
 	 * */
-	template <typename T> class AdpPap: public MDVarGet, public MDtGet<Sdata<T>> {
+	template <typename T> class AdpPap: public MDVarGet {
 	    public:
-		template<typename P> using THandler = std::function<void (Sdata<P>&)>;
+		using THandler = std::function<const DtBase* ()>;
 	    public:
-		THandler<T> mHandler;
+		THandler mHandler;
 	    public:
-		AdpPap(MNode& aHost, THandler<T> aHandler): mHost(aHost), mHandler(aHandler){}
+		AdpPap(MNode& aHost, THandler aHandler): mHost(aHost), mHandler(aHandler){}
 		// From MDVarGet
 		virtual string MDVarGet_Uid() const override {return MDVarGet::Type();}
-		virtual MIface* DoGetDObj(const char *aName) override;
-		virtual string VarGetIfid() const override {return MDtGet<Sdata<T>>::Type();}
-		// From MDtGet
-		virtual string MDtGet_Uid() const {return MDtGet<Sdata<T>>::Type();}
-		virtual void DtGet(Sdata<T>& aData) override { mHandler(aData);}
+		virtual MIface* DoGetDObj(const char *aName) override { return nullptr;}
+		virtual string VarGetIfid() const override {return Sdata<T>::TypeSig();}
+		virtual const DtBase* VDtGet(const string& aType) { return mHandler();}
 	    protected:
 		MNode& mHost;
 	};
@@ -65,20 +64,19 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 	/** @brief Managed agent parameter access point, using generic data
 	 * Acts as a binder of MDVarGet request to method of host
 	 * */
-	template <typename T> class AdpPapB: public MDVarGet, public MDtGet<T> {
+	template <typename T> class AdpPapB: public MDVarGet {
 	    public:
-		template<typename P> using THandler = std::function<void (P&)>;
+		using THandler = std::function<const DtBase* ()>;
 	    public:
-		THandler<T> mHandler;
+		THandler mHandler;
 	    public:
 		AdpPapB(const AdpPapB& aSrc): mHandler(aSrc.mHandler) {}
-		AdpPapB(THandler<T> aHandler): mHandler(aHandler){}
+		AdpPapB(THandler aHandler): mHandler(aHandler){}
 		// From MDVarGet
 		virtual string MDVarGet_Uid() const {return MDVarGet::Type();}
-		virtual MIface* DoGetDObj(const char *aName) override;
-		virtual string VarGetIfid() const override {return MDtGet<T>::Type();}
-		// From MDtGet
-		virtual void DtGet(T& aData) override { mHandler(aData);}
+		virtual MIface* DoGetDObj(const char *aName) override { return nullptr;}
+		virtual string VarGetIfid() const override {return T::TypeSig();}
+		virtual const DtBase* VDtGet(const string& aType) { return mHandler();}
 	};
 
 	/** @brief Managed agent observer
@@ -177,17 +175,16 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 	void setActivated();
 	MDesObserver* getDesObs();
 	MNode* ahostNode();
-	void GetMagUri(Sdata<string>& aData);
+	const DtBase* GetMagUri();
     protected:
 	bool mInpMagUriUpdated = true;
 	bool mInpMagBaseUpdated = true;
 	MNode* mMagOwner; /*!< Owner of managed agents, ref DS_SN_AUL_LNK_SMA */
 	MNode* mMag; /*!< Managed agent */
-	string mMagUri; /*!< Managed agent URI */
-	bool mMagUriValid; /*!< Validity sign of mMagUri */
+	Sdata<string> mMagUri; /*!< Managed agent URI */
 	AdpIap mIapMagUri = AdpIap(*this, [this]() {OnInpMagUri();}); /*!< MAG URI input access point */
 	AdpIap mIapMagBase = AdpIap(*this, [this]() {OnInpMagBase();}); /*!< Input access point: Managed agent base */
-	AdpPap<string> mPapMagUri = AdpPap<string>(*this, [this](Sdata<string>& aData) {GetMagUri(aData);}); /*!< Mag URI access point */
+	AdpPap<string> mPapMagUri = AdpPap<string>(*this, [this]() -> const DtBase* { return GetMagUri();}); /*!< Mag URI access point */
 	TObserverCp mObrCp;               /*!< AHost Observer connpoint */
 	AdpMagObs<AAdp> mMagObs = AdpMagObs<AAdp>(this); /*!< Managed agent observer */
 	TAgtCp mAgtCp;                   /*!< Agent connpoint */
@@ -195,31 +192,6 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 	bool mActNotified;  //<! Sign of that State notified observers on Activation
 	bool mSelfAsBase;  //<! Sign of that host is acts as MAG base
 };
-
-// Access point, using Sdata
-
-template <typename T> MIface* AAdp::AdpPap<T>::DoGetDObj(const char *aName)
-{
-    MIface* res = NULL;
-    string tt = MDtGet<Sdata<T> >::Type();
-    if (tt.compare(aName) == 0) {
-	res = dynamic_cast<MDtGet<Sdata<T> >*>(this);
-    }
-    return res;
-}
-
-
-// Access point, using generic data
-
-template <typename T> MIface* AAdp::AdpPapB<T>::DoGetDObj(const char *aName)
-{
-    MIface* res = NULL;
-    string tt = MDtGet<T>::Type();
-    if (tt.compare(aName) == 0) {
-	res = dynamic_cast<MDtGet<T>*>(this);
-    }
-    return res;
-}
 
 
 
@@ -237,10 +209,10 @@ class AMnodeAdp : public AAdp
 	// From Unit.MIfProvOwner
 	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
     protected:
-	void GetCompsCount(Sdata<int>& aData);
-	void GetCompNames(TCmpNames& aData);
-	void GetOwner(Sdata<string>& aData);
-	void GetName(Sdata<string>& aData);
+	const DtBase* GetCompsCount();
+	const DtBase* GetCompNames();
+	const DtBase* GetOwner();
+	const DtBase* GetName();
 	// From AAdp
 	virtual void OnMagUpdated() override;
 	// From MDesSyncable
@@ -250,16 +222,19 @@ class AMnodeAdp : public AAdp
 	void ApplyMut();
     protected:
 	// Comps count param adapter. Even if the count can be get via comp names vector we support separate param for convenience
-	AdpPap<int> mApCmpCount = AdpPap<int>(*this, [this](Sdata<int>& aData) {GetCompsCount(aData);}); /*!< Comps count access point */
-	AdpPapB<TCmpNames> mApCmpNames = AdpPapB<TCmpNames>([this](TCmpNames& aData) {GetCompNames(aData);}); /*!< Comp names access point */
-	AdpPap<string> mPapOwner = AdpPap<string>(*this, [this](Sdata<string>& aData) {GetOwner(aData);}); /*!< Comps count access point */
-	AdpPap<string> mPapName = AdpPap<string>(*this, [this](Sdata<string>& aData) {GetName(aData);}); /*!< Name access point */
+	AdpPap<int> mApCmpCount = AdpPap<int>(*this, [this]() -> const DtBase* { return GetCompsCount();}); /*!< Comps count access point */
+	AdpPapB<TCmpNames> mApCmpNames = AdpPapB<TCmpNames>([this]() -> const DtBase* { return GetCompNames();}); /*!< Comp names access point */
+	AdpPap<string> mPapOwner = AdpPap<string>(*this, [this]() -> const DtBase* { return GetOwner();}); /*!< Comps count access point */
+	AdpPap<string> mPapName = AdpPap<string>(*this, [this]() -> const DtBase* { return GetName();}); /*!< Name access point */
 	AdpIap mIapInpMut = AdpIap(*this, [this]() {OnInpMut();}); /*!< Mut Add Widget input access point */
 	// From AAdp
 	virtual void NotifyInpsUpdated() override;
 	virtual void onMagOwnedAttached(MObservable* aObl, MOwned* aOwned) override;
     protected:
 	TCmpNames mCompNames;
+	Sdata<int> mCompsCount;
+	Sdata<string> mName;
+	Sdata<string> mOwner;
 	bool mCompNamesUpdated = true;
 	bool mOwnerUpdated = true;
 	bool mNameUpdated = true;
@@ -363,7 +338,7 @@ class DAdp : public Des, public IDesEmbHost, public MDesAdapter
     protected:
 	vector<DesEIbb*> mIbs; /*!< Inputs buffered registry */
 	vector<DesEOstb*> mOsts; /*!< Output states buffered registry */
-	DesEIbs<string> mIbMagUri;   //!< Buffered input "MagUri"
+	DesEIbd<DGuri> mIbMagUri;   //!< Buffered input "MagUri"
 	DesEIbMnode mIbMagBase;   //!< Buffered input "Mag base"
 	DesEOsts<string> mOstMagUri;   //!< Output state "Mag Uri"
 	MNode* mMagBase;

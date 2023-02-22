@@ -4,6 +4,7 @@
 #include "env.h"
 #include "prov.h"
 #include "rmutdata.h"
+#include "rdatauri.h"
 
 #include <cppunit/extensions/HelperMacros.h>
 
@@ -13,6 +14,7 @@
 class Ut_des : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_des);
+    CPPUNIT_TEST(test_des_data);
     CPPUNIT_TEST(test_des_1);
     CPPUNIT_TEST(test_des_ades_1);
     CPPUNIT_TEST(test_des_dmc_1);
@@ -33,6 +35,7 @@ class Ut_des : public CPPUNIT_NS::TestFixture
      * */
     string getStateDstr(const string& aUri);
     private:
+    void test_des_data();
     void test_des_1();
     void test_des_ades_1();
     void test_des_dmc_1();
@@ -487,3 +490,28 @@ void Ut_des::test_des_1()
 
     delete mEnv;
 }
+
+/** @brief Test of DES data
+ * */
+void Ut_des::test_des_data()
+{
+    cout << endl << "=== Test of DES data  ===" << endl;
+
+    DGuri du1;
+    du1.FromString("URI  ");
+
+    /*
+    const string specn("ut_des_utl_1");
+    string ext = "chs";
+    MNode* root = constructSystem(specn);
+    MElem* eroot = root ? root->lIf(eroot) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get root", eroot);
+    // Run
+    bool res = mEnv->RunSystem(1, 2);
+    CPPUNIT_ASSERT_MESSAGE("Failed running system", eroot);
+    */
+
+//    delete mEnv;
+}
+
+
