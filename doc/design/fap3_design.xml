@@ -104,11 +104,17 @@
 	</glossentry>
 
 
+	<glossentry id="gls_ssp"><glossterm>SSP</glossterm>
+	    <glossdef><para>
+		DES Service Point. Mechanism the system provides to the "client" to update clents state depending on system context.
+		    <xref linkend="ds_ssp"/> for desing details </para></glossdef>
+	</glossentry>
+
 	<glossentry id="gls_deds"><glossterm>DEDS</glossterm> <acronym>DEDS</acronym>
 	    <glossdef> <para>
 		Discrete Event Dynamic System,  a discrete-state, event-driven system of which the state evolution depends entirely
 		on the occurrence of asynchronous discrete events over time. Although similar to continuous-variable dynamic systems (CVDS),
-			DEDS consists solely of discrete state spaces and event-driven state transition mechanisms.  Ref
+		DEDS consists solely of discrete state spaces and event-driven state transition mechanisms.  Ref
 		    <ulink url="https://en.wikipedia.org/wiki/Discrete_event_dynamic_system"/></para>
 		<glossseealso otherterm="gls_des"/> </glossdef>
 	</glossentry>
@@ -125,10 +131,10 @@
 	<glossentry id="gls_desas"><glossterm>DESAS</glossterm> <acronym>DESAS</acronym>
 	    <glossdef> <para>
 		Discrete Event System Active Subsystem, the part of discrete-event system that is implemented as
-		autonomous sub-system. Ref <xref linkend="ds_desas"/></para> for design.</glossdef>
-	</glossentry>
+			autonomous sub-system. Ref <xref linkend="ds_desas"/></para> for design.</glossdef>
+	    </glossentry>
 
-	<glossentry id="gls_dhc"><glossterm>DHC</glossterm> <acronym>DHC</acronym>
+	    <glossentry id="gls_dhc"><glossterm>DHC</glossterm> <acronym>DHC</acronym>
 	    <glossdef> <para>Direct Hierarchical Chromosome</para> <para>
 		Approach of multi-agent system definition that describes the model's structure directly. 
 		Ref <xref linkend="ds_smc"/> for discussion regarding chromo desing approaches.
@@ -304,13 +310,13 @@
 		    relations.
 		    <simpara>Ref <ulink url="../../../grayb/doc/design/index.html#ds_i_anr"/> for current desing weakness analysis.</simpara>
 		</listitem>
-		<listitem>Desing native connections iterating mechanism.</listitem>
+		<listitem>Design native connections iterating mechanism.</listitem>
 		<listitem>
 		    Base iface resolution on native level connections.
 		    <simpara>Ref <xref linkend="ds_irm"/></simpara>
 		</listitem>
 		<listitem>
-		    Desing content basing on native level connections tree of content units.
+		    Design content basing on native level connections tree of content units.
 		    <simpara>Also look at <xref linkend="ds_cnh"/> for another content desing discussion.</simpara>
 		</listitem>
 		<listitem>Easy support of anonymous units.</listitem>
@@ -596,7 +602,7 @@
 		</sect4>
 	    </sect3>
 	</sect2>
-	<sect2><title>Proposal of <xref linkend="gls_irm"/> desing improvement</title>
+	<sect2 id="ds_irm_pdi"><title>Proposal of <xref linkend="gls_irm"/> desing improvement</title>
 	    <sect3><title>Intro</title>
 		<simpara>The current desing (1641500c15) seems a bit overkill. IfrNode implements both provider and requester ifaces. IfrNode also
 		    includes ref to the owning node as MIfProvOwner dedicated iface. Can we simplify the design utilizing NTnnp ifaces proxy feature so that the 
@@ -604,6 +610,44 @@
 		<simpara>Do we really need MUnit iface? Why don't use directly MIfProv?</simpara>
 	    </sect3>
 	    <sect3><title>How to access IfrNode attributes, mValid for instance.</title>
+	    </sect3>
+	    <sect3><title>IFR supporiting the context</title>
+		<simpara>Ref <xref linkend="ds_irm_ctx"/></simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_irm_ctx"><title>IFR with context.</title>
+	    <sect3><title>Intro</title>
+		<simpara>Ref <xref linkend="ds_ssp_dip_sss"/> for the "Service point" use-case and design discussion.</simpara>
+		<simpara>This use-case actually highlights specific class of DES - system that contains the collections of uniform subsystems. Current DES design
+		    doen't have specific means to create and run such class of systems.</simpara>
+		<simpara> Actually there are two problems: </simpara>
+		<itemizedlist>
+		    <listitem>
+			#1 How to pass the context data to the point where it can be used to resolve iface.
+			<para>
+			    The example can be seen from <xref linkend="ds_ssp_dip_sss"/>: Client A (client name is the context) requests the MDVarGet from CP,
+			    CP shall pass the context to its MDVarGet call to SSS so this context needs to be propagated to SSS inputs and then back to CP.
+			    Ref <xref linkend="ds_irm_ctx_pcd"/> for details.
+			</para>
+		    </listitem>
+		    <listitem>
+			#2 IFR request should be extended to get context as the argument. Also default iface provider (ref Unit::defaultIfProv()) shall be parametrized
+			with the context. Or should there be the number of default provs for specific context. 
+		    </listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3 id="ds_irm_ctx_pcd"><title>Passing context data</title>
+		<simpara>
+		    The question is how to pass context to the point where the context is using to resolve interface. For instance if we would like to
+		    pass the context from transitions root to transitions leafs (from state to transition inputs) we simply need to pass the context data in MDVarGet method.
+		    This can be done via extending base MIface by the method setContext(ctx_data). However this seems weird at the first glance.
+		</simpara>
+	    </sect3>
+	    <sect3><title>"Service point" use-case. Passing context data: ifaces mux.</title>
+		<simpara>This is one approach of how to pass the context. The idea is to have specific native agent "Mux" instead of "Service point" socket output
+		    (we assume atm that single output is used). This Mux implements MDVarGet iface but contains the array of ifaces (pins), one for each client. Each iface
+		    keeps client's context data - it is obtaiened during IFR request from Client to mux. When the client calls MDVarGet method via mux pin, the pin notifies
+		    service point of active context. Service point uses this context when to "switch" its other muxes.</simpara>
 	    </sect3>
 	</sect2>
     </sect1>
@@ -616,16 +660,16 @@
 	<sect2><title>GUri improvement: avoid upward navigation</title>
 	    <sect3><title>Intro</title>
 		<simpara>In FAP2 GUri can specify upward navigation, for instance navigation thru owner to root, direct access root etc. This needs to
-		    be disabled. So we don't need such navigation at all. Instead we can have "special nodes" that can be accessed via GUri. Special nodes need
-		    to have named specifically, prefix '_' can be used for instance. Owner can be such special node also.
+		be disabled. So we don't need such navigation at all. Instead we can have "special nodes" that can be accessed via GUri. Special nodes need
+		to have named specifically, prefix '_' can be used for instance. Owner can be such special node also.
 		    such special node.</simpara>
 	    </sect3>
 	    <sect3><title>Usecase: agents accesses neighbours in owning container.</title>
 		<simpara>This is very common case when agent is placed in system so it needs access to other components of this system, e.g to system coppnoints.
-		    The agents acs in this case as system's confidant so it is reasonable it has the access to system's internals. How this use-case can be
+		The agents acs in this case as system's confidant so it is reasonable it has the access to system's internals. How this use-case can be
 		    supported? </simpara>
 		<simpara>The solution can be as: the agent uses URI with special node "owner", so the navigation goes thru the owner, the client acces the owner
-		    via MOwner iface, passing self as the argument. Thus the owner can handle this request specifically - it can check if the requestor is 
+		via MOwner iface, passing self as the argument. Thus the owner can handle this request specifically - it can check if the requestor is 
 		    an agent and event verify if such agent has rights for access to owner's components.</simpara>
 	    </sect3>
 	    <sect3><title>Use-case: fap2-vis VrController - unit adapter gets path to managed agent upward.</title>
@@ -635,7 +679,7 @@
 	    </sect3>
 	    <sect3><title>Approach#1: node reference in owner.</title>
 		<simpara>The idea is that sub-system needs to ask its owner to get required node - owner is the only sub-system "window to the world". The owner
-		    prepares the reference to the node for it's components. What is the reference? This is the node that proxies some ifaces, MUnit in case of
+		prepares the reference to the node for it's components. What is the reference? This is the node that proxies some ifaces, MUnit in case of
 		    ref to parent.</simpara>
 		<simpara>It some "deep" located node requires access to much upper layer than all the owners have to create such references.</simpara>
 		<simpara>With this approach the owners responsibility is to create "environment" for its compoments.</simpara>
@@ -650,9 +694,9 @@
 	<sect2 id="ds_sn_aul"><title>[DS_SN_AUL] Access for upper layer. Parents, modules etc.</title>
 	    <sect3><title>Intro</title>
 		<simpara>Even the generic rule of access restriction is to not allow access to upper layer of native hier, sometimes such access is
-		    required. The example is creating "library" of systems and then use them to create heir in lower layer. Another example is 
-		    the modules. Also the example is <xref linkend="gls_adp"/> where adapter has to has the access to "adapted" (or monitired) agent that
-			is not in the scope of adapters node.</simpara>
+		required. The example is creating "library" of systems and then use them to create heir in lower layer. Another example is 
+		the modules. Also the example is <xref linkend="gls_adp"/> where adapter has to has the access to "adapted" (or monitired) agent that
+		    is not in the scope of adapters node.</simpara>
 	    </sect3>
 	    <sect3><title>Approach#1: special nodes</title>
 		<sect4><title>Intro</title>
@@ -667,15 +711,15 @@
 	    <sect3><title>Using implicit namespace for getting parent</title>
 		<sect4><title>Intro</title>
 		    <simpara>For getting the parent specific version of getNode() is used. This version gets implicit namespaces. We can utilize
-			implicit namespace like "all owners" plus _Imports plus all owners _Modules etc. "All owners" namespace should be for name only whereas
+		    implicit namespace like "all owners" plus _Imports plus all owners _Modules etc. "All owners" namespace should be for name only whereas
 			special names can resolve uri also.</simpara>
 		</sect4>
 	    </sect3>
 	    <sect3 id="ds_sn_aul_lnk"><title>Using links</title>
 		<sect4 id="ds_sn_aul_lnk_itr"><title>Intro</title>
 		    <simpara>Let's consider the problem with <xref linkend="gls_adp"/>
-			: adapter agent needs the access to managed agent, the access can be defined with having content "Managed agent URI" but this works only
-			if the managed agent takes place within adapter tree.
+		    : adapter agent needs the access to managed agent, the access can be defined with having content "Managed agent URI" but this works only
+		    if the managed agent takes place within adapter tree.
 		    </simpara>
 		    <simpara>
 			The idea is to introduce "Link" agent that implements "MLink" interface and has content "Managed agent URI". The MLink interface
@@ -684,9 +728,9 @@
 		    </simpara>
 		    <simpara>
 			Hmm, we again faicing same problem - to specify this "subject of link" we need to use content "Subject of link URI", so with navigation 
-			    restrictions the "Subject of link" shall be in the tree of link that makes almost same inconvenience. Ref
+			restrictions the "Subject of link" shall be in the tree of link that makes almost same inconvenience. Ref
 			<xref linkend="ds_sn_aul_lnk_conn"/>
-			    for discussing this issue.
+			for discussing this issue.
 		    </simpara>
 		</sect4>
 		<sect4 id="ds_sn_aul_lnk_conn"><title>Using Link specific "Connect" mutation</title>
@@ -724,8 +768,8 @@
 		    <simpara>Using Link approach often leads to bad system desing, ref <xref linkend="ds_sn_aul_lnk_cohl"/>. Alternative solution can be using the 
 			standard connections via connpoint. In that case the connection can be structured to keep subsystem isolation.</simpara>
 		    <simpara>Indeed, the standard connection point mechanism can provide access to any interface including MNode for instance. What we need is 
-			to introduce "managing" agent that includes the connpoint provideing the required iface (MNode for instance) and redirecting IFR request
-			to managed agent. The desing can be simplified event more - we can just embed the connpoint into the managed agent, connpoint will
+		    to introduce "managing" agent that includes the connpoint provideing the required iface (MNode for instance) and redirecting IFR request
+		    to managed agent. The desing can be simplified event more - we can just embed the connpoint into the managed agent, connpoint will
 			redirect IFR request to the agent directly.</simpara>
 		</sect4>
 		<sect4><title>Criticism:</title>
@@ -751,8 +795,8 @@
 	    <sect3><title>Needs to updata syntax to avoid inproper semantic.</title>
 		<sect4><title>Intro</title>
 		    <simpara>Currently the <xref linkend="gls_dmc"/> syntax allows connection mutation operand to be node mutations and also segment with
-			context (node in context is considering the operand). In this syntax the semantic of segment context as the operand is completely
-			imporper. Even using node mutation as operand is not quite correct - the mutation is just the update of the current elem, thinking exactly
+		    context (node in context is considering the operand). In this syntax the semantic of segment context as the operand is completely
+		    imporper. Even using node mutation as operand is not quite correct - the mutation is just the update of the current elem, thinking exactly
 			it doesn't has the meaning "node created in result of the mutation".</simpara>
 		</sect4>
 		<sect4><title>Solution#1: Introduce the rule of operands interpretation.</title>
@@ -769,7 +813,7 @@
 	    <sect3 id="ds_cli_syntax_ss"><title>Sequence of segments</title>
 		<sect4><title>Intro</title>
 		    <simpara>Often (especially in case of dependent tree-like chromo) it is required to have not only namespace context segment but
-			also target segment. For instance transition1 input connects to state, the state value is set, the state input connects to 
+		    also target segment. For instance transition1 input connects to state, the state value is set, the state input connects to 
 			transition2 output. </simpara>
 		</sect4>
 		<sect4><title>Solution.</title>
@@ -783,7 +827,7 @@
 	    <sect3><title>Syntax definintion</title>
 		<sect4><title>Do we need mutation_create_with_chromo?</title>
 		    <simpara>This mutation is creation of model node and applying assosiated chromo, note this is single mutation.
-			Currently this mutation is valid but same result can be achieved by using simple mutation_create (without chromo) plus
+		    Currently this mutation is valid but same result can be achieved by using simple mutation_create (without chromo) plus
 			segment with the created node as target. So the reasonable question is if we really need this mutation_create_with_chromo?</simpara>
 		    <simpara>Yes, we do. One of the reasons is that syntax production for model_spec cannot be unabmigous in case of using segment. Indeed the
 			full substitution of mutation_create_with_chromo is :</simpara>
@@ -985,7 +1029,7 @@
 	    <sect3 id="ds_cli_pi_ic"><title>To introduce "Inactivity" context to solve the problem with comments. Or using special target segment.</title>
 		<simpara>
 		    Ref <xref linkend="ds_cli_icc_cfc"/> for the FAP2 chromo language weakness. To solve this problem
-			we can just introduce new context of type "Inactive". This context applied to the mut or segment just makes it inactive.
+		    we can just introduce new context of type "Inactive". This context applied to the mut or segment just makes it inactive.
 		</simpara>
 		<simpara>Or, similarly we can introduce special pseudo-name "nil" and use target segment to redirect the number of mutations to "nil"</simpara>
 		<sect4><title>Status</title>
@@ -995,8 +1039,8 @@
 	    <sect3 id="ds_cli_pi_scm"><title>Special comment mut for long comment boundary </title>
 		<simpara>This is another solution for  <xref linkend="ds_cli_icc_cfc"/>: introduce "begin comment" and "end comment" pseudo-mutations, like </simpara>
 		<programlisting>
-		    # &lt;
-		    # &gt;
+			# &lt;
+			# &gt;
 		</programlisting>
 	    </sect3>
 	    <sect3><title>To introduce segment type depending on context.</title>
@@ -1007,8 +1051,8 @@
 	    <sect3 id="ds_cli_pi_dn"><title>To add "depenency" node to chromo run time model.</title>
 		<sect4><title>Intro</title>
 		    <simpara>Current chromo syntax includes chromo dependency: for instance in mutation_connect right part can be chromo node. This
-			defines mutation_connect dependency on this right part chromo node. But this mutation_connect is compiled into chromo run-time in the manner that
-			dosn't keep such dependency semantic: mutation connect in chromo run-time doesn't have pointer to the dependency but add the dependency node 
+		    defines mutation_connect dependency on this right part chromo node. But this mutation_connect is compiled into chromo run-time in the manner that
+		    dosn't keep such dependency semantic: mutation connect in chromo run-time doesn't have pointer to the dependency but add the dependency node 
 			before mutation connect node in the chromo and state this dep uri as mutation connect right part.</simpara>
 		    <simpara>Ref <xref linkend="ds_cli_ddmc"/> for details.</simpara>
 		    <simpara>Ref <xref linkend="ds_tch"/> for other materials.</simpara>
@@ -1026,8 +1070,8 @@
 		    Namespace helps to make transition notation compact with <xref linkend="gls_dmc"/>. But it is still not perfect, ref
 		    <xref linkend="ds_cli_icc_uncs"/> for instance. What helps NS context to do in
 		    <xref linkend="gls_dmc"/>? Just to compact (i.e. without full URI) specify the inputs in the connectins chain plus have a new segment
-			(this is important to create hierarchical chromo structure that is more readeable that the flat structure).
-			Can we specify it compact in another way?
+		    (this is important to create hierarchical chromo structure that is more readeable that the flat structure).
+		    Can we specify it compact in another way?
 		</simpara>
 		<simpara>
 		    Note that the context types actually are not independent. Indeed, the target context means also that target node is also namespace.
@@ -1036,7 +1080,7 @@
 	    <sect3><title>Is it OK to use segments for forming connections hierarchy?</title>
 		<simpara>
 		    FAP2 <xref linkend="gls_dmc"/> uses segments plus namespace context to form connections hierarhy represetation of 
-			hierarchical stype. But is using segments really nesessary?
+		    hierarchical stype. But is using segments really nesessary?
 		</simpara>
 	    </sect3>
 	</sect2>
@@ -1052,8 +1096,8 @@
 		    It is common case when required to specify some mutation of newly-created anonymous agent in connection heirarchy with
 		    <xref linkend="gls_dmc"/>. New chromo syntax (ref
 		    <xref linkend="ds_cli_syntax_ss"/>) allows to do it having two subsequent
-			namespace and target segments. However it is not convenient. The solution would be to use special name designating the
-			top namespace agent, like that (compate to
+		    namespace and target segments. However it is not convenient. The solution would be to use special name designating the
+		    top namespace agent, like that (compate to
 		    <xref linkend="ds_cli_syntax_ss"/>):
 		</simpara>
 		<programlisting>
@@ -1072,17 +1116,17 @@
 		    This happens when namespace is specified for segment and some node is created within this segment and mutated then.
 		    It's clear that the namespace will be propagated to all muts within the segment.
 		    Let's look at what will be the root node chromo after <xref linkend="gls_osm"/> transformation.
-			Mut of newly created node the namespace will be "upper" than the target (target is the newly created node). But specifying "upper" node cannot be
-			done via regular URI (that is relative to the target) but via absolute URI only (absolute URI is also prohibited in chromo.)
+		    Mut of newly created node the namespace will be "upper" than the target (target is the newly created node). But specifying "upper" node cannot be
+		    done via regular URI (that is relative to the target) but via absolute URI only (absolute URI is also prohibited in chromo.)
 		</simpara>
 	    </sect3>
 	    <sect3 id="ds_cli_sno_s1"><title>Solution#1 special mutations for segment start and end</title>
 		<simpara>
 		    <xref linkend="gls_osm"/> tranform hierarchical chromo to the flat chromo. This is the root-cause of the problem. With flat
-			chromo we cannot keep the namespece in segment mutation (we just don't have segment in
+		    chromo we cannot keep the namespece in segment mutation (we just don't have segment in
 		    <xref linkend="gls_osm"/>. The idea is to have segment mutation in <xref linkend="gls_osm"/> by introducing the mutation
-			for segment start and end (like begin and end keywords
-			in Pascal). Thus the namespace will be stated for segment begin mut but not propagated to segment's "internal" muts.
+		    for segment start and end (like begin and end keywords
+		    in Pascal). Thus the namespace will be stated for segment begin mut but not propagated to segment's "internal" muts.
 		</simpara>
 	    </sect3>
 	    <sect3 id="ds_cli_sno_s2"><title>Solution#2 Enable segments in <xref linkend="gls_osm"/></title>
@@ -1113,8 +1157,8 @@
 		<simpara>The design gaps is:</simpara>
 		<itemizedlist>
 		    <listitem>Curently only one namespace can be specified in mut. But if we specify namespaces for two nested node that the 
-			"lower" mut will actually have two namespaces applied. How this mut can be represented in <xref linkend="gls_osm"/> form?
-			    Both namespeces should be specified but just one is supported.</listitem>
+		    "lower" mut will actually have two namespaces applied. How this mut can be represented in <xref linkend="gls_osm"/> form?
+			Both namespeces should be specified but just one is supported.</listitem>
 		</itemizedlist>
 	    </sect3>
 	</sect2>
@@ -1122,17 +1166,17 @@
 	    <sect3><title>Intro</title>
 		<simpara>
 		    Current <xref linkend="gls_osm"/> implementation  generates "inconvenient" bad readeable output chromo. The question is if the approach 
-			can be improved by enabling segments propagation to the output chromo.
-			Ref <xref linkend="ds_cli_sno_s1"/> and <xref linkend="ds_cli_sno_s2"/> that introduce the possible approaches to this.
+		    can be improved by enabling segments propagation to the output chromo.
+		    Ref <xref linkend="ds_cli_sno_s1"/> and <xref linkend="ds_cli_sno_s2"/> that introduce the possible approaches to this.
 		</simpara>
 		<simpara>Ref <xref linkend="ds_iss_001"/> for related issue.</simpara>
 	    </sect3>
 	    <sect3 id="ds_eosm_s1"><title>Solution#1 Checking of parent mutation from the mut context.</title>
 		<sect4><title>Intro</title>
 		    <simpara>The idea is to set the mutation to the chromo at the beginning of the mutation applying. Then
-			apply the owned muatitions from the current node if the current node is the composite mutation. Mutation context of
-			this owned mut applying needs to be modified - add the current composite mutation ref as "owning node". Propagation of owned mutation in
-			onOwnedMutated also needs to be modified: to check if the mutation context "owning node" is alreasy in chormo, in that case
+		    apply the owned muatitions from the current node if the current node is the composite mutation. Mutation context of
+		    this owned mut applying needs to be modified - add the current composite mutation ref as "owning node". Propagation of owned mutation in
+		    onOwnedMutated also needs to be modified: to check if the mutation context "owning node" is alreasy in chormo, in that case
 			deny the mut propagation.  </simpara>
 		    <simpara>The provlem with this approach is that checking of mutation context is qute complicated. The direct way to do it is just
 			search the context ("owning node") in the node chromo so the full traverse thru chromo is required.</simpara>
@@ -1146,7 +1190,7 @@
 		<sect4><title>Intro</title>
 		    <simpara>
 			This is similar to <xref linkend="ds_eosm_s1"/> but the mutation context checked on mut propagarion is not
-			    a parent mutation but mut originator node. Actually this approach is already used in the current
+			a parent mutation but mut originator node. Actually this approach is already used in the current
 			<xref linkend="gls_osm"/> solution, ref MutCtx::mNode.
 		    </simpara>
 		</sect4>
@@ -1158,27 +1202,27 @@
 	<sect2 id="ds_cli_ddmc"><title>Direct <xref linkend="gls_dmc"/> chromo structure - <xref linkend="gls_ddmc"/></title>
 	    <sect3><title>Intro</title>
 		<simpara>The main idea is that current chromo is actually a complex tree. For instance: Q arg of connection mut can be 
-		    simple URI. Or it can be dependent on creation mut (in that case the actual Q arg is P arg of this dependent creation mut). Or
+		simple URI. Or it can be dependent on creation mut (in that case the actual Q arg is P arg of this dependent creation mut). Or
 		    it can depend on namespace segment, in that case conn mut Q arg is this namespace segment "namespace" context.</simpara>
 		<simpara>So there actual relation between connection mut Q arg and another dependent mut parameter. However in the current
-		    chromo2 implementation this relation doesn't exists explicitly. The relation is implemented via name (ID); the name is resolved
+		chromo2 implementation this relation doesn't exists explicitly. The relation is implemented via name (ID); the name is resolved
 		    on chromo parsing phase and the relation is set.</simpara>
 		<simpara>This approach is quite reasonable. In result of <xref linkend="gls_dmc"/> chromo parsing we get simple <xref linkend="gls_osm"/> chromo
-		    where the dependencies are resolved via the names (ID) substitution and stated in form of name references in the model native hier.
-		    So what is the problem here? The problem is that the original chromo and
-		    parsed chromo has different structure. The ouput chromo can be "reused" but its representation is not convenient.
+		where the dependencies are resolved via the names (ID) substitution and stated in form of name references in the model native hier.
+		So what is the problem here? The problem is that the original chromo and
+		parsed chromo has different structure. The ouput chromo can be "reused" but its representation is not convenient.
 		    The possible solution is to convert it back to <xref linkend="gls_dmc"/> but this complicates the whole process.</simpara>
 		<simpara>Is it possible to have chromo structure aligned with the structure of <xref linkend="gls_dmc"/> chromo syntax?</simpara>
 	    </sect3>
 	    <sect3><title>Solution#1 References of given type to depending mutation.</title>
 		<sect4><title>Intro</title>
 		    <simpara>Mut include args both as values and references to depending mutation. The reference is typed. The types
-			means what depending mutation parameter the reference is to. Actually we can define default reference for each mutation type and
-			use this default relation type. For instance mut of type "creation" has default relation to name of created node; mut
-			of type "segment" has default relation the name of context (it is assumed that either the name of context is unambiguos,
+		    means what depending mutation parameter the reference is to. Actually we can define default reference for each mutation type and
+		    use this default relation type. For instance mut of type "creation" has default relation to name of created node; mut
+		    of type "segment" has default relation the name of context (it is assumed that either the name of context is unambiguos,
 			i.e eihter the context is single, or same value both for target and namespace).  </simpara>
 		    <simpara>It is possible to have the chain of references. For instance connection attr Q references to namespace segment mut
-			(i.e. to namespace context value). The namespace context value in turn references to mut of "creation" type (i.e to 
+		    (i.e. to namespace context value). The namespace context value in turn references to mut of "creation" type (i.e to 
 			name of created node).</simpara>
 		</sect4>
 		<sect4><title>How to apply the mutation with the reference.</title>
@@ -1188,8 +1232,8 @@
 	    <sect3 id="ds_cli_ddmc_ues"><title>Soution#2 Using chromo node embedded segment as the relation.</title>
 		<sect4><title>Intro</title>
 		    <simpara>Actually the chromo node (both of abstract chromo model and chromo2 run-time) already has the relation - node embedded "chromo".
-			This embedded chromo is the list of nodes binded to the given node. Currently this dependency is only of type owning-owned, i.e. all the nodes 
-			in chromo are the nodes that have to be applied into the native hier node created by given chromo node mutation.
+		    This embedded chromo is the list of nodes binded to the given node. Currently this dependency is only of type owning-owned, i.e. all the nodes 
+		    in chromo are the nodes that have to be applied into the native hier node created by given chromo node mutation.
 			But we can extend the usage of this chromo node embedded chromo: we can use it to keep for instance connection mutation Q-dependent node.</simpara>
 		</sect4>
 		<sect4 id="ds_cli_ddmc_ues_ics"><title>How we need to improve chromo node structure.</title>
@@ -1215,7 +1259,7 @@
 	    </sect3>
 	    <sect3 id="ds_cli_ddmc_rcdc"><title>Revieving current design of the creation of system</title>
 		<simpara>20221230 Trying implement <xref linkend="gls_ddmc"/> - improve chromo structure to have dependency as child node, chromo itself is parsed fine,
-		    but the creation of system doesn't work properly. So it needs to be also updated. Seems we need to aligned the creation mechanism to the new chromo structure.
+		but the creation of system doesn't work properly. So it needs to be also updated. Seems we need to aligned the creation mechanism to the new chromo structure.
 		    First we need to review the current design and outline the desing update areas. </simpara>
 		<simpara>Ref <xref linkend="ds_rcdc"/> for the details.</simpara>
 	    </sect3>
@@ -1229,12 +1273,12 @@
 	<sect2 id="ds_cli_nseg"><title>Named segment</title>
 	    <sect3><title>Intro</title>
 		<simpara>Use-case_1: some system used <xref linkend="gls_sdc"/> controller to update itself with some chromo segment. The controller
-		    forms its status (Outp output) by checking system's if the segment is applied (check if there is this serment in the chromo). This checking
+		forms its status (Outp output) by checking system's if the segment is applied (check if there is this serment in the chromo). This checking
 		    operation is simple because serments name is supported.</simpara>
 		<simpara>Use-case_2: widget system (ref fap3-vis widget.chs); there is base widget system WidgetBase that is just default "template"; specialized
-		    widget (for instance VLabel) is based on WidgetBase, includes specialized agent (native agent inherited from some base) and adjusts the topology including connections to the agent.
-		    The agent base already has some connpoints that needs to be connected to the compoments of WidgetBase, but this connection cannot be done in the scope of WidgetBase becaues
-		    it doesn't include agent. So currently we need add agent and do these connections for any widget in widget system - i.e. the spec is duplicated many time. The solution can be to
+		widget (for instance VLabel) is based on WidgetBase, includes specialized agent (native agent inherited from some base) and adjusts the topology including connections to the agent.
+		The agent base already has some connpoints that needs to be connected to the compoments of WidgetBase, but this connection cannot be done in the scope of WidgetBase becaues
+		it doesn't include agent. So currently we need add agent and do these connections for any widget in widget system - i.e. the spec is duplicated many time. The solution can be to
 		    combine all that connections within single chromo named segment and then apply it in any particular widget.</simpara>
 	    </sect3>
 	</sect2>
@@ -1264,7 +1308,7 @@
 	    </sect3>
 	    <sect3><title>Using Recursive descent parsing for errors is rather redundant.</title>
 		<simpara>The problem seems to be that we are trying to use "negative" non-terminals like "not URI". We try to use existing not-terminal matching function to
-		    match this non-terminals. So, our meaning of this not-terminals is "the mininal sentence that match it". For instance "a1.a2*blabla" is "not URI" but
+		match this non-terminals. So, our meaning of this not-terminals is "the mininal sentence that match it". For instance "a1.a2*blabla" is "not URI" but
 		    we match "a1.a2*" as sentence matched. </simpara>
 	    </sect3>
 	</sect2>
@@ -1289,13 +1333,13 @@
 		    contain info of how to create the agent, i.e the mutation of the agents owner. Is this reasonable approach?</simpara>
 		<simpara>Another approach would be to have the agents chromo as the info of changing the agent. Or may be at least plus the parent.</simpara>
 		<simpara>The current approach causes some complication when applying the mutations: we need to use "treat_as_chromo" option of mutation routine
-		    to separate the mutation mutation_create part from segment. So when some owner creates new owned agent it first applies to itself the 
+		to separate the mutation mutation_create part from segment. So when some owner creates new owned agent it first applies to itself the 
 		    mutation_create part of the mutation and then segment part to the newly created agent ("treat_as_chromo" option is used here).</simpara>
 	    </sect3>
 	    <sect3><title>Actually both</title>
 		<simpara>Mutation part of the node (ENt_Add specifically) is the info of "how to create" but segment part is of "how to change".
-		    Actually these parts even used with theirs specific aims. 
-		    This is why in the current implementation MNode::mutate() method contains aTreatAsChromo arg - if true it tells to the routine
+		Actually these parts even used with theirs specific aims. 
+		This is why in the current implementation MNode::mutate() method contains aTreatAsChromo arg - if true it tells to the routine
 		    "take that part of the chromo node that is the set of the agent mutations"</simpara>
 	    </sect3>
 	</sect2>
@@ -1361,7 +1405,7 @@
 		</simpara>
 	    </sect3>
 	</sect2>
-	<sect2 id="ds_dce_dso"><title>Desing outline</title>
+	<sect2 id="ds_dce_dso"><title>Design outline</title>
 	    <sect3><title>MCont iface and Content node</title>
 		<simpara>
 		    We need to introduce new elements of native hier - node. Node can just support owner-owned relation and have content.
@@ -1640,11 +1684,11 @@
 	    </simpara>
 	    <simpara>Tried this approach, seems it is not working. The number of problems were discovered, <xref linkend="ds_asr_pnc"/> and more.</simpara>
 	</sect2>
-	<sect2><title>Desing solution: using DES input observer interface.</title>
+	<sect2><title>Design solution: using DES input observer interface.</title>
 	    <simpara>This solution seems simple. Actually what we need is to notify any DES change via this interface. But there are use-cases showing this 
 		approach limitations, ref ut_des_asr_2.chs - connpoints here are not connected directly but via sockets. So this pure approach neither doesn't work.</simpara>
 	</sect2>
-	<sect2 id="ds_asr_cbs"><title>Desing solution: update detection via IRM and notification via DES inp observer.</title>
+	<sect2 id="ds_asr_cbs"><title>Design solution: update detection via IRM and notification via DES inp observer.</title>
 	    <simpara>We can use the "combined" solution: to get the event of unit change via IRM and then use DES inp observer net to activate DES.</simpara>
 	</sect2>
 	<sect2 id="ds_asr_pnc"><title>Issue: IFR MDesInpObserver path is not created from constant.</title>
@@ -1910,7 +1954,7 @@
 		    <sect5><title>Discussion.</title>
 			<simpara>Acc to <xref linkend="uc_sdc_01"/> the insertion on #3 cannot happen because the trigger value is not change.</simpara>
 		    </sect5>
-		    <sect5><title>Desing</title>
+		    <sect5><title>Design</title>
 			<simpara>Ref <xref linkend="ds_dcs_sdc_dsgn_oin"/> for the desing</simpara>
 		    </sect5>
 		</sect4>
@@ -2702,6 +2746,130 @@
 	</sect2>
     </sect1>
 
+    <sect1 id="ds_ssp"><title>System Service point (<xref linkend="gls_ssp"/>)</title>
+	<sect2><title>Status</title>
+	    <itemizedlist>
+		<listitem>20230302 Initial variant, unit-case. Not completed. High-level use-cases are not confirmed. </listitem>
+	    </itemizedlist>
+	</sect2>
+	<sect2><title>Intro</title>
+	    <itemizedlist>
+		<listitem>
+		    Ref <ulink url="../../../fap3-vis/doc/design/index.html#ds_vtxdrp_ecr"/> for the primary use-cases.
+		    <para>The main use-case if the system consisting from a number of "client" syb-system and "service" sub-system.
+			Here the "clients" update theirs's state depending on "service" states. In the use-case above the EdgeCRP points states
+			(coordinates) depends on DRP states set.</para>
+		</listitem>
+	    </itemizedlist>
+	</sect2>
+	<sect2 id="ds_ssp_dip"><title>Design initial points</title>
+	    <sect3><title>Single conn point, multiple client updating (servicing) subsystems.</title>
+		<simpara>It makes sense to simplify the interface for the clients. Because the clients are same from states updates needs we can have
+		    "service" system single connpoint for all such clients. Even having signle connpoints the service system needs to have client's
+		    dedicated subsystems to update each client.</simpara>
+		<simpara>There should be dedicated servicing subsystem created for each client. Let's consider the simple servicing scheme.</simpara>
+		<simpara>There are Servicing system SS, service connpoint CP with simplem interface (one inp Inp and one outp Outp),
+		    clients A and B, and servicing subsystem SSS that "gets" the inp, gets SS context, and updates clients via CP output.</simpara>
+		<programlisting>
+		    |        |-------------|
+		    |        |   SS        |
+		    |   A---|  |---|SSS_A| |
+		    |       |CP|           |     
+		    |   B---|  |---|SSS_B| |
+		    |        |             |
+		    |        |-------------|
+		</programlisting>
+		<simpara>CP shall have special iface resolution rules to resolve iface depending on what the iface request comes from. For instance
+		    if MDesInpObserver resolution request comes from client A then CP shall redirct iface resolution request to SSS_A input. In turn if iface 
+		    resoution request comes from SSS_A then CP shall redirect the request to client A.</simpara>
+	    </sect3>
+	    <sect3 id="ds_ssp_dip_sss"><title>Can we have single updating (servicing) subsystem for clients?</title>
+		<simpara>Note, that having single servicing subsystem makes sense only for the subsystem in form of transition, i.e. without any
+		    states. If there are some states in subsystem there have to be separate subsystems.</simpara>
+		<simpara>Yes, potentially such design can be used. But in that case we need to have enhanced interface resolution mechanism. Let's
+		    consider same simple 2-clients schema:</simpara>
+		<programlisting>
+		    |        |-----------|
+		    |   A---|  | SS      |
+		    |       |CP|---|SSS| |     
+		    |   B---|  |         |
+		    |        |-----------|
+		</programlisting>
+		<simpara>There are Servicing system SS, service connpoint CP with simplem interface (one inp Inp and one outp Outp),
+		    clients A and B, and servicing subsystem SSS that "gets" the inp, gets SS context, and updates clients via CP output.</simpara>
+		<simpara>
+		    When client A gets updated, it sends DES input update notification (MDesInpObserver) thru CP Inp. SSS should pass this
+		    notif back to A thru CP Outp. When B get updated SSS should pass inp update notif back to B. So CP shall resolve MDesInpObserver
+		    depending on iface resolution context, i.e. on what client makes the request.
+		    Yes, CP Iface resolution rules can use iface resolution requestor. But the problem here is
+		    that MDesInpObserver iface resolution request coming to CP doens't contain the full context - even each transition "breaks" the request context.
+		</simpara>
+		<simpara>
+		    Current iface resolutin mechanism supports only context in form of requestor chain. But it is not enough in our case. We needs to have the 
+		    context that can be somehow passed to the agent where it can be actually used. In our case for instance it will be the MDesInpObserver request
+		    to CP. So we need to have the enhanced iface resoution mechanism to support single servicing subsystem schema. With the current resolution
+		    mechanism the solution will not work. Ref <xref linkend="ds_irm_ctx"/> for IFR design materials.
+		</simpara>
+		<simpara>Potentially the solution would be keeping the request context in CP. For instance client A requests CP for MDVarGet, CP stores 
+		    the request context (client A) and uses this context when servicing subsystem in turn requests CP for MDVarGet iface - CP will redirect the request to
+		    client A.</simpara>
+	    </sect3>
+	    <sect3><title>How to create servicing subsystem for the clent.</title>
+		<simpara>We need to have native agent "Servicing point" (or multi-clent point) for that. This agent specifics are:</simpara>
+		<itemizedlist>
+		    <listitem>It creates corresponding servicing subsystem on client connected event.</listitem>
+		    <listitem>It removes corresponding servicing subsystem on client disconnected event.</listitem>
+		    <listitem>It has specific iface resolution rules "binding" client to its servicing subsystem.</listitem>
+		</itemizedlist>
+	    </sect3>
+	</sect2>
+	<sect2><title>Design. Separate servicing subsystem for each client.</title>
+	    <sect3><title>Intro</title>
+		<simpara>Single servicing subsystem desing options (ref <xref linkend="ds_ssp_dip_sss"/>) is not clarified so far. So we need to focuse on
+		    the initial design option where separate servicing subsystem is created for each client.</simpara>
+	    </sect3>
+	    <sect3><title>Structure</title>
+		<simpara>The structure is as:</simpara>
+		<programlisting>
+		    |
+		    |
+		    |                          -------------------------------------------------------------------------
+		    |                          |   SSM                                                                 | 
+		    |                          |                                                                       |
+		    |    ------------------    |   -----------------      --------------------------                   |
+		    |    |        ------- |    |   |       ------- |      |  --------     -------- |         --------  |
+		    |    | Client | CCP |----------| ECP   | Int |-----------| CCPM | SS  | SCXC |-----------| SCXS |------------
+		    |    |        ------- |    |   |       ------- |      |  --------     -------- |         --------  |
+		    |    ------------------    |   -----------------      --------------------------                   |
+		    |                          |                                                                       |
+		    |                          -------------------------------------------------------------------------
+		</programlisting>
+		<simpara>Where:</simpara>
+		<programlisting>
+		    SSM - serivcing subsystems manager
+		    CCP - Client Connection Point (Socket)
+		    ECP - Client connection point extender - specific native agent inherited from Extd and having specific IFR.
+		    CCPM - Client Connection Point mate
+		    SS - servicing subsystem
+		    SCXC - Servicing context consumer
+		    SCXS - Servicing context supplier
+		</programlisting>
+		<simpara>SSM creates SS for each client connected to ECP and name SS with assosiation to its client. Such names assosiation is used to the proper 
+		    iface resolution.  </simpara>
+	    </sect3>
+	    <sect3><title>How to resolver ifaces for client and servicing subsystem?</title>
+		<sect4><title>Intro</title>
+		    <simpara>Threre should be the proper IFR mechanism that "binds" assosiated client and service. To correctly resolve the ifaces the IFR nodes owners
+		    (CCP, ECP, ECP.Int, CCPM) should have the proper contex. We can use some client/service identification as the context at the moment.
+		    Let's use client and sevicing subsystem names (they should be same) as the identification. There is no existing means of how to get the names.
+			So we need to create such means. We can propose the following mechanism of gettig the context: introduce dedicated iface MDesSpc for
+			obtaining ID (this ifaces shall be implemented specific managing agents embedding to Client and SS). IFR nodes owners needs to be
+			customized to use MDesSpc when obtaining ID.</simpara>
+		</sect4>
+	    </sect3>
+	</sect2>
+    </sect1>
+
     <sect1><title>Code review</title>
 	<sect2><title>20221216 Native hier, protocols, node</title>
 	    <sect3><title>Can the protocol of the manager of protocols be used instead of each protocole getLif()</title>
@@ -2717,65 +2885,66 @@
 		    create native agents?</simpara>
 	    </sect3>
 	</sect2>
-    </sect1>
+	</sect1>
 
-    <sect1 id="ds_ibc"><title>Tracking: Desing items to be handed</title>
-	<sect2><title>Intro</title>
-	    <simpara>Ref <xref linkend="ds_itr_sp"/> for the initial list of the problems need to be addressed in FAP3.</simpara>
-	</sect2>
-	<sect2 id="ds_ibc_roncc"><title>Root as the only node containing chromo</title>
-	    <sect3><title>Intro</title>
-		<simpara>
-		    Currently the model can contain many nodes that have theyrs own chromos - any Elem based nodes. This simplifies creating these nodes
-		    heirs. But on another hand this causes chromo duplication. Actually any node chromo can be "calculated" from root chromo. This approach
-		    was tried in some earlier version of FAP.
-		    This approach potentially can improve the model performance. We need to consider such design.
-		</simpara>
-	    </sect3>
-	</sect2>
-	<sect2 id="ds_ibc_dgit"><title>[DS_IBC_DGIT] Do we need MDtGet iface as templated one?</title>
-	    <simpara>Potentially we can have non-templated MDtGet that provides the access to base data iface MDtBase.</simpara>
-	    <simpara>The indication of week desing is the problems with TrTuple: it is not possible to update the tuple components. The input of the 
-		transition can get the access to data only via templated MDtGet but the type isn't explicitly known.</simpara>
-	</sect2>
-	<sect2><title>Intitial invalid status of State</title>
-	    <simpara>Ref <xref linkend="ds_iis"/></simpara>
-	</sect2>
-	<sect2><title>Localize provider's scope</title>
-	    <simpara>Ref <xref linkend="ds_lps"/></simpara>
-	</sect2>
-	<sect2><title>Chromo named segments</title>
-	    <simpara>Ref <xref linkend="ds_cli_nseg"/></simpara>
-	</sect2>
-	<sect2><title>Mutation as transaction</title>
-	    <simpara>Ref <xref linkend="ds_mtc"/></simpara>
-	</sect2>
-	<sect2><title>DES context</title>
-	    <simpara>Ref <xref linkend="ds_dctx"/></simpara>
-	</sect2>
-	<sect2><title>Data special values.</title>
-	    <simpara>Ref <xref linkend="ds_dsv"/></simpara>
-	</sect2>
-	<sect2><title>Redesing data interfaces.</title>
-	    <simpara>Ref <xref linkend="ds_rdi"/></simpara>
-	</sect2>
-	<sect2><title>Introduce constant data instead of State</title>
-	    <simpara>Ref <xref linkend="ds_cist"/></simpara>
-	</sect2>
-	<sect2><title>DES based objects</title>
-	    <simpara>Ref <xref linkend="ds_dcs_sl_dbo"/></simpara>
-	</sect2>
-	<sect2><title>DCS transactions</title>
-	    <simpara>Ref <xref linkend="ds_dcs_trs"/></simpara>
-	</sect2>
-	<sect2><title><xref linkend="ds_gibu"/></title> </sect2>
-	<sect2><title><xref linkend="ds_egio"/></title> </sect2>
-	<sect2><title><xref linkend="ds_desopt_ums"/></title> </sect2>
-	<sect2><title><xref linkend="ds_desopt_asdc"/></title> </sect2>
-	<sect2><title><xref linkend="ds_ndes"/></title> </sect2>
-    </sect1>
+	<sect1 id="ds_ibc"><title>Tracking: Design items to be handed</title>
+	    <sect2><title>Intro</title>
+		<simpara>Ref <xref linkend="ds_itr_sp"/> for the initial list of the problems need to be addressed in FAP3.</simpara>
+	    </sect2>
+	    <sect2 id="ds_ibc_roncc"><title>Root as the only node containing chromo</title>
+		<sect3><title>Intro</title>
+		    <simpara>
+			Currently the model can contain many nodes that have theyrs own chromos - any Elem based nodes. This simplifies creating these nodes
+			heirs. But on another hand this causes chromo duplication. Actually any node chromo can be "calculated" from root chromo. This approach
+			was tried in some earlier version of FAP.
+			This approach potentially can improve the model performance. We need to consider such design.
+		    </simpara>
+		</sect3>
+	    </sect2>
+	    <sect2 id="ds_ibc_dgit"><title>[DS_IBC_DGIT] Do we need MDtGet iface as templated one?</title>
+		<simpara>Potentially we can have non-templated MDtGet that provides the access to base data iface MDtBase.</simpara>
+		<simpara>The indication of week desing is the problems with TrTuple: it is not possible to update the tuple components. The input of the 
+		    transition can get the access to data only via templated MDtGet but the type isn't explicitly known.</simpara>
+	    </sect2>
+	    <sect2><title>Intitial invalid status of State</title>
+		<simpara>Ref <xref linkend="ds_iis"/></simpara>
+	    </sect2>
+	    <sect2><title>Localize provider's scope</title>
+		<simpara>Ref <xref linkend="ds_lps"/></simpara>
+	    </sect2>
+	    <sect2><title>Chromo named segments</title>
+		<simpara>Ref <xref linkend="ds_cli_nseg"/></simpara>
+	    </sect2>
+	    <sect2><title>Mutation as transaction</title>
+		<simpara>Ref <xref linkend="ds_mtc"/></simpara>
+	    </sect2>
+	    <sect2><title>DES context</title>
+		<simpara>Ref <xref linkend="ds_dctx"/></simpara>
+	    </sect2>
+	    <sect2><title>Data special values.</title>
+		<simpara>Ref <xref linkend="ds_dsv"/></simpara>
+	    </sect2>
+	    <sect2><title>Redesing data interfaces.</title>
+		<simpara>Ref <xref linkend="ds_rdi"/></simpara>
+	    </sect2>
+	    <sect2><title>Introduce constant data instead of State</title>
+		<simpara>Ref <xref linkend="ds_cist"/></simpara>
+	    </sect2>
+	    <sect2><title>DES based objects</title>
+		<simpara>Ref <xref linkend="ds_dcs_sl_dbo"/></simpara>
+	    </sect2>
+	    <sect2><title>DCS transactions</title>
+		<simpara>Ref <xref linkend="ds_dcs_trs"/></simpara>
+	    </sect2>
+	    <sect2><title><xref linkend="ds_gibu"/></title> </sect2>
+	    <sect2><title><xref linkend="ds_egio"/></title> </sect2>
+	    <sect2><title><xref linkend="ds_desopt_ums"/></title> </sect2>
+	    <sect2><title><xref linkend="ds_desopt_asdc"/></title> </sect2>
+	    <sect2><title><xref linkend="ds_ndes"/></title> </sect2>
+	    <sect2><title><xref linkend="ds_irm_ctx"/></title> </sect2>
+	</sect1>
 
-    <sect1 id="ds_ic"><title>Tracking: Desing items completed</title>
+	<sect1 id="ds_ic"><title>Tracking: Design items completed</title>
     </sect1>
 
     <sect1 id="ds_iss"><title>Issues</title>
@@ -3009,35 +3178,51 @@
 		<simpara>20230130 Implemented, ref also dependent design item <xref linkend="ds_dsv"/> </simpara>
 	    </sect3>
 	</sect2>
+	<sect2 id="ds_iss_012"><title>[<glossterm id="iss_012">DS_ISS_012</glossterm>] 20230225 Exception when resolving iface in socket extd topology.</title>
+	    <sect3><title>Intro</title>
+		<simpara>Trying to create UT for <xref linkend="gls_ssp"/> but see the exception. Checked with socket UT, modified ut_syst_sock_3 - the problem
+		    is reqproduced.</simpara>
+		<simpara>Ref ut_syst_sock_3.chs tag ISS_012. The exception happens here: </simpara>
+		<programlisting>
+		    #7  0x00007ffff7c6fe53 in Socket::resolveIfc (this=0x55555563bc70, aName="MTIf1", aReq=0x55555563d158) at syst.cpp:315
+		    315						assert(apair == reqn);
+
+		    (gdb) p Uid()
+		    $2 = ".MyRoot.S1.S1_2.Sck1%MSocket"
+		</programlisting>
+	    </sect3>
+	    <sect3><title>Analysis</title>
+		<simpara>The root-cause is wrong alogrithm of moving assosiated pair to extender, ref Socket::resolveIfc() tagged DS_ISS_012.</simpara>
+	    </sect3>
+	</sect2>
     </sect1>
 
     <sect1><title>Tools</title>
 	<sect2><title>chs formatting in VIM</title>
 	    <sect3><title>Set-up .vimrc</title>
-	    <programlisting>
-		    "=====================================================
-		" vim-autoformat settings
-		    "=====================================================
+		<programlisting>
+			"=====================================================
+		    " vim-autoformat settings
+			"=====================================================
 
-		    "let g:autoformat_verbosemode=1
+			"let g:autoformat_verbosemode=1
 
-		let g:formatdef_yb_chs = '"/media/sf_vbx_shared/projects/fap/fap3/clm/fapm3 -f"'
-		let g:formatters_chs = ['yb_chs']
+		    let g:formatdef_yb_chs = '"/media/sf_vbx_shared/projects/fap/fap3/clm/fapm3 -f"'
+		    let g:formatters_chs = ['yb_chs']
 
-		" Disable autoindenting, retab and removing trailing spaces
-		let g:autoformat_autoindent = 0
-		let g:autoformat_retab = 0
-		let g:autoformat_remove_trailing_spaces = 0
+		    " Disable autoindenting, retab and removing trailing spaces
+		    let g:autoformat_autoindent = 0
+		    let g:autoformat_retab = 0
+		    let g:autoformat_remove_trailing_spaces = 0
 
-		" map to &lt;Leader&gt;cf
-		    autocmd FileType chs nnoremap &lt;buffer&gt;&lt;Leader&gt;ff :&lt;C-u&gt;Autoformat&lt;CR&gt;
+		    " map to &lt;Leader&gt;cf
+			autocmd FileType chs nnoremap &lt;buffer&gt;&lt;Leader&gt;ff :&lt;C-u&gt;Autoformat&lt;CR&gt;
 
-		" vim-autoformat settings end
-	    </programlisting>
-	</sect3>
-    </sect2>
-</sect1>
-
+		    " vim-autoformat settings end
+		</programlisting>
+	    </sect3>
+	</sect2>
+    </sect1>
 
 </article>
 

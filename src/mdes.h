@@ -124,4 +124,23 @@ class MDesCtxCsm : public MIface
 };
 
 
+/** @brief DES Service point client
+ * */
+class MDesSpc: public MIface
+{
+    public:
+	static const char* Type() { return "MDesSpc";};
+	// From MIface
+	virtual string Uid() const override { return MDesSpc_Uid();}
+	virtual string MDesSpc_Uid() const = 0;
+	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { return MDesSpc_doDump(aLevel, aIdt, std::cout);}
+	virtual void MDesSpc_doDump(int aLevel, int aIdt, ostream& aOs) const = 0;
+	virtual MIface* getLif(const char *aType) { return MDesSpc_getLif(aType); }
+	virtual MIface* MDesSpc_getLif(const char *aType) = 0;
+	// Local
+	/** @brief Provides service/client ID
+	 * */
+	virtual string getId() const = 0;
+};
+
 #endif

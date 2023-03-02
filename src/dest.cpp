@@ -70,7 +70,7 @@ void TrBase::onInpUpdated()
 	MUnit* pe = pair->lIf(pe);
 	auto ifcs = pe ? pe->getIfs<MDesInpObserver>() : nullptr;
 	if (ifcs) for (auto ifc : *ifcs) {
-	    MDesInpObserver* obs = dynamic_cast<MDesInpObserver*>(ifc);
+	    MDesInpObserver* obs = reinterpret_cast<MDesInpObserver*>(ifc);
 	    // assert(obs);
 	    if (obs) obs->onInpUpdated();
 	}

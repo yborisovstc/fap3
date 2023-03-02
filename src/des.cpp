@@ -139,7 +139,7 @@ bool State::SContValue::setData(const string& aData)
 }
 
 State::State(const string &aType, const string& aName, MEnv* aEnv): Vertu(aType, aName, aEnv),
-    mPdata(NULL), mCdata(NULL), mUpdNotified(false), mActNotified(false), mInpProv(nullptr)
+    mPdata(NULL), mCdata(NULL), mUpdNotified(false), mActNotified(false), mInpProv(nullptr), mStDead(false)
 {
     MNode* cp = Provider()->createNode(CpStateInp::Type(), "Inp", mEnv);
     assert(cp);
@@ -155,6 +155,7 @@ State::~State()
     if (mCdata) {
 	delete mCdata;
     }
+    mStDead = true;
 }
 
 MIface* State::MNode_getLif(const char *aType)
@@ -401,7 +402,9 @@ void State::setUpdated()
 
 void State::onInpUpdated()
 {
-    setActivated();
+    if (!mStDead) {
+	setActivated();
+    }
 }
 
 MDVarGet* State::GetInp()

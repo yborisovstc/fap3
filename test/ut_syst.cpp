@@ -131,7 +131,7 @@ class Ut_syst : public CPPUNIT_NS::TestFixture
     //CPPUNIT_TEST(test_syst_cp_3);
     CPPUNIT_TEST(test_syst_sock_1);
     ///CPPUNIT_TEST(test_syst_sock_2);
-    ///CPPUNIT_TEST(test_syst_sock_3);
+    CPPUNIT_TEST(test_syst_sock_3);
     ///CPPUNIT_TEST(test_syst_sock_4);
     //CPPUNIT_TEST(test_syst_cpe_1);
     //!CPPUNIT_TEST(test_syst_dn);
@@ -636,6 +636,14 @@ void Ut_syst::test_syst_sock_3()
     MUnit* s12cpu = s12cpn ? s12cpn->lIf(s12cpu) : nullptr;
     MTIf2* ifc2 = s12cpu ? s12cpu->getSif(ifc2) : nullptr;
     CPPUNIT_ASSERT_MESSAGE("Fail to get ifc2", ifc2);
+
+
+    // Verify IFR from Sock2.SockB to S1_2.TstAgt
+    MNode* s2ps1p1n = root->getNode("S1.Sock2.PinS1.Pin1");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get S1.Sock2.PinS1.Pin1", s2ps1p1n);
+    MUnit* s2ps1p1u = s2ps1p1n ? s2ps1p1n->lIf(s2ps1p1u) : nullptr;
+    MTIf2* s2ps1p1_ifc2 = s2ps1p1u ? s2ps1p1u ->getSif(s2ps1p1_ifc2) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get MTIf2 from S1.Sock2.PinS1.Pin1", s2ps1p1_ifc2);
 
     delete mEnv;
 }

@@ -206,6 +206,7 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 	bool mActNotified;  //<! Sign of that State notified observers on Activation
 	MIfProv* mInpProv;
 	bool mInpValid;
+	bool mStDead;     //<! Sign of Stated destructed, needs to avoid callbacks initialted by bases */
 };
 
 

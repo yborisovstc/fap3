@@ -25,6 +25,7 @@
 #include "desadp.h"
 #include "dessdc.h"
 #include "dessdo.h"
+#include "dessp.h"
 #include "mnt.h"
 #include "link.h"
 
@@ -61,6 +62,8 @@ const ProvDef::TFReg ProvDef::mReg ( {
 	Item<DesCtxSpl>(), Item<DesCtxCsm>(), 
 	/* DES active subs */
 	Item<DesAs>(), 
+	/* DES service point */
+	Item<DesSpe>(), Item<DesSp>(), Item<DesSpt>(), Item<ADesSpc>(), 
 	});
 
 /** Data factory registry */

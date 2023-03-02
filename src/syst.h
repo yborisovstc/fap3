@@ -80,6 +80,7 @@ class Socket: public Vert, public MSocket
 	Socket(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MNode
 	virtual MIface* MNode_getLif(const char *aType) override;
+	virtual string parentName() const override { return Type(); }
 	// From MVert
 	virtual bool isCompatible(MVert* aPair, bool aExt) override;
 	virtual MVert* getExtd() override;

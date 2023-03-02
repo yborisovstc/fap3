@@ -234,7 +234,7 @@ MVert::TDir Extd::getDir() const
 
 Socket::Socket(const string &aType, const string& aName, MEnv* aEnv): Vert(aType, aName, aEnv)
 {
-    if (aName.empty()) mName = Type();
+//    if (aName.empty()) mName = Type();
     setContent(KContDir, KContDir_Val_Regular);
 }
 
@@ -304,15 +304,17 @@ void Socket::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 				MVert* extd = cp->getExtd();
 				if (extd != this) {
 				    MNode* extdn = extd ? extd->lIf(extdn) : nullptr;
-				    //apair = extdn ? extdn : reqn;
 				    apair = reqn;
 				    if (extdn) {
-					apair = extdn;
-					// Go to next context item to correspond to apair. Quick fix, to redesign
-					req = req->binded()->firstPair();
-					reqo = req ? req->provided()->rqOwner() : nullptr;
-					reqn = const_cast<MNode*>(reqo ? reqo->lIf(reqn) : nullptr);
-					assert(apair == reqn);
+					// DS_ISS_012 Set assosiatad pair to extender only in case if extender is next requestor
+					auto* req_tmp = req->binded()->firstPair();
+					auto* req_tmpo = req_tmp ? req_tmp->provided()->rqOwner() : nullptr;
+					MNode* req_tmpn = const_cast<MNode*>(req_tmpo ? req_tmpo->lIf(req_tmpn) : nullptr);
+					if (extdn == req_tmpn) {
+					    apair = extdn;
+					    req = req_tmp;
+					    isextd ^= true;
+					}
 				    }
 				}
 			    }
