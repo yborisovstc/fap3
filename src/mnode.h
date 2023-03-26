@@ -64,6 +64,7 @@ class MNode: public MIface
 	// Local
 	virtual string name() const = 0;
 	virtual string parentName() const = 0;
+	// TODO !! All navigation thru native hier to be moved to owning iface ?
 	virtual const MNode* getComp(const string& aId) const = 0;
 	virtual MNode* getComp(const string& aId) = 0;
 	virtual const MNode* getNode(const GUri& aUri) const = 0;

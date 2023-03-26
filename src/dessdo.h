@@ -4,6 +4,7 @@
 
 #include "dest.h"
 #include "mobserv.h"
+#include "mlink.h"
 
 /** @brief SDO base
  * */
@@ -51,7 +52,28 @@ class SdoBase : public CpStateOutp, public MDVarGet, public MObserver
 		    return res;
 		}
 	};
-
+	class InpLink : public InpBase {
+	    public:
+		InpLink(SdoBase* aHost, const string& aName): InpBase(aHost, aName) {}
+		bool getData(const MNode*& aData) {
+		    bool res = false;
+		    aData = nullptr;
+		    MNode* inp = mHost->getNode(mName);
+		    MUnit* inpu = inp ? inp->lIf(inpu) : nullptr;
+		    if (inpu) {
+			MLink* link = inpu->getSif(link);
+			if (link) {
+			    aData = link->pair();
+			    res = true;
+			} else {
+			    mHost->Log(TLog(EDbg, mHost) + "Cannot get link via input [" + mName + "]");
+			}
+		    } else {
+			mHost->Log(TLog(EDbg, mHost) + "Cannot get input [" + mName + "]");
+		    }
+		    return res;
+		}
+	};
 	/** @brief Explored agent observer
 	 * */
 	class EagObs : public MObserver {
@@ -137,6 +159,17 @@ class SdoName : public Sdog<Sdata<string>>
 	virtual const DtBase* VDtGet(const string& aType) override;
 };
 
+/** @brief SDO "URI of observed node"
+ * */
+class SdoUri : public Sdog<DGuri>
+{
+    public:
+	static const char* Type() { return "SdoUri";};
+	SdoUri(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	virtual const DtBase* VDtGet(const string& aType) override;
+};
+
+
 /** @brief SDO "Parent"
  * */
 class SdoParent : public Sdog<Sdata<string>>
@@ -171,6 +204,20 @@ class SdoCompComp : public Sdog<DGuri>
 	Inpg<DGuri> mInpCompUri;  //<! Comp URI
 	Inpg<DGuri> mInpCompCompUri;  //<! Comp comp URI
 };
+
+/** @brief SDO "Comp Uri"
+ * TODO NOT COMPLETED
+ * */
+class SdoCompUri : public Sdog<DGuri>
+{
+    public:
+	static const char* Type() { return "SdoCompUri";};
+	SdoCompUri(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	virtual const DtBase* VDtGet(const string& aType) override { return nullptr;}
+    protected:
+	InpLink mInpOwnerLink;  //<! Owner
+};
+
 
 
 
@@ -222,9 +269,12 @@ class SdoConn : public Sdog<Sdata<bool>>
 	static const char* Type() { return "SdoConn";};
 	SdoConn(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual const DtBase* VDtGet(const string& aType) override;
+	virtual void onObsChanged(MObservable* aObl) override;
     protected:
 	Inp<string> mInpVp;
 	Inp<string> mInpVq;
+	MNode* mVpUe;        //<! Vertex under exploring 
+	MNode* mVqUe;        //<! Vertex under exploring 
 };
 
 /** @brief SDO "Vertex pairs count"
@@ -235,8 +285,10 @@ class SdoPairsCount : public Sdog<Sdata<int>>
 	static const char* Type() { return "SdoPairsCount";};
 	SdoPairsCount(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual const DtBase* VDtGet(const string& aType) override;
+	virtual void onObsChanged(MObservable* aObl) override;
     protected:
 	Inp<string> mInpVert;  //<! Vertex URI
+	MNode* mVertUe;        //<! Vertex under exploring 
 };
 
 /** @brief SDO "Vertex pair URI"

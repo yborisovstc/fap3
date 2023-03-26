@@ -29,6 +29,7 @@ class Func
 	virtual string GetInpExpType(int aId) const { return "<?>";};
 	virtual const DtBase* FDtGet() { return nullptr;}
 	template <class T> inline const T* GetInpData(int aInpId, const T* aData);
+	inline const DtBase* GetInpData(int aInpId);
 	const MDVarGet* GetInp(int aInpId);
 	static const MDVarGet* GetInp(Host* aHost, int aInpId);
     protected:
@@ -50,6 +51,21 @@ template <class T> inline const T* Func::GetInpData(int aInpId, const T* aData)
     return data;
 }
 
+inline const DtBase* Func::GetInpData(int aInpId)
+{
+    const DtBase* data = nullptr;
+    TInpIc* Ic = mHost.GetInps(aInpId);
+    if (Ic) {
+	auto* get = (Ic->size() == 1) ? Ic->at(0) : nullptr;
+	data = get ? get->VDtGet(string()) : nullptr;
+	if (!data) {
+	    mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(aInpId) + "]");
+	}
+    }
+    return data;
+}
+
+
 
 
 class FAddBase: public Func {
@@ -67,6 +83,34 @@ template <class T> class FAddDt: public FAddBase
 	FAddDt(Host& aHost): FAddBase(aHost) {};
 	virtual string IfaceGetId() const { return T::TypeSig();}
 	virtual string GetInpExpType(int aId) const;
+	virtual const DtBase* FDtGet() override;
+	T mRes;
+};
+
+
+/** @brief Addition, single connecting inputs (ref iss_014), generic data
+ * */
+template <class T> class FAddDt2: public Func
+{
+    public:
+	static Func* Create(Host* aHost, const string& aOutId);
+	FAddDt2(Host& aHost): Func(aHost) {};
+	virtual string IfaceGetId() const { return T::TypeSig();}
+	virtual string GetInpExpType(int aId) const override { return T::TypeSig();}
+	virtual const DtBase* FDtGet() override;
+	T mRes;
+};
+
+
+/** @brief Subtraction, single connecting inputs (ref iss_014), generic data
+ * */
+template <class T> class FSubDt2: public Func
+{
+    public:
+	static Func* Create(Host* aHost, const string& aOutId);
+	FSubDt2(Host& aHost): Func(aHost) {};
+	virtual string IfaceGetId() const { return T::TypeSig();}
+	virtual string GetInpExpType(int aId) const override { return T::TypeSig();}
 	virtual const DtBase* FDtGet() override;
 	T mRes;
 };

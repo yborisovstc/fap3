@@ -76,6 +76,7 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	// From MObservable
 	virtual string MObservable_Uid() const override { return getUid<MObservable>();}
 	virtual MIface* MObservable_getLif(const char *aType) override;
+	virtual void MObservable_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	virtual bool addObserver(MObserver::TCp* aObs) override;
 	virtual bool rmObserver(MObserver::TCp* aObs) override;
 	// From MOwner

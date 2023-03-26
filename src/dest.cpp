@@ -72,7 +72,9 @@ void TrBase::onInpUpdated()
 	if (ifcs) for (auto ifc : *ifcs) {
 	    MDesInpObserver* obs = reinterpret_cast<MDesInpObserver*>(ifc);
 	    // assert(obs);
-	    if (obs) obs->onInpUpdated();
+	    if (obs) {
+		obs->onInpUpdated();
+	    }
 	}
     }
 }
@@ -179,7 +181,7 @@ void TrVar::MDVarGet_doDump(int aLevel, int aIdt, ostream& aOs) const
 }
 
 
-///// TrAddVar, ver.2
+//// Transition "Addition of Var data, negative inp, multi-connecting inputs"
 
 const string TrAddVar::K_InpInp = "Inp";
 const string TrAddVar::K_InpInpN = "InpN";
@@ -209,6 +211,71 @@ FInp* TrAddVar::GetFinp(int aId)
     else if (aId == FAddBase::EInpN) return &mInpN;
     else return nullptr;
 }
+
+//// Transition "Addition of Var data, single connection inputs"
+
+const string TrAdd2Var::K_InpInp = "Inp";
+const string TrAdd2Var::K_InpInp2 = "Inp2";
+
+TrAdd2Var::TrAdd2Var(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv),
+    mInp(K_InpInp), mInp2(K_InpInp2)
+{
+    AddInput(K_InpInp);
+    AddInput(K_InpInp2);
+}
+
+void TrAdd2Var::Init(const string& aIfaceName)
+{
+    if (mFunc) {
+	delete mFunc;
+	mFunc = NULL;
+    }
+    if ((mFunc = FAddDt2<Sdata<int>>::Create(this, aIfaceName)) != NULL);
+    else {
+	Log(TLog(EErr, this) + "Failed init, outp [" + aIfaceName + "]");
+    }
+}
+
+FInp* TrAdd2Var::GetFinp(int aId)
+{
+    if (aId == Func::EInp1) return &mInp;
+    else if (aId == Func::EInp2) return &mInp2;
+    else return nullptr;
+}
+
+
+//// Transition "Subtraction of Var data, single connection inputs"
+
+const string TrSub2Var::K_InpInp = "Inp";
+const string TrSub2Var::K_InpInp2 = "Inp2";
+
+TrSub2Var::TrSub2Var(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv),
+    mInp(K_InpInp), mInp2(K_InpInp2)
+{
+    AddInput(K_InpInp);
+    AddInput(K_InpInp2);
+}
+
+void TrSub2Var::Init(const string& aIfaceName)
+{
+    if (mFunc) {
+	delete mFunc;
+	mFunc = NULL;
+    }
+    if ((mFunc = FSubDt2<Sdata<int>>::Create(this, aIfaceName)) != NULL);
+    else {
+	Log(TLog(EErr, this) + "Failed init, outp [" + aIfaceName + "]");
+    }
+}
+
+FInp* TrSub2Var::GetFinp(int aId)
+{
+    if (aId == Func::EInp1) return &mInp;
+    else if (aId == Func::EInp2) return &mInp2;
+    else return nullptr;
+}
+
+
 
 ///// TrMplVar
 
@@ -406,7 +473,7 @@ const DtBase* TrSwitchBool::VDtGet(const string& aType)
 string TrSwitchBool::VarGetIfid() const
 {
     auto res = const_cast<TrSwitchBool*>(this)->VDtGet(string());
-    return res->GetTypeSig();
+    return res ? res->GetTypeSig() : string();
 }
 
 
@@ -434,8 +501,12 @@ const DtBase* TrAndVar::VDtGet(const string& aType)
 	    const TData* arg = dget->DtGet(arg);
 	    if (arg && arg->mValid) {
 		if (first) { mRes = *arg; first = false;
-		} else { mRes.mData = mRes.mData && arg->mData; }
+		} else {
+		    mRes.mData = mRes.mData && arg->mData;
+		    Log(TLog(EDbg, this) + "Res: " + mRes.ToString(true));
+		}
 	    } else {
+		Log(TLog(EDbg, this) + "Res: <ERR>");
 		mRes.mValid = false; break;
 	    }
 	}
@@ -457,8 +528,12 @@ const DtBase* TrOrVar::VDtGet(const string& aType)
 	    const TData* arg = dget->DtGet(arg);
 	    if (arg && arg->mValid) {
 		if (first) { mRes = *arg; first = false;
-		} else { mRes.mData = mRes.mData || arg->mData; }
+		} else {
+		    mRes.mData = mRes.mData || arg->mData;
+		    Log(TLog(EDbg, this) + "Res: " + mRes.ToString(true));
+		}
 	    } else {
+		Log(TLog(EDbg, this) + "Res: <ERR>");
 		mRes.mValid = false; break;
 	    }
 	}
@@ -1277,8 +1352,11 @@ const DtBase* TrIsValid::VDtGet(const string& aType)
     const DtBase* inp = GetInpData(mInpInp, inp);
     if (inp) {
 	mRes.mData = inp->IsValid();
-	mRes.mValid = true;
+    } else {
+	mRes.mData = false;
     }
+    mRes.mValid = true;
+    Log(TLog(EDbg, this) + "Inp [" + (inp ? inp->ToString(true) : "nil") + "], res [" + mRes.ToString(true) + "]");
     return &mRes;
 }
 
@@ -1318,7 +1396,11 @@ const DtBase* TrHash::VDtGet(const string& aType)
 	int hash = 0;
 	for (auto inp : *InpIc) {
 	    const DtBase* data = inp->VDtGet(string());
-	    hash += data->Hash();
+	    if (data) {
+		hash += data->Hash();
+	    } else {
+		data = inp->VDtGet(string()); // Debug
+	    }
 	}
 	mRes.mData = hash;
 	mRes.mValid = true;

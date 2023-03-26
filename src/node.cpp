@@ -54,6 +54,22 @@ MIface* Node::MObservable_getLif(const char *aType)
     return res;
 }
 
+void Node::MObservable_doDump(int aLevel, int aIdt, ostream& aOs) const
+{
+    Node* self = const_cast<Node*>(this);
+    if (aLevel & Ifu::EDM_Base) {
+	Ifu::offset(aIdt, cout); cout << "Name: " << mName << endl;
+    }
+    if (aLevel & Ifu::EDM_Comps) {
+	Ifu::offset(aIdt, cout); cout << "Observers: " << endl;
+	auto* obs = self->mOcp.firstPair();
+	while (obs) {
+	    Ifu::offset(aIdt, cout); cout << "- " << obs->provided()->Uid() << endl;
+	    obs = self->mOcp.nextPair(obs);
+	}
+    }
+}
+
 #if 0
 void Node::MNode_doDump(int aLevel, int aIdt, ostream& aOs) const
 {

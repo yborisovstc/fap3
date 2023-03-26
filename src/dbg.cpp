@@ -23,11 +23,30 @@ MElem* Dbg::getElem(MNode* aNode)
     return res;
 }
 
+MVert* Dbg::getVert(MNode* aNode)
+{
+    MVert* res = dynamic_cast<MVert*>(aNode);
+    return res;
+}
+
 template <typename T> T* Dbg::getIface(MNode* aNode)
 {
     T* res = aNode->lIf(res);
     return res;
 }
+
+string Dbg::SoDs(MNode* aNode, const char* aCpUri)
+{
+    const DtBase* data = nullptr;
+    auto* cpn = aNode->getNode(aCpUri);
+    if (cpn) {
+	MUnit* cpu = cpn->lIf(cpu);
+	MDVarGet* cpg = cpu ? cpu->getSif(cpg) : nullptr;
+	data = cpg ? cpg->VDtGet(string()) : nullptr;
+    }
+    return data ? data->ToString(true) : "nil";
+}
+
 
 
 static void init()

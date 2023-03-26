@@ -40,7 +40,7 @@ MIface* Unit::MUnit_getLif(const char *aType)
     MIface* res = nullptr;
     if (res = checkLif<MUnit>(aType));
     else if (res = checkLif<MIfProvOwner>(aType));
-    else res = MNode_getLif(aType); //YB??
+    else res = MNode_getLif(aType); //YB?? vulnerability
     return res;
 }
 

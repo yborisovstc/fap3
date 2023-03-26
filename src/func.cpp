@@ -87,6 +87,7 @@ template<class T> const DtBase* FAddDt<T>::FDtGet()
     if (!resSet) {
 	mRes.mValid = false;
     }
+    mHost.log(EDbg, "Inp count: " + to_string(InpIc->size()) + ", InpN count: " + to_string(InpNIc->size()) + ", res [" + mRes.ToString(true) + "]");
     return &mRes;
 }
 
@@ -98,6 +99,74 @@ template <class T> string FAddDt<T>::GetInpExpType(int aId) const
     }
     return res;
 }
+
+
+//// Addition, single connecting inputs (ref iss_014), generic data
+
+template<class T> Func* FAddDt2<T>::Create(Host* aHost, const string& aString)
+{
+    Func* res = NULL;
+    if (aString.empty()) {
+	// Weak negotiation, basing on inputs only
+	bool inpok = true;
+	auto* inpvg = GetInp(aHost, EInp1);
+	auto* inp2vg = GetInp(aHost, EInp2);
+	inpok = inpvg && inpvg->VarGetIfid() == T::TypeSig() && inp2vg && inp2vg->VarGetIfid() == T::TypeSig();
+	if (inpok) {
+	    res = new FAddDt2<T>(*aHost);
+	}
+    } else if (aString == T::TypeSig()) {
+	    res = new FAddDt2<T>(*aHost);
+	}
+    return res;
+}
+
+template<class T> const DtBase* FAddDt2<T>::FDtGet()
+{
+    mRes.mValid = false;
+    const T* arg1 = GetInpData(EInp1, arg1);
+    const T* arg2 = GetInpData(EInp2, arg2);
+    if (arg1 && arg2 && arg1->IsValid() && arg2->IsValid()) {
+	mRes.mData = arg1->mData + arg2->mData;
+	mRes.mValid = true;
+    }
+    mHost.log(EDbg, "Inp [" + (arg1 ? arg1->ToString(true) : "nil") + "], Inp2 [" + (arg2 ? arg2->ToString(true) : "nil")  + "], res [" + mRes.ToString(true) + "]");
+    return &mRes;
+}
+
+//// Subtraction, single connecting inputs (ref iss_014), generic data
+
+template<class T> Func* FSubDt2<T>::Create(Host* aHost, const string& aString)
+{
+    Func* res = NULL;
+    if (aString.empty()) {
+	// Weak negotiation, basing on inputs only
+	bool inpok = true;
+	auto* inpvg = GetInp(aHost, EInp1);
+	auto* inp2vg = GetInp(aHost, EInp2);
+	inpok = inpvg && inpvg->VarGetIfid() == T::TypeSig() && inp2vg && inp2vg->VarGetIfid() == T::TypeSig();
+	if (inpok) {
+	    res = new FSubDt2<T>(*aHost);
+	}
+    } else if (aString == T::TypeSig()) {
+	    res = new FSubDt2<T>(*aHost);
+	}
+    return res;
+}
+
+template<class T> const DtBase* FSubDt2<T>::FDtGet()
+{
+    mRes.mValid = false;
+    const T* arg1 = GetInpData(EInp1, arg1);
+    const T* arg2 = GetInpData(EInp2, arg2);
+    if (arg1 && arg2 && arg1->IsValid() && arg2->IsValid()) {
+	mRes.mData = arg1->mData - arg2->mData;
+	mRes.mValid = true;
+    }
+    mHost.log(EDbg, "Inp [" + (arg1 ? arg1->ToString(true) : "nil") + "], Inp2 [" + (arg2 ? arg2->ToString(true) : "nil")  + "], res [" + mRes.ToString(true) + "]");
+    return &mRes;
+}
+
 
 
 ///// FMplDt
@@ -319,8 +388,10 @@ template <class T> Func* FCmp<T>::Create(Host* aHost, const string& aInp1Iid, co
 template <class T> const DtBase* FCmp<T>::FDtGet()
 {
     mRes.mValid = false;
-    const T* arg1 = GetInpData(EInp1, arg1);
-    const T* arg2 = GetInpData(EInp2, arg2);
+    auto* arg1d = GetInpData(EInp1);
+    auto* arg2d = GetInpData(EInp2);
+    const T* arg1 = arg1d ? reinterpret_cast<const T*>(arg1d) : nullptr;
+    const T* arg2 = arg2d ? reinterpret_cast<const T*>(arg2d) : nullptr;
     if (arg1 && arg2) {
 	if (arg1->IsCompatible(*arg2)) {
 	    if (arg1->mValid && arg2->mValid) {
@@ -340,6 +411,7 @@ template <class T> const DtBase* FCmp<T>::FDtGet()
 	    }
 	}
     }
+    mHost.log(EDbg, "Inp [" + (arg1 ? arg1d->ToString(true) : "nil") + "], Inp2 [" + (arg2 ? arg2d->ToString(true) : "nil")  + "], res [" + mRes.ToString(true) + "]");
     return &mRes;
 }
 
@@ -502,10 +574,8 @@ template <class T> const DtBase* FAtgPair<T>::FDtGet()
     if (inp && ind && inp->IsValid() && ind->IsValid()) {
 	if (ind->mData == 0) {
 	    mRes = inp->mData.first;
-	    mRes.mValid = true;
 	} else if (ind->mData == 1) {
 	    mRes = inp->mData.second;
-	    mRes.mValid = true;
 	} else {
 	    string inds = ind->ToString(false);
 	    mHost.log(EWarn, "Index is exceeded: " + inds);
@@ -545,6 +615,7 @@ const DtBase* FTailUri::FDtGet()
     if (inp && head && inp->IsValid() && head->IsValid()) {
 	mRes.mValid = inp->mData.getTail(head->mData, mRes.mData);
     }
+    mHost.log(EDbg, "Inp [" + (inp ? inp->ToString(true) : "nil") + "], Head [" + (head ? head->ToString(true) : "nil")  + "], res [" + mRes.ToString(true) + "]");
     return &mRes;
 }
 
@@ -642,6 +713,8 @@ void Init()
 {
     Fhost* host = nullptr;
     FAddDt<Sdata<int>>::Create(host, "");
+    FAddDt2<Sdata<int>>::Create(host, "");
+    FSubDt2<Sdata<int>>::Create(host, "");
     FMplDt<Sdata<int>>::Create(host, "");
     FDivDt<Sdata<int>>::Create(host, "");
     FMaxDt<Sdata<int>>::Create(host, "");

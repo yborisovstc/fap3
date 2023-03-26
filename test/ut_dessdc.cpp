@@ -14,8 +14,9 @@ class Ut_sdc : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_sdc);
 
-    CPPUNIT_TEST(test_Sdc_1);
+    //CPPUNIT_TEST(test_Sdc_1);
     //CPPUNIT_TEST(test_Sdc_2);
+    CPPUNIT_TEST(test_Sdc_2_1);
     //CPPUNIT_TEST(test_Sdc_3);
     //CPPUNIT_TEST(test_Sdc_4);
     //CPPUNIT_TEST(test_Sdo_1);
@@ -25,10 +26,12 @@ class Ut_sdc : public CPPUNIT_NS::TestFixture
     virtual void setUp();
     virtual void tearDown();
     private:
+    string getStateDstr(const string& aUri);
     MNode* constructSystem(const string& aFname);
     private:
     void test_Sdc_1();
     void test_Sdc_2();
+    void test_Sdc_2_1();
     void test_Sdc_3();
     void test_Sdc_4();
     void test_Sdo_1();
@@ -39,6 +42,14 @@ class Ut_sdc : public CPPUNIT_NS::TestFixture
 
 CPPUNIT_TEST_SUITE_REGISTRATION( Ut_sdc );
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(Ut_sdc, "Ut_sdc");
+
+string Ut_sdc::getStateDstr(const string& aUri)
+{
+    MNode* st = mEnv->Root()->getNode(aUri);
+    MDVarGet* stg = st ? st->lIf(stg) : nullptr;
+    const DtBase* data = stg ? stg->VDtGet(string()) : nullptr;
+    return data ? data->ToString(true) : string();
+}
 
 MNode* Ut_sdc::constructSystem(const string& aSpecn)
 {
@@ -122,6 +133,23 @@ void Ut_sdc::test_Sdc_2()
 
     delete mEnv;
 }
+
+/** @brief SDC test - insertion the number of list items
+ * */
+void Ut_sdc::test_Sdc_2_1()
+{
+    printf("\n === Test of SDC: list insertion of number of items\n");
+    MNode* root = constructSystem("ut_sdc_2_1");
+
+    bool res = mEnv->RunSystem(12, 2);
+
+    // Verify the connection
+    CPPUNIT_ASSERT_MESSAGE("Node_1 connected incorrectly", getStateDstr("Launcher.List.Is_conn_ok_Dbg") == "SB true");
+
+    delete mEnv;
+}
+
+
 
 /** @brief MNode SDC test - create and remove node in cycle
  * */

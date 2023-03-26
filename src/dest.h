@@ -61,9 +61,9 @@ template <class T> inline const T* TrBase::GetInpData(FInp& aInp, const T* aData
     if (Ic) {
 	auto* get = (Ic->size() == 1) ? Ic->at(0) : nullptr;
 	data = get ? get->DtGet(data) : nullptr;
-	if (!data) {
-	    Log(TLog(EDbg, this) + "Cannot get input  [" + aInp.mName + "]");
-	}
+    }
+    if (!data) {
+	Log(TLog(EDbg, this) + "Cannot get input  [" + aInp.mName + "]");
     }
     return data;
 }
@@ -98,7 +98,9 @@ class TrVar: public TrBase, public Func::Host
 	Func* mFunc;
 };
 
-/** @brief Agent function "Addition of Var data"
+/** @brief Transition "Addition of Var data, negative inp, multi-connecting inputs"
+ * Note: inputs validity isn't detected proreply, ref iss_014
+ * 
  * */
 class TrAddVar: public TrVar
 {
@@ -115,6 +117,44 @@ class TrAddVar: public TrVar
 	FInp mInp;
 	FInp mInpN;
 };
+
+/** @brief Transition "Addition of Var data, single connection inputs"
+ * */
+class TrAdd2Var: public TrVar
+{
+    public:
+	static const char* Type() { return "TrAdd2Var";};
+	TrAdd2Var(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From TrVar
+	virtual void Init(const string& aIfaceName) override;
+	virtual FInp* GetFinp(int aId) override;
+	virtual int GetInpCpsCount() const override {return 2;}
+    protected:
+	const static string K_InpInp;
+	const static string K_InpInp2;
+	FInp mInp;
+	FInp mInp2;
+};
+
+/** @brief Transition "Subtraction of Var data, single connection inputs"
+ * */
+class TrSub2Var: public TrVar
+{
+    public:
+	static const char* Type() { return "TrSub2Var";};
+	TrSub2Var(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From TrVar
+	virtual void Init(const string& aIfaceName) override;
+	virtual FInp* GetFinp(int aId) override;
+	virtual int GetInpCpsCount() const override {return 2;}
+    protected:
+	const static string K_InpInp;
+	const static string K_InpInp2;
+	FInp mInp;
+	FInp mInp2;
+};
+
+
 
 
 

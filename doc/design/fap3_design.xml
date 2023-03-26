@@ -496,6 +496,32 @@
 		    at firstLeafB().</simpara>
 	    </sect3>
 	</sect2>
+	<sect2 id="ds_nn_efcoop"><title>Native hier efficiency comparing to OOP</title>
+	    <sect3><title>Intro</title>
+		<simpara>Lets look at the current FAP systems creation approach. It is based on inheritance, like it is done in OOP.</simpara>
+		<simpara>The diff of fap agents and OOP can be seen obviously: in OOP the class keeps the common part of its instances.
+		    The instance specific part is the instance context - all the states, whereas the class contains "constant and common" part - methods.</simpara>
+		<simpara>If we look at some DES we can see that it also has states and methods (transitions). But in DES transitions is part of instance but
+		    not the class (parent). Why?</simpara>
+		<simpara>Potentially we can imagine DES following such OOP approach: let's imagine that we can separate all variable part of DES
+		    (i.e. all states data). Then the parent DES (i.e. "class") will keep only "constant" part (i.e. structure - states (w.o. states data, 
+		    transition etc.). Heirs in that case will use single parent constant part to update its variable part. This would be very efficient - 
+		    all heirs would contain only small variable part.</simpara>
+		<simpara>Of course the pictue is more complicated that this simple view - the heirs also need to keep another variable data like
+		    indication of active/updated etc.</simpara>
+		<simpara>Another point that always is eyecatcher: why we need to dupilcate DES controlling part in heirs. For instance fap3-vis containter
+	    includes DES SDCs to add vidgets. Thiese SDCs belongs to each instance of container. Obviously this looks superfluous.</simpara>
+	    </sect3>
+	    <sect3><title>Is the structure variable or constant part?</title>
+		<simpara>What about structure? It also is represented by variable data like trees data (owned/owning tree, IFR tree, pairs tree etc.).
+		    In OOP it is also the part of hier, look for instance to any container, list etc.
+		    All regular data in OOP is put to hiers, the only methods or static data is posessed by class.</simpara>
+		<simpara>But we face contradiction here: the transitions are defined via the structure (i.e. variable data) so how they can be
+		    the essential part of class?</simpara>
+		<simpara>The cause of this contradiction is that in FAP the part that is analogue of OOP methods (transitions, states etc)
+		    is created via structure (i.e.  variable data) on run-time whereas in OOP it is created via constant definition on compilation time.</simpara>
+	    </sect3>
+	</sect2>
     </sect1>
 
     <sect1 id="ds_uinn"><title>Units identification in native net.</title>
@@ -527,6 +553,14 @@
 		<simpara>Native units provides the means of creating native net. These are native connections, ifaces etc. I cannot see the necessity
 		    of identifying these units. The matter is that any identifying is just the means of distinguish the unit within some topology, but we are not going
 		    to have dedicatied subnative topology.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_uinn_cs"><title>Units identification in complex sytem. Name as identifier is not effective.</title>
+	    <sect3><title>Intro</title>
+		<simpara>Let's look at fap3-vis VertDRP design (and especially the design of EdgeCRP). This modes shows the units identifiaction problems in
+		    complex systems. DRP has column index as inernal state of columns iterator. But there is not means of identifying columns via index - we
+		    have only name as identifier. So, VertDRP solution was to "embed" the index into the name. This works but now we have extra transitions to
+		    form the name from index.</simpara>
 	    </sect3>
 	</sect2>
     </sect1>
@@ -2885,66 +2919,68 @@
 		    create native agents?</simpara>
 	    </sect3>
 	</sect2>
-	</sect1>
+    </sect1>
 
-	<sect1 id="ds_ibc"><title>Tracking: Design items to be handed</title>
-	    <sect2><title>Intro</title>
-		<simpara>Ref <xref linkend="ds_itr_sp"/> for the initial list of the problems need to be addressed in FAP3.</simpara>
-	    </sect2>
-	    <sect2 id="ds_ibc_roncc"><title>Root as the only node containing chromo</title>
-		<sect3><title>Intro</title>
-		    <simpara>
-			Currently the model can contain many nodes that have theyrs own chromos - any Elem based nodes. This simplifies creating these nodes
-			heirs. But on another hand this causes chromo duplication. Actually any node chromo can be "calculated" from root chromo. This approach
-			was tried in some earlier version of FAP.
-			This approach potentially can improve the model performance. We need to consider such design.
-		    </simpara>
-		</sect3>
-	    </sect2>
-	    <sect2 id="ds_ibc_dgit"><title>[DS_IBC_DGIT] Do we need MDtGet iface as templated one?</title>
-		<simpara>Potentially we can have non-templated MDtGet that provides the access to base data iface MDtBase.</simpara>
-		<simpara>The indication of week desing is the problems with TrTuple: it is not possible to update the tuple components. The input of the 
-		    transition can get the access to data only via templated MDtGet but the type isn't explicitly known.</simpara>
-	    </sect2>
-	    <sect2><title>Intitial invalid status of State</title>
-		<simpara>Ref <xref linkend="ds_iis"/></simpara>
-	    </sect2>
-	    <sect2><title>Localize provider's scope</title>
-		<simpara>Ref <xref linkend="ds_lps"/></simpara>
-	    </sect2>
-	    <sect2><title>Chromo named segments</title>
-		<simpara>Ref <xref linkend="ds_cli_nseg"/></simpara>
-	    </sect2>
-	    <sect2><title>Mutation as transaction</title>
-		<simpara>Ref <xref linkend="ds_mtc"/></simpara>
-	    </sect2>
-	    <sect2><title>DES context</title>
-		<simpara>Ref <xref linkend="ds_dctx"/></simpara>
-	    </sect2>
-	    <sect2><title>Data special values.</title>
-		<simpara>Ref <xref linkend="ds_dsv"/></simpara>
-	    </sect2>
-	    <sect2><title>Redesing data interfaces.</title>
-		<simpara>Ref <xref linkend="ds_rdi"/></simpara>
-	    </sect2>
-	    <sect2><title>Introduce constant data instead of State</title>
-		<simpara>Ref <xref linkend="ds_cist"/></simpara>
-	    </sect2>
-	    <sect2><title>DES based objects</title>
-		<simpara>Ref <xref linkend="ds_dcs_sl_dbo"/></simpara>
-	    </sect2>
-	    <sect2><title>DCS transactions</title>
-		<simpara>Ref <xref linkend="ds_dcs_trs"/></simpara>
-	    </sect2>
-	    <sect2><title><xref linkend="ds_gibu"/></title> </sect2>
-	    <sect2><title><xref linkend="ds_egio"/></title> </sect2>
-	    <sect2><title><xref linkend="ds_desopt_ums"/></title> </sect2>
-	    <sect2><title><xref linkend="ds_desopt_asdc"/></title> </sect2>
-	    <sect2><title><xref linkend="ds_ndes"/></title> </sect2>
-	    <sect2><title><xref linkend="ds_irm_ctx"/></title> </sect2>
-	</sect1>
+    <sect1 id="ds_ibc"><title>Tracking: Design items to be handed</title>
+	<sect2><title>Intro</title>
+	    <simpara>Ref <xref linkend="ds_itr_sp"/> for the initial list of the problems need to be addressed in FAP3.</simpara>
+	</sect2>
+	<sect2 id="ds_ibc_roncc"><title>Root as the only node containing chromo</title>
+	    <sect3><title>Intro</title>
+		<simpara>
+		    Currently the model can contain many nodes that have theyrs own chromos - any Elem based nodes. This simplifies creating these nodes
+		    heirs. But on another hand this causes chromo duplication. Actually any node chromo can be "calculated" from root chromo. This approach
+		    was tried in some earlier version of FAP.
+		    This approach potentially can improve the model performance. We need to consider such design.
+		</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_ibc_dgit"><title>[DS_IBC_DGIT] Do we need MDtGet iface as templated one?</title>
+	    <simpara>Potentially we can have non-templated MDtGet that provides the access to base data iface MDtBase.</simpara>
+	    <simpara>The indication of week desing is the problems with TrTuple: it is not possible to update the tuple components. The input of the 
+		transition can get the access to data only via templated MDtGet but the type isn't explicitly known.</simpara>
+	</sect2>
+	<sect2><title>Intitial invalid status of State</title>
+	    <simpara>Ref <xref linkend="ds_iis"/></simpara>
+	</sect2>
+	<sect2><title>Localize provider's scope</title>
+	    <simpara>Ref <xref linkend="ds_lps"/></simpara>
+	</sect2>
+	<sect2><title>Chromo named segments</title>
+	    <simpara>Ref <xref linkend="ds_cli_nseg"/></simpara>
+	</sect2>
+	<sect2><title>Mutation as transaction</title>
+	    <simpara>Ref <xref linkend="ds_mtc"/></simpara>
+	</sect2>
+	<sect2><title>DES context</title>
+	    <simpara>Ref <xref linkend="ds_dctx"/></simpara>
+	</sect2>
+	<sect2><title>Data special values.</title>
+	    <simpara>Ref <xref linkend="ds_dsv"/></simpara>
+	</sect2>
+	<sect2><title>Redesing data interfaces.</title>
+	    <simpara>Ref <xref linkend="ds_rdi"/></simpara>
+	</sect2>
+	<sect2><title>Introduce constant data instead of State</title>
+	    <simpara>Ref <xref linkend="ds_cist"/></simpara>
+	</sect2>
+	<sect2><title>DES based objects</title>
+	    <simpara>Ref <xref linkend="ds_dcs_sl_dbo"/></simpara>
+	</sect2>
+	<sect2><title>DCS transactions</title>
+	    <simpara>Ref <xref linkend="ds_dcs_trs"/></simpara>
+	</sect2>
+	<sect2><title><xref linkend="ds_gibu"/></title> </sect2>
+	<sect2><title><xref linkend="ds_egio"/></title> </sect2>
+	<sect2><title><xref linkend="ds_desopt_ums"/></title> </sect2>
+	<sect2><title><xref linkend="ds_desopt_asdc"/></title> </sect2>
+	<sect2><title><xref linkend="ds_ndes"/></title> </sect2>
+	<sect2><title><xref linkend="ds_irm_ctx"/></title> </sect2>
+	<sect2><title><xref linkend="ds_nn_efcoop"/></title> </sect2>
+	<sect2><title><xref linkend="ds_uinn_cs"/></title> </sect2>
+    </sect1>
 
-	<sect1 id="ds_ic"><title>Tracking: Design items completed</title>
+    <sect1 id="ds_ic"><title>Tracking: Design items completed</title>
     </sect1>
 
     <sect1 id="ds_iss"><title>Issues</title>
@@ -3104,8 +3140,8 @@
 			note that mContext of ".testroot.Modules.AvrMdl2%MOwner" ecuals 0. So the look up trace is as:
 		    <programlisting>
 			.testroot.Test.Window.Scene.Drp
-			  .testroot.Modules.AvrMdl2
-			    .testroot.Modules (owenr of AvrMdl2 as AvrMdl2 doesn't have a context).
+			.testroot.Modules.AvrMdl2
+			.testroot.Modules (owenr of AvrMdl2 as AvrMdl2 doesn't have a context).
 			.testroot.Test.Window.Scene
 			...
 			fail
@@ -3114,17 +3150,17 @@
 		<simpara>Hmm, but such resolution works in modnav2. Right, in modnav2 the slot is created from </simpara>
 		<programlisting>.testroot.Launcher.Window.Scene.VBox.ModelView.Drp</programlisting>
 		<simpara>
-			So the look up trace is as:
+		    So the look up trace is as:
 		    <programlisting>
 			.testroot.Launcher.Window.Scene.VBox.ModelView.Drp
-			  .testroot.Modules.AvrMdl2
-			   .testroot.Modules (owner of AvrMdl2 as AvrMdl2 doesn't have a context).
+			.testroot.Modules.AvrMdl2
+			.testroot.Modules (owner of AvrMdl2 as AvrMdl2 doesn't have a context).
 			.testroot.Launcher.Window.Scene.VBox.ModelView
-			  (context) Modules.ContainerMod
-			   ...
-			   ok
+			(context) Modules.ContainerMod
+			...
+			ok
 		    </programlisting>
-		    The resolution is ok, but this result is just "accidental", because the "right" owner of Drp.
+			The resolution is ok, but this result is just "accidental", because the "right" owner of Drp.
 		</simpara>
 		<simpara>
 		    Real root-cause is that the ContainerMod module desing is wrong:
@@ -3193,6 +3229,29 @@
 	    </sect3>
 	    <sect3><title>Analysis</title>
 		<simpara>The root-cause is wrong alogrithm of moving assosiated pair to extender, ref Socket::resolveIfc() tagged DS_ISS_012.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_iss_013"><title>[<glossterm id="iss_013">DS_ISS_013</glossterm>] 20230315 ASdcInsert2 operates incorrectly in case of the number of list comps.</title>
+	    <sect3><title>Status</title>
+		<simpara>Fixed 20230316</simpara>
+	    </sect3>
+	    <sect3><title>Intro</title>
+		<simpara>The problems discovered when adding EdgeCrp default vert segment slot insertion and tested with 2 edges, ref fap3-vis/modules/avr2.chs, SdcInsertVs.</simpara>
+		<simpara>The root-cause of the problem is incorrect update of sdc status - ASdcInsert2 uses weak criteria checking if given comp is already inserted -
+		    it check if comp.Prev is connected in Pname.Next. But this works only if comp is before Pname. So status gets false with other conditions and sdc tries to
+		    insert the comp again.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_iss_014"><title>[<glossterm id="iss_014">DS_ISS_014</glossterm>] 20230321 Transitions with multi-connecting inputs doesn't indicate invalid result properly.</title>
+	    <sect3><title>Status</title>
+		<simpara>In progress</simpara>
+	    </sect3>
+	    <sect3><title>Intro</title>
+		<simpara>Lets lood at TrAddVar. If two outputs are connected to the transition input Inp but one of the output doesn't provide iface as expected then the tranistion
+		    output will be still valid.</simpara>
+	    </sect3>
+	    <sect3><title>Solution</title>
+		<simpara>To have specific transitions with one-connection inputs.</simpara>
 	    </sect3>
 	</sect2>
     </sect1>

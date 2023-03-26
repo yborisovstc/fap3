@@ -38,6 +38,8 @@ class MObservable: public MIface
 	virtual string MObservable_Uid() const = 0;
 	virtual MIface* getLif(const char *aType) { return MObservable_getLif(aType);}
 	virtual MIface* MObservable_getLif(const char *aType) = 0;
+	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { return MObservable_doDump(aLevel, aIdt, std::cout);}
+	virtual void MObservable_doDump(int aLevel, int aIdt, ostream& aOs) const = 0;
 	// Local
 	virtual bool addObserver(MObserver::TCp* aObs) = 0;
 	virtual bool rmObserver(MObserver::TCp* aObs) = 0;

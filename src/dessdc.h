@@ -401,7 +401,7 @@ class ASdcConn : public ASdc
 	ASdc::SdcIap<Sdata<string>> mIapV2; /*!< "V2" input access point */
 };
 
-/** @brief SDC agent "Disonnect"
+/** @brief SDC agent "Disconnect"
  * */
 class ASdcDisconn : public ASdc
 {
@@ -438,6 +438,8 @@ class ASdcInsert2 : public ASdc
 	virtual bool getState(bool aConf = false) override;
 	bool doCtl() override;
     protected:
+	bool isBindedToEnd(MVert* aCurPrevv, const MVert* aEndNextv, const GUri& aUriP, const GUri& aUriN);
+    protected:
 	ASdc::SdcIap<Sdata<string>> mIapName; /*!< "Link name" input access point */
 	ASdc::SdcIap<Sdata<string>> mIapPrev; /*!< "Prev CP" input access point */
 	ASdc::SdcIap<Sdata<string>> mIapNext; /*!< "Next CP" input access point */
@@ -445,6 +447,33 @@ class ASdcInsert2 : public ASdc
 	ASdc::MagDobs mDobsNprev; /*!< "Link prev CP" observation */
 	MVert* mCpPair;
 };
+
+#if 0
+/** @brief SDC agent "Insert node into list, ver. 3. DS_ISS_013 fixed.
+ * TODO Migrate to DES based SDC
+ * */
+class ASdcInsert3 : public ASdc
+{
+    public:
+	static const char* Type() { return "ASdcInsert3";};
+	ASdcInsert3(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+    protected:
+	// From MObserver
+	virtual void onObsChanged(MObservable* aObl) override;
+	// From ASdc
+	virtual bool getState(bool aConf = false) override;
+	bool doCtl() override;
+    protected:
+	ASdc::SdcIap<GUri> mIapStartUri; /*!< "List start" input access point */
+	ASdc::SdcIap<GUri> mIapEndUri; /*!< "List end" input access point */
+	ASdc::SdcIap<GUri> mIapName; /*!< "Link name" input access point */
+	ASdc::SdcIap<GUri> mIapPrev; /*!< "Prev CP" input access point */
+	ASdc::SdcIap<GUri> mIapNext; /*!< "Next CP" input access point */
+	ASdc::SdcIap<GUri> mIapPname; /*!< "Position - name" input access point */
+	ASdc::MagDobs mDobsNprev; /*!< "Link prev CP" observation */
+	MVert* mCpPair;
+};
+#endif
 
 /** @brief SDC agent "Insert node into list AFTER a the chain given node"
  * */
