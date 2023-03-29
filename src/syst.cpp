@@ -532,13 +532,13 @@ void Syst::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 	    if (!pv->isPair(qv) && !qv->isPair(pv)) {
 		res = MVert::connect(pv, qv);
 		if (!res) {
-		    Log(TLog(EErr, this) + "Failed connecting [" + sp + "] to [" + sq + "]");
+		    Log(EErr, TLog(this) + "Failed connecting [" + sp + "] to [" + sq + "]");
 		    res = MVert::connect(pv, qv);
 		} else {
 		    mEdges.push_back(TEdge(pv, qv));
 		}
 	    } else {
-		Log(TLog(EErr, this) + "Connecting [" + sp + "] to [" + sq + "] - already connected");
+		Log(EErr, TLog(this) + "Connecting [" + sp + "] to [" + sq + "] - already connected");
 	    }
 	} else {
 	    MLink* pl = pn->lIf(pl);
@@ -546,14 +546,14 @@ void Syst::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 		// Link, one-way
 		res = pl->connect(qn);	
 		if (!res) {
-		    Log(TLog(EErr, this) + "Failed link [" + sq + "] to [" + sp + "]");
+		    Log(EErr, TLog(this) + "Failed link [" + sq + "] to [" + sp + "]");
 		}
 	    } else {
-		Log(TLog(EErr, this) + "Connecting [" + sp + "] to [" + sq + "] -  [" + (pv ? sq : sp) + "] isn't connectable");
+		Log(EErr, TLog(this) + "Connecting [" + sp + "] to [" + sq + "] -  [" + (pv ? sq : sp) + "] isn't connectable");
 	    }
 	}
     } else {
-	Log(TLog(EErr, this) + "Connecting [" + sp + "] to [" + sq + "] - cannot find [" + (pn ? sq : sp) + "]");
+	Log(EErr, TLog(this) + "Connecting [" + sp + "] to [" + sq + "] - cannot find [" + (pn ? sq : sp) + "]");
     }
     if (!aUpdOnly) {
 	//notifyNodeMutated(aMut, aCtx);
@@ -575,10 +575,10 @@ void Syst::mutDisconnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aC
 		// Vertex to Vertex
 		res = MVert::disconnect(pv, qv);
 		if (!res) {
-		    Log(TLog(EErr, this) + "Failed disconnecting [" + sp + "] from [" + sq + "]");
+		    Log(EErr, TLog(this) + "Failed disconnecting [" + sp + "] from [" + sq + "]");
 		}
 	    } else {
-		Log(TLog(EWarn, this) + "Disconnecting [" + sp + "] and [" + sq + "]: aren't connected");
+		Log(EWarn, TLog(this) + "Disconnecting [" + sp + "] and [" + sq + "]: aren't connected");
 	    }
 	} else {
 	    MLink* pl = pn->lIf(pl);
@@ -586,14 +586,14 @@ void Syst::mutDisconnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aC
 		// Link, one-way
 		res = pl->disconnect(qn);	
 		if (!res) {
-		    Log(TLog(EErr, this) + "Failed disconnecting [" + sq + "] to [" + sp + "]");
+		    Log(EErr, TLog(this) + "Failed disconnecting [" + sq + "] to [" + sp + "]");
 		}
 	    } else {
-		Log(TLog(EErr, this) + "Disconnecting [" + sp + "] from [" + sq + "] -  [" + (pv ? sq : sp) + "] isn't connectable");
+		Log(EErr, TLog(this) + "Disconnecting [" + sp + "] from [" + sq + "] -  [" + (pv ? sq : sp) + "] isn't connectable");
 	    }
 	}
     } else {
-	Log(TLog(EErr, this) + "Disconnecting [" + sp + "] from [" + sq + "] - cannot find [" + (pn ? sq : sp) + "]");
+	Log(EErr, TLog(this) + "Disconnecting [" + sp + "] from [" + sq + "] - cannot find [" + (pn ? sq : sp) + "]");
     }
     if (!aUpdOnly) {
 	//notifyNodeMutated(aMut, aCtx);

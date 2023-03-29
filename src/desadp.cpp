@@ -113,7 +113,7 @@ void AAdp::onObsChanged(MObservable* aObl)
 	MNode* magon = magolinkl->pair();
 	bool res = UpdateMagOwner(magon);
 	if (!res) {
-	    Log(TLog(EErr, this) + "Failed to set MAG base [" + magon->Uid() + "]");
+	    Log(EErr, TLog(this) + "Failed to set MAG base [" + magon->Uid() + "]");
 	}
     } else {
 	// Handling Mag base input change
@@ -352,7 +352,7 @@ bool AAdp::UpdateMag(MNode* aMag)
 	MObservable* magob = mMag->lIf(magob);
 	magob->addObserver(&mMagObs.mOcp);
 	NotifyInpsUpdated();
-	Log(TLog(EInfo, this) + "Managed agent attached [" + mMag->Uid() + "]");
+	Log(EInfo, TLog(this) + "Managed agent attached [" + mMag->Uid() + "]");
     }
     return res;
 }
@@ -374,7 +374,7 @@ bool AAdp::ApplyMagBase()
 	    }
 	}
     } else {
-	Log(TLog(EDbg, this) + "Cannot get input [" + K_CpUriInpMagBase + "]");
+	Log(EDbg, TLog(this) + "Cannot get input [" + K_CpUriInpMagBase + "]");
     }
     return res;
 }
@@ -441,7 +441,7 @@ void AAdp::onOwnerAttached()
     if (magolinkobl) { 
 	magolinkobl->addObserver(&mObrCp);
     } else {
-	Log(TLog(EErr, this) + "Cannot find MAG owner link");
+	Log(EErr, TLog(this) + "Cannot find MAG owner link");
     }
     // Start monitoring MAG base input
     MNode* magbasen = ahostGetNode(K_CpUriInpMagBase);
@@ -449,7 +449,7 @@ void AAdp::onOwnerAttached()
     if (magbaseobl) {
 	magbaseobl->addObserver(&mObrCp);
     } else {
-	Log(TLog(EErr, this) + "Cannot find MAG base inp");
+	Log(EErr, TLog(this) + "Cannot find MAG base inp");
     }
 
 }
@@ -936,7 +936,7 @@ void DAdp::UpdateMag()
 	    MObservable* magob = mMag->lIf(magob);
 	    magob->addObserver(&mMagObs.mOcp);
 	    //NotifyInpsUpdated();
-	    Log(TLog(EInfo, this) + "Managed agent attached [" + mMag->Uid() + "]");
+	    Log(EInfo, TLog(this) + "Managed agent attached [" + mMag->Uid() + "]");
 	}
     }
 }

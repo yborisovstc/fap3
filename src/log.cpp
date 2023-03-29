@@ -52,12 +52,16 @@ TLog::TLog(int aCtg, const MNode* aAgt): mCtg(aCtg)
     }
 }
 
+TLog::TLog(const MNode* aAgt): TLog(EAll, aAgt) {}
+
 TLog::TLog(int aCtg, const MNode* aAgt, const ChromoNode& aMut): TLog(aCtg, aAgt)
 {
     stringstream ss;
     ss << aMut.LineId();
     mMutIdS = ss.str();
 }
+
+TLog::TLog(const MNode* aAgt, const ChromoNode& aMut): TLog(EAll, aAgt, aMut) {}
 
 TLog::TLog(const string& aString)
 {
@@ -78,6 +82,12 @@ TLog& TLog::operator +(const string& aString)
 {
     mContent += aString;
     return *this;
+}
+
+void TLog::SetCtg(int aCtg)
+{
+    mCtg = aCtg;
+    mCtgS = CtgText(mCtg);
 }
 
 string TLog::TimestampS() const

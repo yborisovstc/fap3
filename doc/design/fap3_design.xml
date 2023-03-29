@@ -522,6 +522,42 @@
 		    is created via structure (i.e.  variable data) on run-time whereas in OOP it is created via constant definition on compilation time.</simpara>
 	    </sect3>
 	</sect2>
+	<sect2 id="ds_nn_abo"><title>Using auto-indexed arrays for ownership connection instead of name-to-owned_instance mapping</title>
+	    <sect3><title>Intro</title>
+		<simpara>Currently name-to-owned_instance map is used form owning connpoint (specifically NCpOmip, ref Node class def). We can simplify
+		    this by using array instead of map. For that we need to keep all owned of the current owning in form of table. So URI in native hier
+		    will "internally" be represented by the list of names indexes. Textual representation can be simply formed. Back conversion (from textual repr
+		    to index repr seems to be more time consuming but this operation is requred on chromo applying phase only.)</simpara>
+		<simpara>Probably, We also need to migrate to the approach "Name as the attribute of the relation" for native hier node local identification,
+		    ref <ulink url="../../../fap4/doc/design/index.html#ds_nh_ni"/> for details</simpara>
+	    </sect3>
+	    <sect3><title>UC: owned depends on name. Renaming. Do we need notification.</title>
+		<simpara>This is use-case for the case when  "Name as the attribute of the relation" approach is also applied.
+		    In this case owning shall have method to get owned name. But it is not enough.
+		    Owned can depend on its name (not sure this is a good desing), TrCmpVar for instance, or future constants like SI_23 where the name
+		    encodes the constant parameter. Yes, owned can get the name from owning but it also needs to be notified when the name gets changed.</simpara>
+	    </sect3>
+	    <sect3><title>UC: Removing owned.</title>
+		<simpara>To make this op effective we can just mark the table element as unused (set nullptr for owned). It can be utilized when adding next owned.
+		</simpara>
+	    </sect3>
+	    <sect3><title>Does it really increase the performance?</title>
+		<simpara>Most imprtant native hier node method that ownership relation desing affects is MNode::getNode(GUri). This method is called actively not
+		    only on the system creation phase but on system running also.</simpara>
+		<simpara>I just experimented, added input cache into State:</simpara>
+		<programlisting>
+		    MDVarGet* State::GetInp()
+		    ||          //MNode* inp = getNode("Inp");
+		    ||          if (!mInp) mInp = getNode("Inp");
+		    ||          MNode* inp = mInp;
+		</programlisting>
+		<simpara>Run fap3-vis ut_avr_vert_drp_2 5 vertexes ring as reference model:</simpara>
+		<programlisting>
+		    Without inp cache: 8.333 (sec) = 05:56:12.454 - 05:56:04.121
+		    With    inp cache: 8.227 (sec) = 06:04:32.867 - 06:04:24.640
+		</programlisting>
+	    </sect3>
+	</sect2>
     </sect1>
 
     <sect1 id="ds_uinn"><title>Units identification in native net.</title>
@@ -2194,6 +2230,7 @@
 	    <sect3><title>Intro</title>
 		<simpara>The idea is to provide the system developer the ability to quick set the logging level for the whole system or its part.
 		    Currently the logging level is set locally for the particular node only and doesn't affect the other nodes, even the owneds.</simpara>
+		<simpara>Ref <xref linkend="ds_log_elc"/> for details.</simpara>
 	    </sect3>
 	</sect2>
 	<sect2 id="ds_dbg_sfll"><title>Symbolic form of logging level</title>
@@ -2207,6 +2244,25 @@
 		p Dbg::getElem(mEnv->Root())->Chromos().Root().Dump()
 		p Dbg::getElem(mEnv->Root()->getNodeS("S1"))->Chromos().Root().Dump()
 	    </programlisting>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_log"><title>Logging</title>
+	<sect2 id="ds_log_elc"><title>Hierarchical logging control</title>
+	    <sect3><title>Status</title>
+		<simpara>20230329 Initially implemented.</simpara>
+	    </sect3>
+	    <sect3><title>Intro</title>
+		<simpara>The current design of FAP logging means is not completed - it allows to control the logging the only local native hier node. 
+		    Ref <xref linkend="ds_dbg_llf"/> for the enhancement proposal.</simpara>
+	    </sect3>
+	    <sect3><title>Local and Owned levels</title>
+		<sect4><title>Intro</title>
+		    <simpara>In the FAP any system is the native hier where logging decision is the responsibility of node. This means that we need to
+			distribute the "global" setting thru native hier to have global affect. So the idea is to introduce node specific content
+			"Owned Logging Level" that sets logging level for all node owned by the given node.</simpara>
+		</sect4>
+	    </sect3>
 	</sect2>
     </sect1>
 
@@ -2978,6 +3034,7 @@
 	<sect2><title><xref linkend="ds_irm_ctx"/></title> </sect2>
 	<sect2><title><xref linkend="ds_nn_efcoop"/></title> </sect2>
 	<sect2><title><xref linkend="ds_uinn_cs"/></title> </sect2>
+	<sect2><title><xref linkend="ds_nn_abo"/></title> </sect2>
     </sect1>
 
     <sect1 id="ds_ic"><title>Tracking: Design items completed</title>

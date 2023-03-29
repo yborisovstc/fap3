@@ -21,6 +21,7 @@ class Content : public Node, public MContent
 	virtual MIface* MContent_getLif(const char *aType) override;
 	virtual void MContent_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	// From MContent
+	// TODO Bug. Needs to return URI?
 	virtual string contName() const override { return name();}
 	virtual bool getData(string& aData) const override;
 	virtual bool setData(const string& aData) override;

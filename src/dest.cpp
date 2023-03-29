@@ -89,7 +89,7 @@ Func::TInpIc* TrBase::GetInps(FInp& aInp)
     }
     res = aInp.mIfp ? aInp.mIfp->ifaces() : nullptr;
     if (!res || res->size() == 0) {
-	Log(TLog(EDbg, this) + "Cannot get input  [" + aInp.mName + "]");
+	Log(EDbg, TLog(this) + "Cannot get input  [" + aInp.mName + "]");
     }
     return reinterpret_cast<Func::TInpIc*>(res);
 }
@@ -130,11 +130,6 @@ string TrVar::GetInpUri(int aId) const
     FInp* inp = const_cast<TrVar*>(this)->GetFinp(aId);
     assert(inp);
     return inp->mName;
-}
-
-void TrVar::log(int aCtg, const string& aMsg)
-{
-    Log(TLog(aCtg, this) + aMsg);
 }
 
 const DtBase* TrVar::VDtGet(const string& aType)
@@ -201,7 +196,7 @@ void TrAddVar::Init(const string& aIfaceName)
     }
     if ((mFunc = FAddDt<Sdata<int>>::Create(this, aIfaceName)) != NULL);
     else {
-	Log(TLog(EErr, this) + "Failed init, outp [" + aIfaceName + "]");
+	Log(EErr, TLog(this) + "Failed init, outp [" + aIfaceName + "]");
     }
 }
 
@@ -232,7 +227,7 @@ void TrAdd2Var::Init(const string& aIfaceName)
     }
     if ((mFunc = FAddDt2<Sdata<int>>::Create(this, aIfaceName)) != NULL);
     else {
-	Log(TLog(EErr, this) + "Failed init, outp [" + aIfaceName + "]");
+	Log(EErr, TLog(this) + "Failed init, outp [" + aIfaceName + "]");
     }
 }
 
@@ -264,7 +259,7 @@ void TrSub2Var::Init(const string& aIfaceName)
     }
     if ((mFunc = FSubDt2<Sdata<int>>::Create(this, aIfaceName)) != NULL);
     else {
-	Log(TLog(EErr, this) + "Failed init, outp [" + aIfaceName + "]");
+	Log(EErr, TLog(this) + "Failed init, outp [" + aIfaceName + "]");
     }
 }
 
@@ -411,7 +406,7 @@ void TrCmpVar::Init(const string& aIfaceName)
 	else if (mFunc = FCmp<Sdata<string> >::Create(this, t1, t2, ftype));
 	else if (mFunc = FCmp<DGuri>::Create(this, t1, t2, ftype));
 	else {
-	    Log(TLog(EErr, this) + "Failed init, inputs [" + t1 + "], [" + t2 + "]");
+	    Log(EErr, TLog(this) + "Failed init, inputs [" + t1 + "], [" + t2 + "]");
 	}
     }
 }
@@ -461,7 +456,7 @@ const DtBase* TrSwitchBool::VDtGet(const string& aType)
     const DtBase* inp2 = GetInpData(mInp2, inp2);
     if (sel && inp1 && inp2)
     {
-	Log(TLog(EDbg, this) + "Sel: " + sel->ToString(true) + ", Inp1: " + inp1->ToString(true) + ", Inp2: " + inp2->ToString(true));
+	Log(EDbg, TLog(this) + "Sel: " + sel->ToString(true) + ", Inp1: " + inp1->ToString(true) + ", Inp2: " + inp2->ToString(true));
 	if (sel->IsValid()) {
 	    res = sel->mData ? inp2 : inp1;
 	    res = (aType.empty() || aType == res->GetTypeSig()) ? res : nullptr;
@@ -503,10 +498,10 @@ const DtBase* TrAndVar::VDtGet(const string& aType)
 		if (first) { mRes = *arg; first = false;
 		} else {
 		    mRes.mData = mRes.mData && arg->mData;
-		    Log(TLog(EDbg, this) + "Res: " + mRes.ToString(true));
+		    Log(EDbg, TLog(this) + "Res: " + mRes.ToString(true));
 		}
 	    } else {
-		Log(TLog(EDbg, this) + "Res: <ERR>");
+		Log(EDbg, TLog(this) + "Res: <ERR>");
 		mRes.mValid = false; break;
 	    }
 	}
@@ -530,10 +525,10 @@ const DtBase* TrOrVar::VDtGet(const string& aType)
 		if (first) { mRes = *arg; first = false;
 		} else {
 		    mRes.mData = mRes.mData || arg->mData;
-		    Log(TLog(EDbg, this) + "Res: " + mRes.ToString(true));
+		    Log(EDbg, TLog(this) + "Res: " + mRes.ToString(true));
 		}
 	    } else {
-		Log(TLog(EDbg, this) + "Res: <ERR>");
+		Log(EDbg, TLog(this) + "Res: <ERR>");
 		mRes.mValid = false; break;
 	    }
 	}
@@ -655,7 +650,7 @@ const DtBase* TrSvldVar::VDtGet(const string& aType)
 	    res = inp2;
 	} else {
 	    res = inp1;
-	    Log(TLog(EDbg, this) + "Both inputs are invalid");
+	    Log(EDbg, TLog(this) + "Both inputs are invalid");
 	}
     }
     return res;
@@ -917,14 +912,14 @@ const DtBase* TrTuple::VDtGet(const string& aType)
 			    *elem = *edata;
 			} else {
 			    elem->mValid = false;
-			    Log(TLog(EErr, this) + "Input [" + compn->name() + "] is incompatible with tuple component");
+			    Log(EErr, TLog(this) + "Input [" + compn->name() + "] is incompatible with tuple component");
 			}
 		    } else {
 			elem->mValid = false;
-			Log(TLog(EDbg, this) + "Cannot get input  [" + compn->name() + "]");
+			Log(EDbg, TLog(this) + "Cannot get input  [" + compn->name() + "]");
 		    }
 		} else {
-		    Log(TLog(EErr, this) + "No such component [" + compn->name() + "] of tuple");
+		    Log(EErr, TLog(this) + "No such component [" + compn->name() + "] of tuple");
 		}
 	    }
 	    compo = owner()->nextPair(compo);
@@ -997,15 +992,15 @@ void TrPair::Init(const string& aIfaceName)
 	    if ((mFunc = FPair<DGuri>::Create(this, aIfaceName, t1)));
 	    else if ((mFunc = FPair<Sdata<int>>::Create(this, aIfaceName, t1)));
 	    else {
-		Log(TLog(EErr, this) + "Failed init, iface [" + aIfaceName + "]");
+		Log(EErr, TLog(this) + "Failed init, iface [" + aIfaceName + "]");
 	    }
 	} else {
-	    Log(TLog(EErr, this) + "Failed init, incompatible inputs [" + t1 + "], [" + t2 + "]");
+	    Log(EErr, TLog(this) + "Failed init, incompatible inputs [" + t1 + "], [" + t2 + "]");
 	    t1 = inp1->VarGetIfid();
 	    t2 = inp2->VarGetIfid();
 	}
     } else {
-	Log(TLog(EErr, this) + "Missing input [" + (inp2 ? GetInpUri(Func::EInp1) : GetInpUri(Func::EInp1)) + "]");
+	Log(EErr, TLog(this) + "Missing input [" + (inp2 ? GetInpUri(Func::EInp1) : GetInpUri(Func::EInp1)) + "]");
     }
 }
 
@@ -1104,7 +1099,7 @@ MDVarGet* TrInpSel::GetInp()
 	    if (idx->mData >= 0 && idx->mData < Ic->size()) {
 		res = Ic->at(idx->mData);
 	    } else {
-		Log(TLog(EErr, this) + "Incorrect index  [" + to_string(idx->mData) + "], inps num: " + to_string(Ic->size()));
+		Log(EErr, TLog(this) + "Incorrect index  [" + to_string(idx->mData) + "], inps num: " + to_string(Ic->size()));
 	    }
 	}
     }
@@ -1356,7 +1351,7 @@ const DtBase* TrIsValid::VDtGet(const string& aType)
 	mRes.mData = false;
     }
     mRes.mValid = true;
-    Log(TLog(EDbg, this) + "Inp [" + (inp ? inp->ToString(true) : "nil") + "], res [" + mRes.ToString(true) + "]");
+    Log(EDbg, TLog(this) + "Inp [" + (inp ? inp->ToString(true) : "nil") + "], res [" + mRes.ToString(true) + "]");
     return &mRes;
 }
 

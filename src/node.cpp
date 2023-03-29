@@ -4,20 +4,33 @@
 
 
 static const string K_Cont_Debug_LogLevel = "Debug.LogLevel";
+static const string K_Cont_LogLevel = "LogLevel";
+static const string K_Cont_OwdLogLevel = "OwdLogLevel";
 static const string K_Cont_Explorable = "Explorable"; // Value "n", "y"
 static const string K_Cont_Controllable = "Controllable"; // Value "n", "y"
 static const string K_Cont_Val_Yes = "y";
 static const string K_Cont_Val_No = "n";
 static const string K_ContentType = "Content";
+
+/** @brief Content "Logging parameters"
+ * The content data format is:
+ * */ 
 static const char K_LogLevelSep= '.';
 static const string K_LogLevel_Err= "Err";
 static const string K_LogLevel_Warn= "Warn";
 static const string K_LogLevel_Info= "Info";
 static const string K_LogLevel_Dbg= "Dbg";
+static const string K_LogLevel_Dbg2= "Dbg2";
 
 // TODO to find proper place for it
 static const string K_SpName_Ns= "_@";
 static const string K_SpName_Nil= "_";
+
+// Owned LogLevel
+int Node::K_Ll_Mask = 0xff;
+int Node::K_Oll_Shift = 8;
+int Node::K_SOll_Shift = 16;
+int Node::K_Ll_Shift = 0;
 
 Node::Node(const string &aType, const string &aName, MEnv* aEnv): mName(aName.empty() ? aType : aName), mEnv(aEnv), mOcp(this), mOnode(this, this),
     mLogLevel(EInfo), mExplorable(false), mControllable(false)
@@ -165,7 +178,7 @@ const MNode* Node::getNode(const GUri& aUri) const
 	    }
 	}
     } else {
-	Log(TLog(EErr, this) + "Invalid URI [" + aUri + "]");
+	Log(EErr, TLog(this) + "Invalid URI [" + aUri + "]");
     }
     return res;
 }
@@ -206,7 +219,7 @@ void Node::updateNs(TNs& aNs, const ChromoNode& aCnode)
 	if (!ns.empty()) {
 	    MNode* nsu = getNode(ns, aNs);
 	    if (nsu == NULL) {
-		Log(TLog(EErr, this) + "Cannot find namespace [" + ns + "]");
+		Log(EErr, TLog(this) + "Cannot find namespace [" + ns + "]");
 	    } else {
 		aNs.clear(); // Override namespace by explicitly stated one
 		aNs.push_back(nsu);
@@ -391,8 +404,17 @@ bool Node::attachOwned(MNode* aOwned)
     if (res) {
 	aOwned->owned()->provided()->onOwnerAttached();
 	onOwnedAttached(aOwned->owned()->provided());
+	// Set owned log level
+	MOwned* owd = aOwned->lIf(owd);
+	assert(owd);
+	auto oll = getOwdLogLevel();
+	auto soll = getSOwdLogLevel();
+	auto ll = (oll != ELcUndef) ? oll : soll;
+	if (ll != ELcUndef) {
+	    owd->setLogLevel(ll);
+	}
     } else {
-	Log(TLog(EErr, this) + "Attaching owned: already exists [" + aOwned->name() + "]");
+	Log(EErr, TLog(this) + "Attaching owned: already exists [" + aOwned->name() + "]");
     }
     return res;
 }
@@ -403,7 +425,7 @@ MNode* Node::createHeir(const string& aName)
     if (Provider()->isProvided(this)) {
 	uheir = Provider()->createNode(name(), aName, mEnv);
     } else {
-	Log(TLog(EInfo, this) + "The parent of [" + aName + "] is not of provided");
+	Log(EInfo, TLog(this) + "The parent of [" + aName + "] is not of provided");
     }
     return uheir;
 }
@@ -452,7 +474,7 @@ MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
     updateNs(ns, aMut);
     bool mutadded = false;
     bool res = false;
-    Log(TLog(EDbg2, this, aMut) + "Adding element [" + sname + "]");
+    Log(EDbg2, TLog(this, aMut) + "Adding element [" + sname + "]");
 
     assert(!sname.empty());
     MNode* uelem = NULL;
@@ -492,13 +514,13 @@ MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
 		}
 		parent->attachHeir(uelem);
 	    } else {
-		Log(TLog(EErr, this) + "Adding node [" + sname + "] failed");
+		Log(EErr, TLog(this) + "Adding node [" + sname + "] failed");
 	    }
 	} else {
 	    Logger()->Write(EErr, this, "Creating [%s] - parent [%s] not found", sname.c_str(), sparent.c_str());
 	}
     } else {
-	Log(TLog(EErr, this) + "Missing parent name");
+	Log(EErr, TLog(this) + "Missing parent name");
     }
     if (!aUpdOnly && !mutadded) {
 	//notifyNodeMutated(aMut, aCtx);
@@ -517,15 +539,15 @@ void Node::mutRemove(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 	bool res = owner()->disconnect(owner()->pairAt(sname));
 	if (res) {
 	    owned->deleteOwned();
-	    Log(TLog(EInfo, this) + "Removed node [" + sname + "]");
+	    Log(EInfo, TLog(this) + "Removed node [" + sname + "]");
 	    if (!aUpdOnly) {
 		//notifyNodeMutated(aMut, aCtx);
 	    }
 	} else {
-	    Log(TLog(EErr, this) + "Failed detached owned [" + sname + "]");
+	    Log(EErr, TLog(this) + "Failed detached owned [" + sname + "]");
 	}
     } else {
-	Log(TLog(EErr, this) + "Failed removing [" + sname + "] - not found");
+	Log(EErr, TLog(this) + "Failed removing [" + sname + "] - not found");
     }
 }
 
@@ -543,7 +565,7 @@ void Node::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 {
     string sp = aMut.Attr(ENa_P);
     string sq = aMut.Attr(ENa_Q);
-    Log(TLog(EErr, this) + "Connecting [" + sp + "] to [" + sq + "] - not supported");
+    Log(EErr, TLog(this) + "Connecting [" + sp + "] to [" + sq + "] - not supported");
     if (!aUpdOnly) {
 	//notifyNodeMutated(aMut, aCtx);
     }
@@ -553,7 +575,7 @@ void Node::mutDisconnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aC
 {
     string sp = aMut.Attr(ENa_P);
     string sq = aMut.Attr(ENa_Q);
-    Log(TLog(EErr, this) + "Disconnecting [" + sp + "] from [" + sq + "] - not supported");
+    Log(EErr, TLog(this) + "Disconnecting [" + sp + "] from [" + sq + "] - not supported");
     if (!aUpdOnly) {
 	//notifyNodeMutated(aMut, aCtx);
     }
@@ -566,7 +588,7 @@ void Node::mutImport(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
     string srcs = aMut.Attr(ENa_Id);
     bool res = impmgr->Import(srcs);
     if (!res) {
-	Log(TLog(EErr, this) + "Importing [" + srcs + "] failed");
+	Log(EErr, TLog(this) + "Importing [" + srcs + "] failed");
     }
     if (!aUpdOnly) {
 	//notifyNodeMutated(aMut, aCtx);
@@ -712,7 +734,7 @@ bool Node::setContent(const GUri& aCuri, const string& aData)
 	res = cnode->setData(aData);
     }
     if (!res) {
-	Log(TLog(EErr, this) + "Setting [" + aCuri.toString() + "] to [" + aData + "]: content doesn't exist");
+	Log(EErr, TLog(this) + "Setting [" + aCuri.toString() + "] to [" + aData + "]: content doesn't exist");
     }
     return res;
 
@@ -847,6 +869,7 @@ int Node::parseLogLevel(const string& aData)
     else if (name == K_LogLevel_Warn) res = EWarn;
     else if (name == K_LogLevel_Info) res = EInfo;
     else if (name == K_LogLevel_Dbg) res = EDbg;
+    else if (name == K_LogLevel_Dbg2) res = EDbg2;
     if (res != -1) {
 	if (isExt) {
 	    try {
@@ -854,15 +877,16 @@ int Node::parseLogLevel(const string& aData)
 	    } catch (std::exception& e) { }
 	    if (extl != -1) res += extl;
 	    else {
-		Log(TLog(EErr, this) + "Wrong log level extension [" + ext + "]");
+		Log(EErr, TLog(this) + "Wrong log level extension [" + ext + "]");
 	    }
 	}
     } else {
-	Log(TLog(EErr, this) + "Unknown log level [" + name + "]");
+	Log(EErr, TLog(this) + "Unknown log level [" + name + "]");
     }
     return res;
 }
 
+#if 0
 void Node::onContentChanged(const MContent* aCont)
 {
     // Cache logging level
@@ -886,6 +910,77 @@ void Node::onContentChanged(const MContent* aCont)
 	obs = mOcp.nextPair(obs);
     }
 }
+#endif
+
+void Node::onContentChanged(const MContent* aCont)
+{
+    bool res = true;
+    string data;
+    // Cache logging level
+    if (aCont->contName() == K_Cont_LogLevel) {
+	if (res = aCont->getData(data)) {
+	    auto ll = parseLogLevel(data);
+	    setLocLogLevel(ll);
+	}
+    } else if (aCont->contName() == K_Cont_OwdLogLevel) {
+	if (res = aCont->getData(data)) {
+	    auto oll = parseLogLevel(data);
+	    setSOwdLogLevel(oll);
+	    // Notify owners of log level updated
+	    for (int i = 0; i < owner()->pcount(); i++) {
+		auto owd = owner()->pairAt(0);
+		owd->provided()->setLogLevel(oll);
+	    }
+	}
+
+    } else if (aCont->contName() == K_Cont_Explorable) {
+	if (res = aCont->getData(data)) {
+	    mExplorable = (data == K_Cont_Val_Yes);
+	}
+    } else if (aCont->contName() == K_Cont_Controllable) {
+	if (res = aCont->getData(data)) {
+	    mControllable = (data == K_Cont_Val_Yes);
+	}
+    }
+
+    // Notify observers
+    auto* obs = mOcp.firstPair();
+    while (obs) {
+	obs->provided()->onObsContentChanged(this, aCont);
+	obs = mOcp.nextPair(obs);
+    }
+}
+
+void Node::setOwdLogLevel(int aLevel)
+{
+    mLogLevel &= ~(K_Ll_Mask << K_Oll_Shift);
+    mLogLevel |= ((aLevel & K_Ll_Mask) << K_Oll_Shift);
+}
+
+void Node::setSOwdLogLevel(int aLevel)
+{
+    mLogLevel &= ~(K_Ll_Mask << K_SOll_Shift);
+    mLogLevel |= ((aLevel & K_Ll_Mask) << K_SOll_Shift);
+}
+
+void Node::setLocLogLevel(int aLevel)
+{
+    mLogLevel &= ~K_Ll_Mask;
+    mLogLevel |= (aLevel & K_Ll_Mask);
+}
+
+
+bool Node::setLogLevel(int aLevel)
+{
+    setOwdLogLevel(aLevel);
+    // Propagate to owned
+    for (int i = 0; i < owner()->pcount(); i++) {
+	auto owd = owner()->pairAt(i);
+	owd->provided()->setLogLevel(aLevel);
+    }
+    return true;
+}
+
 
 //!! not tested
 MNode* Node::addComp(const string& aType, const string& aName)

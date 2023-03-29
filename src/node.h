@@ -98,8 +98,9 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	virtual void onOwnerAttached() override {}
 	virtual void onOwnerDetached() override {}
 	virtual bool isOwner(const MOwner* mOwner) const override;
+	virtual bool setLogLevel(int aLevel) override;
     public:
-	inline void Log(const TLog& aRec) const { if (aRec.Ctg() <= mLogLevel)  Logger()->Write(aRec);}
+	inline void Log(int aLevel, const TLog& aRec) const;
     protected:
 	template<class T> MIface* checkLif(const char* aType) { return (strcmp(aType, T::Type()) == 0) ? dynamic_cast<T*>(this) : nullptr;}
 	MOwner* Owner();
@@ -125,6 +126,13 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	virtual void mutDisconnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx);
 	virtual void mutImport(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx);
 	void notifyNodeMutated(const ChromoNode& aMut, const MutCtx& aCtx);
+	/** @brief LogLevel helpers */
+	void setOwdLogLevel(int aLevel);
+	inline int getOwdLogLevel() const;
+	void setSOwdLogLevel(int aLevel);
+	inline int getSOwdLogLevel() const;
+	void setLocLogLevel(int aLevel);
+	inline int getLocLogLevel() const;
     protected:
 	MEnv* mEnv = nullptr;
 	string mName;
@@ -134,6 +142,35 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	int mLogLevel;                /*!< Logging level */
 	bool mExplorable;                /*!< Exploring is enabled, ref ds_dcs_aes_acp */
 	bool mControllable;             /*!< Control is enabled, ref ds_dcs_aes_acp */
+	static int K_Ll_Mask;
+	static int K_Oll_Shift;
+	static int K_SOll_Shift;
+	static int K_Ll_Shift;
 };
+
+inline void Node::Log(int aLevel, const TLog& aRec) const
+{
+    auto oll = getOwdLogLevel();
+    int ll = (oll == ELcUndef) ? getLocLogLevel() : oll;
+    if (aLevel <= ll) {
+	const_cast<TLog&>(aRec).SetCtg(aLevel); Logger()->Write(aRec);
+    }
+}
+
+inline int Node::getOwdLogLevel() const
+{
+    return (mLogLevel >> K_Oll_Shift) & K_Ll_Mask;
+}
+
+inline int Node::getSOwdLogLevel() const
+{
+    return (mLogLevel >> K_SOll_Shift) & K_Ll_Mask;
+}
+
+inline int Node::getLocLogLevel() const
+{
+    return mLogLevel & K_Ll_Mask;
+}
+
 
 #endif //  __FAP3_NODE_H

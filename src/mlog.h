@@ -9,13 +9,22 @@ class MNode;
 class MLogObserver;
 class ChromoNode;
 
+/** @brief Scope of the logging parameters
+ * */
+enum TLogScope {
+    ELsLocal = 0,   //<!  Local scope, applied to the current native hier node
+    ELsGlobas = 1,  //<!  Global scope, applied to the whole owned tree
+};
+
 enum TLogRecCtg {
-    ENoLog = 0,
-    EErr = 1,
+    ELcUndef = 0,
+    ENoLog = 1,
+    EErr = 2,
     EWarn = 10,
     EInfo = 20,
     EDbg = 30,
     EDbg2 = 31,
+    EAll = 50,
     ECtg_Max
 };
 
@@ -26,6 +35,8 @@ class TLog
     public:
 	TLog(int aCtg, const MNode* aAgt);
 	TLog(int aCtg, const MNode* aAgt, const ChromoNode& aMut);
+	TLog(const MNode* aAgt);
+	TLog(const MNode* aAgt, const ChromoNode& aMut);
 	TLog(const string& aString);
 	TLog& operator +(const string& aString);
 	operator string() const;
@@ -36,6 +47,7 @@ class TLog
 	string MutIdS() const;
 	string CtgS() const;
 	string Content() const { return mContent;};
+	void SetCtg(int aCtg);
     protected:
 	int mCtg;
 	string mTimestampS;

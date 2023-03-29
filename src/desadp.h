@@ -316,7 +316,7 @@ class DAdp : public Des, public IDesEmbHost, public MDesAdapter
 	// From IDesEmbHost
 	virtual void registerIb(DesEIbb* aIap) override;
 	virtual void registerOst(DesEOstb* aItem) override;
-	virtual void logEmb(const TLog& aRec) override { Log(aRec);}
+	virtual void logEmb(int aCtg, const TLog& aRec) override { Log(aCtg, aRec);}
 	// From Unit.MIfProvOwner
 	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
 	// From MDesSyncable

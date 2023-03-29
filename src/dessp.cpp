@@ -68,12 +68,12 @@ void DesSpe::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 			    if (pairspc) {
 				auto cid = pairspc->getId();
 				if (sid == cid) {
-				    Log(TLog(EDbg, this) + "Client found for service [" + cid + "]");
+				    Log(EDbg, TLog(this) + "Client found for service [" + cid + "]");
 				    cltu = pairu;
 				    break;
 				}
 			    } else {
-				Log(TLog(EErr, this) + "Cannot obtain client MDesSpc interface");
+				Log(EErr, TLog(this) + "Cannot obtain client MDesSpc interface");
 			    }
 			}
 			if (cltu) {
@@ -82,7 +82,7 @@ void DesSpe::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 			}
 		    }
 		} else {
-		    Log(TLog(EErr, this) + "Cannot obtain service  MDesSpc interface");
+		    Log(EErr, TLog(this) + "Cannot obtain service  MDesSpc interface");
 		}
 	    } else {
 		// Request from outside. Redirect to Int
@@ -133,12 +133,12 @@ void DesSp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 			    if (pairspc) {
 				auto sid = pairspc->getId();
 				if (sid == cid) {
-				    Log(TLog(EDbg, this) + "Servicing subs found for client [" + cid + "]");
+				    Log(EDbg, TLog(this) + "Servicing subs found for client [" + cid + "]");
 				    ssubsu = pairu;
 				    break;
 				}
 			    } else {
-				Log(TLog(EErr, this) + "Cannot obtain service MDesSpc interface");
+				Log(EErr, TLog(this) + "Cannot obtain service MDesSpc interface");
 			    }
 			}
 			if (ssubsu) {
@@ -147,7 +147,7 @@ void DesSp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 			}
 		    }
 		} else {
-		    Log(TLog(EErr, this) + "Cannot obtain client MDesSpc interface");
+		    Log(EErr, TLog(this) + "Cannot obtain client MDesSpc interface");
 		}
 	    } else {
 		// Direct requestor is the pair. Redirect to owner.

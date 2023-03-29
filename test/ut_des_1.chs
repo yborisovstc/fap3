@@ -1,4 +1,5 @@
 MyRoot : Elem {
+    Debug.OwdLogLevel = "Dbg"
     Launcher : DesLauncher {
         Debug.LogLevel = "Dbg"
         Ds1 : Des {

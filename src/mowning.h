@@ -57,7 +57,8 @@ class MOwned : public MIface
 	virtual void deleteOwned() = 0;
 	virtual void onOwnerAttached() = 0;
 	virtual void onOwnerDetached() = 0;
-	virtual bool isOwner(const MOwner* mOwner) const = 0;
+	virtual bool isOwner(const MOwner* aOwner) const = 0;
+	virtual bool setLogLevel(int aLevel) = 0;
 };
 
 

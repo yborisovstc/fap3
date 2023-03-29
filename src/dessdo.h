@@ -31,7 +31,7 @@ class SdoBase : public CpStateOutp, public MDVarGet, public MObserver
 		    if (inp) {
 			res = GetSData(inp, aData);
 		    } else {
-			mHost->Log(TLog(EDbg, mHost) + "Cannot get input [" + mName + "]");
+			mHost->Log(EDbg, TLog(mHost) + "Cannot get input [" + mName + "]");
 		    }
 		    return res;
 		}
@@ -47,7 +47,7 @@ class SdoBase : public CpStateOutp, public MDVarGet, public MObserver
 		    if (inp) {
 			res = GetGData(inp, aData);
 		    } else {
-			mHost->Log(TLog(EDbg, mHost) + "Cannot get input [" + mName + "]");
+			mHost->Log(EDbg, TLog(mHost) + "Cannot get input [" + mName + "]");
 		    }
 		    return res;
 		}
@@ -66,10 +66,10 @@ class SdoBase : public CpStateOutp, public MDVarGet, public MObserver
 			    aData = link->pair();
 			    res = true;
 			} else {
-			    mHost->Log(TLog(EDbg, mHost) + "Cannot get link via input [" + mName + "]");
+			    mHost->Log(EDbg, TLog(mHost) + "Cannot get link via input [" + mName + "]");
 			}
 		    } else {
-			mHost->Log(TLog(EDbg, mHost) + "Cannot get input [" + mName + "]");
+			mHost->Log(EDbg, TLog(mHost) + "Cannot get input [" + mName + "]");
 		    }
 		    return res;
 		}

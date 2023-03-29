@@ -207,6 +207,7 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 	MIfProv* mInpProv;
 	bool mInpValid;
 	bool mStDead;     //<! Sign of Stated destructed, needs to avoid callbacks initialted by bases */
+	MNode* mInp;      //<! Input cached
 };
 
 
@@ -402,7 +403,7 @@ class IDesEmbHost
 	virtual void registerIb(DesEIbb* aIap) = 0;
 	virtual void registerOst(DesEOstb* aOst) = 0;
 	virtual void registerPar(DesEParb* aPar) { assert(false);}
-	virtual void logEmb(const TLog& aRec) =0;
+	virtual void logEmb(int aCtg, const TLog& aRec) =0;
 };
 
 /** @brief Double buffering Input base, ref ds_dee_ssi
@@ -467,7 +468,7 @@ template <typename T> class DesEIbt: public DesEIbb
 template <typename T> void DesEIbt<T>::confirm()
 {
     if (mUdt != mCdt) {
-	eHost()->logEmb(TLog(TLogRecCtg::EDbg, mHost) + "[" + mUri + "] Updated: [" + toStr(mCdt) + "] -> [" + toStr(mUdt) + "]");
+	eHost()->logEmb(TLogRecCtg::EDbg, TLog(mHost) + "[" + mUri + "] Updated: [" + toStr(mCdt) + "] -> [" + toStr(mUdt) + "]");
 	mCdt = mUdt; mChanged = true;
     } else mChanged = false;
     mUpdated = false;
@@ -491,7 +492,7 @@ template <typename T> void DesEIbd<T>::update()
     DesEIbb::update();
     MNode* inp = TP::mHost->getNode(TP::mUri);
     if (inp) TP::mValid = GetGData(inp, this->mUdt);
-    if (!TP::mValid) this->eHost()->logEmb(TLog(TLogRecCtg::EDbg, TP::mHost) + "Cannot get input [" + this->mUri + "]");
+    if (!TP::mValid) this->eHost()->logEmb(TLogRecCtg::EDbg, TLog(TP::mHost) + "Cannot get input [" + this->mUri + "]");
     else { this->mActivated = false; this->setUpdated(); }
 }
 
@@ -514,7 +515,7 @@ template <typename T> void DesEIbs<T>::update()
     DesEIbb::update();
     MNode* inp = TP::mHost->getNode(TP::mUri);
     if (inp) TP::mValid = GetSData(inp, this->mUdt);
-    if (!TP::mValid) this->eHost()->logEmb(TLog(TLogRecCtg::EDbg, TP::mHost) + "Cannot get input [" + this->mUri + "]");
+    if (!TP::mValid) this->eHost()->logEmb(TLogRecCtg::EDbg, TLog(TP::mHost) + "Cannot get input [" + this->mUri + "]");
     else { this->mActivated = false; this->setUpdated(); }
 }
 
@@ -576,7 +577,7 @@ void DesEOsts<T>::updateData(const T& aData)
 {
     if (aData != mData.mData || !mData.IsValid()) {
 	Tdata newData(aData);
-	eHost()->logEmb(TLog(TLogRecCtg::EDbg, mHost) + "[" + mCpUri + "] Updated: [" + mData.ToString() + "] -> [" + newData.ToString() + "]");
+	eHost()->logEmb(TLogRecCtg::EDbg, TLog(mHost) + "[" + mCpUri + "] Updated: [" + mData.ToString() + "] -> [" + newData.ToString() + "]");
 	mData.mData = aData; mData.mValid = true;
 	NotifyInpsUpdated();
     }
@@ -603,7 +604,7 @@ template <typename T>
 void DesEOst<T>::updateData(const T& aData)
 {
     if (aData != mData) {
-	eHost()->logEmb(TLog(TLogRecCtg::EDbg, mHost) + "[" + mCpUri + "] Updated: [" + mData.ToString() + "] -> [" + aData.ToString() + "]");
+	eHost()->logEmb(TLogRecCtg::EDbg, TLog(mHost) + "[" + mCpUri + "] Updated: [" + mData.ToString() + "] -> [" + aData.ToString() + "]");
 	mData = aData;
 	NotifyInpsUpdated();
     }
@@ -615,7 +616,7 @@ void DesEOst<T>::updateInvalid()
     if (mData.IsValid()) {
 	T prevData = mData;
 	mData.mValid = false;
-	eHost()->logEmb(TLog(TLogRecCtg::EDbg, mHost) + "[" + mCpUri + "] Updated: [" + prevData.ToString() + "] -> [" + mData.ToString() + "]");
+	eHost()->logEmb(TLogRecCtg::EDbg, TLog(mHost) + "[" + mCpUri + "] Updated: [" + prevData.ToString() + "] -> [" + mData.ToString() + "]");
 	NotifyInpsUpdated();
     }
 }
