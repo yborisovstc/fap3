@@ -4,6 +4,7 @@
 #include "miface.h"
 #include "mprov.h"
 #include "mlog.h"
+#include "mprof.h"
 
 
 /** @brief Imprort manager interface
@@ -42,6 +43,8 @@ class MEnv : public MIface
 	virtual void constructSystem() = 0;
 	/** @brief Gets logger instance */
 	virtual MLogRec* Logger() = 0;
+	/** @brief Gets profiler iface */
+	virtual MProfiler *profiler() = 0;
 	/** @brief Gets import manager */
 	virtual MImportMgr* ImpsMgr() = 0;
 	/** @brief Gets root node */

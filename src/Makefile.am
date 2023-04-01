@@ -32,6 +32,8 @@ libfap3_la_SOURCES = \
 		       log.cpp \
 		       ifr.h \
 		       ifr.cpp \
+		       prof.h \
+		       prof.cpp \
 		       prov.h \
 		       prov.cpp \
 		       provdef.h \
@@ -114,6 +116,7 @@ include_HEADERS = \
 		  mowning.h \
 		  mchromo.h \
 		  mobserv.h \
+		  mprof.h \
 		  nconn.h \
 		  mlink.h \
 		  rdata.h \
@@ -141,6 +144,7 @@ include_HEADERS = \
 		  rdatauri.h \
 		  func.h \
 		  dest.h \
+		  prof.h \
 		  miface.h
 
 

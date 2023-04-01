@@ -8,10 +8,22 @@
 #include "mchromo.h"
 #include "chromo.h"
 #include "elem.h"
+#include "prof.h"
+#include "prof_ids.h"
 
 
 static const string KLogFileName = "faplog.txt";
 static const string KModulesName = "Modules";
+
+
+/** @brief Init data for profiler duration indicator */
+const PindCluster<PindDurStat>::Idata KPindDurStatIdata = {
+    "Duration stat",
+    {
+	{PEvents::EDurStat_TrAnd, "IFC_TR_AND", 80000, false},
+    }
+};
+
 
 
 ///// ImportsMgr
@@ -145,32 +157,28 @@ void ImportsMgr::ImportToNode(MNode* aNode, const ChromoNode& aMut)
 ///// Env
 
 
-Env::Env(const string& aSpecFile, const string& aLogFileName): mRoot(NULL), mSpecFile(aSpecFile),/*mLogger(NULL),*/
-    mChromo(NULL) /*, mEnPerfTrace(false), mEnIfTrace(false), mExtIfProv(NULL), mIfResolver(NULL), mProf(NULL)*/
+Env::Env(const string& aSpecFile, const string& aLogFileName): mRoot(NULL), mSpecFile(aSpecFile), mLogger(nullptr),
+    mChromo(NULL), mProf(nullptr) /*, mEnPerfTrace(false), mEnIfTrace(false), mExtIfProv(NULL), mIfResolver(NULL)*/
 {
     mLogger = new Logrec(aLogFileName.empty() ? KLogFileName : aLogFileName);
     mProvider = new Factory(string(), this);
     mImpMgr = new ImportsMgr(*this);
     mProvider->LoadPlugins();
+    mProf = new DProf<EPiid_NUM>(this, aSpecFile);
+    // Profiler indicators
+    mProf->AddPind<PindCluster<PindDurStat>>(KPindDurStatIdata);
     /*
     srand(time(NULL));
     iChMgr = new ChromoMgr(*this);
     string chromo_fext = iSpecFile.substr(iSpecFile.find_last_of(".") + 1);
     iChMgr->SetChromoRslArgs(chromo_fext);
     mIfResolver = new IfcResolver(*this);    
-    mProf = new GProfiler(this, KPInitData);
-    */
-    // Profilers events
-    /*
-    mPfid_Start_Constr = Profiler()->RegisterEvent(TPEvent("Start construction"));
-    mPfid_Root_Created = Profiler()->RegisterEvent(TPEvent("Root created"));
-    mPfid_Root_Created_From_Start = Profiler()->RegisterEvent(TPEvent("Root created from start", mPfid_Start_Constr));
-    mPfid_End_Constr = Profiler()->RegisterEvent(TPEvent("End construction"));
     */
 }
 
-Env::Env(const string& aSpec, const string& aLogFileName, bool aOpt): mRoot(NULL), /*mLogger(NULL),*/
-    mChromo(NULL)/*, mEnPerfTrace(false), mEnIfTrace(false), mExtIfProv(NULL), mIfResolver(NULL), mProf(NULL)*/
+#if 0
+Env::Env(const string& aSpec, const string& aLogFileName, bool aOpt): mRoot(NULL), mLogger(nullptr),
+    mChromo(NULL), mProf(nullptr)/*, mEnPerfTrace(false), mEnIfTrace(false), mExtIfProv(NULL), mIfResolver(NULL)*/
 {
     /*
     mLogger = new GLogRec(aLogFileName.empty() ? KLogFileName : aLogFileName);
@@ -186,14 +194,8 @@ Env::Env(const string& aSpec, const string& aLogFileName, bool aOpt): mRoot(NULL
     mIfResolver = new IfcResolver(*this);    
     mProf = new GProfiler(this, KPInitData);
     */
-    // Profilers events
-    /*
-    mPfid_Start_Constr = Profiler()->RegisterEvent(TPEvent("Start construction"));
-    mPfid_Root_Created = Profiler()->RegisterEvent(TPEvent("Root created"));
-    mPfid_Root_Created_From_Start = Profiler()->RegisterEvent(TPEvent("Root created from start", mPfid_Start_Constr));
-    mPfid_End_Constr = Profiler()->RegisterEvent(TPEvent("End construction"));
-    */
 }
+#endif
 
 
 Env::~Env()
@@ -208,9 +210,9 @@ Env::~Env()
     delete mProvider;
     delete mLogger;
     delete mImpMgr;
+    delete mProf;
     /*
     delete mIfResolver;
-    delete mProf;
     */
 }
 

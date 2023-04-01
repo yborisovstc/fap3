@@ -461,6 +461,8 @@ void Ut_des::test_des_1()
     // Verifying iface cache update, ref ds_desopt_uic 
     bool res = mEnv->RunSystem(5, 2);
     CPPUNIT_ASSERT_MESSAGE("Ds1.St1 failed on phase 1", getStateDstr("Launcher.Ds1.St1") == "SI 5");
+    mEnv->profiler()->saveMetrics();
+
 
     MNode* c1n = launcher->getNode("Ds1.Const_1");
     MVert* c1v = c1n->lIf(c1v);

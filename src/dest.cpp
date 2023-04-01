@@ -2,6 +2,7 @@
 #include "dest.h"
 #include "syst.h"
 #include "data.h"
+#include "prof_ids.h"
 
 
 TrBase::TrBase(const string &aType, const string& aName, MEnv* aEnv): CpStateOutp(aType, aName, aEnv)
@@ -489,6 +490,7 @@ TrBool::TrBool(const string &aType, const string& aName, MEnv* aEnv): TrBase(aTy
 const DtBase* TrAndVar::VDtGet(const string& aType)
 {
     mRes.mValid = true;
+    PFL_DUR_STAT_START(PEvents::EDurStat_TrAnd);
     bool first = true;
     auto* Ic = GetInps(mInp);
     if (Ic && Ic->size() > 0) {
@@ -506,6 +508,7 @@ const DtBase* TrAndVar::VDtGet(const string& aType)
 	    }
 	}
     }
+    PFL_DUR_STAT_REC(PEvents::EDurStat_TrAnd); 
     return &mRes;
 }
 

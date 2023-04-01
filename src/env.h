@@ -5,6 +5,8 @@
 #include "mnode.h"
 #include "mlauncher.h"
 #include "factr.h"
+#include "prof.h"
+
 
 class Logrec;
 class Env;
@@ -37,6 +39,7 @@ class ImportsMgr: public MImportMgr
 	friend class Env;
 };
 
+template <int Dim> class DProf;
 
 /** @brief Execution environment
  * */
@@ -45,7 +48,7 @@ class Env: public MEnv
     public:
 	static const char* Type() { return "Env";};
 	Env(const string& aSpecFile, const string& aLogFileName = string());
-	Env(const string& aSpec, const string& aLogFileName, bool aOpt);
+	//Env(const string& aSpec, const string& aLogFileName, bool aOpt);
 	virtual ~Env();
 	// From MEnv.MIface
 	virtual string MEnv_Uid() const override { return Type();}
@@ -55,6 +58,7 @@ class Env: public MEnv
 	virtual MProvider* provider() const override {return mProvider;}
 	virtual void constructSystem() override;
 	virtual MLogRec* Logger() override;
+	inline virtual MProfiler *profiler() override { return mProf;}
 	virtual MImportMgr* ImpsMgr() override { return mImpMgr;}
 	virtual MNode* Root() const override;
 	virtual bool RunSystem(int aCount = 0, int aIdleCount = 0) override;
@@ -74,7 +78,9 @@ class Env: public MEnv
 	MLauncher* mLauncher = nullptr; /*!< Model's launcher */
 	ImportsMgr* mImpMgr;
 	map<string, string> mEVars;
+	DProf<EPiid_NUM>* mProf;
 
 };
+
 
 #endif

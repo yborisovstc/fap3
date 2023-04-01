@@ -1,6 +1,7 @@
 
 #include <cstring>
 #include "func.h"
+#include "prof_ids.h"
 
 static int KDbgLog_Value = 9;
 
