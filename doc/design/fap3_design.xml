@@ -1659,6 +1659,24 @@
     </sect1>
 
     <sect1 id="ds_mdc"><title>Modify DES cycle to avoid polling the comps but keep the lists of active/updated in owner.</title>
+	<sect2 id="ds_mdc_sw"><title>Avoid copying active/update lists elems. Using active/update lists swap approach.</title>
+	    <sect3><title>Status</title>
+		<simpara>20230401 Initial implementation, experimental.</simpara>
+	    </sect3>
+	    <sect3><title>Intro</title>
+		<simpara>Using base active/updated lists approach was implemented and verified. Even having a number of cons against
+		    "MDesSyncable polling thru owneds" approach this "active/update lists" approach can be improved further.</simpara>
+		<simpara>In the current implementation each MDesSyncable from "active" list inevitably goes to "update" list thru the
+		    setUpdated() Des method. So on Update phase completed "update" list is the copy of "active" list (copyed elem by elem).
+		    We can just swap the lists on Update phase completion and then clean "active" list.</simpara>
+		<simpara>Same design idiom was used to improve updated/confirmed data in State, ref <xref linkend="ds_desopt_ums"/>.</simpara>
+	    </sect3>
+	    <sect3><title>Verification</title>
+		<sect4><title>Fap3-vis ut_avr_vert_drp_2_chs model, 5 vert cycled.</title>
+		    <simpara>Original variant run time: 8.5s, optimized: 8.4s (note that switching off rendering gives us 6.8s)</simpara>
+		</sect4>
+	    </sect3>
+	</sect2>
     </sect1>
 
     <sect1 id="ds_mcrc"><title>[DS_MCRC] Redesign chromo to make it really copyable.</title>
@@ -3035,6 +3053,7 @@
 	<sect2><title><xref linkend="ds_nn_efcoop"/></title> </sect2>
 	<sect2><title><xref linkend="ds_uinn_cs"/></title> </sect2>
 	<sect2><title><xref linkend="ds_nn_abo"/></title> </sect2>
+	<sect2><title><xref linkend="ds_mdc_sw"/></title> </sect2>
     </sect1>
 
     <sect1 id="ds_ic"><title>Tracking: Design items completed</title>

@@ -457,12 +457,12 @@ const DtBase* TrSwitchBool::VDtGet(const string& aType)
     const DtBase* inp2 = GetInpData(mInp2, inp2);
     if (sel && inp1 && inp2)
     {
-	Log(EDbg, TLog(this) + "Sel: " + sel->ToString(true) + ", Inp1: " + inp1->ToString(true) + ", Inp2: " + inp2->ToString(true));
 	if (sel->IsValid()) {
-	    res = sel->mData ? inp2 : inp1;
-	    res = (aType.empty() || aType == res->GetTypeSig()) ? res : nullptr;
+	    auto* data = sel->mData ? inp2 : inp1;
+	    res = (aType.empty() || aType == data->GetTypeSig()) ? data : nullptr;
 	}
     }
+    Log(EDbg, TLog(this) + "Sel: " + (sel ? sel->ToString(true) : "nul") + ", Inp1: " + (inp1 ? inp1->ToString(true) : "nil") + ", Inp2: " + (inp2 ? inp2->ToString(true) : "nil"));
     return res;
 }
 

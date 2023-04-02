@@ -91,6 +91,7 @@ testroot : Elem {
                 = "SI 3"
             }
             Sw : TrSwitchBool @  {
+                _@ < Debug.LogLevel = "Dbg"
                 Sel ~ Cmp_Ge : TrCmpVar @  {
                     Inp ~ Counter
                     Inp2 ~ Const_3
@@ -98,7 +99,9 @@ testroot : Elem {
                 Inp1 ~ MagUri
                 Inp2 ~ MagUri2
             }
-            Adapter.InpMagUri ~ Sw
+            Adapter.InpMagUri ~ : TrToUriVar @  {
+                Inp ~ Sw
+            }
             # "Mutating: adding component"
             Adapter.AddComp.Name ~ : State {
                 = "SS New_node"

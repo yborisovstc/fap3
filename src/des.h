@@ -14,6 +14,7 @@
 #include "content.h"
 #include "rdatauri.h"
 
+#define DES_LISTS_SWAP
 
 /** @brief State Connection point
  * */
@@ -242,10 +243,18 @@ class Des: public Syst, public MDesSyncable, public MDesObserver
 	// From Unit.MIfProvOwner
 	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
     protected:
+#ifdef DES_LISTS_SWAP
+	list<MDesSyncable*> mSP;     /*!< Active compoments */
+	list<MDesSyncable*> mSQ;    /*!< Updated compoments */
+	list<MDesSyncable*>* mActive = &mSP;
+	list<MDesSyncable*>* mUpdated = &mSQ;
+#else
 	list<MDesSyncable*> mActive;     /*!< Active compoments */
-	list<MDesSyncable*> mUpdated;     /*!< Updated compoments */
+	list<MDesSyncable*> mUpdated;    /*!< Updated compoments */
+#endif
 	bool mUpdNotified;  //<! Sign of that State notified observers on Update
 	bool mActNotified;  //<! Sign of that State notified observers on Activation
+	bool mUpd = false;
 };
 
 /** @brief DES agent
@@ -298,12 +307,20 @@ class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver
 	MNode* ahostNode();
 	MDesObserver* getDesObs();
     protected:
+#ifdef DES_LISTS_SWAP
+	list<MDesSyncable*> mSP;     /*!< Active compoments */
+	list<MDesSyncable*> mSQ;    /*!< Updated compoments */
+	list<MDesSyncable*>* mActive = &mSP;
+	list<MDesSyncable*>* mUpdated = &mSQ;
+#else
 	list<MDesSyncable*> mActive;     /*!< Active compoments */
 	list<MDesSyncable*> mUpdated;    /*!< Updated compoments */
+#endif
 	TObserverCp mOrCp;               /*!< Observer connpoint */ 
 	TAgtCp mAgtCp;                   /*!< Agent connpoint */ 
 	bool mUpdNotified;               //<! Sign of that State notified observers on Update
 	bool mActNotified;               //<! Sign of that State notified observers on Activation
+	bool mUpd = false;
 };
 
 
@@ -694,6 +711,7 @@ class DesCtxCsm : public Des, public MDesCtxCsm
 	virtual void onCtxRemoved(const string& aCtxId) override;
 	// From MDesSyncable
 	virtual void update() override;
+	virtual void confirm() override;
     protected:
 	bool init();
 	// TODO not used, to delete?
