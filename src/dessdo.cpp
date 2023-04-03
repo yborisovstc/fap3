@@ -13,7 +13,7 @@ SdoBase::InpBase::InpBase(SdoBase* aHost, const string& aName): mHost(aHost), mN
 }
 
 SdoBase::SdoBase(const string &aType, const string& aName, MEnv* aEnv): CpStateOutp(aType, aName, aEnv),
-    mObrCp(this), mEagObs(this), mSue(nullptr)
+    mObrCp(this), mEagObs(this), mSue(nullptr), mCInv(true)
 {
 }
 
@@ -86,18 +86,20 @@ void SdoBase::onObsContentChanged(MObservable* aObl, const MContent* aCont)
 
 void SdoBase::onObsChanged(MObservable* aObl)
 {
+    mCInv = true;
     UpdateMag();
 }
 
 void SdoBase::NotifyInpsUpdated()
 {
+    mCInv = true;
     for (auto pair : mPairs) {
 	MUnit* pe = pair->lIf(pe);
 	// Don't add self to if request context to enable routing back to self
 	MIfProv* ifp = pe->defaultIfProv(MDesInpObserver::Type());
 	MIfProv* prov = ifp->first();
 	while (prov) {
-	    MDesInpObserver* obs = dynamic_cast<MDesInpObserver*>(prov->iface());
+	    MDesInpObserver* obs = reinterpret_cast<MDesInpObserver*>(prov->iface());
 	    obs->onInpUpdated();
 	    prov = prov->next();
 	}
@@ -111,12 +113,15 @@ SdoName::SdoName(const string &aType, const string& aName, MEnv* aEnv): Sdog<Sda
 
 const DtBase* SdoName::VDtGet(const string& aType)
 {
-    mRes.mValid = false;
-    if (!mSue)  {
-	Log(EWarn, TLog(this) + "Owner is not explorable");
-    } else {
-	mRes.mData = mSue->name();
-	mRes.mValid = true;
+    if (mCInv) {
+	mRes.mValid = false;
+	if (!mSue)  {
+	    Log(EWarn, TLog(this) + "Owner is not explorable");
+	} else {
+	    mRes.mData = mSue->name();
+	    mRes.mValid = true;
+	}
+	mCInv = false;
     }
     return &mRes;
 }
@@ -187,20 +192,24 @@ SdoCompsCount::SdoCompsCount(const string &aType, const string& aName, MEnv* aEn
 
 const DtBase* SdoCompsCount::VDtGet(const string& aType)
 {
-    string name;
-    mRes.mValid = false;
-    if (!mSue)  {
-	Log(EWarn, TLog(this) + "Owner is not explorable");
-    } else {
-	int count = 0;
-	auto owdCp = mSue->owner()->firstPair();
-	while (owdCp) {
-	    MNode* osn = owdCp->provided()->lIf(osn);
-	    count++;
-	    owdCp = mSue->owner()->nextPair(owdCp);
+    // TODO. Fixme: data cache invalidation approach doesn't work.
+    if (mCInv) {
+	string name;
+	mRes.mValid = false;
+	if (!mSue)  {
+	    Log(EWarn, TLog(this) + "Owner is not explorable");
+	} else {
+	    int count = 0;
+	    auto owdCp = mSue->owner()->firstPair();
+	    while (owdCp) {
+		MNode* osn = owdCp->provided()->lIf(osn);
+		count++;
+		owdCp = mSue->owner()->nextPair(owdCp);
+	    }
+	    mRes.mData = count;
+	    mRes.mValid = true;
 	}
-	mRes.mData = count;
-	mRes.mValid = true;
+	mCInv = false;
     }
     return &mRes;
 }
@@ -221,20 +230,23 @@ SdoCompsNames::SdoCompsNames(const string &aType, const string& aName, MEnv* aEn
 
 const DtBase* SdoCompsNames::VDtGet(const string& aType)
 {
-    string name;
-    mRes.mValid = false;
-    if (!mSue)  {
-	Log(EWarn, TLog(this) + "Owner is not explorable");
-    } else {
-	Stype cnames;
-	auto owdCp = mSue->owner()->firstPair();
-	while (owdCp) {
-	    MNode* osn = owdCp->provided()->lIf(osn);
-	    cnames.mData.push_back(osn->name());
-	    owdCp = mSue->owner()->nextPair(owdCp);
+    if (mCInv) {
+	string name;
+	mRes.mValid = false;
+	if (!mSue)  {
+	    Log(EWarn, TLog(this) + "Owner is not explorable");
+	} else {
+	    Stype cnames;
+	    auto owdCp = mSue->owner()->firstPair();
+	    while (owdCp) {
+		MNode* osn = owdCp->provided()->lIf(osn);
+		cnames.mData.push_back(osn->name());
+		owdCp = mSue->owner()->nextPair(owdCp);
+	    }
+	    mRes.mData = cnames.mData;
+	    mRes.mValid = true;
 	}
-	mRes.mData = cnames.mData;
-	mRes.mValid = true;
+	mCInv = false;
     }
     return &mRes;
 }
@@ -401,6 +413,7 @@ SdoPairsCount::SdoPairsCount(const string &aType, const string& aName, MEnv* aEn
 
 const DtBase* SdoPairsCount::VDtGet(const string& aType)
 {
+    // TODO. Fixme: data cache invalidation approach doesn't work.
     mRes.mValid = false;
     string verts;
     bool res = mInpVert.getData(verts);
@@ -410,7 +423,7 @@ const DtBase* SdoPairsCount::VDtGet(const string& aType)
 	Log(EWarn, TLog(this) + "Owner is not explorable");
     } else {
 	MNode* vertn = mSue->getNode(verts);
-	if (vertn != mVertUe) {
+	if (vertn && vertn != mVertUe) {
 	    mVertUe = vertn;
 	    // Start observing vertex under exploring
 	    MObservable* obl = mVertUe->lIf(obl);
@@ -427,7 +440,10 @@ const DtBase* SdoPairsCount::VDtGet(const string& aType)
 		mRes.mData = vertv->pairsCount();
 		mRes.mValid = true;
 	    }
+	} else {
+	    Log(EDbg, TLog(this) + "Explorable [" + verts + "] is nil");
 	}
+	    Log(EDbg, TLog(this) + "Explorable [" + verts + "], res: " + mRes.ToString(true));
     }
     return &mRes;
 }
@@ -436,7 +452,7 @@ void SdoPairsCount::onObsChanged(MObservable* aObl)
 {
     MObservable* obl = mVertUe ? mVertUe->lIf(obl) : nullptr;
     if (obl && aObl == obl) {
-	//Log(EDbg, TLog(this) + "SdoPair::onObsChanged");
+	Log(EDbg, TLog(this) + "SdoPairsCount::onObsChanged");
 	NotifyInpsUpdated();
     } else {
 	SdoBase::onObsChanged(aObl);
@@ -647,43 +663,46 @@ SdoEdges::SdoEdges(const string &aType, const string& aName, MEnv* aEnv): Sdog<V
 
 const DtBase* SdoEdges::VDtGet(const string& aType)
 {
-    mRes.mValid = false;
-    if (!mSue)  {
-	Log(EErr, TLog(this) + "Owner is not explorable");
-    } else {
-	MSyst* sues = mSue->lIf(sues);
-	if (!sues) {
-	    Log(EErr, TLog(this) + "Explorable isn't system");
+    if (mCInv) {
+	mRes.mValid = false;
+	if (!mSue)  {
+	    Log(EErr, TLog(this) + "Owner is not explorable");
 	} else {
-	    mRes.mValid = true;
-	    mRes.mData.clear();
-	    for (auto conn : sues->connections()) {
-		MVert* p = conn.first;
-		MUnit* pu = p->lIf(pu);
-		MNode* pn = pu ? pu->getSif(pn) : nullptr;
-		MVert* q = conn.second;
-		MUnit* qu = q->lIf(qu);
-		MNode* qn = qu ? qu->getSif(qn) : nullptr;
-		if (!pn || !qn) {
-		    Log(EErr, TLog(this) + "Couldnt get URI for vert [" + (pn ? p->Uid(): q->Uid()) + "]");
-		    mRes.mValid = false;
-		    break;
-		} else {
-		    mRes.mValid = true;
-		    GUri puri;
-		    pn->getUri(puri, mSue);
-		    GUri quri;
-		    qn->getUri(quri, mSue);
-		    DGuri purid(puri);
-		    DGuri qurid(quri);
-		    Pair<DGuri> elem;
-		    elem.mData.first = purid;
-		    elem.mData.second = qurid;
-		    elem.mValid = true;
-		    mRes.mData.push_back(elem);
+	    MSyst* sues = mSue->lIf(sues);
+	    if (!sues) {
+		Log(EErr, TLog(this) + "Explorable isn't system");
+	    } else {
+		mRes.mValid = true;
+		mRes.mData.clear();
+		for (auto conn : sues->connections()) {
+		    MVert* p = conn.first;
+		    MUnit* pu = p->lIf(pu);
+		    MNode* pn = pu ? pu->getSif(pn) : nullptr;
+		    MVert* q = conn.second;
+		    MUnit* qu = q->lIf(qu);
+		    MNode* qn = qu ? qu->getSif(qn) : nullptr;
+		    if (!pn || !qn) {
+			Log(EErr, TLog(this) + "Couldnt get URI for vert [" + (pn ? p->Uid(): q->Uid()) + "]");
+			mRes.mValid = false;
+			break;
+		    } else {
+			mRes.mValid = true;
+			GUri puri;
+			pn->getUri(puri, mSue);
+			GUri quri;
+			qn->getUri(quri, mSue);
+			DGuri purid(puri);
+			DGuri qurid(quri);
+			Pair<DGuri> elem;
+			elem.mData.first = purid;
+			elem.mData.second = qurid;
+			elem.mValid = true;
+			mRes.mData.push_back(elem);
+		    }
 		}
 	    }
 	}
+	mCInv = false;
     }
     return &mRes;
 }

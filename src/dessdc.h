@@ -38,6 +38,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 		virtual MIface* MDesSyncable_getLif(const char *aType) override { return nullptr; }
 		virtual void setUpdated() override { mUpdated = true; mHost->setUpdated();}
 		virtual void setActivated() override { mActivated = true; mHost->setActivated();}
+		virtual int countOfActive(bool aLocal = false) const override { return 1;}
 	    public:
 		ASdc* mHost;
 		string mName;    /*!< Iap name */
@@ -81,6 +82,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 		virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
 		virtual void setUpdated() override { mUpdated = true; mHost->setUpdated();}
 		virtual void setActivated() override { mActivated = true; mHost->setActivated();}
+		virtual int countOfActive(bool aLocal = false) const override { return 1;}
 	    public:
 		ASdc* mHost;
 		string mName;    /*!< Iap name */
@@ -266,6 +268,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 	virtual void confirm() override;
 	virtual void setUpdated() override;
 	virtual void setActivated() override;
+	virtual int countOfActive(bool aLocal = false) const override { return 1;}
 	// From MDesObserver
 	virtual string MDesObserver_Uid() const override {return getUid<MDesObserver>();}
 	virtual void MDesObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override {}

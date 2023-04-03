@@ -18,8 +18,8 @@ class MIface
 	virtual string Uid() const = 0;
 	/** @brief Gets local interface of type aType */
 	virtual MIface* getLif(const char *aType) { return nullptr;}
-	template <class T> T* lIf(T* aInst) {return aInst = dynamic_cast<T*>(getLif(aInst->Type()));}
-	template <class T> const T* lIf(T* aInst) const { MIface* self = const_cast<MIface*>(this); return aInst = dynamic_cast<T*>(self->getLif(aInst->Type()));}
+	template <class T> T* lIf(T* aInst) {return aInst = reinterpret_cast<T*>(getLif(aInst->Type()));}
+	template <class T> const T* lIf(T* aInst) const { MIface* self = const_cast<MIface*>(this); return aInst = reinterpret_cast<T*>(self->getLif(aInst->Type()));}
 	/** @brief outputs dump
 	 * @param aInt  indentation level
 	 * */

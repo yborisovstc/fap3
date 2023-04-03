@@ -52,6 +52,7 @@ class TrBase: public CpStateOutp, public MDVarGet, protected MDesInpObserver
 	template <class T> inline const T* GetInpData(FInp& aInp, const T* aData);
     protected:
 	void AddInput(const string& aName);
+	bool mCInv;              //!< Sign of data cache invalidated
 };
 
 template <class T> inline const T* TrBase::GetInpData(FInp& aInp, const T* aData)
@@ -61,9 +62,9 @@ template <class T> inline const T* TrBase::GetInpData(FInp& aInp, const T* aData
     if (Ic) {
 	auto* get = (Ic->size() == 1) ? Ic->at(0) : nullptr;
 	data = get ? get->DtGet(data) : nullptr;
-    }
-    if (!data) {
-	Log(EDbg, TLog(this) + "Cannot get input  [" + aInp.mName + "]");
+	if (get && !data) { // There already is the log in GetInps
+	    Log(EDbg, TLog(this) + "Cannot get input  [" + aInp.mName + "]");
+	}
     }
     return data;
 }
@@ -97,6 +98,7 @@ class TrVar: public TrBase, public Func::Host
 	MDVarGet* GetInp(int aInpId);
     protected:
 	Func* mFunc;
+	const DtBase* mRes = nullptr;
 };
 
 /** @brief Transition "Addition of Var data, negative inp, multi-connecting inputs"
@@ -112,6 +114,7 @@ class TrAddVar: public TrVar
 	virtual void Init(const string& aIfaceName) override;
 	virtual FInp* GetFinp(int aId) override;
 	virtual int GetInpCpsCount() const override {return 2;}
+	virtual const DtBase* VDtGet(const string& aType) override;
     protected:
 	const static string K_InpInp;
 	const static string K_InpInpN;
@@ -130,6 +133,7 @@ class TrAdd2Var: public TrVar
 	virtual void Init(const string& aIfaceName) override;
 	virtual FInp* GetFinp(int aId) override;
 	virtual int GetInpCpsCount() const override {return 2;}
+	virtual const DtBase* VDtGet(const string& aType) override;
     protected:
 	const static string K_InpInp;
 	const static string K_InpInp2;
@@ -148,6 +152,7 @@ class TrSub2Var: public TrVar
 	virtual void Init(const string& aIfaceName) override;
 	virtual FInp* GetFinp(int aId) override;
 	virtual int GetInpCpsCount() const override {return 2;}
+	virtual const DtBase* VDtGet(const string& aType) override;
     protected:
 	const static string K_InpInp;
 	const static string K_InpInp2;
@@ -205,6 +210,7 @@ class TrMinVar: public TrVar
 	// From ATrVar
 	virtual void Init(const string& aIfaceName) override;
 	virtual FInp* GetFinp(int aId) override;
+	virtual const DtBase* VDtGet(const string& aType) override;
     protected:
 	const static string K_InpInp;
 	FInp mInp;
@@ -221,6 +227,7 @@ class TrMaxVar: public TrVar
 	// From ATrVar
 	virtual void Init(const string& aIfaceName) override;
 	virtual FInp* GetFinp(int aId) override;
+	virtual const DtBase* VDtGet(const string& aType) override;
     protected:
 	const static string K_InpInp;
 	FInp mInp;
@@ -238,6 +245,7 @@ class TrCmpVar: public TrVar
 	virtual void Init(const string& aIfaceName) override;
 	virtual FInp* GetFinp(int aId) override;
 	virtual int GetInpCpsCount() const override {return 2;}
+	virtual const DtBase* VDtGet(const string& aType) override;
     protected:
 	const static string K_InpInp;
 	const static string K_InpInp2;
@@ -260,6 +268,7 @@ class TrSwitchBool: public TrBase
     protected:
 	FInp mInp1, mInp2, mSel;
 	const static string K_InpInp1, K_InpInp2, K_InpSel;
+	const DtBase* mRes = nullptr;
 };
 
 class TrBool: public TrBase
@@ -520,6 +529,7 @@ class TrInpSel: public TrBase
     protected:
 	FInp mInpInp, mInpIdx;
 	const static string K_InpInp, K_InpIdx;
+	const DtBase* mRes = nullptr;
 };
 
 /** @brief Transition "Inputs counter"

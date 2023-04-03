@@ -64,8 +64,10 @@ class MDesSyncable: public MIface
 	// Local
 	virtual void update() = 0;
 	virtual void confirm() = 0;
-	virtual void setUpdated() = 0;
+	virtual void setUpdated() = 0; // TODO not used with ds_mdc_sw
 	virtual void setActivated() = 0;
+	/** @brief Debug. Returns the count of active synched owneds */
+	virtual int countOfActive(bool aLocal = false) const = 0;
 };
 
 class MDesCtxCsm;

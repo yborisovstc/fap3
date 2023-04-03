@@ -248,7 +248,7 @@ void AAdp::NotifyInpUpdated(MNode* aCp)
     MUnit* cpu = aCp->lIf(cpu);
     auto obsis = cpu->getIfs<MDesInpObserver>();
     for (auto obsi : *obsis) {
-	MDesInpObserver* obs = dynamic_cast<MDesInpObserver*>(obsi);
+	MDesInpObserver* obs = reinterpret_cast<MDesInpObserver*>(obsi);
 	obs->onInpUpdated();
     }
 }
@@ -949,6 +949,6 @@ MNode* DAdp::getMag()
 
 MIface* DAdp::MagLink::MLink_getLif(const char *aType)
 {
-    return (strcmp(aType, MLink::Type()) == 0) ? dynamic_cast<MLink*>(this) : nullptr;;
+    return (strcmp(aType, MLink::Type()) == 0) ? reinterpret_cast<MLink*>(this) : nullptr;;
 }
 

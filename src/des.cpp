@@ -5,7 +5,6 @@
 #include "des.h"
 #include "data.h"
 
-// Experimental oprimization of DES cycle, ref ds_mdc_sw
 #define DES_RGS_VERIFY
 
 
@@ -23,7 +22,7 @@ void CpState::notifyInpsUpdated()
     MIfProv* ifp = defaultIfProv(MDesInpObserver::Type());
     MIfProv* prov = ifp->first();
     while (prov) {
-	MDesInpObserver* obs = dynamic_cast<MDesInpObserver*>(prov->iface());
+	MDesInpObserver* obs = reinterpret_cast<MDesInpObserver*>(prov->iface());
 	if (obs) obs->onInpUpdated();
 	prov = prov->next();
     }
@@ -321,7 +320,9 @@ void State::update()
     } else {
 	mInpValid = false;
     }
+#ifndef DES_LISTS_SWAP
     setUpdated();
+#endif
 }
 
 void State::NotifyInpsUpdated()
@@ -672,6 +673,17 @@ void Des::setActivated()
     }
 }
 
+int Des::countOfActive(bool aLocal) const
+{
+    int res = mActive->size();
+    if (!aLocal) {
+	for (auto item : *mActive) {
+	    res += item->countOfActive(aLocal);
+	}
+    }
+    return res;
+}
+
 #ifdef DES_LISTS_SWAP
 void Des::onActivated(MDesSyncable* aComp)
 {
@@ -733,7 +745,9 @@ void Des::onOwnedAttached(MOwned* aOwned)
     MDesSyncable* os = osu ? osu->getSif(os) : nullptr;
     if (os) {
 	os->setActivated();
+#ifndef DES_LISTS_SWAP
 	os->setUpdated();
+#endif
     }
 }
 
@@ -995,6 +1009,11 @@ void ADes::onActivated(MDesSyncable* aComp)
     assert(!mUpd);
     setActivated();
     if (aComp) {
+#ifdef DES_RGS_VERIFY
+	for (auto comp : *mActive) {
+	    assert(aComp != comp);
+	}
+#endif
 	mActive->push_back(aComp);
     }
 }
@@ -1003,6 +1022,11 @@ void ADes::onActivated(MDesSyncable* aComp)
 {
     setActivated();
     if (aComp) {
+#ifdef DES_RGS_VERIFY
+	for (auto comp : mActive) {
+	    assert(aComp != comp);
+	}
+#endif
 	mActive.push_back(aComp);
     }
 }
@@ -1022,6 +1046,17 @@ void ADes::onUpdated(MDesSyncable* aComp)
     }
 }
 #endif
+
+int ADes::countOfActive(bool aLocal) const
+{
+    int res = mActive->size();
+    if (!aLocal) {
+	for (auto item : *mActive) {
+	    res += item->countOfActive(aLocal);
+	}
+    }
+    return res;
+}
 
 MIface* ADes::MOwned_getLif(const char *aType)
 {
@@ -1043,7 +1078,9 @@ void ADes::onObsOwnedAttached(MObservable* aObl, MOwned* aOwned)
     MDesSyncable* ss = MNode::lIf(ss); // self
     if (os && os != ss) {
 	os->setActivated();
+#ifndef DES_LISTS_SWAP
 	os->setUpdated();
+#endif
     }
 }
 
@@ -1086,7 +1123,7 @@ void ADes::onOwnerAttached()
 	MUnit* osu = owdCp->provided()->lIf(osu);
 	MDesSyncable* os = osu ? osu->getSif(os) : nullptr;
 	if (os && os != this) {
-	    onActivated(os);
+	    os->setActivated();
 	}
 	owdCp = host->owner()->nextPair(owdCp);
     }
@@ -1163,7 +1200,7 @@ bool DesLauncher::Run(int aCount, int aIdleCount)
 	if (!mActive.empty()) {
 #endif
 	    updateCounter(cnt);
-	    Log(EDbg, TLog(this) + ">>> Update [" + to_string(cnt) + "]");
+	    Log(EDbg, TLog(this) + ">>> Update [" + to_string(cnt) + "], count: " + to_string(countOfActive()));
 	    update();
 #ifdef DES_LISTS_SWAP
 	    if (!mUpdated->empty()) {
@@ -1385,7 +1422,10 @@ void DesEIbMnode::update()
 	}
     }
     if (!res) this->eHost()->logEmb(TLogRecCtg::EDbg, TLog(TP::mHost) + "Cannot get input [" + this->mUri + "]");
-    else { this->mActivated = false; this->setUpdated(); }
+    else {
+	this->mActivated = false;
+	this->setUpdated();
+    }
 }
 
 
@@ -1397,7 +1437,7 @@ void DesEOstb::NotifyInpsUpdated()
     MUnit* cpu = cp ? cp->lIf(cpu) : nullptr;
     auto ifaces = cpu->getIfs<MDesInpObserver>();
     if (ifaces) for (auto ifc : *ifaces) {
-	MDesInpObserver* ifco = dynamic_cast<MDesInpObserver*>(ifc);
+	MDesInpObserver* ifco = reinterpret_cast<MDesInpObserver*>(ifc);
 	if (ifco) {
 	    ifco->onInpUpdated();
 	}
@@ -1448,7 +1488,7 @@ void DesCtxSpl::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 		auto ifaces = ownu->getIfs<MDesCtxSpl>();
 		// Filter out same id suppliers, ref ds_dctx_dic_cs Solution_2
 		if (ifaces) for (auto ifc : *ifaces) {
-		    MDesCtxSpl* spl = dynamic_cast<MDesCtxSpl*>(ifc);
+		    MDesCtxSpl* spl = reinterpret_cast<MDesCtxSpl*>(ifc);
 		    if (spl->getSplId() != getSplId()) {
 			addIfpLeaf(spl, aReq);
 		    }
@@ -1493,7 +1533,7 @@ bool DesCtxSpl::bindCtx(const string& aCtxId, MVert* aCtx)
 	    auto ifaces = ownu->getIfs<MDesCtxSpl>();
 	    // Find same id supplier
 	    if (ifaces) for (auto ifc : *ifaces) {
-		MDesCtxSpl* spl = dynamic_cast<MDesCtxSpl*>(ifc);
+		MDesCtxSpl* spl = reinterpret_cast<MDesCtxSpl*>(ifc);
 		if (spl->getSplId() == getSplId()) {
 		    res = spl->bindCtx(aCtxId, aCtx);
 		}
@@ -1584,7 +1624,7 @@ bool DesCtxCsm::init()
     if (ownu) {
 	auto ifaces = ownu->getIfs<MDesCtxSpl>();
 	if (ifaces) for (auto ifc : *ifaces) {
-	    MDesCtxSpl* spl = dynamic_cast<MDesCtxSpl*>(ifc);
+	    MDesCtxSpl* spl = reinterpret_cast<MDesCtxSpl*>(ifc);
 	    if (spl->getSplId() == getCsmId()) {
 		res = spl->registerCsm(&mCsmCp);
 		if (res) {
@@ -1647,7 +1687,7 @@ void DesCtxCsm::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	if (ownu) {
 	    auto ifaces = ownu->getIfs<MDesCtxSpl>();
 	    if (ifaces) for (auto ifc : *ifaces) {
-		MDesCtxSpl* spl = dynamic_cast<MDesCtxSpl*>(ifc);
+		MDesCtxSpl* spl = reinterpret_cast<MDesCtxSpl*>(ifc);
 		if (spl->getSplId() == getCsmId()) {
 		    addIfpLeaf(spl, aReq);
 		}
@@ -1714,7 +1754,7 @@ void DesInpDemux::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	    if (!ifaces || ifaces->empty() || ifaces->size() <= mIdx) {
 		Logger()->Write(EErr, this, "Ifaces idx overflow");
 	    } else {
-		auto* ifc = dynamic_cast<MDVarGet*>(ifaces->at(mIdx));
+		auto* ifc = reinterpret_cast<MDVarGet*>(ifaces->at(mIdx));
 		addIfpLeaf(ifc, aReq);
 	    }
 	}

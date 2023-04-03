@@ -14,6 +14,7 @@
 #include "content.h"
 #include "rdatauri.h"
 
+// Experimental oprimization of DES cycle, ref ds_mdc_sw
 #define DES_LISTS_SWAP
 
 /** @brief State Connection point
@@ -155,6 +156,7 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 	virtual void confirm() override;
 	virtual void setUpdated() override;
 	virtual void setActivated() override;
+	virtual int countOfActive(bool aLocal = false) const override { return 1;}
 	// From MDesInpObserver
 	virtual string MDesInpObserver_Uid() const {return getUid<MDesInpObserver>();}
 	virtual void MDesInpObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
@@ -235,6 +237,7 @@ class Des: public Syst, public MDesSyncable, public MDesObserver
 	virtual void confirm() override;
 	virtual void setUpdated() override;
 	virtual void setActivated() override;
+	virtual int countOfActive(bool aLocal = false) const override;
 	// From MDesObserver
 	virtual string MDesObserver_Uid() const override {return getUid<MDesObserver>();}
 	virtual void MDesObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override;
@@ -285,6 +288,7 @@ class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver
 	virtual void confirm() override;
 	virtual void setUpdated() override;
 	virtual void setActivated() override;
+	virtual int countOfActive(bool aLocal = false) const override;
 	// From MDesObserver
 	virtual string MDesObserver_Uid() const override {return getUid<MDesObserver>();}
 	virtual void onActivated(MDesSyncable* aComp) override;
@@ -449,6 +453,7 @@ class DesEIbb: public MDesInpObserver, public MDesSyncable
 	virtual void update() override { mChanged = false;}
 	virtual void setUpdated() override { mUpdated = true; sHost()->setUpdated();}
 	virtual void setActivated() override { mActivated = true; sHost()->setActivated();}
+	virtual int countOfActive(bool aLocal = false) const override { return 1;}
     protected:
 	template <typename S> string toStr(const S& aData) { return to_string(aData); }
 	string toStr(const string& aData) { return aData; }

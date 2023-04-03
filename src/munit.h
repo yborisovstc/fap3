@@ -43,7 +43,7 @@ class MUnit: public MIface
 	    auto prov = defaultIfProv(T::Type());
 	    MIface* ifc = (prov && prov->ifaces()) ? (prov->ifaces()->empty() ? nullptr : prov->ifaces()->at(0)) : nullptr;
 	    if (aCheck) assert(prov->ifaces()->size() <= 1);
-	    return aInst = dynamic_cast<T*>(ifc);
+	    return aInst = reinterpret_cast<T*>(ifc);
 	}
 	/** @brief Gets ifaces resolved
 	 * */

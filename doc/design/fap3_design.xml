@@ -2781,6 +2781,27 @@
 		<simpara>We can see that each DES cycle getNode() is called. It needs to be avoided.</simpara>
 	    </sect3>
 	</sect2>
+	<sect2 id="ds_desopt_mdc"><title>Modify DES cycle to avoid polling the comps but keep the lists of active/updated in owner.</title>
+	    <simpara>Ref <xref linkend="ds_mdc"/> for details</simpara>
+	</sect2>
+	<sect2 id="ds_desopt_tdc"><title>Transtions: avoid multiple update, use data cache for that.</title>
+	    <sect3><title>Intro</title>
+		<simpara>In the complex systems the transitions topology can differs from "true" tree. It can be like that:</simpara>
+		<programlisting>
+		    |                    -----
+		    |          --- ... --|
+		    |         /          | 
+		    |   TRANS            | TRANS2
+		    |        \           | 
+		    |          --- ... --|
+		    |                    -----
+		</programlisting>
+		<simpara>or similar. In that case the TRANS will be updated many times on DES update phase.</simpara>
+		<simpara>We need to avoid that. This can be done via caching transition output (this is already implemented) and 
+		    enable the cache update only at the first update in DES update phase.</simpara>
+		<simpara>Same approach can be applied to SDO and SDC also.</simpara>
+	    </sect3>
+	</sect2>
     </sect1>
 
     <sect1 id="ds_rdr"><title>Row data redesign.</title>
@@ -3328,6 +3349,10 @@
 	    </sect3>
 	    <sect3><title>Solution</title>
 		<simpara>To have specific transitions with one-connection inputs.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_iss_015"><title>[<glossterm id="iss_015">DS_ISS_015</glossterm>] [Open] 20230403 SdoPairsCount doesn't observes the target existence</title>
+	    <sect3><title>Status</title>
 	    </sect3>
 	</sect2>
     </sect1>

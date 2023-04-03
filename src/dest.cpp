@@ -5,7 +5,7 @@
 #include "prof_ids.h"
 
 
-TrBase::TrBase(const string &aType, const string& aName, MEnv* aEnv): CpStateOutp(aType, aName, aEnv)
+TrBase::TrBase(const string &aType, const string& aName, MEnv* aEnv): CpStateOutp(aType, aName, aEnv), mCInv(true)
 {
 }
 
@@ -66,7 +66,9 @@ void TrBase::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 
 void TrBase::onInpUpdated()
 {
-    // Just rederect to call to pairs
+    // Invalidate data cache
+    mCInv = true;
+    // Rederect to call to pairs
     for (auto pair : mPairs) {
 	MUnit* pe = pair->lIf(pe);
 	auto ifcs = pe ? pe->getIfs<MDesInpObserver>() : nullptr;
@@ -135,14 +137,17 @@ string TrVar::GetInpUri(int aId) const
 
 const DtBase* TrVar::VDtGet(const string& aType)
 {
-    const DtBase* res = NULL;
     if (!mFunc) {
 	Init(aType);
     }
     if (mFunc) {
-	res = mFunc->FDtGet();
+	//if (mCInv) {
+	if (true) {
+	    mRes = mFunc->FDtGet();
+	    mCInv = !mRes;
+	}
     }
-    return res;
+    return mRes;
 }
 
 MDVarGet* TrVar::GetInp(int aInpId) {
@@ -208,6 +213,21 @@ FInp* TrAddVar::GetFinp(int aId)
     else return nullptr;
 }
 
+const DtBase* TrAddVar::VDtGet(const string& aType)
+{
+    if (!mFunc) {
+	Init(aType);
+    }
+    if (mFunc) {
+	if (mCInv) {
+	    mRes = mFunc->FDtGet();
+	    mCInv = !mRes;
+	}
+    }
+    return mRes;
+}
+
+
 //// Transition "Addition of Var data, single connection inputs"
 
 const string TrAdd2Var::K_InpInp = "Inp";
@@ -238,6 +258,21 @@ FInp* TrAdd2Var::GetFinp(int aId)
     else if (aId == Func::EInp2) return &mInp2;
     else return nullptr;
 }
+
+const DtBase* TrAdd2Var::VDtGet(const string& aType)
+{
+    if (!mFunc) {
+	Init(aType);
+    }
+    if (mFunc) {
+	if (mCInv) {
+	    mRes = mFunc->FDtGet();
+	    mCInv = !mRes;
+	}
+    }
+    return mRes;
+}
+
 
 
 //// Transition "Subtraction of Var data, single connection inputs"
@@ -270,6 +305,21 @@ FInp* TrSub2Var::GetFinp(int aId)
     else if (aId == Func::EInp2) return &mInp2;
     else return nullptr;
 }
+
+const DtBase* TrSub2Var::VDtGet(const string& aType)
+{
+    if (!mFunc) {
+	Init(aType);
+    }
+    if (mFunc) {
+	if (mCInv) {
+	    mRes = mFunc->FDtGet();
+	    mCInv = !mRes;
+	}
+    }
+    return mRes;
+}
+
 
 
 
@@ -353,6 +403,21 @@ FInp* TrMinVar::GetFinp(int aId)
     else return nullptr;
 }
 
+const DtBase* TrMinVar::VDtGet(const string& aType)
+{
+    if (!mFunc) {
+	Init(aType);
+    }
+    if (mFunc) {
+	if (mCInv) {
+	    mRes = mFunc->FDtGet();
+	    mCInv = !mRes;
+	}
+    }
+    return mRes;
+}
+
+
 
 
 ///// TrMaxVar
@@ -379,6 +444,21 @@ FInp* TrMaxVar::GetFinp(int aId)
     if (aId == FMaxBase::EInp) return &mInp;
     else return nullptr;
 }
+
+const DtBase* TrMaxVar::VDtGet(const string& aType)
+{
+    if (!mFunc) {
+	Init(aType);
+    }
+    if (mFunc) {
+	if (mCInv) {
+	    mRes = mFunc->FDtGet();
+	    mCInv = !mRes;
+	}
+    }
+    return mRes;
+}
+
 
 
 ////    TrCmpVar
@@ -434,6 +514,22 @@ FCmpBase::TFType TrCmpVar::GetFType()
     return res;
 }
 
+const DtBase* TrCmpVar::VDtGet(const string& aType)
+{
+    if (!mFunc) {
+	Init(aType);
+    }
+    if (mFunc) {
+	if (true) {
+	//if (mCInv) {
+	    mRes = mFunc->FDtGet();
+	    mCInv = !mRes;
+	}
+    }
+    return mRes;
+}
+
+
 
 ////  TrSwitchBool
 
@@ -451,19 +547,21 @@ TrSwitchBool::TrSwitchBool(const string &aType, const string& aName, MEnv* aEnv)
 
 const DtBase* TrSwitchBool::VDtGet(const string& aType)
 {
-    const DtBase* res = nullptr;
-    const Sdata<bool>* sel = GetInpData(mSel, sel);
-    const DtBase* inp1 = GetInpData(mInp1, inp1);
-    const DtBase* inp2 = GetInpData(mInp2, inp2);
-    if (sel && inp1 && inp2)
-    {
-	if (sel->IsValid()) {
-	    auto* data = sel->mData ? inp2 : inp1;
-	    res = (aType.empty() || aType == data->GetTypeSig()) ? data : nullptr;
+    if (mCInv) {
+	const Sdata<bool>* sel = GetInpData(mSel, sel);
+	const DtBase* inp1 = GetInpData(mInp1, inp1);
+	const DtBase* inp2 = GetInpData(mInp2, inp2);
+	if (sel && inp1 && inp2)
+	{
+	    if (sel->IsValid()) {
+		auto* data = sel->mData ? inp2 : inp1;
+		mRes = (aType.empty() || aType == data->GetTypeSig()) ? data : nullptr;
+	    }
 	}
+	Log(EDbg, TLog(this) + "Sel: " + (sel ? sel->ToString(true) : "nul") + ", Inp1: " + (inp1 ? inp1->ToString(true) : "nil") + ", Inp2: " + (inp2 ? inp2->ToString(true) : "nil"));
+	mCInv = false;
     }
-    Log(EDbg, TLog(this) + "Sel: " + (sel ? sel->ToString(true) : "nul") + ", Inp1: " + (inp1 ? inp1->ToString(true) : "nil") + ", Inp2: " + (inp2 ? inp2->ToString(true) : "nil"));
-    return res;
+    return mRes;
 }
 
 string TrSwitchBool::VarGetIfid() const
@@ -1111,8 +1209,12 @@ MDVarGet* TrInpSel::GetInp()
 
 const DtBase* TrInpSel::VDtGet(const string& aType)
 {
-    MDVarGet* inp = GetInp();
-    return inp ? inp->VDtGet(aType) : nullptr;
+    if (mCInv) {
+	MDVarGet* inp = GetInp();
+	mRes = inp ? inp->VDtGet(aType) : nullptr;
+	mCInv = false;
+    }
+    return mRes;
 }
 
 
