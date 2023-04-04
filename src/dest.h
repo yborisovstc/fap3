@@ -114,7 +114,6 @@ class TrAddVar: public TrVar
 	virtual void Init(const string& aIfaceName) override;
 	virtual FInp* GetFinp(int aId) override;
 	virtual int GetInpCpsCount() const override {return 2;}
-	virtual const DtBase* VDtGet(const string& aType) override;
     protected:
 	const static string K_InpInp;
 	const static string K_InpInpN;
@@ -133,7 +132,6 @@ class TrAdd2Var: public TrVar
 	virtual void Init(const string& aIfaceName) override;
 	virtual FInp* GetFinp(int aId) override;
 	virtual int GetInpCpsCount() const override {return 2;}
-	virtual const DtBase* VDtGet(const string& aType) override;
     protected:
 	const static string K_InpInp;
 	const static string K_InpInp2;
@@ -152,7 +150,6 @@ class TrSub2Var: public TrVar
 	virtual void Init(const string& aIfaceName) override;
 	virtual FInp* GetFinp(int aId) override;
 	virtual int GetInpCpsCount() const override {return 2;}
-	virtual const DtBase* VDtGet(const string& aType) override;
     protected:
 	const static string K_InpInp;
 	const static string K_InpInp2;
@@ -210,7 +207,6 @@ class TrMinVar: public TrVar
 	// From ATrVar
 	virtual void Init(const string& aIfaceName) override;
 	virtual FInp* GetFinp(int aId) override;
-	virtual const DtBase* VDtGet(const string& aType) override;
     protected:
 	const static string K_InpInp;
 	FInp mInp;
@@ -227,7 +223,6 @@ class TrMaxVar: public TrVar
 	// From ATrVar
 	virtual void Init(const string& aIfaceName) override;
 	virtual FInp* GetFinp(int aId) override;
-	virtual const DtBase* VDtGet(const string& aType) override;
     protected:
 	const static string K_InpInp;
 	FInp mInp;
@@ -245,7 +240,6 @@ class TrCmpVar: public TrVar
 	virtual void Init(const string& aIfaceName) override;
 	virtual FInp* GetFinp(int aId) override;
 	virtual int GetInpCpsCount() const override {return 2;}
-	virtual const DtBase* VDtGet(const string& aType) override;
     protected:
 	const static string K_InpInp;
 	const static string K_InpInp2;
@@ -365,6 +359,7 @@ class TrSvldVar: public TrBase
     protected:
 	FInp mInp1, mInp2;
 	static const string K_InpInp1, K_InpInp2;
+	const DtBase* mRes = nullptr;
 };
 
 
@@ -492,6 +487,7 @@ class TrTupleSel: public TrBase
     protected:
 	FInp mInpInp, mInpComp;
 	const static string K_InpInp, K_InpComp;
+	const DtBase* mRes = nullptr;
 };
 
 

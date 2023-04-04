@@ -3075,6 +3075,7 @@
 	<sect2><title><xref linkend="ds_uinn_cs"/></title> </sect2>
 	<sect2><title><xref linkend="ds_nn_abo"/></title> </sect2>
 	<sect2><title><xref linkend="ds_mdc_sw"/></title> </sect2>
+	<sect2><title><xref linkend="ds_desopt_tdc"/></title> </sect2>
     </sect1>
 
     <sect1 id="ds_ic"><title>Tracking: Design items completed</title>
@@ -3351,7 +3352,12 @@
 		<simpara>To have specific transitions with one-connection inputs.</simpara>
 	    </sect3>
 	</sect2>
-	<sect2 id="ds_iss_015"><title>[<glossterm id="iss_015">DS_ISS_015</glossterm>] [Open] 20230403 SdoPairsCount doesn't observes the target existence</title>
+	<sect2 id="ds_iss_015"><title>[<glossterm id="iss_015">DS_ISS_015</glossterm>] [Resolved] 20230403 SdoPairsCount doesn't observes the target existence</title>
+	    <sect3><title>Status</title>
+		<simpara>Resolved 20230404</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_iss_016"><title>[<glossterm id="iss_016">DS_ISS_016</glossterm>] [Open] 20230403 SdoCompComp doesn't observes the target existence</title>
 	    <sect3><title>Status</title>
 	    </sect3>
 	</sect2>

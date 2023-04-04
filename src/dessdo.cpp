@@ -132,12 +132,15 @@ SdoUri::SdoUri(const string &aType, const string& aName, MEnv* aEnv): Sdog<DGuri
 
 const DtBase* SdoUri::VDtGet(const string& aType)
 {
-    mRes.mValid = false;
-    if (!mSue)  {
-	Log(EWarn, TLog(this) + "Owner is not explorable");
-    } else {
-	mSue->getUri(mRes.mData, nullptr);
-	mRes.mValid = true;
+    if (mCInv) {
+	mRes.mValid = false;
+	if (!mSue)  {
+	    Log(EWarn, TLog(this) + "Owner is not explorable");
+	} else {
+	    mSue->getUri(mRes.mData, nullptr);
+	    mRes.mValid = true;
+	}
+	mCInv = false;
     }
     return &mRes;
 }
@@ -149,12 +152,15 @@ SdoParent::SdoParent(const string &aType, const string& aName, MEnv* aEnv): Sdog
 
 const DtBase* SdoParent::VDtGet(const string& aType)
 {
-    mRes.mValid = false;
-    if (!mSue)  {
-	Log(EWarn, TLog(this) + "Owner is not explorable");
-    } else {
-	mRes.mData = mSue->parentName();
-	mRes.mValid = true;
+    if (mCInv) {
+	mRes.mValid = false;
+	if (!mSue)  {
+	    Log(EWarn, TLog(this) + "Owner is not explorable");
+	} else {
+	    mRes.mData = mSue->parentName();
+	    mRes.mValid = true;
+	}
+	mCInv = false;
     }
     return &mRes;
 }
@@ -171,16 +177,19 @@ SdoComp::SdoComp(const string &aType, const string& aName, MEnv* aEnv): Sdog<Sda
 
 const DtBase* SdoComp::VDtGet(const string& aType)
 {
-    mRes.mValid = false;
-    string name;
-    bool res = mInpName.getData(name);
-    if (!res) {
-	Log(EErr, TLog(this) + "Failed getting input [" + mInpName.mName + "] data");
-    } else if (!mSue)  {
-	Log(EWarn, TLog(this) + "Owner is not explorable");
-    } else {
-	mRes.mData = mSue->getNode(name);
-	mRes.mValid = true;
+    if (mCInv) {
+	mRes.mValid = false;
+	string name;
+	bool res = mInpName.getData(name);
+	if (!res) {
+	    Log(EErr, TLog(this) + "Failed getting input [" + mInpName.mName + "] data");
+	} else if (!mSue)  {
+	    Log(EWarn, TLog(this) + "Owner is not explorable");
+	} else {
+	    mRes.mData = mSue->getNode(name);
+	    mRes.mValid = true;
+	}
+	mCInv = false;
     }
     return &mRes;
 }
@@ -192,7 +201,6 @@ SdoCompsCount::SdoCompsCount(const string &aType, const string& aName, MEnv* aEn
 
 const DtBase* SdoCompsCount::VDtGet(const string& aType)
 {
-    // TODO. Fixme: data cache invalidation approach doesn't work.
     if (mCInv) {
 	string name;
 	mRes.mValid = false;
@@ -270,29 +278,32 @@ SdoCompOwner::SdoCompOwner(const string &aType, const string& aName, MEnv* aEnv)
 
 const DtBase* SdoCompOwner::VDtGet(const string& aType)
 {
-    DGuri curi;
-    mRes.mValid = false;
-    bool res = mInpCompUri.getData(curi);
-    if (!res) {
-	Log(EErr, TLog(this) + "Failed getting input [" + mInpCompUri.mName + "] data");
-    } else if (!mSue)  {
-	Log(EWarn, TLog(this) + "Owner is not explorable");
-    } else {
-	MNode* comp = mSue->getNode(curi.mData);
-	if (comp) {
-	    // TODO Comp URI reduction is used instead of comp MNode API. This is because
-	    // of MNode not allowing to access owner. To re-design.
-	    GUri ownerUri = curi.mData.head(curi.mData.size() - 1);
-	    MNode* owner = mSue->getNode(ownerUri);
-	    if (owner) {
-		mRes.mData = ownerUri;
-		mRes.mValid = true;
-	    } else {
-		Log(EErr, TLog(this) + "Couldn't get component [" + curi.ToString(false) + "] owner");
-	    }
+    if (mCInv) {
+	DGuri curi;
+	mRes.mValid = false;
+	bool res = mInpCompUri.getData(curi);
+	if (!res) {
+	    Log(EErr, TLog(this) + "Failed getting input [" + mInpCompUri.mName + "] data");
+	} else if (!mSue)  {
+	    Log(EWarn, TLog(this) + "Owner is not explorable");
 	} else {
-	    Log(EErr, TLog(this) + "Couldn't get component [" + curi.ToString(false) + "]");
+	    MNode* comp = mSue->getNode(curi.mData);
+	    if (comp) {
+		// TODO Comp URI reduction is used instead of comp MNode API. This is because
+		// of MNode not allowing to access owner. To re-design.
+		GUri ownerUri = curi.mData.head(curi.mData.size() - 1);
+		MNode* owner = mSue->getNode(ownerUri);
+		if (owner) {
+		    mRes.mData = ownerUri;
+		    mRes.mValid = true;
+		} else {
+		    Log(EErr, TLog(this) + "Couldn't get component [" + curi.ToString(false) + "] owner");
+		}
+	    } else {
+		Log(EErr, TLog(this) + "Couldn't get component [" + curi.ToString(false) + "]");
+	    }
 	}
+	mCInv = false;
     }
     return &mRes;
 }
@@ -307,32 +318,38 @@ SdoCompComp::SdoCompComp(const string &aType, const string& aName, MEnv* aEnv): 
 
 const DtBase* SdoCompComp::VDtGet(const string& aType)
 {
-    DGuri curi, ccuri;
-    mRes.mValid = false;
-    bool res = mInpCompUri.getData(curi);
-    if (!res) {
-	Log(EErr, TLog(this) + "Failed getting input [" + mInpCompUri.mName + "] data");
-    } else if (!mSue)  {
-	Log(EWarn, TLog(this) + "Owner is not explorable");
-    } else {
-	res = mInpCompCompUri.getData(ccuri);
+    // TODO Opt ds_desopt_tdc causes system failure. Needs to observe comp (curi). To fix.
+    // TODO Do we need this. This can be replaced by uris append
+    //if (mCInv) {
+    if (true) {
+	DGuri curi, ccuri;
+	mRes.mValid = false;
+	bool res = mInpCompUri.getData(curi);
 	if (!res) {
-	    Log(EErr, TLog(this) + "Failed getting input [" + mInpCompCompUri.mName + "] data");
+	    Log(EErr, TLog(this) + "Failed getting input [" + mInpCompUri.mName + "] data");
+	} else if (!mSue)  {
+	    Log(EWarn, TLog(this) + "Owner is not explorable");
 	} else {
-	    MNode* comp = mSue->getNode(curi.mData);
-	    if (comp) {
-		MNode* ccomp = comp->getNode(ccuri.mData);
-		if (ccomp) {
-		    mRes.mData.clear();
-		    ccomp->getUri(mRes.mData, mSue);
-		    mRes.mValid = true;
-		} else {
-		    Log(EErr, TLog(this) + "Couldn't get component [" + mInpCompCompUri.mName + "] owner");
-		}
+	    res = mInpCompCompUri.getData(ccuri);
+	    if (!res) {
+		Log(EErr, TLog(this) + "Failed getting input [" + mInpCompCompUri.mName + "] data");
 	    } else {
-		Log(EErr, TLog(this) + "Couldn't get component [" + mInpCompUri.mName + "]");
+		MNode* comp = mSue->getNode(curi.mData);
+		if (comp) {
+		    MNode* ccomp = comp->getNode(ccuri.mData);
+		    if (ccomp) {
+			mRes.mData.clear();
+			ccomp->getUri(mRes.mData, mSue);
+			mRes.mValid = true;
+		    } else {
+			Log(EErr, TLog(this) + "Couldn't get component [" + mInpCompCompUri.mName + "] owner");
+		    }
+		} else {
+		    Log(EErr, TLog(this) + "Couldn't get component [" + mInpCompUri.mName + "]");
+		}
 	    }
 	}
+	mCInv = false;
     }
     return &mRes;
 }
@@ -349,45 +366,48 @@ SdoConn::SdoConn(const string &aType, const string& aName, MEnv* aEnv): Sdog<Sda
 
 const DtBase* SdoConn::VDtGet(const string& aType)
 {
-    mRes.mValid = false;
-    string vps, vqs;
-    bool res = mInpVp.getData(vps);
-    bool resq = mInpVq.getData(vqs) ;
-    if (!res || !resq) {
-	Log(EErr, TLog(this) + "Failed getting input [" + (res ? mInpVp.mName : mInpVq.mName) + "] data");
-    } else if (!mSue)  {
-	Log(EWarn, TLog(this) + "Owner is not explorable");
-    } else {
-	MNode* vpn = mSue->getNode(vps);
-	MNode* vqn = mSue->getNode(vqs);
-	if (vpn && vqn) {
-	    if (vpn != mVpUe) {
-		mVpUe = vpn;
-		MObservable* obl = mVpUe->lIf(obl);
-		if (obl) {
-		    res = obl->addObserver(&mObrCp);
+    if (mCInv) {
+	mRes.mValid = false;
+	string vps, vqs;
+	bool res = mInpVp.getData(vps);
+	bool resq = mInpVq.getData(vqs) ;
+	if (!res || !resq) {
+	    Log(EErr, TLog(this) + "Failed getting input [" + (res ? mInpVp.mName : mInpVq.mName) + "] data");
+	} else if (!mSue)  {
+	    Log(EWarn, TLog(this) + "Owner is not explorable");
+	} else {
+	    MNode* vpn = mSue->getNode(vps);
+	    MNode* vqn = mSue->getNode(vqs);
+	    if (vpn && vqn) {
+		if (vpn != mVpUe) {
+		    mVpUe = vpn;
+		    MObservable* obl = mVpUe->lIf(obl);
+		    if (obl) {
+			res = obl->addObserver(&mObrCp);
+		    }
+		    if (!res || !obl) {
+			Logger()->Write(EErr, this, "Cannot attach VertUe to observer");
+		    }
 		}
-		if (!res || !obl) {
-		    Logger()->Write(EErr, this, "Cannot attach VertUe to observer");
+		if (vqn != mVqUe) {
+		    mVqUe = vqn;
+		    MObservable* obl = mVqUe->lIf(obl);
+		    if (obl) {
+			res = obl->addObserver(&mObrCp);
+		    }
+		    if (!res || !obl) {
+			Logger()->Write(EErr, this, "Cannot attach VertUe to observer");
+		    }
 		}
-	    }
-	    if (vqn != mVqUe) {
-		mVqUe = vqn;
-		MObservable* obl = mVqUe->lIf(obl);
-		if (obl) {
-		    res = obl->addObserver(&mObrCp);
-		}
-		if (!res || !obl) {
-		    Logger()->Write(EErr, this, "Cannot attach VertUe to observer");
-		}
-	    }
-	    MVert* vpv = vpn->lIf(vpv);
-	    MVert* vqv = vqn->lIf(vqv);
-	    if (vpv && vqv) {
-		mRes.mData = vpv->isConnected(vqv);
+		MVert* vpv = vpn->lIf(vpv);
+		MVert* vqv = vqn->lIf(vqv);
+		if (vpv && vqv) {
+		    mRes.mData = vpv->isConnected(vqv);
 		mRes.mValid = true;
 	    }
 	}
+    }
+	mCInv = false;
     }
     return &mRes;
 }
@@ -413,49 +433,121 @@ SdoPairsCount::SdoPairsCount(const string &aType, const string& aName, MEnv* aEn
 
 const DtBase* SdoPairsCount::VDtGet(const string& aType)
 {
-    // TODO. Fixme: data cache invalidation approach doesn't work.
-    mRes.mValid = false;
-    string verts;
-    bool res = mInpVert.getData(verts);
-    if (!res) {
-	Log(EErr, TLog(this) + "Failed getting input [" + mInpVert.mName + "] data");
-    } else if (!mSue)  {
-	Log(EWarn, TLog(this) + "Owner is not explorable");
-    } else {
-	MNode* vertn = mSue->getNode(verts);
-	if (vertn && vertn != mVertUe) {
-	    mVertUe = vertn;
-	    // Start observing vertex under exploring
-	    MObservable* obl = mVertUe->lIf(obl);
-	    if (obl) {
-		res = obl->addObserver(&mObrCp);
-	    }
-	    if (!res || !obl) {
-		Logger()->Write(EErr, this, "Cannot attach VertUe to observer");
-	    }
-	}
-	if (vertn) {
-	    MVert* vertv = vertn->lIf(vertv);
-	    if (vertv) {
-		mRes.mData = vertv->pairsCount();
-		mRes.mValid = true;
-	    }
+    if (mCInv) {
+	mRes.mValid = false;
+	string verts;
+	bool res = mInpVert.getData(verts);
+	if (!res) {
+	    Log(EErr, TLog(this) + "Failed getting input [" + mInpVert.mName + "] data");
+	} else if (!mSue)  {
+	    Log(EWarn, TLog(this) + "Owner is not explorable");
 	} else {
-	    Log(EDbg, TLog(this) + "Explorable [" + verts + "] is nil");
-	}
+	    MNode* vertn = mSue->getNode(verts);
+	    if (vertn) {
+		if (vertn != mVertUe) {
+		    mVertUe = vertn;
+		    // Start observing vertex under exploring
+		    MObservable* obl = mVertUe->lIf(obl);
+		    if (obl) {
+			res = obl->addObserver(&mObrCp);
+		    }
+		    if (!res || !obl) {
+			Logger()->Write(EErr, this, "Cannot attach VertUe to observer");
+		    }
+		}
+	    } else {
+		// ds_iss_15
+		observingVertUeExst();
+	    }
+	    if (vertn) {
+		MVert* vertv = vertn->lIf(vertv);
+		if (vertv) {
+		    mRes.mData = vertv->pairsCount();
+		    mRes.mValid = true;
+		}
+	    } else {
+		Log(EDbg, TLog(this) + "Explorable [" + verts + "] is nil");
+	    }
 	    Log(EDbg, TLog(this) + "Explorable [" + verts + "], res: " + mRes.ToString(true));
+	}
+	mCInv = false;
     }
     return &mRes;
+}
+
+void SdoPairsCount::observingVertUeExst()
+{
+    // Vert under exploring doens't exists, observe it's existance
+    // Observing it's existing owner
+    string verts;
+    mInpVert.getData(verts);
+    GUri sueUri(verts);
+    GUri vertUeOwrUri;
+    mVertUeOwrLevel = sueUri.size() - 1;
+    MNode* owner = nullptr;
+    do {
+	vertUeOwrUri = sueUri.head(mVertUeOwrLevel);
+	owner = mSue->getNode(vertUeOwrUri);
+	if (!owner) mVertUeOwrLevel--;
+    } while (!owner);
+    if (owner != mVertUeOwr) {
+	Log(EDbg, TLog(this) + "VertUE owner [" + vertUeOwrUri + "] to be observing, level: " + to_string(mVertUeOwrLevel));
+	if (mVertUeOwr) {
+	    MObservable* obl = mVertUeOwr->lIf(obl);
+	    bool res = obl->rmObserver(&mObrCp);
+	    if (!res || !obl) {
+		Logger()->Write(EErr, this, "Failed deattaching VertUeOwr from observable");
+	    }
+	}
+	mVertUeOwr = owner;
+	MObservable* obl = mVertUeOwr->lIf(obl);
+	bool res = obl ? obl->addObserver(&mObrCp) : false;
+	if (!res || !obl) {
+	    Logger()->Write(EErr, this, "Cannot attach VertUeOwr to observer");
+	} else {
+	    Log(EDbg, TLog(this) + "VertUE owner [" + mVertUeOwr->getUriS(mSue) + "] observing, level: " + to_string(mVertUeOwrLevel));
+	}
+    }
 }
 
 void SdoPairsCount::onObsChanged(MObservable* aObl)
 {
     MObservable* obl = mVertUe ? mVertUe->lIf(obl) : nullptr;
     if (obl && aObl == obl) {
-	Log(EDbg, TLog(this) + "SdoPairsCount::onObsChanged");
+	Log(EDbg, TLog(this) + "VertUE changed");
 	NotifyInpsUpdated();
     } else {
 	SdoBase::onObsChanged(aObl);
+    }
+}
+
+void SdoPairsCount::onObsOwnedAttached(MObservable* aObl, MOwned* aOwned)
+{
+    MObservable* obl = mVertUeOwr ? mVertUeOwr->lIf(obl) : nullptr;
+    if (obl && aObl == obl) {
+	// VeruUE owner observable
+	Log(EDbg, TLog(this) + "onObsOwnedAttached, owned: " + aOwned->Uid());
+	string verts;
+	mInpVert.getData(verts);
+	GUri sueUri(verts);
+	GUri owdUri = sueUri.head(mVertUeOwrLevel + 1);
+	auto* vertUeOwrOwd = mSue->getNode(owdUri);
+	MOwned* vueOwd = vertUeOwrOwd ? vertUeOwrOwd->lIf(vueOwd) : nullptr;
+	if (vueOwd && aOwned == vueOwd) {
+	    Log(EDbg, TLog(this) + "[" + mVertUeOwr->getUriS(mSue) + "] owned [" + vertUeOwrOwd->getUriS(mSue) + "] attached");
+	    // Checking if VertUe got attached
+	    MNode* vertUe = mSue->getNode(verts);
+	    if (vertUe) {
+		// Yes, attached. Stop observing the attaching
+		Log(EDbg, TLog(this) + "VertUe [" + vertUe->getUriS(mSue) + "] got attached");
+		NotifyInpsUpdated();
+	    } else {
+		// Not attached yet, proceed
+		observingVertUeExst();
+	    }
+	}
+    } else {
+	SdoBase::onObsOwnedAttached(aObl, aOwned);
     }
 }
 
@@ -469,43 +561,46 @@ SdoPair::SdoPair(const string &aType, const string& aName, MEnv* aEnv): Sdog<DGu
 
 const DtBase* SdoPair::VDtGet(const string& aType)
 {
-    string verts;
-    mRes.mValid = false;
-    bool res = mInpTarg.getData(verts);
-    if (!res) {
-	Log(EErr, TLog(this) + "Failed getting input [" + mInpTarg.mName + "] data");
-    } else if (!mSue)  {
-	Log(EWarn, TLog(this) + "Owner is not explorable");
-    } else {
-	MNode* vertn = mSue->getNode(verts);
-	if (vertn != mVertUe) {
-	    mVertUe = vertn;
-	    // Start observing vertex under exploring
-	    MObservable* obl = mVertUe->lIf(obl);
-	    if (obl) {
-		res = obl->addObserver(&mObrCp);
-	    }
-	    if (!res || !obl) {
-		Logger()->Write(EErr, this, "Cannot attach VertUe to observer");
-	    }
-	}
-	if (vertn) {
-	    MVert* vertv = vertn->lIf(vertv);
-	    if (vertv) {
-		if (vertv->pairsCount() == 1) {
-		    MVert* pair = vertv->getPair(0);
-		    // TODO Workaround used, ref ds_dcs_sdo_gmn. Create solid solution.
-		    MUnit* pairu = pair->lIf(pairu);
-		    MNode* pairn = pairu ? pairu->getSif(pairn) : nullptr;
-		    if (pairn) {
-			pairn->getUri(mRes.mData, mSue);
-			mRes.mValid = true;
-		    }
+    if (mCInv) {
+	string verts;
+	mRes.mValid = false;
+	bool res = mInpTarg.getData(verts);
+	if (!res) {
+	    Log(EErr, TLog(this) + "Failed getting input [" + mInpTarg.mName + "] data");
+	} else if (!mSue)  {
+	    Log(EWarn, TLog(this) + "Owner is not explorable");
+	} else {
+	    MNode* vertn = mSue->getNode(verts);
+	    if (vertn != mVertUe) {
+		mVertUe = vertn;
+		// Start observing vertex under exploring
+		MObservable* obl = mVertUe->lIf(obl);
+		if (obl) {
+		    res = obl->addObserver(&mObrCp);
 		}
-	    } else {
-		Log(EErr, TLog(this) + "Target [" + verts + "] is not vertex");
+		if (!res || !obl) {
+		    Logger()->Write(EErr, this, "Cannot attach VertUe to observer");
+		}
+	    }
+	    if (vertn) {
+		MVert* vertv = vertn->lIf(vertv);
+		if (vertv) {
+		    if (vertv->pairsCount() == 1) {
+			MVert* pair = vertv->getPair(0);
+			// TODO Workaround used, ref ds_dcs_sdo_gmn. Create solid solution.
+			MUnit* pairu = pair->lIf(pairu);
+			MNode* pairn = pairu ? pairu->getSif(pairn) : nullptr;
+			if (pairn) {
+			    pairn->getUri(mRes.mData, mSue);
+			    mRes.mValid = true;
+			}
+		    }
+		} else {
+		    Log(EErr, TLog(this) + "Target [" + verts + "] is not vertex");
+		}
 	    }
 	}
+	mCInv = false;
     }
     return &mRes;
 }
@@ -531,41 +626,44 @@ SdoTcPair::SdoTcPair(const string &aType, const string& aName, MEnv* aEnv): Sdog
 
 const DtBase* SdoTcPair::VDtGet(const string& aType)
 {
-    DGuri targUri;
-    mRes.mValid = false;
-    bool res = mInpTarg.getData(targUri);
-    if (!res) {
-	Log(EErr, TLog(this) + "Failed getting input [" + mInpTarg.mName + "] data");
-    } else {
-	DGuri targCompUri;
-	res = mInpTargComp.getData(targCompUri);
+    if (mCInv) {
+	DGuri targUri;
+	mRes.mValid = false;
+	bool res = mInpTarg.getData(targUri);
 	if (!res) {
-	    Log(EErr, TLog(this) + "Failed getting input [" + mInpTargComp.mName + "] data");
-	} else if (!mSue)  {
-	    Log(EWarn, TLog(this) + "Owner is not explorable");
+	    Log(EErr, TLog(this) + "Failed getting input [" + mInpTarg.mName + "] data");
 	} else {
-	    targUri += targCompUri;
-	    MNode* vertn = mSue->getNode(targUri.mData);
-	    if (vertn) {
-		MVert* vertv = vertn->lIf(vertv);
-		if (vertv) {
-		    if (vertv->pairsCount() == 1) {
-			MVert* pair = vertv->getPair(0);
-			// TODO Workaround used, ref ds_dcs_sdo_gmn. Create solid solution.
-			MUnit* pairu = pair->lIf(pairu);
-			MNode* pairn = pairu ? pairu->getSif(pairn) : nullptr;
-			if (pairn) {
-			    GUri uri;
-			    pairn->getUri(uri, mSue);
-			    mRes.mData = uri;
-			    mRes.mValid = true;
+	    DGuri targCompUri;
+	    res = mInpTargComp.getData(targCompUri);
+	    if (!res) {
+		Log(EErr, TLog(this) + "Failed getting input [" + mInpTargComp.mName + "] data");
+	    } else if (!mSue)  {
+		Log(EWarn, TLog(this) + "Owner is not explorable");
+	    } else {
+		targUri += targCompUri;
+		MNode* vertn = mSue->getNode(targUri.mData);
+		if (vertn) {
+		    MVert* vertv = vertn->lIf(vertv);
+		    if (vertv) {
+			if (vertv->pairsCount() == 1) {
+			    MVert* pair = vertv->getPair(0);
+			    // TODO Workaround used, ref ds_dcs_sdo_gmn. Create solid solution.
+			    MUnit* pairu = pair->lIf(pairu);
+			    MNode* pairn = pairu ? pairu->getSif(pairn) : nullptr;
+			    if (pairn) {
+				GUri uri;
+				pairn->getUri(uri, mSue);
+				mRes.mData = uri;
+				mRes.mValid = true;
+			    }
 			}
+		    } else {
+			Log(EErr, TLog(this) + "Target [" + targUri.mData + "] is not vertex");
 		    }
-		} else {
-		    Log(EErr, TLog(this) + "Target [" + targUri.mData + "] is not vertex");
 		}
 	    }
 	}
+	mCInv = false;
     }
     return &mRes;
 }
@@ -577,64 +675,18 @@ SdoPairs::SdoPairs(const string &aType, const string& aName, MEnv* aEnv): Sdog<V
 
 const DtBase* SdoPairs::VDtGet(const string& aType)
 {
-    if (!mSue)  {
-	Log(EErr, TLog(this) + "Owner is not explorable");
-    } else {
-	MVert* suev = mSue->lIf(suev);
-	if (!suev) {
-	    Log(EErr, TLog(this) + "Explorable isn't vertex");
+    if (mCInv) {
+	if (!mSue)  {
+	    Log(EErr, TLog(this) + "Owner is not explorable");
 	} else {
-	    mRes.mValid = true;
-	    mRes.mData.clear();
-	    for (int ind = 0; ind < suev->pairsCount(); ind++) {
-		MVert* pair = suev->getPair(ind);
-		// TODO Workaround used, ref ds_dcs_sdo_gmn. Create solid solution.
-		MUnit* pairu = pair->lIf(pairu);
-		MNode* pairn = pairu ? pairu->getSif(pairn) : nullptr;
-		if (!pairn) {
-		    Log(EErr, TLog(this) + "Couldnt get URI for pair [" + pair->Uid() + "]");
-		    mRes.mValid = false;
-		    break;
-		} else {
-		    mRes.mValid = true;
-		    GUri puri;
-		    pairn->getUri(puri, mSue);
-		    DGuri purid(puri);
-		    mRes.mData.push_back(purid);
-		}
-	    }
-	}
-    }
-    return &mRes;
-}
-
-
-///  SDO "Target pairs"
-
-SdoTPairs::SdoTPairs(const string &aType, const string& aName, MEnv* aEnv): Sdog<Vector<DGuri>>(aType, aName, aEnv),
-    mInpTarg(this, "Targ") {}
-
-const DtBase* SdoTPairs::VDtGet(const string& aType)
-{
-    DGuri turi;
-    mRes.mValid = false;
-    bool res = mInpTarg.getData(turi);
-    if (!res) {
-	Log(EErr, TLog(this) + "Failed getting input [" + mInpTarg.mName + "] data");
-    } else if (!mSue)  {
-	Log(EErr, TLog(this) + "Owner is not explorable");
-    } else {
-	MNode* targn = mSue->getNode(turi.mData);
-	if (!targn) {
-	    Log(EErr, TLog(this) + "Couldn't find target [" + mInpTarg.mName + "]");
-	} else {
-	    MVert* targv = targn->lIf(targv);
-	    if (!targv) {
-		Log(EErr, TLog(this) + "Target [" + mInpTarg.mName + "] isn't a vertex");
+	    MVert* suev = mSue->lIf(suev);
+	    if (!suev) {
+		Log(EErr, TLog(this) + "Explorable isn't vertex");
 	    } else {
 		mRes.mValid = true;
-		for (int ind = 0; ind < targv->pairsCount(); ind++) {
-		    MVert* pair = targv->getPair(ind);
+		mRes.mData.clear();
+		for (int ind = 0; ind < suev->pairsCount(); ind++) {
+		    MVert* pair = suev->getPair(ind);
 		    // TODO Workaround used, ref ds_dcs_sdo_gmn. Create solid solution.
 		    MUnit* pairu = pair->lIf(pairu);
 		    MNode* pairn = pairu ? pairu->getSif(pairn) : nullptr;
@@ -652,6 +704,58 @@ const DtBase* SdoTPairs::VDtGet(const string& aType)
 		}
 	    }
 	}
+	mCInv = false;
+    }
+    return &mRes;
+}
+
+
+///  SDO "Target pairs"
+
+SdoTPairs::SdoTPairs(const string &aType, const string& aName, MEnv* aEnv): Sdog<Vector<DGuri>>(aType, aName, aEnv),
+    mInpTarg(this, "Targ") {}
+
+const DtBase* SdoTPairs::VDtGet(const string& aType)
+{
+    if (mCInv) {
+	DGuri turi;
+	mRes.mValid = false;
+	bool res = mInpTarg.getData(turi);
+	if (!res) {
+	    Log(EErr, TLog(this) + "Failed getting input [" + mInpTarg.mName + "] data");
+	} else if (!mSue)  {
+	    Log(EErr, TLog(this) + "Owner is not explorable");
+	} else {
+	    MNode* targn = mSue->getNode(turi.mData);
+	    if (!targn) {
+		Log(EErr, TLog(this) + "Couldn't find target [" + mInpTarg.mName + "]");
+	    } else {
+		MVert* targv = targn->lIf(targv);
+		if (!targv) {
+		    Log(EErr, TLog(this) + "Target [" + mInpTarg.mName + "] isn't a vertex");
+		} else {
+		    mRes.mValid = true;
+		    for (int ind = 0; ind < targv->pairsCount(); ind++) {
+			MVert* pair = targv->getPair(ind);
+			// TODO Workaround used, ref ds_dcs_sdo_gmn. Create solid solution.
+			MUnit* pairu = pair->lIf(pairu);
+			MNode* pairn = pairu ? pairu->getSif(pairn) : nullptr;
+			if (!pairn) {
+			    Log(EErr, TLog(this) + "Couldnt get URI for pair [" + pair->Uid() + "]");
+			    mRes.mValid = false;
+			    break;
+			} else {
+			    mRes.mValid = true;
+			    GUri puri;
+			    pairn->getUri(puri, mSue);
+			    DGuri purid(puri);
+			    mRes.mData.push_back(purid);
+			}
+		    }
+		}
+	    }
+	}
+	mCInv = false;
     }
     return &mRes;
 }

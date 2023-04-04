@@ -287,9 +287,14 @@ class SdoPairsCount : public Sdog<Sdata<int>>
 	SdoPairsCount(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual const DtBase* VDtGet(const string& aType) override;
 	virtual void onObsChanged(MObservable* aObl) override;
+	virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override;
+    protected:
+	void observingVertUeExst();
     protected:
 	Inp<string> mInpVert;  //<! Vertex URI
 	MNode* mVertUe;        //<! Vertex under exploring 
+	MNode* mVertUeOwr = nullptr;     //<! Vertex under exploring owner
+	int mVertUeOwrLevel = -1;
 };
 
 /** @brief SDO "Vertex pair URI"
