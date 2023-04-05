@@ -100,8 +100,10 @@ Func::TInpIc* TrBase::GetInps(FInp& aInp)
 const DtBase* TrBase::VDtGet(const string& aType)
 {
     if (mCInv) {
+	PFL_DUR_STAT_START(PEvents::EDurStat_Trans);
 	mResp = doVDtGet(aType);
 	mCInv = false;
+	PFL_DUR_STAT_REC(PEvents::EDurStat_Trans);
     }
     return mResp;
 }

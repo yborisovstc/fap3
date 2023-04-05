@@ -2,6 +2,7 @@
 
 #include <time.h>
 #include <pthread.h>
+#include <iomanip>
 #include "prof.h"
 #include "mlog.h"
 
@@ -67,6 +68,7 @@ bool Pind::saveToFile(const std::string &aPath) {
 		}
 	    }
 	}
+	fclose(fp);
     } else {
 	res = false;
     }
@@ -106,6 +108,12 @@ void ProfBase::saveMetrics() {
 
 // Duration indicator
 
+string PindDur::toTime(PindDur::TDur aNs) {
+    stringstream ss;
+    ss << std::fixed << std::setprecision(TLog::KPrecision) << ((double)aNs / 1000000000);
+    return ss.str();
+}
+
 void PindDur::Start() {
     mErr = !GetClock(mIvStart);
 }
@@ -127,7 +135,60 @@ void PindDur::Rec(TRecParam /* aPar */) {
 }
 
 string PindDur::toString() const {
-    return PindItem::toString() + field(to_string(mDur));
+    return PindItem::toString() + field(fieldToString(PIndFId::EInd_VAL));
 }
 
+string PindDur::fieldToString(TPItemFId aFId) const {
+    if (aFId == PIndFId::EInd_VAL) {
+	return toTime(getValue());
+    }
+    return PindItem::fieldToString(aFId);
+}
+
+string PindDurStat::fieldToString(TPItemFId aFId) const {
+    switch(aFId) {
+	case PIndFId::EStat_MIN:
+	    return PindDur::toTime(mMin);
+	case PIndFId::EStat_MAX:
+	    return PindDur::toTime(mMax);
+	case PIndFId::EStat_SUM:
+	    return PindDur::toTime(mSum);
+	case PIndFId::EStat_AVG:
+	    return PindDur::toTime(mAvg);
+	case PIndFId::EStat_SD:
+	    return PindDur::toTime(mSD);
+    }
+    return PindStat<PindDur, EPiid_DurStat>::fieldToString(aFId);
+}
+
+/** @brief Init data for common profiler duration indicator */
+const PindCluster<PindDurStat>::Idata KPindDurStatIdata = {
+    "durstat",
+    {
+	{PEvents::EDurStat_IFR_IFaces, "IFR_IFACES", 500000, false},
+	{PEvents::EDurStat_Ev2, "C_Ev2", 80000, false},
+    }
+};
+
+MProfiler* DProfInst::mProf = nullptr;
+
+void DProfInst::init(const std::string& aPathBase) {
+    init(new DProf<EPiid_NUM>(nullptr, aPathBase));
+    // Profiler indicators
+    mProf->addPind<PindCluster<PindDurStat>>(KPindDurStatIdata);
+}
+
+void DProfInst::init(MProfiler *aProf) {
+    if (mProf) {
+	delete mProf;
+    }
+    mProf = aProf;
+}
+
+MProfiler* DProfInst::prof() {
+    if (!mProf) {
+	init("prof");
+    }
+    return mProf;
+}
 

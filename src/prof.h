@@ -8,16 +8,17 @@
 #include <cmath>
 
 #include "mprof.h"
+#include "prof_ids.h"
 
 using namespace std;
 
-/** @brief Perf indicators IDs
+/** @brief Perf indicators type IDs
  * */
 enum {
     EPiid_Clock = 0,      //!< Clock
     EPiid_Dur = 1,        //!< Duration
     EPiid_DurStat = 2,    //!< Duration statistic
-    EPiid_NUM ,            //!< NUM of IDs
+    EPiid_NUM,            //!< NUM of IDs
     EPiid_Undef
 };
 
@@ -35,15 +36,17 @@ public:
     PindBase(const string& aDescr): mDescr(aDescr) {}
     virtual ~PindBase() {}
     // From MPind
-    virtual string getDescription() override { return mDescr;}
+    virtual string getDescription() const override { return mDescr;}
     /** @brief Obtains clock resolution in nanoseconds */
     virtual bool getClockResolution(TClock& aRes) const override;
     virtual void dump() const override {}
     virtual string toString() const override;
+    virtual string fieldToString(TPItemFId aFId) const override {return string();}
     virtual string getFileSuf() const override {return string();}
     /** Gets clock absolute value */
     bool GetClock(TClock& aClock);
     static string field(const string& aField) { return aField + PRec::KFieldSep;}
+
 protected:
     string mDescr;            //!< Description
     clockid_t mClockId = -1;  //!< Clock ID
@@ -108,6 +111,7 @@ public:
     using TDur = long int; /*!< Duration type */
     using TVal = TDur; /*!< Value type */
     using TRecParam = int; /*!< Recording parameter type */
+    static string toTime(TDur aNs);
 
 public:
     PindDur(const TIdata &aIdata) : PindItem(aIdata) {}
@@ -122,6 +126,7 @@ public:
     virtual string getFileSuf() const override { return string(); }
     virtual bool saveToFile(const std::string &aPath) override { return false; }
     virtual string toString() const override;
+    virtual string fieldToString(TPItemFId aFId) const override;
 
 protected:
     TClock mIvStart; /*!< Interval start */
@@ -164,8 +169,13 @@ public:
     // From MPind
     virtual TTid tid() const { return KTypeId; }
     virtual string toString() const override;
+    virtual string fieldToString(TPItemFId aFId) const override;
+    virtual string getFileSuf() const override {return string();}
 protected:
     TInd mPrmInd;        //!< Primary indicator
+    TIndValue mSum = 0;  //!< Sum
+    TIndValue mMin = 0;  //!< Minimum
+    TIndValue mMax = 0;  //!< Maximum
     double mAvg = 0.0;   //!< Average, ns
     size_t mWnd = 0;     //!< Statistic processing window size, in samples
     int mCount = 1;      //!< Events counter
@@ -186,6 +196,17 @@ void PindStat<TInd, Id>::Rec(typename TInd::TRecParam aPar) {
         }
     }
     if (!mErr) {
+        mSum += pval;
+        if (mCount == 1) {
+	    mMin = mMax = pval;
+        } else {
+            if (mMin > pval) {
+                mMin = pval;
+            }
+            if (mMax < pval) {
+                mMax = pval;
+            }
+        }
         if (mCount < mWnd) {
             double count = mCount;
             double avg = ((count - 1.0) / count) * mAvg + ((double) pval) / count;
@@ -203,6 +224,9 @@ template <typename TInd, int Id>
 void PindStat<TInd, Id>::StartWnd() {
     mCount = 1;
     mErrCount = 0;
+    mSum = 0;
+    mMin = 0;
+    mMax = 0;
     mAvg = 0.0;
     mM2 = 0.0;
     mSD = 0.0;
@@ -210,11 +234,32 @@ void PindStat<TInd, Id>::StartWnd() {
 
 template <typename TInd, int Id>
 string PindStat<TInd, Id>::toString() const {
-    return PindItem::toString() + field(to_string(mCount)) + field(to_string(mPrmInd.getValue())) +
-           field(to_string((TIndValue) mAvg)) +
-           field(to_string((TIndValue)(mSD))) + field(to_string(mErrCount));
+    return PindItem::toString() + field(fieldToString(PIndFId::EStat_CNT)) +
+           field(fieldToString(PIndFId::EStat_MIN)) + field(fieldToString(PIndFId::EStat_MAX)) +
+           field(fieldToString(PIndFId::EStat_SUM)) + field(fieldToString(PIndFId::EStat_AVG)) +
+           field(fieldToString(PIndFId::EStat_SD)) + field(fieldToString(PIndFId::EStat_ERRCNT));
 }
 
+template <typename TInd, int Id>
+string PindStat<TInd, Id>::fieldToString(TPItemFId aFId) const {
+    switch(aFId) {
+	case PIndFId::EStat_CNT:
+	    return to_string(mCount - 1);
+	case PIndFId::EStat_MIN:
+	    return to_string(mMin);
+	case PIndFId::EStat_MAX:
+	    return to_string(mMax);
+	case PIndFId::EStat_SUM:
+	    return to_string((TIndValue)mSum);
+	case PIndFId::EStat_AVG:
+	    return to_string((TIndValue)mAvg);
+	case PIndFId::EStat_SD:
+	    return to_string((TIndValue) mSD);
+	case PIndFId::EStat_ERRCNT:
+	    return to_string(mErrCount);
+    }
+    return PindItem::fieldToString(aFId);
+}
 
 
 /** @brief Collection of performance indicators
@@ -235,30 +280,48 @@ public:
     };
     using TIdata = Idata;
 public:
-     PindCluster(const Idata &aIdata) : Pind(aIdata.mDescr, -1) {
-        for (auto itemInit : aIdata.mItems) {
-            TItem *item = new TItem(itemInit);
-            mItems.insert(TItemsElem(itemInit.mId, item));
-        }
+    PindCluster(const Idata &aIdata) : Pind(aIdata.mDescr, -1) {
+        addItems(aIdata);
     }
     virtual ~PindCluster() { for (auto item : mItems) delete item.second;}
     // From MPind
     virtual TTid tid() const { return KTypeId; }
-    virtual string getFileSuf() const override {return string();}
+    virtual string getFileSuf() const override { return getDescription();}
     virtual int getBufLen() const override { return mItems.size();}
     virtual string recToString(int aRecNum) const override {
-	auto* item = getItem(aRecNum);
+	auto* item = getItemByIdx(aRecNum);
 	return item ? item->toString() : string();
     }
     virtual string toString() const override {return string();}
     //virtual bool saveToFile(const std::string& aPath) override {return false;}
 public:
+    void addItems(const Idata &aIdata) {
+        for (auto itemInit : aIdata.mItems) {
+            TItem *item = new TItem(itemInit);
+            mItems.insert(TItemsElem(itemInit.mId, item));
+        }
+    }
     TPitem *getItem(PindItem::TId aId) const { return mItems.count(aId) > 0 ? mItems.at(aId) : NULL; }
+    TPitem *getItemByIdx(int aIdx) const {
+	TPitem* res = nullptr;
+	if (aIdx < mItems.size()) {
+	    auto it = mItems.begin();
+	    for (int i = 0; i < aIdx; i++) {
+		it++;
+	    }
+	    res = it->second;
+	}
+	return res;
+    }
 protected:
     TItems mItems;
 };
 
-using PindDurStat = PindStat<PindDur, EPiid_DurStat>;
+class PindDurStat: public PindStat<PindDur, EPiid_DurStat> {
+public:
+    PindDurStat(const TIdata& aIdata): PindStat<PindDur, EPiid_DurStat>(aIdata) {}
+    virtual string fieldToString(TPItemFId aFId) const override;
+};
 
 
 class MEnv;
@@ -290,9 +353,10 @@ public:
     /** Type of performance indicators register
      *  The key is id of indicator
      */
-    using TPinds = array<PindBase*, Dim>;
-    using TPindsElem = pair<MPind::TTid, PindBase*>;
+    using TPinds = array<MPind*, Dim>;
+    using TPindsElem = pair<MPind::TTid, MPind*>;
 public:
+    static MProfiler* defaultProfiler();
     DProf(MEnv* aEnv, const std::string& aPathBase): ProfBase(aEnv, aPathBase), mPinds{} {}
     virtual ~DProf() {
 	for (auto ind : mPinds) {
@@ -301,24 +365,58 @@ public:
     }
     // From MProfiler
     virtual MPind* getPind(int aId) override { return mPinds.at(aId);}
+    virtual void setPind(int aId, MPind* aPind) override { mPinds[aId] = aPind; }
     virtual int pindsCount() const override { return Dim;}
-    template<typename T> void AddPind(const typename T::TIdata& aIdata) {
-        MPind* curPind = getPind(T::KTypeId);
-        if (!curPind) {
-            mPinds[T::KTypeId] = new T(aIdata);
-        }
-    }
-public:
-    // Profiler helpers
-    virtual void DurStatStart(TPItemId aId) { Pfi<PindDurStat>(aId)->Start();}
-    virtual void DurStatRec(TPItemId aId) { Pfi<PindDurStat>(aId)->Rec(0);}
 protected:
+    static DProf* mProf;    //!< Default profiler
     TPinds mPinds;          //!< Performance indicators
 };
+
+/** Default common profiler instance */
+class DProfInst
+{
+public:
+    static void init(const std::string& aPathBase);
+    static void init(MProfiler *aProf);
+    static MProfiler* profiler() { return prof(); }
+protected:
+    static MProfiler* prof();
+    static MProfiler* mProf;    //!< Default profiler
+};
+
+// Profiler's routines
+#ifdef PROFILING_ENABLED
+#define PROF_SAVE(PFL) if (PFL) PFL->saveMetrics()
+#define PROF_DUR_START(PFL, TYPE, ID) if (PFL) PFL->getPindItem<PindCluster, TYPE>(ID)->Start()
+#define PROF_DUR_REC(PFL, TYPE, ID) if (PFL) PFL->getPindItem<PindCluster, TYPE>(ID)->Rec(0)
+#define PROF_VALUE(PFL, TYPE, ID) ((PFL != nullptr) ? PFL->getPindItem<PindCluster, TYPE>(ID)->toString() : string())
+#define PROF_FIELD(PFL, TYPE, ID, FID) ((PFL != nullptr) ? PFL->getPindItem<PindCluster, TYPE>(ID)->fieldToString(FID) : string())
+#else
+#define PROF_SAVE(PFL) ((void)0)
+#define PROF_DUR_START(PFL, TYPE, ID) ((void)0)
+#define PROF_DUR_REC(PFL, TYPE, ID) ((void)0)
+#define PROF_VALUE(PFL, TYPE, ID) string()
+#define PROF_FIELD(PFL, TYPE, ID, FID) string()
+#endif
+
+#define PROF_DUR PindDur
+#define PROF_DUR_STAT PindDurStat
+
+// Common profiler's routines
+#ifdef PROFILING_ENABLED
+#define PFLC() DProfInst::profiler()
+#define PFLC_INIT(PROF) DProfInst::init(PROF)
+#else
+#define PFLC() ((void)0)
+#define PFLC_INIT(PROF) ((void)0)
+#endif
+#define PFLC_SAVE() PROF_SAVE(PFLC())
+#define PFLC_DUR_STAT(FUN, ID) PROF_DUR_##FUN(PFLC(), PROF_DUR_STAT, ID)
+#define PFLC_DUR_STAT_F(FUN, ID, FID) PROF_DUR_##FUN(PFLC(), PROF_DUR_STAT, ID, FID)
+#define PFLC_DUR(FUN, ID) PROF_DUR_##FUN(PFLC(), PROF_DUR, ID)
 
 #define LOG(...) mEnv->Logger()->WriteFormat(__VA_ARGS__)
 
 template <typename T> inline T* ProfBase::Pfi(PindItem::TId aId) { return getPind<PindCluster<T>>().getItem(aId);}
-
 
 #endif

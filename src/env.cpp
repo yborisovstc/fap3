@@ -15,12 +15,29 @@
 static const string KLogFileName = "faplog.txt";
 static const string KModulesName = "Modules";
 
+/** @brief Init data for profiler duration indicator */
+const PindCluster<PindDur>::Idata KPindDurIdata = {
+    "dur",
+    {
+	{PEvents::EDurStat_LaunchActive, "IFC_LNCH_ACTIVE"},
+    }
+};
 
 /** @brief Init data for profiler duration indicator */
 const PindCluster<PindDurStat>::Idata KPindDurStatIdata = {
-    "Duration stat",
+    "durstat",
     {
-	{PEvents::EDurStat_TrAnd, "IFC_TR_AND", 80000, false},
+	{PEvents::EDurStat_Trans, "IFC_TRANS", 80000, false},
+	{PEvents::EDurStat_UInvldIrm, "IFC_U_INV", 80000, false},
+	{PEvents::EDurStat_LaunchRun, "IFC_LNCH_RUN", 80000, false},
+	{PEvents::EDurStat_LaunchActive, "IFC_LNCH_ACTIVE", 80000, false},
+	{PEvents::EDurStat_LaunchUpdate, "IFC_LNCH_UPD", 80000, false},
+	{PEvents::EDurStat_LaunchConfirm, "IFC_LNCH_CONF", 80000, false},
+	{PEvents::EDurStat_DesAsUpd, "IFC_DESAS_UPD", 80000, false},
+	{PEvents::EDurStat_StConfirm, "IFC_ST_CONF", 80000, false},
+	{PEvents::EDurStat_DAdpConfirm, "IFC_DADP_CONF", 80000, false},
+	{PEvents::EDurStat_DAdpDes, "IFC_DADP_DES", 80000, false},
+	{PEvents::EDurStat_ASdcConfirm, "IFC_ASDC_CONF", 80000, false},
     }
 };
 
@@ -164,9 +181,12 @@ Env::Env(const string& aSpecFile, const string& aLogFileName): mRoot(NULL), mSpe
     mProvider = new Factory(string(), this);
     mImpMgr = new ImportsMgr(*this);
     mProvider->LoadPlugins();
+#ifdef PROFILING_ENABLED
     mProf = new DProf<EPiid_NUM>(this, aSpecFile);
     // Profiler indicators
-    mProf->AddPind<PindCluster<PindDurStat>>(KPindDurStatIdata);
+    mProf->addPind<PindCluster<PindDur>>(KPindDurIdata);
+    mProf->addPind<PindCluster<PindDurStat>>(KPindDurStatIdata);
+#endif
     /*
     srand(time(NULL));
     iChMgr = new ChromoMgr(*this);

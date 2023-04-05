@@ -2,6 +2,8 @@
 #include <iostream> 
 
 #include "ifr.h"
+#include "prof_ids.h"
+#include "prof.h"
 
 string IfrNode::name() const
 {
@@ -282,12 +284,14 @@ MIfProv::TIfaces* IfrNodeRoot::ifaces()
 {
     TIfaces* res = nullptr;
     if (!mValid) {
+	PFLC_DUR_STAT(START, PEvents::EDurStat_IFR_IFaces);
 	string nm = name();
 	auto self = const_cast<IfrNodeRoot*>(this);
 	self->resolve(nm);
 	if (mValid) {
 	    res = &mIcache;
 	}
+	PFLC_DUR_STAT(REC, PEvents::EDurStat_IFR_IFaces);
     } else if (!mIcacheValid) {
 	updateIcache();
 	res = &mIcache;

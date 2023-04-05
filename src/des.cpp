@@ -4,6 +4,7 @@
 #include "mlink.h"
 #include "des.h"
 #include "data.h"
+#include "prof_ids.h"
 
 #define DES_RGS_VERIFY
 
@@ -337,6 +338,7 @@ void State::confirm()
 {
     mUpdNotified = false;
     bool changed = false;
+    PFL_DUR_STAT_START(PEvents::EDurStat_StConfirm);
     if (mCdata) {
 	string old_value;
 	if (isLogLevel(EDbg)) {
@@ -383,6 +385,7 @@ void State::confirm()
 	    LOGN(EInfo, "Not initialized");
 	}
     }
+    PFL_DUR_STAT_REC(PEvents::EDurStat_StConfirm);
 }
 
 void State::setUpdated()
@@ -1433,6 +1436,7 @@ bool DesLauncher::Run(int aCount, int aIdleCount)
     int cnt = 0;
     int idlecnt = 0;
     LOGN(EInfo, "START");
+    PFL_DUR_STAT_START(PEvents::EDurStat_LaunchRun);
     while (!mStop && (aCount == 0 || cnt < aCount) && (aIdleCount == 0 || idlecnt < aIdleCount)) {
 #ifdef DES_LISTS_SWAP
 	if (!mActive->empty()) {
@@ -1440,8 +1444,14 @@ bool DesLauncher::Run(int aCount, int aIdleCount)
 	if (!mActive.empty()) {
 #endif
 	    //updateCounter(cnt); // TODO Is it needed?
-	    LOGN(EDbg, ">>> Update [" + to_string(cnt) + "], count: " + to_string(countOfActive()));
+	    LOGN(EDbg, ">>> Update [" + to_string(cnt) + "], count: " + to_string(countOfActive()) +
+		    ", prev_dur: " + PFL_DUR_VALUE(PEvents::EDurStat_LaunchActive));
+	    PFL_DUR_START(PEvents::EDurStat_LaunchActive);
+	    PFL_DUR_STAT_START(PEvents::EDurStat_LaunchActive);
+	    PFL_DUR_STAT_START(PEvents::EDurStat_LaunchUpdate);
 	    update();
+	    PFL_DUR_STAT_REC(PEvents::EDurStat_LaunchUpdate);
+	    PFL_DUR_STAT_START(PEvents::EDurStat_LaunchConfirm);
 #ifdef DES_LISTS_SWAP
 	    if (isLogLevel(EDbg)) {
 		LOGN(EDbg, ">>> Confirm [" + to_string(cnt) + "]");
@@ -1455,8 +1465,11 @@ bool DesLauncher::Run(int aCount, int aIdleCount)
 		confirm();
 	    }
 #endif
+	    PFL_DUR_STAT_REC(PEvents::EDurStat_LaunchConfirm);
 	    cnt++;
 	    idlecnt = 0;
+	    PFL_DUR_STAT_REC(PEvents::EDurStat_LaunchActive);
+	    PFL_DUR_REC(PEvents::EDurStat_LaunchActive);
 	} else {
 	    if (idlecnt == 0) {
 		LOGN(EInfo, "IDLE");
@@ -1465,7 +1478,8 @@ bool DesLauncher::Run(int aCount, int aIdleCount)
 	    idlecnt++;
 	}
 	}
-	LOGN(EInfo, "END");
+	PFL_DUR_STAT_REC(PEvents::EDurStat_LaunchRun);
+	LOGN(EInfo, "END " + PFL_DUR_STAT_FIELD(PEvents::EDurStat_LaunchRun, PIndFId::EStat_SUM));
 	return res;
     }
 
@@ -1633,12 +1647,14 @@ bool DesAs::Run(int aCount, int aIdleCount)
 
 void DesAs::update()
 {
+    PFL_DUR_STAT_START(PEvents::EDurStat_DesAsUpd);
     mRunning = true;
     bool res = Run(0, 1);
     mRunning = false;
     if (!res) {
 	LOGN(EErr, "Failed run");
     }
+    PFL_DUR_STAT_REC(PEvents::EDurStat_DesAsUpd);
 }
 
 void DesAs::setActivated()

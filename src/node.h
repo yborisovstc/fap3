@@ -8,7 +8,7 @@
 #include "nconn.h"
 #include "mecont.h"
 #include <cstring>
-#include "mprof.h"
+#include "prof.h"
 
 
 using namespace std;
@@ -192,15 +192,13 @@ inline int Node::getLocLogLevel() const
 
 
 // Profiler's routines
-#ifdef PROFILING_ENABLED
-#define PFL_DUR_STAT_START(ID) mEnv->profiler()->DurStatStart(ID)
-#define PFL_DUR_STAT_REC(ID) mEnv->profiler()->DurStatRec(ID)
-#else
-#define PFL_DUR_STAT_START(ID) ((void)0)
-#define PFL_DUR_STAT_REC(ID) ((void)0)
-#endif
-
-
-
+#define PFLE() mEnv->profiler()
+#define PFL_SAVE() PROF_SAVE(PFLE())
+#define PFL_DUR_STAT_START(ID) PROF_DUR_START(PFLE(), PROF_DUR_STAT, ID)
+#define PFL_DUR_STAT_REC(ID) PROF_DUR_REC(PFLE(), PROF_DUR_STAT, ID)
+#define PFL_DUR_STAT_FIELD(ID, FID) PROF_FIELD(PFLE(), PROF_DUR_STAT, ID, FID)
+#define PFL_DUR_START(ID) PROF_DUR_START(PFLE(), PROF_DUR, ID)
+#define PFL_DUR_REC(ID) PROF_DUR_REC(PFLE(), PROF_DUR, ID)
+#define PFL_DUR_VALUE(ID) PROF_FIELD(PFLE(), PROF_DUR, ID, PIndFId::EInd_VAL)
 
 #endif //  __FAP3_NODE_H
