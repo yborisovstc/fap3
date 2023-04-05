@@ -3,6 +3,7 @@
 
 #include "unit.h"
 #include "ifr.h"
+#include "prof_ids.h"
 
 
 Unit::Unit(const string &aType, const string &aName, MEnv* aEnv): Node(aType, aName, aEnv)
@@ -130,13 +131,16 @@ IfrNode* Unit::createIfProv(const string& aName, MIfReq::TIfReqCp* aReq) const
 
 void Unit::invalidateIrm()
 {
-    if (!mIrns.empty())
+    if (!mIrns.empty()) {
+	PFL_DUR_STAT_START(PEvents::EDurStat_UInvldIrm);
 	for (auto node : mIrns) {
-	if (node->isValid()) {
-	    node->setValid(false);
-	    // Keep ifaces actual, ref ds_desopt_uic
-	    node->ifaces();
+	    if (node->isValid()) {
+		node->setValid(false);
+		// Keep ifaces actual, ref ds_desopt_uic
+		node->ifaces();
+	    }
 	}
+	PFL_DUR_STAT_REC(PEvents::EDurStat_UInvldIrm);
     }
 }
 

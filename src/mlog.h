@@ -33,6 +33,7 @@ enum TLogRecCtg {
 class TLog
 {
     public:
+	static const int KPrecision;
 	TLog(int aCtg, const MNode* aAgt);
 	TLog(int aCtg, const MNode* aAgt, const string& aArg);
 	TLog(int aCtg, const MNode* aAgt, const ChromoNode& aMut);

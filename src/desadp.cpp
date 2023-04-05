@@ -5,6 +5,7 @@
 #include "rdatauri.h"
 #include "mlink.h"
 #include "mmntp.h"
+#include "prof_ids.h"
 
 
 // Agents DES adaptation - ADP
@@ -883,6 +884,7 @@ void DAdp::update()
 
 void DAdp::confirm()
 {
+    PFL_DUR_STAT_START(PEvents::EDurStat_DAdpConfirm);
     for (auto iap : mIbs) {
 	if (iap->mUpdated) {
 	    iap->mChanged = false;
@@ -895,7 +897,10 @@ void DAdp::confirm()
     if (mIbMagUri.mChanged) {
 	UpdateMag();
     }
+    PFL_DUR_STAT_START(PEvents::EDurStat_DAdpDes);
     Des::confirm();
+    PFL_DUR_STAT_REC(PEvents::EDurStat_DAdpDes);
+    PFL_DUR_STAT_REC(PEvents::EDurStat_DAdpConfirm);
 }
 
 bool DAdp::UpdateMagBase()

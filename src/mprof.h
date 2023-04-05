@@ -7,6 +7,8 @@
 /** @brief Profiler interface
  * */
 
+using TPItemId = int; //!< ID item
+using TPItemFId = int; //!< ID field
 
 /** @brief Profilers event
  * */
@@ -49,7 +51,7 @@ public:
 public:
     /** @brief Return type ID */
     virtual TTid tid() const = 0;
-    virtual std::string getDescription() = 0;
+    virtual std::string getDescription() const = 0;
     virtual int getBufLen() const = 0;
     virtual int getBufLenLimit() const = 0;
     /** Returns file suffix */
@@ -58,12 +60,11 @@ public:
     virtual bool getClockResolution(TClock& aRes) const =  0;
     virtual std::string recToString(int aRecNum) const = 0;
     virtual std::string toString() const = 0;
+    virtual std::string fieldToString(TPItemFId aFId) const = 0;
     virtual bool saveToFile(const std::string& aPath) = 0;
     virtual void dump() const = 0;
     virtual int getId() const = 0;
 };
-
-using TPItemId = int; //!< ID type
 
 /** @brief Profiler interface
  * */
@@ -78,12 +79,21 @@ class MProfiler
 	virtual int pindsCount() const = 0;
 	/** @brief Gets pointer to indicator by Id */
 	virtual MPind* getPind(int aId) = 0;
+	/** @brief Adds pind */
+	virtual void setPind(int aId, MPind* aPind) = 0;
+	/** @brief Gets pointer to indicator by item type Id and item Id */
 	template<typename T> T* getPind(T* aArg) { return reinterpret_cast<T*>(getPind(aArg->KTypeId));}
 	template<typename T> T& getPind() { return reinterpret_cast<T&>(*getPind(T::KTypeId));}
-    public:
-	// Profiler helpers
-	virtual void DurStatStart(TPItemId aId) = 0;
-	virtual void DurStatRec(TPItemId aId) = 0;
+        template<typename T> void addPind(const typename T::TIdata& aIdata) {
+	    MPind* curPind = getPind(T::KTypeId);
+	    if (!curPind) {
+		setPind(T::KTypeId, new T(aIdata));
+	    } else {
+		MProfiler::getPind<T>().addItems(aIdata);
+	    }
+	}
+	// Profiler cluster helper
+	template<template<typename> typename C, typename T> T* getPindItem(TPItemId aId) { return getPind<C<T>>().getItem(aId);}
 };
 
 

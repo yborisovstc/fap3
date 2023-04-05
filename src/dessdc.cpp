@@ -1,6 +1,7 @@
 
 #include "des.h"
 #include "dessdc.h"
+#include "prof_ids.h"
 
 /* SDC base agent */
 
@@ -287,6 +288,7 @@ void ASdc::confirm()
        mIapEnb.confirm();
        }
        */
+    PFL_DUR_STAT_START(PEvents::EDurStat_ASdcConfirm);
     bool changed = false;
     for (auto iap : mIaps) {
 	if (iap->mUpdated) {
@@ -308,6 +310,7 @@ void ASdc::confirm()
 	}
     }
     mUpdNotified = false;
+    PFL_DUR_STAT_REC(PEvents::EDurStat_ASdcConfirm);
 }
 
 void ASdc::setActivated()
