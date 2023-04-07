@@ -16,14 +16,14 @@ void ASdc::MagDobs::updateNuo(MNode* aNuo)
 {
     assert(aNuo);
     /*
-    if (aNuo != mNuo) {
-	MObservable* nuo = mNuo ? mNuo->lIf(nuo) : nullptr;
-	if (nuo) nuo->rmObserver(&mOcp);
-	mNuo = aNuo;
-	nuo = mNuo->lIf(nuo);
-	if (nuo) nuo->addObserver(&mOcp);
-    }
-    */
+       if (aNuo != mNuo) {
+       MObservable* nuo = mNuo ? mNuo->lIf(nuo) : nullptr;
+       if (nuo) nuo->rmObserver(&mOcp);
+       mNuo = aNuo;
+       nuo = mNuo->lIf(nuo);
+       if (nuo) nuo->addObserver(&mOcp);
+       }
+       */
     mOcp.disconnectAll();
     MObservable* nuo = aNuo->lIf(nuo);
     if (nuo) nuo->addObserver(&mOcp);
@@ -57,7 +57,7 @@ template <typename T> string toStr(const T& aData) { return to_string(aData); }
 
 string toStr(const string& aData) { return aData;}
 
-template <class T>
+    template <class T>
 T& ASdc::SdcIap<T>::data(bool aConf)
 { 
     if (aConf) return mCdt;
@@ -67,13 +67,13 @@ T& ASdc::SdcIap<T>::data(bool aConf)
     }
 }
 
-template <class T>
+    template <class T>
 bool ASdc::SdcIap<T>::updateData()
 {
     return mHost->GetInpData<T>(mInpUri, mUdt);
 }
 
-template <class T>
+    template <class T>
 void ASdc::SdcIap<T>::update()
 {
     T old_data = mUdt;
@@ -85,7 +85,7 @@ void ASdc::SdcIap<T>::update()
     setUpdated();
 }
 
-template <class T>
+    template <class T>
 void ASdc::SdcIap<T>::confirm()
 {
     if (mUdt != mCdt) {
@@ -132,13 +132,13 @@ bool ASdc::SdcIapEnb::updateData()
     return res;
 }
 
-template <class T>
+    template <class T>
 bool ASdc::SdcIapg<T>::updateData()
 {
     return mHost->GetInpData<T>(mInpUri, mUdt);
 }
 
-template <class T>
+    template <class T>
 void ASdc::SdcIapg<T>::update()
 {
     bool res = updateData();
@@ -146,7 +146,7 @@ void ASdc::SdcIapg<T>::update()
     setUpdated();
 }
 
-template <class T>
+    template <class T>
 void ASdc::SdcIapg<T>::confirm()
 {
     if (mUdt != mCdt) {
@@ -158,7 +158,7 @@ void ASdc::SdcIapg<T>::confirm()
     mUpdated = false;
 }
 
-template <class T>
+    template <class T>
 void ASdc::SdcMap<T>::update()
 {
     mGetData(mUdt);
@@ -169,7 +169,7 @@ void ASdc::SdcMap<T>::update()
     setUpdated();
 }
 
-template <class T>
+    template <class T>
 void ASdc::SdcMap<T>::confirm()
 {
     if (mUdt != mCdt) {
@@ -274,7 +274,9 @@ void ASdc::update()
 	    }
 	}
 	mActNotified = false;
+#ifndef DES_LISTS_SWAP
 	setUpdated();
+#endif
     }
 }
 
@@ -294,12 +296,14 @@ void ASdc::confirm()
     }
     if (/*changed &&*/ mMag && mIapEnb.data(true).IsValid() && mIapEnb.data(true).mData) { // Ref ds_dcs_sdc_dsgn_oin Solution#1
 	if (!getState(true)) { // Ref ds_dcs_sdc_dsgn_cc Solution#2
+	//mOapOut.VDtGet(string()); // TODO This optimizatio doesn't short time. To ponder.
+	//if (mOapOut.mData.mValid && !mOapOut.mData.mData) {
 	    bool res = doCtl();
 	    if (!res) {
 		Log(EErr, TLog(this) + "Failed controlling managed agent");
 	    } else {
 		mCdone = true;
-		mOapOut.NotifyInpsUpdated();
+		notifyOutp();
 	    }
 	}
     }
@@ -315,7 +319,7 @@ void ASdc::setActivated()
 	    obs->onActivated(this);
 	    mActNotified = true;
 	}
-	// System is activated, this means some inputs is notified of change
+	// System is activated, this means some inputs are notified of change
 	// Status transition potentially depends on any inputs so we need to
 	// propagate notification to output
 	notifyOutp();
@@ -351,6 +355,12 @@ void ASdc::onUpdated(MDesSyncable* aComp)
     assert(false);
 }
 
+void ASdc::notifyOutp()
+{
+    mOapOut.NotifyInpsUpdated();
+    mOutCInv = true;
+}
+
 void ASdc::notifyMaps()
 {
     for (auto map : mMaps) {
@@ -383,10 +393,13 @@ MIface* ASdc::MObserver_getLif(const char *aType)
 
 void ASdc::getOut(Sdata<bool>& aData)
 {
-    // Form status taking into acc control completion, ref ds_dcs_sdc_dsgn_cc
-    aData.mData = getState()/* && mCdone*/;
-    aData.mValid = true;
-    Log(EDbg, TLog(this) + "Outp: " + (aData.mData ? "true" : "false"));
+    if (mOutCInv) {
+	// Form status taking into acc control completion, ref ds_dcs_sdc_dsgn_cc
+	aData.mData = getState();
+	aData.mValid = true;
+	Log(EDbg, TLog(this) + "Outp: " + (aData.mData ? "true" : "false"));
+	mOutCInv = false;
+    }
 }
 
 void ASdc::onOwnerAttached()
@@ -446,12 +459,12 @@ template<typename T> bool ASdc::GetInpData(const string aInpUri, T& aRes)
     MNode* inp = getNode(aInpUri);
     if (inp) {
 	/*
-	T data;
-	res =  GetGData(inp, data);
-	if (res) {
-	    aRes = data;
-	}
-	*/
+	   T data;
+	   res =  GetGData(inp, data);
+	   if (res) {
+	   aRes = data;
+	   }
+	   */
 	GetGData(inp, aRes);
     } else {
 	Log(EDbg, TLog(this) + "Cannot get input [" + aInpUri + "]");
@@ -786,7 +799,7 @@ bool ASdcInsert2::getState(bool aConf)
 	}
 	MNode* comp = mMag->getNode(mIapName.data(aConf).mData);
 	if (!comp) {
-	    Log(EErr, TLog(this) + "State: Cannot find comp [" + mIapName.data(aConf).mData + "]");
+	    Log(EDbg, TLog(this) + "State: Cannot find comp [" + mIapName.data(aConf).mData + "]");
 	    break;
 	}
 	GUri uri_p = GUri(mIapPrev.data(aConf).mData);
@@ -794,34 +807,34 @@ bool ASdcInsert2::getState(bool aConf)
 	GUri prev_uri(mIapName.data(aConf).mData); prev_uri += uri_p;
 	MNode* prev = mMag->getNode(prev_uri);
 	if (!prev) {
-	    Log(EErr, TLog(this) + "State: Cannot find Prev Cp [" + prev_uri.toString() + "]");
+	    Log(EDbg, TLog(this) + "State: Cannot find Prev Cp [" + prev_uri.toString() + "]");
 	    break;
 	}
 	GUri next_uri(mIapName.data(aConf).mData); next_uri += uri_n;
 	MNode* next = mMag->getNode(next_uri);
 	if (!next) {
-	    Log(EErr, TLog(this) + "State: Cannot find Next Cp [" + next_uri.toString() + "]");
+	    Log(EDbg, TLog(this) + "State: Cannot find Next Cp [" + next_uri.toString() + "]");
 	    break;
 	}
 	MVert* prevv = prev->lIf(prevv);
 	if (!prevv) {
-	    Log(EErr, TLog(this) + "State: Prev is not connectable [" + prev_uri.toString() + "]");
+	    Log(EWarn, TLog(this) + "State: Prev is not connectable [" + prev_uri.toString() + "]");
 	    break;
 	}
 	MVert* nextv = next->lIf(nextv);
 	if (!nextv) {
-	    Log(EErr, TLog(this) + "State: Next is not connectable [" + next_uri.toString() + "]");
+	    Log(EDbg, TLog(this) + "State: Next is not connectable [" + next_uri.toString() + "]");
 	    break;
 	}
 	MNode* pnode = mMag->getNode(mIapPname.data(aConf).mData);
 	if (!pnode) {
-	    Log(EErr, TLog(this) + "State: Cannot find position node [" + mIapPname.data(aConf).mData + "]");
+	    Log(EDbg, TLog(this) + "State: Cannot find position node [" + mIapPname.data(aConf).mData + "]");
 	    break;
 	}
 	GUri pnode_next_uri(mIapPname.data(aConf).mData); pnode_next_uri += uri_n;
 	MNode* pnode_next = mMag->getNode(pnode_next_uri);
 	if (!pnode_next) {
-	    Log(EErr, TLog(this) + "State: Cannot find position node next cp [" + pnode_next_uri.toString() + "]");
+	    Log(EDbg, TLog(this) + "State: Cannot find position node next cp [" + pnode_next_uri.toString() + "]");
 	    break;
 	}
 	MVert* pnode_nextv = pnode_next->lIf(pnode_nextv);
@@ -863,6 +876,13 @@ bool ASdcInsert2::doCtl()
     // Verify conditions
     do {
 	if (!mIapName.mCdt.IsValid() || !mIapPrev.mCdt.IsValid() || !mIapNext.mCdt.IsValid()) {
+	    if (!mIapName.mCdt.IsValid()) {
+		Log(EErr, TLog(this) + "Name is invalid");
+	    } else if (!mIapPrev.mCdt.IsValid()) {
+		Log(EErr, TLog(this) + "Prev is invalid");
+	    } else {
+		Log(EErr, TLog(this) + "Next is invalid");
+	    }
 	    break;
 	}
 	MNode* comp = mMag->getNode(mIapName.data().mData);
@@ -1199,12 +1219,13 @@ ASdcExtract::ASdcExtract(const string &aType, const string& aName, MEnv* aEnv): 
 
 bool ASdcExtract::getState(bool aConf)
 {
-    bool res = true; // Note, errors are interpreted in favor of "extracted" state
+    bool res = false;
     do {
 	if (!mMag) break;
 	if (!mIapName.data(aConf).IsValid() || !mIapPrev.data(aConf).IsValid() || !mIapNext.data(aConf).IsValid()) {
 	    break;
 	}
+	res = true; // Note, errors are interpreted in favor of "extracted" state
 	MNode* comp = mMag->getNode(mIapName.data(aConf).mData);
 	if (!comp) {
 	    Log(EDbg, TLog(this) + "Cannot find comp [" + mIapName.mCdt.mData + "]");

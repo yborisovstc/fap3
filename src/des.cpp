@@ -534,6 +534,249 @@ DtBase* State::VDtGet(const string& aType)
 
 
 
+
+
+
+// Constant data
+
+const string Const::KCont_Value = "";
+
+bool Const::SContValue::getData(string& aData) const
+{
+    aData = mHost.mData->ToString();
+    return true;
+}
+
+bool Const::SContValue::setData(const string& aData)
+{
+    return mHost.updateWithContValue(aData);
+}
+
+Const::Const(const string &aType, const string& aName, MEnv* aEnv): Vertu(aType, aName, aEnv),
+    mData(NULL), mInpProv(nullptr), mIsDead(false)
+{
+}
+
+Const::~Const()
+{
+    if (mData) {
+	delete mData;
+    }
+    mIsDead = true;
+}
+
+MIface* Const::MNode_getLif(const char *aType)
+{
+    MIface* res = NULL;
+    if (res = checkLif<MConnPoint>(aType));
+    else if (res = checkLif<MDVarGet>(aType));
+    else res = Vertu::MNode_getLif(aType);
+    return res;
+}
+
+MIface* Const::MOwner_getLif(const char *aType)
+{
+    MIface* res = NULL;
+    if(res = checkLif<MUnit>(aType));  // IFR from inputs
+    else res = Vertu::MOwner_getLif(aType);
+    return res;
+}
+
+MIface* Const::MOwned_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    res = Unit::MOwned_getLif(aType);
+    return res;
+}
+
+void Const::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+{
+    if (aName == provName()) {
+	MIface* ifr = MNode_getLif(aName.c_str());
+	if (ifr && !aReq->binded()->provided()->findIface(ifr)) {
+	    addIfpLeaf(ifr, aReq);
+	}
+    } else {
+	Vertu::resolveIfc(aName, aReq);
+    }
+}
+
+MContent* Const::getCont(int aIdx)
+{
+    return const_cast<MContent*>(const_cast<const Const*>(this)->getCont(aIdx));
+}
+
+const MContent* Const::getCont(int aIdx) const
+{
+    const MContent* res = nullptr;
+    if (aIdx == 0) res = &mValue;
+    else if (aIdx == 1) res = Node::getCont(aIdx - 1);
+    return res;
+}
+
+bool Const::getContent(const GUri& aCuri, string& aRes) const
+{
+    bool res = true;
+    string name = aCuri;
+    if (name == KCont_Value)
+	res = mValue.getData(aRes);
+    else
+	res = Vertu::getContent(aCuri, aRes);
+    return res;
+}
+
+bool Const::setContent(const GUri& aCuri, const string& aData)
+{
+    bool res = true;
+    string name = aCuri;
+    if (name == KCont_Value)
+	res = mValue.setData(aData);
+    else
+	res = Vertu::setContent(aCuri, aData);
+    return res;
+}
+
+void Const::onContentChanged(const MContent* aCont)
+{
+    Vertu::onContentChanged(aCont);
+}
+
+MIface* Const::MVert_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MConnPoint>(aType));
+    else res = Vertu::MVert_getLif(aType);
+    return res;
+}
+
+bool Const::isCompatible(MVert* aPair, bool aExt)
+{
+    bool res = false;
+    bool ext = aExt;
+    MVert* cp = aPair;
+    // Checking if the pair is Extender
+    if (aPair != this) {
+	MVert* ecp = cp->getExtd(); 
+	if (ecp) {
+	    ext = !ext;
+	    cp = ecp;
+	}
+	if (cp) {
+	    // Check roles conformance
+	    string prov = provName();
+	    string req = reqName();
+	    MConnPoint* mcp = cp->lIf(mcp);
+	    if (mcp) {
+		string pprov = mcp->provName();
+		string preq = mcp->reqName();
+		if (ext) {
+		    res = prov == pprov && req == preq;
+		} else {
+		    res = prov == preq && req == pprov;
+		}
+	    }
+	}
+    } else {
+	res = aExt;
+    }
+    return res;
+}
+
+void Const::NotifyInpsUpdated()
+{
+    for (auto pair : mPairs) {
+	MUnit* pe = pair->lIf(pe);
+	auto ifcs = pe->getIfs<MDesInpObserver>();
+	if (ifcs) for (auto ifc : *ifcs) {
+	    MDesInpObserver* obs = reinterpret_cast<MDesInpObserver*>(ifc);
+	    obs->onInpUpdated();
+	}
+    }
+}
+
+string Const::provName() const
+{
+    return MDVarGet::Type();
+}
+
+string Const::reqName() const
+{
+    return MDesInpObserver::Type();
+}
+
+string Const::VarGetIfid() const
+{
+    return mData ? mData->GetTypeSig() : string();
+}
+
+DtBase* Const::CreateData(const string& aType)
+{
+   return Provider()->createData(aType);
+}
+
+void Const::onConnected()
+{
+    Vertu::onConnected();
+    NotifyInpsUpdated();
+}
+
+void Const::onDisconnected()
+{
+    Vertu::onDisconnected();
+    NotifyInpsUpdated();
+}
+
+void Const::onIfpInvalidated(MIfProv* aProv)
+{
+    Vertu::onIfpInvalidated(aProv);
+    NotifyInpsUpdated();
+}
+
+void Const::refreshInpObsIfr()
+{
+    for (auto pair : mPairs) {
+	MUnit* pe = pair->lIf(pe);
+	// Don't add self to if request context to enable routing back to self
+	MIfProv* ifp = pe->defaultIfProv(MDesInpObserver::Type());
+	MIfProv* prov = ifp->first();
+    }
+}
+
+bool Const::updateWithContValue(const string& aData)
+{
+    bool res = false;
+    if (!mData) {
+	string type;
+	DtBase::ParseSigPars(aData, type);
+	mData = CreateData(type);
+    }
+    if (mData) {
+	res = true;
+	mData->FromString(aData);
+	if (mData->IsValid()) {
+	    if (mData->IsChanged()) {
+		//Log(EDbg, TLog(this) + "Initialized:  " + mCdata->ToString(true) + "]");
+		NotifyInpsUpdated();
+	    }
+	}  else {
+	    if (!mData->IsValid() && mData->IsDsError()) {
+		Log(EErr, TLog(this) + "Error on applying content [" + mName + "] value [" + aData + "]");
+		mData->FromString(aData);
+	    }
+	}
+    }
+    return res;
+}
+
+DtBase* Const::VDtGet(const string& aType)
+{
+    return (mData && (aType == mData->GetTypeSig() || aType.empty())) ? mData : nullptr;
+}
+
+
+
+
+
 /// DES
 
 Des::Des(const string &aType, const string &aName, MEnv* aEnv): Syst(aType, aName, aEnv), mUpdNotified(false), mActNotified(false)

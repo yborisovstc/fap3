@@ -214,6 +214,96 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 };
 
 
+/** @brief Constant data
+ * */
+class Const: public Vertu, public MConnPoint, public MDVarGet, public Cnt::Host
+{
+    public:
+	/** @brief Pseudo content */
+	class SCont : public MContent {
+	    public:
+	    SCont(Const& aHost, const string& aName) : mName(aName), mHost(aHost), mUpdated(false) {}
+	    // From MContent
+	    virtual string MContent_Uid() const override { return mHost.getCntUid(mName, MContent::Type());}
+	    virtual MIface* MContent_getLif(const char *aType) override { return nullptr;}
+	    virtual void MContent_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+	    virtual string contName() const override { return mName;}
+	    public:
+	    bool mUpdated;
+	    string mValue;
+	    protected:
+	    string mName;
+	    Const& mHost;
+	};
+	/** @brief Value content */
+	class SContValue : public SCont {
+	    public:
+	    SContValue(Const& aHost, const string& aName): SCont(aHost, aName) {}
+	    // From MContent
+	    virtual bool getData(string& aData) const override;
+	    virtual bool setData(const string& aData) override;
+	};
+    public:
+	static const char* Type() { return "Const";};
+	Const(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	virtual ~Const();
+	// From Node.MIface
+	virtual MIface* MNode_getLif(const char *aType) override;
+	// From Node
+	virtual MIface* MOwner_getLif(const char *aType) override;
+	// From Unit.MIfProvOwner
+	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	// From Node.MContentOwner
+	virtual void onContentChanged(const MContent* aCont) override;
+	// From MVert
+	virtual MIface *MVert_getLif(const char *aType) override;
+	virtual bool isCompatible(MVert* aPair, bool aExt) override;
+	virtual TDir getDir() const override { return EOut;}
+	// From MConnPoint
+	virtual string MConnPoint_Uid() const {return getUid<MDesInpObserver>();}
+	virtual string provName() const override;
+	virtual string reqName() const override;
+	// From Cnt.Host
+	virtual string getCntUid(const string& aName, const string& aIfName) const override { return getUid(aName, aIfName);}
+	virtual MContentOwner* cntOwner() override { return this;}
+	// From Node.MContentOwner
+	virtual int contCount() const override { return 1 + Node::contCount();}
+	virtual MContent* getCont(int aIdx) override;
+	virtual const MContent* getCont(int aIdx) const override;
+	virtual bool getContent(const GUri& aCuri, string& aRes) const override;
+	virtual bool setContent(const GUri& aCuri, const string& aData) override;
+	// From MDVarGet
+	virtual string MDVarGet_Uid() const override {return getUid<MDVarGet>();}
+	virtual string VarGetIfid() const override;
+	virtual MIface* DoGetDObj(const char *aName) override {return nullptr;}
+	virtual DtBase* VDtGet(const string& aType) override;
+    public:
+	static const string KCont_Value;
+    protected:
+	MDVarGet* GetInp();
+	bool updateWithContValue(const string& aCnt);
+    protected:
+	/** @brief Notifies dependencies of input updated */
+	void NotifyInpsUpdated();
+	// From MNode
+	virtual MIface* MOwned_getLif(const char *aType) override;
+	// From MUnit
+	virtual void onIfpInvalidated(MIfProv* aProv) override;
+	// From Vertu
+	virtual void onConnected() override;
+	virtual void onDisconnected() override;
+	// Local
+	void refreshInpObsIfr();
+	DtBase* CreateData(const string& aSrc);
+    protected:
+	DtBase* mData;   //<! Data
+	SContValue mValue = SContValue(*this, KCont_Value);
+	MIfProv* mInpProv;
+	bool mIsDead;     //<! Sign of instance destructed, needs to avoid callbacks initialted by bases */
+};
+
+
+
 
 /** @brief DES system
 * */

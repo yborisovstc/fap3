@@ -36,7 +36,11 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 		virtual string MDesSyncable_Uid() const override {return MDesSyncable::Type();} 
 		virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
 		virtual MIface* MDesSyncable_getLif(const char *aType) override { return nullptr; }
+#ifdef DES_LISTS_SWAP
+		virtual void setUpdated() override { mUpdated = true; }
+#else
 		virtual void setUpdated() override { mUpdated = true; mHost->setUpdated();}
+#endif
 		virtual void setActivated() override { mActivated = true; mHost->setActivated();}
 		virtual int countOfActive(bool aLocal = false) const override { return 1;}
 	    public:
@@ -80,7 +84,11 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 		// From MDesSyncable
 		virtual string MDesSyncable_Uid() const override {return mHost->getUidC<MDesSyncable>(mName);} 
 		virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+#ifdef DES_LISTS_SWAP
+		virtual void setUpdated() override { mUpdated = true; }
+#else
 		virtual void setUpdated() override { mUpdated = true; mHost->setUpdated();}
+#endif
 		virtual void setActivated() override { mActivated = true; mHost->setActivated();}
 		virtual int countOfActive(bool aLocal = false) const override { return 1;}
 	    public:
@@ -301,7 +309,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 	/** @brief Gets status of the query */
 	virtual bool getState(bool aConf = false) {return false;}
 	void notifyMaps();
-	void notifyOutp() { mOapOut.NotifyInpsUpdated(); }
+	void notifyOutp();
 	void UpdateMag();
     protected:
 	vector<SdcIapb*> mIaps; /*!< Input adapters registry */
@@ -315,6 +323,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 	ASdc::SdcPap<Sdata<bool>> mOapOut; /*!< Controlling status access point */
 	MagObs mMagObs;             /*!< MAG observer */
 	bool mCdone;               /*!<  Sign that controlling was completed, ref ds_dcs_sdc_dsgn_cc */
+	bool mOutCInv = true;      //!< Sign of output data cache invalidated
 };
 
 template <typename T>

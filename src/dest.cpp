@@ -202,7 +202,7 @@ void TrAddVar::Init(const string& aIfaceName)
     }
     if ((mFunc = FAddDt<Sdata<int>>::Create(this, aIfaceName)) != NULL);
     else {
-	Log(EErr, TLog(this) + "Failed init, outp [" + aIfaceName + "]");
+	Log(EWarn, TLog(this) + "Failed init, outp [" + aIfaceName + "]");
     }
 }
 
@@ -234,7 +234,7 @@ void TrAdd2Var::Init(const string& aIfaceName)
     }
     if ((mFunc = FAddDt2<Sdata<int>>::Create(this, aIfaceName)) != NULL);
     else {
-	Log(EErr, TLog(this) + "Failed init, outp [" + aIfaceName + "]");
+	Log(EWarn, TLog(this) + "Failed init, outp [" + aIfaceName + "]");
     }
 }
 
@@ -266,7 +266,7 @@ void TrSub2Var::Init(const string& aIfaceName)
     }
     if ((mFunc = FSubDt2<Sdata<int>>::Create(this, aIfaceName)) != NULL);
     else {
-	Log(EErr, TLog(this) + "Failed init, outp [" + aIfaceName + "]");
+	Log(EWarn, TLog(this) + "Failed init, outp [" + aIfaceName + "]");
     }
 }
 
@@ -414,7 +414,7 @@ void TrCmpVar::Init(const string& aIfaceName)
 	else if (mFunc = FCmp<Sdata<string> >::Create(this, t1, t2, ftype));
 	else if (mFunc = FCmp<DGuri>::Create(this, t1, t2, ftype));
 	else {
-	    Log(EErr, TLog(this) + "Failed init, inputs [" + t1 + "], [" + t2 + "]");
+	    Log(EWarn, TLog(this) + "Failed init, inputs [" + t1 + "], [" + t2 + "]");
 	}
     }
 }
@@ -624,7 +624,7 @@ void TrApndVar::Init(const string& aIfaceName)
 	if ((mFunc = FApnd<Sdata<string>>::Create(this, aIfaceName, t_inp)));
 	else if ((mFunc = FApnd<DGuri>::Create(this, aIfaceName, t_inp)));
 	else {
-	    Logger()->Write(EErr, this, "Failed init function");
+	    Logger()->Write(EWarn, this, "Failed init function");
 	}
     }
 }
@@ -703,7 +703,7 @@ void TrTailVar::Init(const string& aIfaceName)
     }
     if ((mFunc = FTailUri::Create(this, aIfaceName)));
     else {
-	Logger()->Write(EErr, this, "Failed init function");
+	Logger()->Write(EWarn, this, "Failed init function");
     }
 }
 
@@ -736,7 +736,7 @@ void TrHeadVar::Init(const string& aIfaceName)
     }
     if ((mFunc = FHeadUri::Create(this, aIfaceName)));
     else {
-	Logger()->Write(EErr, this, "Failed init function");
+	Logger()->Write(EWarn, this, "Failed init function");
     }
 }
 
@@ -775,7 +775,7 @@ void TrTailnVar::Init(const string& aIfaceName)
     }
     if ((mFunc = FTailnUri::Create(this, ifaceName)));
     else {
-	Logger()->Write(EErr, this, "Failed init function");
+	Logger()->Write(EWarn, this, "Failed init function");
     }
 }
 
@@ -1023,15 +1023,15 @@ void TrPair::Init(const string& aIfaceName)
 	    if ((mFunc = FPair<DGuri>::Create(this, aIfaceName, t1)));
 	    else if ((mFunc = FPair<Sdata<int>>::Create(this, aIfaceName, t1)));
 	    else {
-		Log(EErr, TLog(this) + "Failed init, iface [" + aIfaceName + "]");
+		Log(EWarn, TLog(this) + "Failed init, iface [" + aIfaceName + "]");
 	    }
 	} else {
-	    Log(EErr, TLog(this) + "Failed init, incompatible inputs [" + t1 + "], [" + t2 + "]");
+	    Log(EWarn, TLog(this) + "Failed init, incompatible inputs [" + t1 + "], [" + t2 + "]");
 	    t1 = inp1->VarGetIfid();
 	    t2 = inp2->VarGetIfid();
 	}
     } else {
-	Log(EErr, TLog(this) + "Missing input [" + (inp2 ? GetInpUri(Func::EInp1) : GetInpUri(Func::EInp1)) + "]");
+	Log(EWarn, TLog(this) + "Missing input [" + (inp2 ? GetInpUri(Func::EInp1) : GetInpUri(Func::EInp1)) + "]");
     }
 }
 

@@ -26,6 +26,7 @@
 #include "dessdc.h"
 #include "dessdo.h"
 #include "dessp.h"
+#include "desconst.h"
 #include "mnt.h"
 #include "link.h"
 
@@ -40,7 +41,7 @@ const string KChromRarg_Chs = "chs";
 const ProvDef::TFReg ProvDef::mReg ( {
 	Item<Node>(), Item<Unit>(), Item<Import>(), Item<Elem>(), Item<Content>(), Item<Vertu>(), Item<Vert>(), Item<Link>(),
 	Item<Syst>(), Item<ConnPointu>(), Item<CpMnodeOutp>(), Item<CpMnodeInp>(),
-	Item<Extd>(), Item<State>(), Item<Des>(), Item<TrAddVar>(), Item<TrAdd2Var>(), Item<TrSub2Var>(),
+	Item<Extd>(), Item<State>(), Item<Const>(), Item<Des>(), Item<TrAddVar>(), Item<TrAdd2Var>(), Item<TrSub2Var>(),
 	Item<CpStateInp>(), Item<CpStateOutp>(), Item<ExtdStateInp>(), Item<ExtdStateOutp>(), Item<ExtdStateMnodeOutp>(),
 	Item<CpStateMnodeInp>(),  Item<CpStateMnodeOutp>(),
 	Item<DesLauncher>(), Item<Sout>(), Item<ADes>(), Item<Socket>(),
@@ -64,6 +65,8 @@ const ProvDef::TFReg ProvDef::mReg ( {
 	Item<DesAs>(), 
 	/* DES service point */
 	Item<DesSpe>(), Item<DesSp>(), Item<DesSpt>(), Item<ADesSpc>(), 
+	/* DES constants */
+	Item<SI_0>(), Item<SI_1>(), Item<SB_False>(), Item<SB_True>(),
 	});
 
 /** Data factory registry */
