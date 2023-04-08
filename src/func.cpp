@@ -25,7 +25,7 @@ const MDVarGet* Func::GetInp(int aInpId)
     if (Ic) {
 	res = (Ic->size() == 1) ? Ic->at(0) : nullptr;
 	if (!res) {
-	    mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(aInpId) + "]");
+	    LOGF(EDbg, "Cannot get input [" + mHost.GetInpUri(aInpId) + "]");
 	}
     }
     return res;
@@ -88,7 +88,7 @@ template<class T> const DtBase* FAddDt<T>::FDtGet()
     if (!resSet) {
 	mRes.mValid = false;
     }
-    mHost.log(EDbg, "Inp count: " + to_string(InpIc->size()) + ", InpN count: " + to_string(InpNIc->size()) + ", res [" + mRes.ToString(true) + "]");
+    LOGF(EDbg, "Inp count: " + to_string(InpIc->size()) + ", InpN count: " + to_string(InpNIc->size()) + ", res [" + mRes.ToString(true) + "]");
     return &mRes;
 }
 
@@ -131,7 +131,7 @@ template<class T> const DtBase* FAddDt2<T>::FDtGet()
 	mRes.mData = arg1->mData + arg2->mData;
 	mRes.mValid = true;
     }
-    mHost.log(EDbg, "Inp [" + (arg1 ? arg1->ToString(true) : "nil") + "], Inp2 [" + (arg2 ? arg2->ToString(true) : "nil")  + "], res [" + mRes.ToString(true) + "]");
+    LOGF(EDbg, "Inp [" + (arg1 ? arg1->ToString(true) : "nil") + "], Inp2 [" + (arg2 ? arg2->ToString(true) : "nil")  + "], res [" + mRes.ToString(true) + "]");
     return &mRes;
 }
 
@@ -164,7 +164,7 @@ template<class T> const DtBase* FSubDt2<T>::FDtGet()
 	mRes.mData = arg1->mData - arg2->mData;
 	mRes.mValid = true;
     }
-    mHost.log(EDbg, "Inp [" + (arg1 ? arg1->ToString(true) : "nil") + "], Inp2 [" + (arg2 ? arg2->ToString(true) : "nil")  + "], res [" + mRes.ToString(true) + "]");
+    LOGF(EDbg, "Inp [" + (arg1 ? arg1->ToString(true) : "nil") + "], Inp2 [" + (arg2 ? arg2->ToString(true) : "nil")  + "], res [" + mRes.ToString(true) + "]");
     return &mRes;
 }
 
@@ -265,7 +265,7 @@ Func* FApnd<T>::Create(Host* aHost, const string& aOutIid, const string& aInpIid
 	}
     } else {
 	// Weak negotiation - wrong case here
-	//mHost.log(EErr, "Creating instance, wrong outp [" + aOutIid + "] or inp [" + aInpIid + "] types");
+	//LOGF(EErr, "Creating instance, wrong outp [" + aOutIid + "] or inp [" + aInpIid + "] types");
     }
     return res;
 }
@@ -279,7 +279,7 @@ template<class T> const DtBase* FApnd<T>::FDtGet()
 	mRes.mData = arg1->mData + arg2->mData;
 	mRes.mValid = true;
     }
-    mHost.log(EDbg, "Inp1 [" + (arg1 ? arg1->ToString(true) : "nil") + "], Inp2 [" + (arg2 ? arg2->ToString(true) : "nil")  + "], res [" + mRes.ToString(true) + "]");
+    LOGF(EDbg, "Inp1 [" + (arg1 ? arg1->ToString(true) : "nil") + "], Inp2 [" + (arg2 ? arg2->ToString(true) : "nil")  + "], res [" + mRes.ToString(true) + "]");
     return &mRes;
 }
 
@@ -412,7 +412,7 @@ template <class T> const DtBase* FCmp<T>::FDtGet()
 	    }
 	}
     }
-    mHost.log(EDbg, "Inp [" + (arg1 ? arg1d->ToString(true) : "nil") + "], Inp2 [" + (arg2 ? arg2d->ToString(true) : "nil")  + "], res [" + mRes.ToString(true) + "]");
+    LOGF(EDbg, "Inp [" + (arg1 ? arg1d->ToString(true) : "nil") + "], Inp2 [" + (arg2 ? arg2d->ToString(true) : "nil")  + "], res [" + mRes.ToString(true) + "]");
     return &mRes;
 }
 
@@ -485,7 +485,7 @@ template <class T> const DtBase* FAtVect<T>::FDtGet()
 	if (ind->mData < inp->Size()) {
 	    mRes.mValid = inp->GetElem(ind->mData, mRes.mData);
 	} else {
-	    mHost.log(EWarn, "Index is exceeded: " + ind->ToString(false));
+	    LOGF(EWarn, "Index is exceeded: " + ind->ToString(false));
 	}
     }
     return &mRes;
@@ -531,7 +531,7 @@ template <class T> const DtBase* FAtgVect<T>::FDtGet()
 	if (ind->mData < inp->Size()) {
 	    mRes.mValid = inp->GetElem(ind->mData, mRes);
 	} else {
-	    mHost.log(EWarn, "Index is exceeded: " + ind->ToString(false));
+	    LOGF(EWarn, "Index is exceeded: " + ind->ToString(false));
 	}
     }
     return &mRes;
@@ -579,7 +579,7 @@ template <class T> const DtBase* FAtgPair<T>::FDtGet()
 	    mRes = inp->mData.second;
 	} else {
 	    string inds = ind->ToString(false);
-	    mHost.log(EWarn, "Index is exceeded: " + inds);
+	    LOGF(EWarn, "Index is exceeded: " + inds);
 	}
     }
     return &mRes;
@@ -616,7 +616,7 @@ const DtBase* FTailUri::FDtGet()
     if (inp && head && inp->IsValid() && head->IsValid()) {
 	mRes.mValid = inp->mData.getTail(head->mData, mRes.mData);
     }
-    mHost.log(EDbg, "Inp [" + (inp ? inp->ToString(true) : "nil") + "], Head [" + (head ? head->ToString(true) : "nil")  + "], res [" + mRes.ToString(true) + "]");
+    LOGF(EDbg, "Inp [" + (inp ? inp->ToString(true) : "nil") + "], Head [" + (head ? head->ToString(true) : "nil")  + "], res [" + mRes.ToString(true) + "]");
     return &mRes;
 }
 

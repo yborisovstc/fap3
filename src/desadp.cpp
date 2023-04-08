@@ -113,7 +113,7 @@ void AAdp::onObsChanged(MObservable* aObl)
 	MNode* magon = magolinkl->pair();
 	bool res = UpdateMagOwner(magon);
 	if (!res) {
-	    Log(EErr, TLog(this) + "Failed to set MAG base [" + magon->Uid() + "]");
+	    LOGN(EErr, "Failed to set MAG base [" + magon->Uid() + "]");
 	}
     } else {
 	// Handling Mag base input change
@@ -332,7 +332,7 @@ bool AAdp::UpdateMag(const string& aMagUri)
 	if (mag) {
 	    UpdateMag(mag);
 	} else if (hasMagOwner) {
-	    Logger()->Write(EErr, this, "Cannot find managed agent [%s]", mMagUri.mData.c_str());
+	    LOGN(EErr, "Cannot find managed agent [" + mMagUri.mData + "]");
 	}
     }
     return res;
@@ -352,7 +352,7 @@ bool AAdp::UpdateMag(MNode* aMag)
 	MObservable* magob = mMag->lIf(magob);
 	magob->addObserver(&mMagObs.mOcp);
 	NotifyInpsUpdated();
-	Log(EInfo, TLog(this) + "Managed agent attached [" + mMag->Uid() + "]");
+	LOGN(EInfo, "Managed agent attached [" + mMag->Uid() + "]");
     }
     return res;
 }
@@ -374,7 +374,7 @@ bool AAdp::ApplyMagBase()
 	    }
 	}
     } else {
-	Log(EDbg, TLog(this) + "Cannot get input [" + K_CpUriInpMagBase + "]");
+	LOGN(EDbg, "Cannot get input [" + K_CpUriInpMagBase + "]");
     }
     return res;
 }
@@ -427,13 +427,13 @@ void AAdp::onOwnerAttached()
 	res = obl->addObserver(&mObrCp);
     }
     if (!res) {
-	Logger()->Write(EErr, this, "Cannot attach to observer");
+	LOGN(EErr, "Cannot attach to observer");
     }
     // Registering in agent host
     MActr* ac = Owner()->lIf(ac);
     res = ac->attachAgent(&mAgtCp);
     if (!res) {
-	Logger()->Write(EErr, this, "Cannot attach to host");
+	LOGN(EErr, "Cannot attach to host");
     }
     // Start monitoring MAG owner link
     MNode* magoln = ahostGetNode(K_MagOwnerLinkUri);
@@ -441,7 +441,7 @@ void AAdp::onOwnerAttached()
     if (magolinkobl) { 
 	magolinkobl->addObserver(&mObrCp);
     } else {
-	Log(EErr, TLog(this) + "Cannot find MAG owner link");
+	LOGN(EErr, "Cannot find MAG owner link");
     }
     // Start monitoring MAG base input
     MNode* magbasen = ahostGetNode(K_CpUriInpMagBase);
@@ -449,7 +449,7 @@ void AAdp::onOwnerAttached()
     if (magbaseobl) {
 	magbaseobl->addObserver(&mObrCp);
     } else {
-	Log(EErr, TLog(this) + "Cannot find MAG base inp");
+	LOGN(EErr, "Cannot find MAG base inp");
     }
 
 }
@@ -583,7 +583,7 @@ void AMnodeAdp::confirm() {
 	    mNameUpdated = false;
 	}
     } else {
-	Logger()->Write(EWarn, this, "Managed agent is not attached");
+	LOGN(EWarn, "Managed agent is not attached");
     }
     AAdp::confirm();
 }
@@ -637,9 +637,9 @@ void AMnodeAdp::ApplyMut()
 		    mMag->mutate(chr->Root(), false, mutctx, true);
 		    delete chr;
 		    string muts = mut.ToString();
-		    Logger()->Write(EInfo, this, "Managed agent is mutated [%s]", muts.c_str());
+		    LOGN(EInfo, "Managed agent is mutated [" + muts + "]");
 		} else if (!mut.IsValid() || mut.Type() == ENt_Unknown) {
-		    Logger()->Write(EErr, this, "Invalid mutation [%s]", mut.operator string().c_str());
+		    LOGN(EErr, "Invalid mutation [" + mut.operator string() + "]");
 		}
 	    } else {
 		const DChr2* gsd = vget->DtGet(gsd);
@@ -653,18 +653,18 @@ void AMnodeAdp::ApplyMut()
 			TNs ns; MutCtx mutctx(NULL, ns);
 			mMag->mutate(chromo.Root(), false, mutctx, true);
 			string datas = chromo.Root();
-			Logger()->Write(EInfo, this, "Managed agent is mutated [%s]", datas.c_str());
+			LOGN(EInfo, "Managed agent is mutated [" + datas + "]");
 		    } else {
 			string datas = chromo.Root();
-			Logger()->Write(EErr, this, "Invalid mutations [%s]", datas.c_str());
+			LOGN(EErr, "Invalid mutations [" + datas + "]");
 		    }
 
 		} else  {
-		    Logger()->Write(EErr, this, "Cannot get data from Inp");
+		    LOGN(EErr, "Cannot get data from Inp");
 		}
 	    }
 	} else {
-	    Logger()->Write(EDbg, this, "Cannot get input");
+	    LOGN(EDbg, "Cannot get input");
 	}
     }
 }
@@ -727,12 +727,12 @@ void AMelemAdp::ApplyMut()
 			mMag->mutate(chr->Root(), false, mutctx, true);
 			delete chr;
 			string muts = mut.ToString();
-			Logger()->Write(EInfo, this, "Managed agent is mutated [%s]", muts.c_str());
+			LOGN(EInfo, "Managed agent is mutated [" + muts + "]");
 		    } else if (!mut.IsValid() || mut.Type() == ENt_Unknown) {
-			Logger()->Write(EErr, this, "Invalid mutation [%s]", mut.operator string().c_str());
+			LOGN(EErr, "Invalid mutation [" + mut.operator string() + "]");
 		    }
 		} else {
-		    Logger()->Write(EErr, this, "Managed agent is not MElem");
+		    LOGN(EErr, "Managed agent is not MElem");
 		}
 	    } else {
 		const DChr2* data = vget->DtGet(data);
@@ -744,20 +744,20 @@ void AMelemAdp::ApplyMut()
 			TNs ns; MutCtx mutctx(NULL, ns);
 			mMag->mutate(chromo.Root(), false, mutctx);
 			string datas = chromo.Root();
-			Logger()->Write(EInfo, this, "Managed agent is mutated [%s]", datas.c_str());
+			LOGN(EInfo, "Managed agent is mutated [" + datas + "]");
 		    } else {
 			string datas = chromo.Root();
-			Logger()->Write(EErr, this, "Invalid mutations [%s]", datas.c_str());
+			LOGN(EErr, "Invalid mutations [" + datas + "]");
 		    }
 		} else {
-		    Logger()->Write(EErr, this, "Managed agent is not MElem");
+		    LOGN(EErr, "Managed agent is not MElem");
 		}
 		} else {
-		    Logger()->Write(EErr, this, "Cannot get data from Inp");
+		    LOGN(EErr, "Cannot get data from Inp");
 		}
 	    }
 	} else {
-	    Logger()->Write(EDbg, this, "Cannot get input");
+	    LOGN(EDbg, "Cannot get input");
 	}
     }
 }
@@ -936,7 +936,7 @@ void DAdp::UpdateMag()
 	    MObservable* magob = mMag->lIf(magob);
 	    magob->addObserver(&mMagObs.mOcp);
 	    //NotifyInpsUpdated();
-	    Log(EInfo, TLog(this) + "Managed agent attached [" + mMag->Uid() + "]");
+	    LOGN(EInfo, "Managed agent attached [" + mMag->Uid() + "]");
 	}
     }
 }

@@ -51,6 +51,10 @@ class MUnit: public MIface
 	    auto prov = defaultIfProv(T::Type());
 	    return prov ? prov->ifaces() : nullptr;
 	}
+	template<class T> MIfProv::TTIfaces<T>* getTIfs() {
+	    auto prov = defaultIfProv(T::Type());
+	    return prov ? reinterpret_cast<MIfProv::TTIfaces<T>*>(prov->ifaces()) : nullptr;
+	}
 };
 
 

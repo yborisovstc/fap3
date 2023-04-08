@@ -21,6 +21,7 @@ class Func
 	    virtual string GetInpUri(int aId) const = 0;
 	    virtual void log(int aCtg, const string& aMsg) = 0;
 	    virtual string getHostUri() const = 0;
+	    virtual bool hostIsLogLevel(int aLevel) const = 0;
 	};
     public:
 	Func(Host& aHost): mHost(aHost) {};
@@ -35,6 +36,12 @@ class Func
     protected:
 	Host& mHost;
 };
+
+#define LOGF(aLevel, aContent) \
+    if (mHost.hostIsLogLevel(aLevel)) {\
+	mHost.log(aLevel, aContent);\
+    }\
+
 
 
 template <class T> inline const T* Func::GetInpData(int aInpId, const T* aData)

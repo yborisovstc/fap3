@@ -52,6 +52,11 @@ TLog::TLog(int aCtg, const MNode* aAgt): mCtg(aCtg)
     }
 }
 
+TLog::TLog(int aCtg, const MNode* aAgt, const string& aContent): TLog(aCtg, aAgt)
+{
+    mContent = aContent;
+}
+
 TLog::TLog(const MNode* aAgt): TLog(EAll, aAgt) {}
 
 TLog::TLog(int aCtg, const MNode* aAgt, const ChromoNode& aMut): TLog(aCtg, aAgt)

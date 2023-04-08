@@ -17,7 +17,7 @@ enum TLogScope {
 };
 
 enum TLogRecCtg {
-    ELcUndef = 0,
+    ELcUndef = 0, // DON'T change!
     ENoLog = 1,
     EErr = 2,
     EWarn = 10,
@@ -34,6 +34,7 @@ class TLog
 {
     public:
 	TLog(int aCtg, const MNode* aAgt);
+	TLog(int aCtg, const MNode* aAgt, const string& aArg);
 	TLog(int aCtg, const MNode* aAgt, const ChromoNode& aMut);
 	TLog(const MNode* aAgt);
 	TLog(const MNode* aAgt, const ChromoNode& aMut);

@@ -17,6 +17,7 @@
 // Experimental oprimization of DES cycle, ref ds_mdc_sw
 #define DES_LISTS_SWAP
 
+
 /** @brief State Connection point
  * */
 class CpState: public ConnPointu
@@ -156,7 +157,7 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 	virtual void confirm() override;
 	virtual void setUpdated() override;
 	virtual void setActivated() override;
-	virtual int countOfActive(bool aLocal = false) const override { return 1;}
+	virtual int countOfActive(bool aLocal = false) const override { return 0;}
 	// From MDesInpObserver
 	virtual string MDesInpObserver_Uid() const {return getUid<MDesInpObserver>();}
 	virtual void MDesInpObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
@@ -310,6 +311,8 @@ class Const: public Vertu, public MConnPoint, public MDVarGet, public Cnt::Host
 class Des: public Syst, public MDesSyncable, public MDesObserver
 {
     public:
+    using TScblReg = list<MDesSyncable*>;
+    public:
 	static const char* Type() { return "Des";};
 	Des(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From Node.MIface
@@ -336,14 +339,16 @@ class Des: public Syst, public MDesSyncable, public MDesObserver
 	// From Unit.MIfProvOwner
 	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
     protected:
+	static void RmSyncable(TScblReg& aReg, MDesSyncable* aScbl);
+    protected:
 #ifdef DES_LISTS_SWAP
-	list<MDesSyncable*> mSP;     /*!< Active compoments */
-	list<MDesSyncable*> mSQ;    /*!< Updated compoments */
-	list<MDesSyncable*>* mActive = &mSP;
-	list<MDesSyncable*>* mUpdated = &mSQ;
+	TScblReg mSP;     /*!< Active compoments */
+	TScblReg mSQ;    /*!< Updated compoments */
+	TScblReg* mActive = &mSP;
+	TScblReg* mUpdated = &mSQ;
 #else
-	list<MDesSyncable*> mActive;     /*!< Active compoments */
-	list<MDesSyncable*> mUpdated;    /*!< Updated compoments */
+	TScblReg mActive;     /*!< Active compoments */
+	TScblReg mUpdated;    /*!< Updated compoments */
 #endif
 	bool mUpdNotified;  //<! Sign of that State notified observers on Update
 	bool mActNotified;  //<! Sign of that State notified observers on Activation

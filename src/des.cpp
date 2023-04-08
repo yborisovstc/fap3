@@ -19,12 +19,9 @@ CpState::CpState(const string &aType, const string& aName, MEnv* aEnv): ConnPoin
 
 void CpState::notifyInpsUpdated()
 {
-    MIfProv* ifp = defaultIfProv(MDesInpObserver::Type());
-    MIfProv* prov = ifp->first();
-    while (prov) {
-	MDesInpObserver* obs = reinterpret_cast<MDesInpObserver*>(prov->iface());
-	if (obs) obs->onInpUpdated();
-	prov = prov->next();
+    auto* ifcs = getTIfs<MDesInpObserver>();
+    for (auto* obs : *ifcs) {
+	obs->onInpUpdated();
     }
 }
 
@@ -329,9 +326,8 @@ void State::NotifyInpsUpdated()
 {
     for (auto pair : mPairs) {
 	MUnit* pe = pair->lIf(pe);
-	auto ifcs = pe->getIfs<MDesInpObserver>();
-	if (ifcs) for (auto ifc : *ifcs) {
-	    MDesInpObserver* obs = static_cast<MDesInpObserver*>(ifc);
+	auto ifcs = pe->getTIfs<MDesInpObserver>();
+	if (ifcs) for (auto obs : *ifcs) {
 	    obs->onInpUpdated();
 	}
     }
@@ -342,10 +338,6 @@ void State::confirm()
     mUpdNotified = false;
     bool changed = false;
     if (mCdata) {
-	string old_value;
-	if (isLogLevel(EDbg)) {
-	    old_value = mCdata->ToString();
-	}
 	if (mInpValid) {
 	    if (mPdata) {
 		if (*mCdata != *mPdata) {
@@ -368,13 +360,10 @@ void State::confirm()
 	    }
 	}
 	if (changed) {
-	    if (isLogLevel(EDbg)) {
-		string new_value = mCdata->ToString();
-		Log(EInfo, TLog(this) + "Updated [" + new_value + " <- " + old_value + "]");
-	    }
+	    LOGN(EDbg, "Updated [" + mCdata->ToString() + " <- " + mCdata->ToString() + "]");
 	} else {
-	    // State is not changed. No need to notify connected inps. But we still need to make IFR paths to inps
-	    // actual. Ref ds_asr.
+	    // State is not changed. No need to notify connected inps.
+	    // But we still need to make IFR paths to inps actual. Ref ds_asr.
 	    // TODO PERF
 	    refreshInpObsIfr();
 	}
@@ -385,9 +374,9 @@ void State::confirm()
 	if (mCdata) {
 	    *mCdata = *mPdata;
 	    NotifyInpsUpdated();
-	    Log(EInfo, TLog(this) + "Updated [" + mCdata->ToString() + "]");
+	    LOGN(EInfo, "Updated [" + mCdata->ToString() + "]");
 	} else {
-	    Log(EInfo, TLog(this) + "Not initialized");
+	    LOGN(EInfo, "Not initialized");
 	}
     }
 }
@@ -414,7 +403,6 @@ MDVarGet* State::GetInp()
     MDVarGet* res = nullptr;
     MIfProv::TIfaces* ifcs = nullptr;
     if (!mInpProv) {
-	//MNode* inp = getNode("Inp");
 	if (!mInp) mInp = getNode("Inp");
 	MNode* inp = mInp;
 	MUnit* inpu = inp ? inp->lIf(inpu) : nullptr;
@@ -426,7 +414,7 @@ MDVarGet* State::GetInp()
     if (ifcs && ifcs->size() == 1) {
 	res = reinterpret_cast<MDVarGet*>(ifcs->at(0));
     } else {
-	Log(EDbg, TLog(this) + "Cannot get input");
+	LOGN(EDbg, "Cannot get input");
     }
     return res;
 }
@@ -513,12 +501,12 @@ bool State::updateWithContValue(const string& aData)
 	mPdata->FromString(aData);
 	if (mCdata->IsValid()) {
 	    if (mCdata->IsChanged()) {
-		//Log(EDbg, TLog(this) + "Initialized:  " + mCdata->ToString(true) + "]");
+		//LOGN(EDbg, "Initialized:  " + mCdata->ToString(true) + "]");
 		NotifyInpsUpdated();
 	    }
 	}  else {
 	    if (!mCdata->IsValid() && mCdata->IsDsError()) {
-		Log(EErr, TLog(this) + "Error on applying content [" + mName + "] value [" + aData + "]");
+		LOGN(EErr, "Error on applying content [" + mName + "] value [" + aData + "]");
 		mCdata->FromString(aData);
 	    }
 	}
@@ -755,12 +743,12 @@ bool Const::updateWithContValue(const string& aData)
 	mData->FromString(aData);
 	if (mData->IsValid()) {
 	    if (mData->IsChanged()) {
-		//Log(EDbg, TLog(this) + "Initialized:  " + mCdata->ToString(true) + "]");
+		//LOGN(EDbg, "Initialized:  " + mCdata->ToString(true) + "]");
 		NotifyInpsUpdated();
 	    }
 	}  else {
 	    if (!mData->IsValid() && mData->IsDsError()) {
-		Log(EErr, TLog(this) + "Error on applying content [" + mName + "] value [" + aData + "]");
+		LOGN(EErr, "Error on applying content [" + mName + "] value [" + aData + "]");
 		mData->FromString(aData);
 	    }
 	}
@@ -844,7 +832,7 @@ void Des::update()
 	try {
 	    comp->update();
 	} catch (std::exception e) {
-	    Log(EErr, TLog(this) + "Error on update [" + comp->Uid() + "]");
+	    LOGN(EErr, "Error on update [" + comp->Uid() + "]");
 	}
     }
     // Swapping the lists
@@ -863,7 +851,7 @@ void Des::update()
 	try {
 	    comp->update();
 	} catch (std::exception e) {
-	    Log(EErr, TLog(this) + "Error on update [" + comp->Uid() + "]");
+	    LOGN(EErr, "Error on update [" + comp->Uid() + "]");
 	}
 	mActive.pop_front();
     }
@@ -976,9 +964,9 @@ void Des::onUpdated(MDesSyncable* aComp)
 }
 #endif
 
-static void RmSyncable(list<MDesSyncable*>& aList, MDesSyncable* aScbl)
+void Des::RmSyncable(TScblReg& aReg, MDesSyncable* aScbl)
 {
-    aList.remove(aScbl);
+    aReg.remove(aScbl);
 }
 
 void Des::onOwnedAttached(MOwned* aOwned)
@@ -1156,7 +1144,7 @@ void ADes::update()
 	try {
 	    comp->update();
 	} catch (std::exception e) {
-	    Log(EErr, TLog(this) + "Error on update [" + comp->Uid() + "]");
+	    LOGN(EErr, "Error on update [" + comp->Uid() + "]");
 	}
     }
     // Swapping the lists
@@ -1176,7 +1164,7 @@ void ADes::update()
 	try {
 	    comp->update();
 	} catch (std::exception e) {
-	    Log(EErr, TLog(this) + "Error on update [" + comp->Uid() + "]");
+	    LOGN(EErr, "Error on update [" + comp->Uid() + "]");
 	}
 	mActive.pop_front();
     }
@@ -1224,10 +1212,10 @@ void ADes::setUpdated()
 	if (obs) {
 	    obs->onUpdated(this);
 	    mUpdNotified = true;
-	    //Log(EInfo, TLog(this) + "setUpdated, observer: " + obs->Uid());
+	    //LOGN(EInfo, "setUpdated, observer: " + obs->Uid());
 	    //obs = getDesObs();
 	} else {
-	    //Log(EInfo, TLog(this) + "setUpdated, observer not found");
+	    //LOGN(EInfo, "setUpdated, observer not found");
 	}
     }
 }
@@ -1240,7 +1228,7 @@ void ADes::setActivated()
 	    obs->onActivated(this);
 	    mActNotified = true;
 	} else {
-	    //Log(EInfo, TLog(this) + "setActivated, observer not found");
+	    //LOGN(EInfo, "setActivated, observer not found");
 	    //obs = getDesObs();
 	}
     }
@@ -1325,6 +1313,11 @@ void ADes::onObsOwnedAttached(MObservable* aObl, MOwned* aOwned)
 	os->setUpdated();
 #endif
     }
+}
+
+static void RmSyncable(list<MDesSyncable*>& aReg, MDesSyncable* aScbl)
+{
+    aReg.remove(aScbl);
 }
 
 void ADes::onObsOwnedDetached(MObservable* aObl, MOwned* aOwned)
@@ -1435,66 +1428,70 @@ bool DesLauncher::Run(int aCount, int aIdleCount)
     bool res = true;
     int cnt = 0;
     int idlecnt = 0;
-    Log(EInfo, TLog(this) + "START");
+    LOGN(EInfo, "START");
     while (!mStop && (aCount == 0 || cnt < aCount) && (aIdleCount == 0 || idlecnt < aIdleCount)) {
 #ifdef DES_LISTS_SWAP
 	if (!mActive->empty()) {
 #else
 	if (!mActive.empty()) {
 #endif
-	    updateCounter(cnt);
-	    Log(EDbg, TLog(this) + ">>> Update [" + to_string(cnt) + "], count: " + to_string(countOfActive()));
+	    //updateCounter(cnt); // TODO Is it needed?
+	    LOGN(EDbg, ">>> Update [" + to_string(cnt) + "], count: " + to_string(countOfActive()));
 	    update();
 #ifdef DES_LISTS_SWAP
-	    if (!mUpdated->empty()) {
+	    if (isLogLevel(EDbg)) {
+		LOGN(EDbg, ">>> Confirm [" + to_string(cnt) + "]");
+	    }
+	    //outputCounter(cnt); // TODO Is it needed?
+	    confirm();
 #else
 	    if (!mUpdated.empty()) {
-#endif
-		Log(EDbg, TLog(this) + ">>> Confirm [" + to_string(cnt) + "]");
-		outputCounter(cnt);
+		LOGN(EDbg, ">>> Confirm [" + to_string(cnt) + "]");
+		//outputCounter(cnt); // TODO Is it needed?
 		confirm();
 	    }
+#endif
 	    cnt++;
 	    idlecnt = 0;
 	} else {
 	    if (idlecnt == 0) {
-		Log(EInfo, TLog(this) + "IDLE");
+		LOGN(EInfo, "IDLE");
 	    }
 	    OnIdle();
 	    idlecnt++;
 	}
+	}
+	LOGN(EInfo, "END");
+	return res;
     }
-    Log(EInfo, TLog(this) + "END");
-    return res;
-}
 
 
-bool DesLauncher::Stop()
-{
-    mStop = true;
-    return true;
-}
+    bool DesLauncher::Stop()
+    {
+	mStop = true;
+	return true;
+    }
 
-void DesLauncher::OnIdle()
-{
-    this_thread::sleep_for(std::chrono::milliseconds(100));
-    //mStop = true;
-}
+    void DesLauncher::OnIdle()
+    {
+	this_thread::sleep_for(std::chrono::milliseconds(100));
+	//mStop = true;
+    }
 
-MIface* DesLauncher::MOwned_getLif(const char *aType)
-{
-    MIface* res = nullptr;
-    if (res = checkLif<MLauncher>(aType));
-    else res = Des::MOwned_getLif(aType);
-    return res;
-}
+    MIface* DesLauncher::MOwned_getLif(const char *aType)
+    {
+	MIface* res = nullptr;
+	if (res = checkLif<MLauncher>(aType));
+	else res = Des::MOwned_getLif(aType);
+	return res;
+    }
 
-MIface* DesLauncher::MNode_getLif(const char *aType)
-{
-    MIface* res = nullptr;
-    if (res = checkLif<MLauncher>(aType));
-    else res = Des::MNode_getLif(aType);
-    return res;
+    MIface* DesLauncher::MNode_getLif(const char *aType)
+    {
+	MIface* res = nullptr;
+	if (res = checkLif<MLauncher>(aType));
+	else res = Des::MNode_getLif(aType);
+	return res;
 }
 
 void DesLauncher::updateCounter(int aCnt)
@@ -1543,13 +1540,13 @@ bool DesAs::Run(int aCount, int aIdleCount)
 		    ss = compn;
 		} else {
 		    // TODO Is this limination really needed?
-		    Log(EErr, TLog(this) + "Subsystems number > 1");
+		    LOGN(EErr, "Subsystems number > 1");
 		}
 	    }
 	    owdCp = owner()->nextPair(owdCp);
 	}
 	if (ss == nullptr) {
-	    Log(EErr, TLog(this) + "No subsystems found");
+	    LOGN(EErr, "No subsystems found");
 	    break;
 	}
 	// Initiate subsystem, ref ds_desas_sis_iph
@@ -1557,35 +1554,35 @@ bool DesAs::Run(int aCount, int aIdleCount)
 	*/
 	MNode* ss = getNode(K_SsUri);
 	if (ss == nullptr) {
-	    Log(EErr, TLog(this) + "No subsystem [" + K_SsUri + "] found");
+	    LOGN(EErr, "No subsystem [" + K_SsUri + "] found");
 	    break;
 	}
 	MNode* ssinit = ss->getNode(K_SsInitUri);
 	if (!ssinit) {
-	    Log(EErr, TLog(this) + "Couldn't find Init state");
+	    LOGN(EErr, "Couldn't find Init state");
 	    res = false; break;
 	}
 	MContentOwner* cntInit = ssinit->lIf(cntInit);
 	if (!cntInit) {
-	    Log(EErr, TLog(this) + "Couldn't find Init state content");
+	    LOGN(EErr, "Couldn't find Init state content");
 	    res = false; break;
 	}
 	cntInit->setContent("", "SB true");
 #ifdef DES_LISTS_SWAP
 	if (!mActive->empty()) {
-	    Log(EInfo, TLog(this) + ">>> Init update");
+	    LOGN(EInfo, ">>> Init update");
 	    Des::update();
 	    if (!mUpdated->empty()) {
-		Log(EInfo, TLog(this) + ">>> Init confirm");
+		LOGN(EInfo, ">>> Init confirm");
 		Des::confirm();
 	    }
 	}
 #else
 	if (!mActive.empty()) {
-	    Log(EInfo, TLog(this) + ">>> Init update");
+	    LOGN(EInfo, ">>> Init update");
 	    Des::update();
 	    if (!mUpdated.empty()) {
-		Log(EInfo, TLog(this) + ">>> Init confirm");
+		LOGN(EInfo, ">>> Init confirm");
 		Des::confirm();
 	    }
 	}
@@ -1596,10 +1593,10 @@ bool DesAs::Run(int aCount, int aIdleCount)
 #ifdef DES_LISTS_SWAP
 	    if (!mActive->empty()) {
 		updateCounter(cnt);
-		Log(EInfo, TLog(this) + ">>> Update [" + to_string(cnt) + "]");
+		LOGN(EInfo, ">>> Update [" + to_string(cnt) + "]");
 		Des::update();
 		if (!mUpdated->empty()) {
-		    Log(EInfo, TLog(this) + ">>> Confirm [" + to_string(cnt) + "]");
+		    LOGN(EInfo, ">>> Confirm [" + to_string(cnt) + "]");
 		    outputCounter(cnt);
 		    Des::confirm();
 		}
@@ -1612,10 +1609,10 @@ bool DesAs::Run(int aCount, int aIdleCount)
 #else
 	    if (!mActive.empty()) {
 		updateCounter(cnt);
-		Log(EInfo, TLog(this) + ">>> Update [" + to_string(cnt) + "]");
+		LOGN(EInfo, ">>> Update [" + to_string(cnt) + "]");
 		Des::update();
 		if (!mUpdated.empty()) {
-		    Log(EInfo, TLog(this) + ">>> Confirm [" + to_string(cnt) + "]");
+		    LOGN(EInfo, ">>> Confirm [" + to_string(cnt) + "]");
 		    outputCounter(cnt);
 		    Des::confirm();
 		}
@@ -1636,7 +1633,7 @@ void DesAs::update()
     bool res = Run(0, 1);
     mRunning = false;
     if (!res) {
-	Log(EErr, TLog(this) + "Failed run");
+	LOGN(EErr, "Failed run");
     }
 }
 
@@ -1837,7 +1834,7 @@ void DesCtxCsm::update()
     if (!mInitialized) {
 	mInitFailed = !init();
 	if (mInitFailed) {
-	    Log(EErr, TLog(this) + "Init failed");
+	    LOGN(EErr, "Init failed");
 	}
 	mInitialized = true;
     }
@@ -1851,7 +1848,7 @@ void DesCtxCsm::confirm()
     if (!mInitialized) {
 	mInitFailed = !init();
 	if (mInitFailed) {
-	    Log(EErr, TLog(this) + "Init failed");
+	    LOGN(EErr, "Init failed");
 	}
 	mInitialized = true;
     }

@@ -453,6 +453,16 @@ void Ut_des::test_des_1()
 {
     cout << endl << "=== Test of simple DES ===" << endl;
 
+
+    // Benchmarking
+    constructSystem("ut_des_1_2");
+    mEnv->RunSystem(10000, 2);
+    delete mEnv;
+    constructSystem("ut_des_1_3");
+    mEnv->RunSystem(10000, 2);
+    delete mEnv;
+
+
     MNode* root = constructSystem("ut_des_1");
     MNode* launcher = root->getNode("Launcher");
     CPPUNIT_ASSERT_MESSAGE("Failed getting launcher", launcher);
@@ -489,12 +499,15 @@ void Ut_des::test_des_1()
     res = mEnv->RunSystem(2, 2);
     CPPUNIT_ASSERT_MESSAGE("Ds1.St1 failed on phase 3", getStateDstr("Launcher.Ds1.St1") == "SI 22");
 
+    delete mEnv;
 
     // Benchmarking
-    //bool res = mEnv->RunSystem(10000, 2);
+    /*
+    constructSystem("ut_des_1_2");
+    res = mEnv->RunSystem(10000, 2);
     CPPUNIT_ASSERT_MESSAGE("Failed running system", res);
-
     delete mEnv;
+    */
 }
 
 /** @brief Test of DES data

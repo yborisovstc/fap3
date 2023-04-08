@@ -115,7 +115,7 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	bool isNodeOwned(const MNode* aComp) const;
 	MNode* addComp(const string& aType, const string& aName);
 	void notifyChanged();
-	inline bool isLogLevel(int aLevel) const { return mLogLevel >= aLevel;}
+	inline bool isLogLevel(int aLevel) const;
 	MContent* createContent(const GUri& aUri);
 	int parseLogLevel(const string& aData);
 	// Mutations
@@ -149,14 +149,19 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	static int K_Ll_Shift;
 };
 
-inline void Node::Log(int aLevel, const TLog& aRec) const
-{
+inline bool Node::isLogLevel(int aLevel) const {
     auto oll = getOwdLogLevel();
     int ll = (oll == ELcUndef) ? getLocLogLevel() : oll;
-    if (aLevel <= ll) {
+    return (aLevel <= ll);
+}
+
+inline void Node::Log(int aLevel, const TLog& aRec) const
+{
+    if (isLogLevel(aLevel)) {
 	const_cast<TLog&>(aRec).SetCtg(aLevel); Logger()->Write(aRec);
     }
 }
+
 
 inline int Node::getOwdLogLevel() const
 {
@@ -172,6 +177,19 @@ inline int Node::getLocLogLevel() const
 {
     return mLogLevel & K_Ll_Mask;
 }
+
+#define LOGN(aLevel, aContent) \
+    if (isLogLevel(aLevel)) {\
+	TLog rec(aLevel, this, aContent);\
+	Logger()->Write(rec);\
+    }\
+
+#define LOGNN(aNode, aLevel, aContent) \
+    if (aNode->isLogLevel(aLevel)) {\
+	TLog rec(aLevel, aNode, aContent);\
+	aNode->Logger()->Write(rec);\
+    }\
+
 
 // Profiler's routines
 #ifdef PROFILING_ENABLED

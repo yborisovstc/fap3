@@ -85,6 +85,7 @@ class TrVar: public TrBase, public Func::Host
 	virtual string GetInpUri(int aId) const override;
 //	virtual void log(int aCtg, const string& aMsg);
 	inline void log(int aCtg, const string& aMsg) override { Log(aCtg, TLog(this) + aMsg); }
+	virtual bool hostIsLogLevel(int aLevel) const override { return isLogLevel(aLevel);}
 	virtual string getHostUri() const { return getUriS(nullptr);}
 	virtual Func::TInpIc* GetInps(int aInpId) override;
     protected:
