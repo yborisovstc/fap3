@@ -42,6 +42,7 @@ class TrBase: public CpStateOutp, public MDVarGet, protected MDesInpObserver
 	// From MDVarGet
 	virtual string MDVarGet_Uid() const override { return getUid<MDVarGet>();}
 	virtual MIface* DoGetDObj(const char *aName) override { return nullptr;}
+	virtual const DtBase* VDtGet(const string& aType) override;
     protected:
 	// Local
 	Func::TInpIc* GetInps(FInp& aInp);
@@ -50,9 +51,11 @@ class TrBase: public CpStateOutp, public MDVarGet, protected MDesInpObserver
 	/** @brief Gets input data
 	 * */
 	template <class T> inline const T* GetInpData(FInp& aInp, const T* aData);
+	virtual const DtBase* doVDtGet(const string& aType) { return nullptr;}
     protected:
 	void AddInput(const string& aName);
 	bool mCInv;              //!< Sign of data cache invalidated
+	const DtBase* mResp = nullptr;
 };
 
 template <class T> inline const T* TrBase::GetInpData(FInp& aInp, const T* aData)
@@ -79,11 +82,9 @@ class TrVar: public TrBase, public Func::Host
 	virtual string MDVarGet_Uid() const override { return getUid<MDVarGet>();}
 	virtual void MDVarGet_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	virtual string VarGetIfid() const override;
-	virtual const DtBase* VDtGet(const string& aType) override;
 	// From Func::Host
 	virtual int GetInpCpsCount() const {return 0;}
 	virtual string GetInpUri(int aId) const override;
-//	virtual void log(int aCtg, const string& aMsg);
 	inline void log(int aCtg, const string& aMsg) override { Log(aCtg, TLog(this) + aMsg); }
 	virtual bool hostIsLogLevel(int aLevel) const override { return isLogLevel(aLevel);}
 	virtual string getHostUri() const { return getUriS(nullptr);}
@@ -97,9 +98,9 @@ class TrVar: public TrBase, public Func::Host
 	/** @brief Gets value of MDVarGet MDtGet Sdata<T> input */
 	template<typename T> bool DtGetSdataInp(T& aData, const string& aInpName);
 	MDVarGet* GetInp(int aInpId);
+	virtual const DtBase* doVDtGet(const string& aType) override;
     protected:
 	Func* mFunc;
-	const DtBase* mRes = nullptr;
 };
 
 /** @brief Transition "Addition of Var data, negative inp, multi-connecting inputs"
@@ -256,14 +257,13 @@ class TrSwitchBool: public TrBase
     public:
 	static const char* Type() { return "TrSwitchBool";};
 	TrSwitchBool(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
-	virtual const DtBase* VDtGet(const string& aType) override;
+	virtual const DtBase* doVDtGet(const string& aType) override;
 	virtual string VarGetIfid() const override;
     protected:
 	MDVarGet* GetInp();
     protected:
 	FInp mInp1, mInp2, mSel;
 	const static string K_InpInp1, K_InpInp2, K_InpSel;
-	const DtBase* mRes = nullptr;
 };
 
 class TrBool: public TrBase
@@ -288,7 +288,7 @@ class TrAndVar: public TrBool
     public:
 	static const char* Type() { return "TrAndVar";};
 	TrAndVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL): TrBool(aType, aName, aEnv) {}
-	virtual const DtBase* VDtGet(const string& aType) override;
+	virtual const DtBase* doVDtGet(const string& aType) override;
 };
 
 /** @brief Agent function "Boolena OR of Var data"
@@ -298,7 +298,7 @@ class TrOrVar: public TrBool
     public:
 	static const char* Type() { return "TrOrVar";};
 	TrOrVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL): TrBool(aType, aName, aEnv) {}
-	virtual const DtBase* VDtGet(const string& aType) override;
+	virtual const DtBase* doVDtGet(const string& aType) override;
 };
 
 
@@ -309,7 +309,7 @@ class TrNegVar: public TrBool
     public:
 	static const char* Type() { return "TrNegVar";};
 	TrNegVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL): TrBool(aType, aName, aEnv) {}
-	virtual const DtBase* VDtGet(const string& aType) override;
+	virtual const DtBase* doVDtGet(const string& aType) override;
 };
 
 
@@ -324,7 +324,7 @@ class TrToUriVar: public TrBase
 	static const char* Type() { return "TrToUriVar";};
 	TrToUriVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual string VarGetIfid() const override { return TRes::TypeSig();}
-	virtual const DtBase* VDtGet(const string& aType) override;
+	virtual const DtBase* doVDtGet(const string& aType) override;
     protected:
 	FInp mInp;
 	const static string K_InpInp;
@@ -356,11 +356,10 @@ class TrSvldVar: public TrBase
 	TrSvldVar(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MDVarGet
 	virtual string VarGetIfid() const override;
-	virtual const DtBase* VDtGet(const string& aType) override;
+	virtual const DtBase* doVDtGet(const string& aType) override;
     protected:
 	FInp mInp1, mInp2;
 	static const string K_InpInp1, K_InpInp2;
-	const DtBase* mRes = nullptr;
 };
 
 
@@ -468,7 +467,7 @@ class TrTuple: public TrBase
 	TrTuple(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MDVarGet
 	virtual string VarGetIfid() const override;
-	virtual const DtBase* VDtGet(const string& aType) override;
+	virtual const DtBase* doVDtGet(const string& aType) override;
     protected:
 	FInp mInpInp;
 	const static string K_InpInp;
@@ -484,11 +483,10 @@ class TrTupleSel: public TrBase
 	TrTupleSel(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MDVarGet
 	virtual string VarGetIfid() const override;
-	virtual const DtBase* VDtGet(const string& aType) override;
+	virtual const DtBase* doVDtGet(const string& aType) override;
     protected:
 	FInp mInpInp, mInpComp;
 	const static string K_InpInp, K_InpComp;
-	const DtBase* mRes = nullptr;
 };
 
 
@@ -503,7 +501,7 @@ class TrTostrVar: public TrBase
 	TrTostrVar(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MDVarGet
 	virtual string VarGetIfid() const override { return TRes::TypeSig();}
-	virtual const DtBase* VDtGet(const string& aType) override;
+	virtual const DtBase* doVDtGet(const string& aType) override;
     protected:
 	TRes mRes;
 	FInp mInpInp;
@@ -520,13 +518,12 @@ class TrInpSel: public TrBase
 	TrInpSel(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MDVarGet
 	virtual string VarGetIfid() const override;
-	virtual const DtBase* VDtGet(const string& aType) override;
+	virtual const DtBase* doVDtGet(const string& aType) override;
     protected:
 	MDVarGet* GetInp();
     protected:
 	FInp mInpInp, mInpIdx;
 	const static string K_InpInp, K_InpIdx;
-	const DtBase* mRes = nullptr;
 };
 
 /** @brief Transition "Inputs counter"
@@ -539,7 +536,7 @@ class TrInpCnt: public TrBase
 	TrInpCnt(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MDVarGet
 	virtual string VarGetIfid() const override;
-	virtual const DtBase* VDtGet(const string& aType) override;
+	virtual const DtBase* doVDtGet(const string& aType) override;
     protected:
 	FInp mInpInp;
 	TRes mRes;
@@ -587,7 +584,7 @@ class TrMutNode: public TrMut
     public:
 	static const char* Type() { return "TrMutNode";};
 	TrMutNode(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
-	virtual const DtBase* VDtGet(const string& aType) override;
+	virtual const DtBase* doVDtGet(const string& aType) override;
     protected:
 	FInp mInpParent, mInpName;
 	static const string K_InpParent, K_InpName;
@@ -601,7 +598,7 @@ class TrMutConn: public TrMut
 	using TInp = Sdata<string>;
 	static const char* Type() { return "TrMutConn";};
 	TrMutConn(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
-	virtual const DtBase* VDtGet(const string& aType) override;
+	virtual const DtBase* doVDtGet(const string& aType) override;
     protected:
 	FInp mInpCp1, mInpCp2;
 	static const string K_InpCp1, K_InpCp2;
@@ -614,7 +611,7 @@ class TrMutCont: public TrMut
     public:
 	static const char* Type() { return "TrMutCont";};
 	TrMutCont(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
-	virtual const DtBase* VDtGet(const string& aType) override;
+	virtual const DtBase* doVDtGet(const string& aType) override;
     protected:
 	FInp mInpName, mInpValue, mInpTarget;
 	static const string K_InpName, K_InpValue, K_InpTarget;
@@ -629,7 +626,7 @@ class TrMutDisconn: public TrMut
 	using TInp = Sdata<string>;
 	static const char* Type() { return "TrMutDisconn";};
 	TrMutDisconn(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
-	virtual const DtBase* VDtGet(const string& aType) override;
+	virtual const DtBase* doVDtGet(const string& aType) override;
     protected:
 	FInp mInpCp1, mInpCp2;
 	static const string K_InpCp1, K_InpCp2;
@@ -645,7 +642,7 @@ class TrChr: public TrBase
 	TrChr(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MDVarGet
 	virtual string VarGetIfid() const override;
-	virtual const DtBase* VDtGet(const string& aType) override;
+	virtual const DtBase* doVDtGet(const string& aType) override;
     protected:
 	FInp mInpBase, mInpMut;
 	DChr2 mRes;
@@ -661,7 +658,7 @@ class TrChrc: public TrBase
 	TrChrc(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MDVarGet
 	virtual string VarGetIfid() const override;
-	virtual const DtBase* VDtGet(const string& aType) override;
+	virtual const DtBase* doVDtGet(const string& aType) override;
     protected:
 	FInp mInpInp;
 	DChr2 mRes;
@@ -680,7 +677,7 @@ class TrIsValid: public TrBase
 	TrIsValid(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MDVarGet
 	virtual string VarGetIfid() const override { return TRes::TypeSig(); }
-	virtual const DtBase* VDtGet(const string& aType) override;
+	virtual const DtBase* doVDtGet(const string& aType) override;
     protected:
 	FInp mInpInp;
 	TRes mRes;
@@ -713,7 +710,7 @@ class TrHash: public TrBase
 	TrHash(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MDVarGet
 	virtual string VarGetIfid() const override { return TRes::TypeSig();}
-	virtual const DtBase* VDtGet(const string& aType) override;
+	virtual const DtBase* doVDtGet(const string& aType) override;
     protected:
 	FInp mInpInp;
 	TRes mRes;

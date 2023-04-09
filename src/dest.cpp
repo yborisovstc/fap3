@@ -97,6 +97,15 @@ Func::TInpIc* TrBase::GetInps(FInp& aInp)
     return reinterpret_cast<Func::TInpIc*>(res);
 }
 
+const DtBase* TrBase::VDtGet(const string& aType)
+{
+    if (mCInv) {
+	mResp = doVDtGet(aType);
+	mCInv = !mResp;
+    }
+    return mResp;
+}
+
 
 
 ///// TrVar
@@ -135,19 +144,16 @@ string TrVar::GetInpUri(int aId) const
     return inp->mName;
 }
 
-const DtBase* TrVar::VDtGet(const string& aType)
+const DtBase* TrVar::doVDtGet(const string& aType)
 {
+    const DtBase* res = nullptr;
     if (!mFunc) {
 	Init(aType);
     }
     if (mFunc) {
-	if (mCInv) {
-	//if (true) {
-	    mRes = mFunc->FDtGet();
-	    mCInv = !mRes;
-	}
+	res = mFunc->FDtGet();
     }
-    return mRes;
+    return res;
 }
 
 MDVarGet* TrVar::GetInp(int aInpId) {
@@ -456,23 +462,21 @@ TrSwitchBool::TrSwitchBool(const string &aType, const string& aName, MEnv* aEnv)
     AddInput(K_InpSel);
 }
 
-const DtBase* TrSwitchBool::VDtGet(const string& aType)
+const DtBase* TrSwitchBool::doVDtGet(const string& aType)
 {
-    if (mCInv) {
-	const Sdata<bool>* sel = GetInpData(mSel, sel);
-	const DtBase* inp1 = GetInpData(mInp1, inp1);
-	const DtBase* inp2 = GetInpData(mInp2, inp2);
-	if (sel && inp1 && inp2)
-	{
-	    if (sel->IsValid()) {
-		auto* data = sel->mData ? inp2 : inp1;
-		mRes = (aType.empty() || aType == data->GetTypeSig()) ? data : nullptr;
-	    }
+    const DtBase* res = nullptr;
+    const Sdata<bool>* sel = GetInpData(mSel, sel);
+    const DtBase* inp1 = GetInpData(mInp1, inp1);
+    const DtBase* inp2 = GetInpData(mInp2, inp2);
+    if (sel && inp1 && inp2)
+    {
+	if (sel->IsValid()) {
+	    auto* data = sel->mData ? inp2 : inp1;
+	    res = (aType.empty() || aType == data->GetTypeSig()) ? data : nullptr;
 	}
-	LOGN(EDbg, "Sel: " + (sel ? sel->ToString(true) : "nul") + ", Inp1: " + (inp1 ? inp1->ToString(true) : "nil") + ", Inp2: " + (inp2 ? inp2->ToString(true) : "nil"));
-	mCInv = false;
     }
-    return mRes;
+    LOGN(EDbg, "Sel: " + (sel ? sel->ToString(true) : "nul") + ", Inp1: " + (inp1 ? inp1->ToString(true) : "nil") + ", Inp2: " + (inp2 ? inp2->ToString(true) : "nil"));
+    return res;
 }
 
 string TrSwitchBool::VarGetIfid() const
@@ -496,30 +500,25 @@ TrBool::TrBool(const string &aType, const string& aName, MEnv* aEnv): TrBase(aTy
 ///// TrAndVar
 
 
-const DtBase* TrAndVar::VDtGet(const string& aType)
+const DtBase* TrAndVar::doVDtGet(const string& aType)
 {
-    if (mCInv) {
-	mRes.mValid = true;
-	PFL_DUR_STAT_START(PEvents::EDurStat_TrAnd);
-	bool first = true;
-	auto* Ic = GetInps(mInp);
-	if (Ic && Ic->size() > 0) {
-	    for (auto dget : *Ic) {
-		const TData* arg = dget->DtGet(arg);
-		if (arg && arg->mValid) {
-		    if (first) { mRes = *arg; first = false;
-		    } else {
-			mRes.mData = mRes.mData && arg->mData;
-		    }
+    mRes.mValid = true;
+    bool first = true;
+    auto* Ic = GetInps(mInp);
+    if (Ic && Ic->size() > 0) {
+	for (auto dget : *Ic) {
+	    const TData* arg = dget->DtGet(arg);
+	    if (arg && arg->mValid) {
+		if (first) { mRes = *arg; first = false;
 		} else {
-		    mRes.mValid = false; break;
+		    mRes.mData = mRes.mData && arg->mData;
 		}
+	    } else {
+		mRes.mValid = false; break;
 	    }
 	}
-	LOGN(EDbg, TLog(this) + "Res: " + mRes.ToString(true));
-	PFL_DUR_STAT_REC(PEvents::EDurStat_TrAnd); 
-	mCInv = false;
     }
+    LOGN(EDbg, TLog(this) + "Res: " + mRes.ToString(true));
     return &mRes;
 }
 
@@ -527,28 +526,25 @@ const DtBase* TrAndVar::VDtGet(const string& aType)
 ///// TrOrVar
 
 
-const DtBase* TrOrVar::VDtGet(const string& aType)
+const DtBase* TrOrVar::doVDtGet(const string& aType)
 {
-    if (mCInv) {
-	mRes.mValid = true;
-	auto* Ic = GetInps(mInp);
-	bool first = true;
-	if (Ic && Ic->size() > 0) {
-	    for (auto dget : *Ic) {
-		const TData* arg = dget->DtGet(arg);
-		if (arg && arg->mValid) {
-		    if (first) { mRes = *arg; first = false;
-		    } else {
-			mRes.mData = mRes.mData || arg->mData;
-		    }
+    mRes.mValid = true;
+    auto* Ic = GetInps(mInp);
+    bool first = true;
+    if (Ic && Ic->size() > 0) {
+	for (auto dget : *Ic) {
+	    const TData* arg = dget->DtGet(arg);
+	    if (arg && arg->mValid) {
+		if (first) { mRes = *arg; first = false;
 		} else {
-		    mRes.mValid = false; break;
+		    mRes.mData = mRes.mData || arg->mData;
 		}
+	    } else {
+		mRes.mValid = false; break;
 	    }
 	}
-	LOGN(EDbg, "Res: " + mRes.ToString(true));
-	mCInv = false;
     }
+    LOGN(EDbg, "Res: " + mRes.ToString(true));
     return &mRes;
 }
 
@@ -556,16 +552,13 @@ const DtBase* TrOrVar::VDtGet(const string& aType)
 
 ///// TrNegVar
 
-const DtBase* TrNegVar::VDtGet(const string& aType)
+const DtBase* TrNegVar::doVDtGet(const string& aType)
 {
-    if (mCInv) {
-	mRes.mValid = false;
-	const TData* inp = GetInpData(mInp, inp);
-	if (inp && inp->IsValid()) {
-	    mRes.mData = !inp->mData;
-	    mRes.mValid = true;
-	}
-	mCInv = false;
+    mRes.mValid = false;
+    const TData* inp = GetInpData(mInp, inp);
+    if (inp && inp->IsValid()) {
+	mRes.mData = !inp->mData;
+	mRes.mValid = true;
     }
     return &mRes;
 }
@@ -583,16 +576,13 @@ TrToUriVar::TrToUriVar(const string &aType, const string& aName, MEnv* aEnv): Tr
     AddInput(K_InpInp);
 }
 
-const DtBase* TrToUriVar::VDtGet(const string& aType)
+const DtBase* TrToUriVar::doVDtGet(const string& aType)
 {
-    if (mCInv) {
-	mRes.mValid = false;
-	const TInp* inp = GetInpData(mInp, inp);
-	if (inp && inp->IsValid()) {
-	    mRes.mData = GUri(inp->mData);
-	    mRes.mValid = true;
-	}
-	mCInv = false;
+    mRes.mValid = false;
+    const TInp* inp = GetInpData(mInp, inp);
+    if (inp && inp->IsValid()) {
+	mRes.mData = GUri(inp->mData);
+	mRes.mValid = true;
     }
     return &mRes;
 }
@@ -658,26 +648,24 @@ string TrSvldVar::VarGetIfid() const
     return res;
 }
 
-const DtBase* TrSvldVar::VDtGet(const string& aType)
+const DtBase* TrSvldVar::doVDtGet(const string& aType)
 {
-    if (mCInv) {
-	const DtBase* inp1 = GetInpData(mInp1, inp1);
-	const DtBase* inp2 = GetInpData(mInp2, inp2);
-	if (inp1 && inp2) {
-	    if (inp1->IsValid() && inp2->IsValid()) {
-		mRes = inp1;
-	    } else if (inp1->IsValid()) {
-		mRes = inp1;
-	    } else if (inp2->IsValid()) {
-		mRes = inp2;
-	    } else {
-		mRes = inp1;
-		LOGN(EDbg, "Both inputs are invalid");
-	    }
+    const DtBase* res = nullptr;
+    const DtBase* inp1 = GetInpData(mInp1, inp1);
+    const DtBase* inp2 = GetInpData(mInp2, inp2);
+    if (inp1 && inp2) {
+	if (inp1->IsValid() && inp2->IsValid()) {
+	    res = inp1;
+	} else if (inp1->IsValid()) {
+	    res = inp1;
+	} else if (inp2->IsValid()) {
+	    res = inp2;
+	} else {
+	    res = inp1;
+	    LOGN(EDbg, "Both inputs are invalid");
 	}
-	mCInv = false;
     }
-    return mRes;
+    return res;
 }
 
 
@@ -915,44 +903,41 @@ string TrTuple::VarGetIfid() const
 }
 
 // TODO The design is ugly and bulky. To redesing, ref ds_ibc_dgit
-const DtBase* TrTuple::VDtGet(const string& aType)
+const DtBase* TrTuple::doVDtGet(const string& aType)
 {
-    if (mCInv) {
-	mRes.mValid = true;
-	const NTuple* arg = GetInpData(mInpInp, arg);
-	if (arg) {
-	    mRes = *arg;
-	    auto compo = owner()->firstPair();
-	    while (compo) {
-		MNode* compn = compo->provided()->lIf(compn);
-		assert(compn);
-		if (compn->name() != K_InpInp) {
-		    DtBase* elem = mRes.GetElem(compn->name());
-		    if (elem) {
-			MUnit* inpu = compn->lIf(inpu);
-			MDVarGet* inpvg = inpu ? inpu->getSif(inpvg) : nullptr;
-			if (inpvg) {
-			    auto* edata = inpvg->VDtGet(elem->GetTypeSig());
-			    if (edata) {
-				*elem = *edata;
-			    } else {
-				elem->mValid = false;
-				LOGN(EErr, "Input [" + compn->name() + "] is incompatible with tuple component");
-			    }
+    mRes.mValid = true;
+    const NTuple* arg = GetInpData(mInpInp, arg);
+    if (arg) {
+	mRes = *arg;
+	auto compo = owner()->firstPair();
+	while (compo) {
+	    MNode* compn = compo->provided()->lIf(compn);
+	    assert(compn);
+	    if (compn->name() != K_InpInp) {
+		DtBase* elem = mRes.GetElem(compn->name());
+		if (elem) {
+		    MUnit* inpu = compn->lIf(inpu);
+		    MDVarGet* inpvg = inpu ? inpu->getSif(inpvg) : nullptr;
+		    if (inpvg) {
+			auto* edata = inpvg->VDtGet(elem->GetTypeSig());
+			if (edata) {
+			    *elem = *edata;
 			} else {
 			    elem->mValid = false;
-			    LOGN(EDbg, "Cannot get input  [" + compn->name() + "]");
+			    LOGN(EErr, "Input [" + compn->name() + "] is incompatible with tuple component");
 			}
 		    } else {
-			LOGN(EErr, "No such component [" + compn->name() + "] of tuple");
+			elem->mValid = false;
+			LOGN(EDbg, "Cannot get input  [" + compn->name() + "]");
 		    }
+		} else {
+		    LOGN(EErr, "No such component [" + compn->name() + "] of tuple");
 		}
-		compo = owner()->nextPair(compo);
 	    }
-	} else {
-	    mRes.mValid = false;
+	    compo = owner()->nextPair(compo);
 	}
-	mCInv = false;
+    } else {
+	mRes.mValid = false;
     }
     return &mRes;
 }
@@ -970,17 +955,15 @@ TrTupleSel::TrTupleSel(const string& aType, const string& aName, MEnv* aEnv): Tr
     AddInput(K_InpComp);
 }
 
-const DtBase* TrTupleSel::VDtGet(const string& aType)
+const DtBase* TrTupleSel::doVDtGet(const string& aType)
 {
-    if (mCInv) {
-	const NTuple* arg = GetInpData(mInpInp, arg);
-	const Sdata<string>* idx = GetInpData(mInpComp, idx);
-	if (arg && arg->IsValid() && idx && idx->IsValid()) {
-	    mRes = arg->GetElem(idx->mData);
-	}
-	mCInv = false;
+    const DtBase* res = nullptr;
+    const NTuple* arg = GetInpData(mInpInp, arg);
+    const Sdata<string>* idx = GetInpData(mInpComp, idx);
+    if (arg && arg->IsValid() && idx && idx->IsValid()) {
+	res = arg->GetElem(idx->mData);
     }
-    return mRes;
+    return res;
 }
 
 string TrTupleSel::VarGetIfid() const
@@ -1054,16 +1037,13 @@ TrTostrVar::TrTostrVar(const string& aType, const string& aName, MEnv* aEnv): Tr
     AddInput(K_InpInp);
 }
 
-const DtBase* TrTostrVar::VDtGet(const string& aType)
+const DtBase* TrTostrVar::doVDtGet(const string& aType)
 {
-    if (mCInv) {
-	mRes.mValid = false;
-	const DtBase* inp = GetInpData(mInpInp, inp);
-	if (inp && inp->IsValid()) {
-	    mRes.mData = inp->ToString(false);
-	    mRes.mValid = true;
-	}
-	mCInv = false;
+    mRes.mValid = false;
+    const DtBase* inp = GetInpData(mInpInp, inp);
+    if (inp && inp->IsValid()) {
+	mRes.mData = inp->ToString(false);
+	mRes.mValid = true;
     }
     return &mRes;
 }
@@ -1084,18 +1064,15 @@ string TrInpCnt::VarGetIfid() const
     return Sdata<int>::TypeSig();
 }
 
-const DtBase* TrInpCnt::VDtGet(const string& aType)
+const DtBase* TrInpCnt::doVDtGet(const string& aType)
 {
     // TODO Make optimisation to not check type each cycle
     if (aType == TRes::TypeSig()) {
-	if (mCInv) {
-	    mRes.mValid = false;
-	    auto* Ic = GetInps(mInpInp);
-	    if (Ic) {
-		mRes.mData = Ic->size();
-		mRes.mValid = true;
-	    }
-	    mCInv = false;
+	mRes.mValid = false;
+	auto* Ic = GetInps(mInpInp);
+	if (Ic) {
+	    mRes.mData = Ic->size();
+	    mRes.mValid = true;
 	}
 	return &mRes;
     } else {
@@ -1141,14 +1118,12 @@ MDVarGet* TrInpSel::GetInp()
     return res;
 }
 
-const DtBase* TrInpSel::VDtGet(const string& aType)
+const DtBase* TrInpSel::doVDtGet(const string& aType)
 {
-    if (mCInv) {
-	MDVarGet* inp = GetInp();
-	mRes = inp ? inp->VDtGet(aType) : nullptr;
-	mCInv = false;
-    }
-    return mRes;
+    const DtBase* res = nullptr;
+    MDVarGet* inp = GetInp();
+    res = inp ? inp->VDtGet(aType) : nullptr;
+    return res;
 }
 
 
@@ -1180,17 +1155,14 @@ TrMutNode::TrMutNode(const string& aType, const string& aName, MEnv* aEnv): TrMu
     AddInput(K_InpName);
 }
 
-const DtBase* TrMutNode::VDtGet(const string& aType)
+const DtBase* TrMutNode::doVDtGet(const string& aType)
 {
-    if (mCInv) {
-	mRes.mValid = false;
-	const Sdata<string>* name = GetInpData(mInpName, name);
-	const Sdata<string>* parent = GetInpData(mInpParent, parent);
-	if (name && name->IsValid() && parent && parent->IsValid()) {
-	    mRes.mData = TMut(ENt_Node, ENa_Parent, parent->mData, ENa_Id, name->mData);
-	    mRes.mValid = true;
-	}
-	mCInv = false;
+    mRes.mValid = false;
+    const Sdata<string>* name = GetInpData(mInpName, name);
+    const Sdata<string>* parent = GetInpData(mInpParent, parent);
+    if (name && name->IsValid() && parent && parent->IsValid()) {
+	mRes.mData = TMut(ENt_Node, ENa_Parent, parent->mData, ENa_Id, name->mData);
+	mRes.mValid = true;
     }
     return &mRes;
 }
@@ -1208,17 +1180,14 @@ TrMutConn::TrMutConn(const string& aType, const string& aName, MEnv* aEnv): TrMu
     AddInput(K_InpCp2);
 }
 
-const DtBase* TrMutConn::VDtGet(const string& aType)
+const DtBase* TrMutConn::doVDtGet(const string& aType)
 {
-    if (mCInv) {
-	mRes.mValid = false;
-	const TInp* cp1 = GetInpData(mInpCp1, cp1);
-	const TInp* cp2 = GetInpData(mInpCp2, cp2);
-	if (cp1 && cp2 && cp1->IsValid() && cp2->IsValid()) {
-	    mRes.mData = TMut(ENt_Conn, ENa_P, cp1->mData, ENa_Q, cp2->mData);
-	    mRes.mValid = true;
-	}
-	mCInv = false;
+    mRes.mValid = false;
+    const TInp* cp1 = GetInpData(mInpCp1, cp1);
+    const TInp* cp2 = GetInpData(mInpCp2, cp2);
+    if (cp1 && cp2 && cp1->IsValid() && cp2->IsValid()) {
+	mRes.mData = TMut(ENt_Conn, ENa_P, cp1->mData, ENa_Q, cp2->mData);
+	mRes.mValid = true;
     }
     return &mRes;
 }
@@ -1238,26 +1207,23 @@ TrMutCont::TrMutCont(const string& aType, const string& aName, MEnv* aEnv): TrMu
     AddInput(K_InpTarget);
 }
 
-const DtBase* TrMutCont::VDtGet(const string& aType)
+const DtBase* TrMutCont::doVDtGet(const string& aType)
 {
-    if (mCInv) {
-	mRes.mValid = false;
-	const Sdata<string>* name = GetInpData(mInpName, name);
-	const Sdata<string>* value = GetInpData(mInpValue, value);
-	if (name && value && name->IsValid() && value->IsValid()) {
-	    const Sdata<string>* target = GetInpData(mInpTarget, target);
-	    // Target is optional
-	    if (target) {
-		if (target->IsValid()) {
-		    mRes.mData = TMut(ENt_Cont, ENa_Targ, target->mData, ENa_Id, name->mData, ENa_MutVal, value->mData);
-		    mRes.mValid = true;
-		}
-	    } else {
-		mRes.mData = TMut(ENt_Cont, ENa_Id, name->mData, ENa_MutVal, value->mData);
+    mRes.mValid = false;
+    const Sdata<string>* name = GetInpData(mInpName, name);
+    const Sdata<string>* value = GetInpData(mInpValue, value);
+    if (name && value && name->IsValid() && value->IsValid()) {
+	const Sdata<string>* target = GetInpData(mInpTarget, target);
+	// Target is optional
+	if (target) {
+	    if (target->IsValid()) {
+		mRes.mData = TMut(ENt_Cont, ENa_Targ, target->mData, ENa_Id, name->mData, ENa_MutVal, value->mData);
 		mRes.mValid = true;
 	    }
+	} else {
+	    mRes.mData = TMut(ENt_Cont, ENa_Id, name->mData, ENa_MutVal, value->mData);
+	    mRes.mValid = true;
 	}
-	mCInv = false;
     }
     return &mRes;
 }
@@ -1276,17 +1242,14 @@ TrMutDisconn::TrMutDisconn(const string& aType, const string& aName, MEnv* aEnv)
     AddInput(K_InpCp2);
 }
 
-const DtBase* TrMutDisconn::VDtGet(const string& aType)
+const DtBase* TrMutDisconn::doVDtGet(const string& aType)
 {
-    if (mCInv) {
-	mRes.mValid = false;
-	const TInp* cp1 = GetInpData(mInpCp1, cp1);
-	const TInp* cp2 = GetInpData(mInpCp2, cp2);
-	if (cp1 && cp2 && cp1->IsValid() && cp2->IsValid()) {
-	    mRes.mData = TMut(ENt_Disconn, ENa_P, cp1->mData, ENa_Q, cp2->mData);
-	    mRes.mValid = true;
-	}
-	mCInv = false;
+    mRes.mValid = false;
+    const TInp* cp1 = GetInpData(mInpCp1, cp1);
+    const TInp* cp2 = GetInpData(mInpCp2, cp2);
+    if (cp1 && cp2 && cp1->IsValid() && cp2->IsValid()) {
+	mRes.mData = TMut(ENt_Disconn, ENa_P, cp1->mData, ENa_Q, cp2->mData);
+	mRes.mValid = true;
     }
     return &mRes;
 }
@@ -1310,39 +1273,36 @@ string TrChr::VarGetIfid() const
     return DChr2::TypeSig();
 }
 
-const DtBase* TrChr::VDtGet(const string& aType)
+const DtBase* TrChr::doVDtGet(const string& aType)
 {
-    if (mCInv) {
-	mRes.mValid = true;
-	// Base
-	const DChr2* base = GetInpData(mInpBase, base);
-	// Enable the base is optional
-	if (base) {
-	    mRes = *base;
-	}
-	if (mRes.IsValid()) {
-	    // Mut
-	    auto* MutIc = GetInps(mInpMut);
-	    if (MutIc && MutIc->size() > 0) {
-		for (auto mutget: *MutIc) {
-		    const DMut* mut = mutget ? mutget->DtGet(mut) : nullptr;
-		    if (mut) {
-			if (mut->mValid) {
-			    mRes.mData.Root().AddChild(mut->mData);
-			} else {
-			    mRes.mValid = false;
-			    break;
-			}
+    mRes.mValid = true;
+    // Base
+    const DChr2* base = GetInpData(mInpBase, base);
+    // Enable the base is optional
+    if (base) {
+	mRes = *base;
+    }
+    if (mRes.IsValid()) {
+	// Mut
+	auto* MutIc = GetInps(mInpMut);
+	if (MutIc && MutIc->size() > 0) {
+	    for (auto mutget: *MutIc) {
+		const DMut* mut = mutget ? mutget->DtGet(mut) : nullptr;
+		if (mut) {
+		    if (mut->mValid) {
+			mRes.mData.Root().AddChild(mut->mData);
 		    } else {
 			mRes.mValid = false;
 			break;
 		    }
+		} else {
+		    mRes.mValid = false;
+		    break;
 		}
-	    } else {
-		mRes.mValid = false;
 	    }
+	} else {
+	    mRes.mValid = false;
 	}
-	mCInv = false;
     }
     return &mRes;
 }
@@ -1364,25 +1324,22 @@ string TrChrc::VarGetIfid() const
     return DChr2::TypeSig();
 }
 
-const DtBase* TrChrc::VDtGet(const string& aType)
+const DtBase* TrChrc::doVDtGet(const string& aType)
 {
-    if (mCInv) {
-	auto* InpIc = GetInps(mInpInp);
-	if (InpIc && InpIc->size() > 0) {
-	    mRes.mValid = true;
-	    for (auto* get : *InpIc) {
-		const DChr2* item = get->DtGet(item);
-		if (item && item->IsValid()) {
-		    mRes.mData.Root().AddChild(item->mData.Root());
-		} else {
-		    mRes.mValid = false;
-		    break;
-		}
+    auto* InpIc = GetInps(mInpInp);
+    if (InpIc && InpIc->size() > 0) {
+	mRes.mValid = true;
+	for (auto* get : *InpIc) {
+	    const DChr2* item = get->DtGet(item);
+	    if (item && item->IsValid()) {
+		mRes.mData.Root().AddChild(item->mData.Root());
+	    } else {
+		mRes.mValid = false;
+		break;
 	    }
-	} else {
-	    mRes.mValid = false;
 	}
-	mCInv = false;
+    } else {
+	mRes.mValid = false;
     }
     return &mRes;
 }
@@ -1398,20 +1355,17 @@ TrIsValid::TrIsValid(const string& aType, const string& aName, MEnv* aEnv): TrBa
     AddInput(K_InpInp);
 }
 
-const DtBase* TrIsValid::VDtGet(const string& aType)
+const DtBase* TrIsValid::doVDtGet(const string& aType)
 {
-    if (mCInv) {
-	mRes.mValid = false;
-	const DtBase* inp = GetInpData(mInpInp, inp);
-	if (inp) {
-	    mRes.mData = inp->IsValid();
-	} else {
-	    mRes.mData = false;
-	}
-	mRes.mValid = true;
-	LOGN(EDbg, "Inp [" + (inp ? inp->ToString(true) : "nil") + "], res [" + mRes.ToString(true) + "]");
-	mCInv = false;
+    mRes.mValid = false;
+    const DtBase* inp = GetInpData(mInpInp, inp);
+    if (inp) {
+	mRes.mData = inp->IsValid();
+    } else {
+	mRes.mData = false;
     }
+    mRes.mValid = true;
+    LOGN(EDbg, "Inp [" + (inp ? inp->ToString(true) : "nil") + "], res [" + mRes.ToString(true) + "]");
     return &mRes;
 }
 
@@ -1443,25 +1397,22 @@ TrHash::TrHash(const string& aType, const string& aName, MEnv* aEnv): TrBase(aTy
     AddInput(K_InpInp);
 }
 
-const DtBase* TrHash::VDtGet(const string& aType)
+const DtBase* TrHash::doVDtGet(const string& aType)
 {
-    if (mCInv) {
-	mRes.mValid = false;
-	auto* InpIc = GetInps(mInpInp);
-	if (InpIc && InpIc->size() > 0) {
-	    int hash = 0;
-	    for (auto inp : *InpIc) {
-		const DtBase* data = inp->VDtGet(string());
-		if (data) {
-		    hash += data->Hash();
-		} else {
-		    data = inp->VDtGet(string()); // Debug
-		}
+    mRes.mValid = false;
+    auto* InpIc = GetInps(mInpInp);
+    if (InpIc && InpIc->size() > 0) {
+	int hash = 0;
+	for (auto inp : *InpIc) {
+	    const DtBase* data = inp->VDtGet(string());
+	    if (data) {
+		hash += data->Hash();
+	    } else {
+		data = inp->VDtGet(string()); // Debug
 	    }
-	    mRes.mData = hash;
-	    mRes.mValid = true;
 	}
-	mCInv = false;
+	mRes.mData = hash;
+	mRes.mValid = true;
     }
     return &mRes;
 }

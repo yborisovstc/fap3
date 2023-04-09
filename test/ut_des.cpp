@@ -16,7 +16,6 @@ class Ut_des : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST_SUITE(Ut_des);
     //CPPUNIT_TEST(test_des_data);
     CPPUNIT_TEST(test_des_1);
-    /*
     CPPUNIT_TEST(test_des_ades_1);
     CPPUNIT_TEST(test_des_dmc_1);
     CPPUNIT_TEST(test_des_ifr_inval_1);
@@ -27,6 +26,7 @@ class Ut_des : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(test_des_utl_1);
     CPPUNIT_TEST(test_des_utl_2);
     CPPUNIT_TEST(test_des_sp_1);
+    /*
     */
     CPPUNIT_TEST_SUITE_END();
     public:
