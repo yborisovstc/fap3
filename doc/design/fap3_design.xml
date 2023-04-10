@@ -2811,6 +2811,62 @@
 		<simpara>Same approach can be applied to SDO and SDC also.</simpara>
 	    </sect3>
 	</sect2>
+	<sect2><title>Misc optimization items</title>
+	    <sect3><title>Seach when checking IRM requestor</title>
+		<programlisting>
+		    83	void Unit::resolveIface(const string&amp;aName, MIfReq::TIfReqCp* aReq)
+		    ...
+		    86	    // Check if the requestor was already registered
+		    87	    MIfProv* prov = nullptr;
+		    88	    for (auto item : mIrns) { 
+		    89		if (item->isConnected(aReq)) { prov = item; break;}
+		</programlisting>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_desopt_est"><title>Fap3-vis ut_avr_vert_drp_2. Extracting VertCRP Slot takes long time.</title>
+	    <sect3><title>Into</title>
+		<simpara>Analysis of the log shows that extracting VertCrp Slot takes long time.</simpara>
+		<programlisting>
+		    04/09/23 16:27:33.446340883;INF;;.testroot.Test.Window.Scene.Drp.SdcReposExtrSlot;Started extracting node [.testroot.Test.Window.Scene.Drp.Slot_Model_vert2%MNode]
+		    04/09/23 16:27:33.629897118;INF;;.testroot.Test.Window.Scene.Drp.SdcReposExtrSlot;Started extracting node 1
+		</programlisting>
+		<simpara>So the operation takes ~180ms: disconnect </simpara>
+		<programlisting>
+		    ASdcExtract::doCtl (this=0x55555617e010) at dessdc.cpp:1307
+		    ...
+		    bool cres = MVert::disconnect(nextv, nextPair);
+		</programlisting>
+		<simpara>Where nextv is ".testroot.Test.Window.Scene.Drp.Slot_Model_vert2.Next%MVert" and nextPair is ".testroot.Test.Window.Scene.Drp.Column_0.Start.Prev%MVert"</simpara>
+		<simpara>Disconnect operation includes handling:</simpara>
+		<programlisting>
+		    void Vert::onDisconnected()
+		    -   {
+		    |       invalidateIrm();
+		    |       notifyChanged();
+		</programlisting>
+		<simpara>Checked Column_0.Start.Prev IRMs - the tree is too vast. This is because of the specifics of Columns container topology - slots CPs comprises very long chains.</simpara>
+	    </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_dsps"><title>[Impl] Dynamic switching with TrSwitchBool: design problem and possible solution</title>
+	<sect2><title>Status</title>
+	    <simpara>20230409 Initial impl.</simpara>
+	</sect2>
+	<sect2><title>Intro</title>
+	    <simpara>In the current fap3 version there is still TrSwitchBool issue that was discussed earlier and then forgotten:
+		transition passes MDesInpObserver notification from non-selected input.</simpara>
+	    <simpara>This dynamic switching is the alternative of struncture changing via SDC. Dynamic switching is more light-weight then
+		changing of the structure. It just uses interface calls redirections instead of interface resolution.</simpara>
+	</sect2>
+	<sect2><title>Solution</title>
+	    <simpara>
+		Current implementation already does MDtGet calls redirection. The only MDesInpObserver call is not redirected.
+		Created new agent TrSwitchBool2. Added MDesInpObserver call redirection. Tested on fap3-vis ut_avr_vert_drp_2 -
+		there is no performance valuable improvement. This weak affect to the performance can be explained: transitions cache (
+		<xref linkend="ds_desopt_tdc"/>) was introduced some time ago so even the dependent state is notified extra times the state just 
+		    takes the trans cache (that is unchanged), so no re-calculation happens)</simpara>
+	</sect2>
     </sect1>
 
     <sect1 id="ds_rdr"><title>Row data redesign.</title>
@@ -3085,6 +3141,8 @@
 	<sect2><title><xref linkend="ds_nn_abo"/></title> </sect2>
 	<sect2><title><xref linkend="ds_mdc_sw"/></title> </sect2>
 	<sect2><title><xref linkend="ds_desopt_tdc"/></title> </sect2>
+	<sect2><title><xref linkend="ds_dsps"/></title> </sect2>
+	<sect2><title><xref linkend="ds_desopt_est"/></title> </sect2>
     </sect1>
 
     <sect1 id="ds_ic"><title>Tracking: Design items completed</title>
@@ -3368,6 +3426,7 @@
 	</sect2>
 	<sect2 id="ds_iss_016"><title>[<glossterm id="iss_016">DS_ISS_016</glossterm>] [Open] 20230403 SdoCompComp doesn't observes the target existence</title>
 	    <sect3><title>Status</title>
+		<simpara>Postponed ATM. CompComp seems to be unusable at all.</simpara>
 	    </sect3>
 	</sect2>
     </sect1>

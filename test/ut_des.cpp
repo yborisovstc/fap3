@@ -15,7 +15,10 @@ class Ut_des : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_des);
     //CPPUNIT_TEST(test_des_data);
+    /*
+    */
     CPPUNIT_TEST(test_des_1);
+    /*
     CPPUNIT_TEST(test_des_ades_1);
     CPPUNIT_TEST(test_des_dmc_1);
     CPPUNIT_TEST(test_des_ifr_inval_1);
@@ -26,7 +29,6 @@ class Ut_des : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(test_des_utl_1);
     CPPUNIT_TEST(test_des_utl_2);
     CPPUNIT_TEST(test_des_sp_1);
-    /*
     */
     CPPUNIT_TEST_SUITE_END();
     public:
@@ -168,6 +170,7 @@ void Ut_des::test_des_tr_1()
     CPPUNIT_ASSERT_MESSAGE("StUri failed", getStateDstr("Launcher.Ds1.StUri") == "URI State1.State2");
     CPPUNIT_ASSERT_MESSAGE("SSizeOfVect failed", getStateDstr("Launcher.Ds1.SSizeOfVect") == "SI 3");
     CPPUNIT_ASSERT_MESSAGE("SSwitch failed", getStateDstr("Launcher.Ds1.SSwitch") == "SI 2");
+    CPPUNIT_ASSERT_MESSAGE("SSwitch2 failed", getStateDstr("Launcher.Ds1.SSwitch2") == "SI 2");
     CPPUNIT_ASSERT_MESSAGE("SSwitchUsInv failed", getStateDstr("Launcher.Ds1.SSwitchUsInv") == "SI 2");
     CPPUNIT_ASSERT_MESSAGE("SAddInt failed", getStateDstr("Launcher.Ds1.SAddInt") == "SI 7");
     CPPUNIT_ASSERT_MESSAGE("SMplInt failed", getStateDstr("Launcher.Ds1.SMplInt") == "SI 10");

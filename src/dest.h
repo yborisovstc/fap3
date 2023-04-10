@@ -266,6 +266,41 @@ class TrSwitchBool: public TrBase
 	const static string K_InpInp1, K_InpInp2, K_InpSel;
 };
 
+/** @brief Agent function "Switcher" ver.2
+ * Updated for solving desinp observing from non-selected inp, ref ds_dsps
+ * Doens't improve the performance, mitigated by trans cache (ds_desopt_tdc) so
+ * TrSwitchBool can be used instead.
+ * */
+class TrSwitchBool2: public TrBase
+{
+    public:
+	class IobsPx : public MDesInpObserver {
+	    public:
+		IobsPx(TrSwitchBool2* aHost): mHost(aHost) {}
+		virtual string MDesInpObserver_Uid() const {return mHost->getUid<MDesInpObserver>() + "Px";}
+		virtual void MDesInpObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+		virtual void onInpUpdated() override { mHost->notifyInpsUpdated(this); }
+		TrSwitchBool2* mHost;
+	};
+    friend class IobsPx;
+    public:
+	static const char* Type() { return "TrSwitchBool2";};
+	TrSwitchBool2(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	virtual const DtBase* doVDtGet(const string& aType) override;
+	virtual string VarGetIfid() const override;
+    protected:
+	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	MDVarGet* GetInp();
+	void notifyInpsUpdated(const IobsPx* aPx);
+    protected:
+	FInp mInp1, mInp2, mSel;
+	const static string K_InpInp1, K_InpInp2, K_InpSel;
+	bool mSelV = false;
+	bool mSelected = false;
+	IobsPx mPx1, mPx2;
+};
+
+
 class TrBool: public TrBase
 {
     public:

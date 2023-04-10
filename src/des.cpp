@@ -338,6 +338,10 @@ void State::confirm()
     mUpdNotified = false;
     bool changed = false;
     if (mCdata) {
+	string old_value;
+	if (isLogLevel(EDbg)) {
+	    old_value = mCdata->ToString();
+	}
 	if (mInpValid) {
 	    if (mPdata) {
 		if (*mCdata != *mPdata) {
@@ -360,7 +364,7 @@ void State::confirm()
 	    }
 	}
 	if (changed) {
-	    LOGN(EDbg, "Updated [" + mCdata->ToString() + " <- " + mCdata->ToString() + "]");
+	    LOGN(EDbg, "Updated [" + mCdata->ToString() + " <- " + old_value + "]");
 	} else {
 	    // State is not changed. No need to notify connected inps.
 	    // But we still need to make IFR paths to inps actual. Ref ds_asr.

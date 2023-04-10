@@ -136,6 +136,24 @@ MyRoot : Elem {
                     }
                 }
             }
+            # "Switch2"
+            SSwitch2 : State @  {
+                _@ <  {
+                    = "SI"
+                    Debug.LogLevel = "Dbg"
+                }
+                Inp ~ : TrSwitchBool2 @  {
+                    Inp1 ~ : State {
+                        = "SI 5"
+                    }
+                    Inp2 ~ : State {
+                        = "SI 2"
+                    }
+                    Sel ~ : State {
+                        = "SB true"
+                    }
+                }
+            }
             # "Switch with unselected channel invalid"
             SSwitchUsInv : State @  {
                 _@ <  {

@@ -101,7 +101,7 @@ const DtBase* TrBase::VDtGet(const string& aType)
 {
     if (mCInv) {
 	mResp = doVDtGet(aType);
-	mCInv = !mResp;
+	mCInv = false;
     }
     return mResp;
 }
@@ -484,6 +484,92 @@ string TrSwitchBool::VarGetIfid() const
     auto res = const_cast<TrSwitchBool*>(this)->VDtGet(string());
     return res ? res->GetTypeSig() : string();
 }
+
+
+////  TrSwitchBool, v.2
+
+const string TrSwitchBool2::K_InpInp1 = "Inp1";
+const string TrSwitchBool2::K_InpInp2 = "Inp2";
+const string TrSwitchBool2::K_InpSel = "Sel";
+
+TrSwitchBool2::TrSwitchBool2(const string &aType, const string& aName, MEnv* aEnv): TrBase(aType, aName, aEnv),
+    mInp1(K_InpInp1), mInp2(K_InpInp2), mSel(K_InpSel), mPx1(this), mPx2(this)
+{
+    AddInput(K_InpInp1);
+    AddInput(K_InpInp2);
+    AddInput(K_InpSel);
+}
+
+const DtBase* TrSwitchBool2::doVDtGet(const string& aType)
+{
+    const DtBase* res = nullptr;
+    const Sdata<bool>* sel = GetInpData(mSel, sel);
+    const DtBase* inp1 = GetInpData(mInp1, inp1);
+    const DtBase* inp2 = GetInpData(mInp2, inp2);
+    if (sel && inp1 && inp2)
+    {
+	if (sel->IsValid()) {
+	    auto* data = sel->mData ? inp2 : inp1;
+	    res = (aType.empty() || aType == data->GetTypeSig()) ? data : nullptr;
+	    mSelV = sel->mData;
+	    mSelected = true;
+	}
+    }
+    LOGN(EDbg, "Sel: " + (sel ? sel->ToString(true) : "nul") + ", Inp1: " + (inp1 ? inp1->ToString(true) : "nil") + ", Inp2: " + (inp2 ? inp2->ToString(true) : "nil"));
+    return res;
+}
+
+string TrSwitchBool2::VarGetIfid() const
+{
+    auto res = const_cast<TrSwitchBool2*>(this)->VDtGet(string());
+    return res ? res->GetTypeSig() : string();
+}
+
+void TrSwitchBool2::notifyInpsUpdated(const IobsPx* aPx)
+{
+    //const Sdata<bool>* sel = GetInpData(mSel, sel);
+    //if (sel && sel->IsValid()) {
+    if (mSelected) {
+	auto* px = mSelV ? &mPx2 : &mPx1;
+	if (aPx == px) {
+	    onInpUpdated();
+	}
+    } else {
+	onInpUpdated();
+    }
+}
+
+void TrSwitchBool2::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+{
+    MIface* ifr = MNode_getLif(aName.c_str()); // Local
+    if (ifr) {
+	addIfpLeaf(ifr, aReq);
+    } else if (aName == MDesInpObserver::Type()) {
+	// Enable MDesInpObserver resolution for inputs only
+	// We cannot resolve inputs atm (it requires inputs registry)
+	// So checking components instead of inputs
+	MIfReq::TIfReqCp* req = aReq->binded()->firstPair();
+	if (req) {
+	    const MIfProvOwner* reqo = req->provided()->rqOwner();
+	    MNode* reqn = const_cast<MNode*>(reqo ? reqo->lIf(reqn) : nullptr); // Current requestor as node
+	    if (reqn && isNodeOwned(reqn)) {
+		if (reqn->name() == mInp1.mName) {
+		    ifr = &mPx1;
+		} else if (reqn->name() == mInp2.mName) {
+		    ifr = &mPx2;
+		} else {
+		    ifr = dynamic_cast<MDesInpObserver*>(this);
+		}
+		addIfpLeaf(ifr, aReq);
+	    }
+	}
+    } else {
+	CpStateOutp::resolveIfc(aName, aReq);
+    }
+}
+
+
+
 
 
 /// Bool transition base
