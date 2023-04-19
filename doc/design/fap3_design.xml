@@ -720,6 +720,31 @@
 		    service point of active context. Service point uses this context when to "switch" its other muxes.</simpara>
 	    </sect3>
 	</sect2>
+	<sect2 id="ds_irm_wprc"><title>IFR as the weak point if the system is re-configurable</title>
+	    <sect3><title>Intro</title>
+		<simpara>Ref <xref linkend="ds_desopt_est"/> for the use-case. This use-case shows that IFR is 
+		    not effective when system is re-configurable, the example is VertDRP.</simpara>
+	    </sect3>
+	    <sect3 id="ds_irm_wprc_uic"><title>Solution: Use IRM only in case of implicit connections.</title>
+		<simpara>Tried this approach (ref CpStateInp with DES_CPS_IFC macro) but couldnt fix all the problems. Postponed.</simpara>
+	    </sect3>
+	    <sect3 id="ds_irm_wprc_blc"><title>Solution: Use DES extenders breaking long IRM chans</title>
+		<simpara>
+		    It is noticed when debugging that some IRM chains too long and complex. This causes long invalidation.  Ref
+		    <xref linkend="ds_desopt_est"/> for the metrics - max invalidation time is ~72ms that is too long. 
+			We can reduce the chains useng special extenders, ref ExtdStateOutpI.
+		</simpara>
+		<simpara>Tried this solution for ut_avr_vert_drp_2 - it reduces the invalidation time from 2.93s to 1.2s, max invalidation time is reduced to 7.5ms.
+		    But this solution is not persistent and depends on the model topology.</simpara>
+	    </sect3>
+	    <sect3 id="ds_irm_wprc_lsc"><title>Solution: Layered system DES control (<xref linkend="gls_sdc"/>)</title>
+		<sect4><title>Intro</title>
+		    <simpara>This idea is to avoid running the system under re-configuration (controlled system). If controlled system is not run
+			then we don't need to notify DES inputs immediately. This notification can be done only on controlling is completed.</simpara>
+		    <simpara>Ref <xref linkend="ds_dcs_sl"/> for layered control design details.</simpara>
+		</sect4>
+	    </sect3>
+	</sect2>
     </sect1>
 
     <sect1 id="ds_sn"><title>System navigation improvement. Access restrictions</title>
@@ -1879,8 +1904,9 @@
 	</sect2>
 	<sect2 id="ds_dcs_sl"><title>Using special layer for controlling systems.</title>
 	    <sect3><title>Intro</title>
-		<simpara>On initial times of DES desing there was the idea of how such systems can be controlled. The idea was that specific layer needs to be used.
-		    This layer represent underlying layer (controlled) as data. This means that controlling layer defines controlled layer via some data
+		<simpara>On initial times of DES design there was the idea of how such systems can be controlled. The idea was that specific layer needs to be used.
+		    This layer considers underlying layer (controlled) as a data (same manner as regular DES considers states simple data as a data).
+		    This means that controlling layer defines controlled layer via some data
 		    (it should be structured data and complex enough). In fact this data is the static description of the structure of the controlled layer.
 		    In contrast of chromosome this description doesn't specify the system in "dynamic" manner (i.e. via the chromo - spec of changes the sytem)
 		    but statically, as existed structure. There shall be the transitions that can manipulate with such definitions, for instance delete one 
@@ -1888,14 +1914,23 @@
 	    </sect3>
 	    <sect3><title>This is just another form of the current solution</title>
 		<simpara>At the first look this seems same as <xref linkend="ds_dcs_itr_cs"/> but different form. With special layer the controlling subsystem
-		    update is DES standard: the data (controlled system definition) is modifyed in the proper transition that the controlled system "apply" this
+		    update is DES standard: the data (controlled system definition) is modified in the proper transition that the controlled system "apply" this
 		    data to it controlled model (i.e. changes the model). In DES adapter there is no explicit transition. Instead, the adapter performs "the transition" via
 		    direct changing (mutating) of the controlled system. The only diff is <xref linkend="ds_dcs_itr_sna"/> - this causes the different behaviour.
 		</simpara>
 	    </sect3>
-	    <sect3 id="ds_dcs_sl_dbo"><title>DES base objects</title>
-		<simpara>This philosophy can be interpreted by another manner - we can create object which chromo (or some another exquivalend of structure representation) parts
+	    <sect3 id="ds_dcs_sl_dbo"><title>DES based objects</title>
+		<simpara>This philosophy can be interpreted with another manner - we can create object which chromo (or some another exquivalend of structure representation) parts
 		    are states. Obviously this will be "higher" level objects, that can be called "DES based" objects.</simpara>
+	    </sect3>
+	    <sect3><title>Layered system control as the solution of system performance issue.</title>
+		<sect4><title>Intro</title>
+		    <simpara>Ref <xref linkend="ds_irm_wprc_lsc"/> for the issue description and initial analysis.</simpara>
+		    <simpara>The system peroformance is degraded because of a lot of IRM invalidation and related to that DES inputs notifications. This
+			mechanism supports DES actual with re-configuration performed but makes the system run slower.</simpara>
+		    <simpara>The idea is to stop controlled system, make all controlled system re-configuration, perform IRM invalidation and DES inp notification and then run the 
+			controlled system again.</simpara>
+		</sect4>
 	    </sect3>
 	</sect2>
 	<sect2 id="ds_dcs_cssd"><title>System update: chromo vs system structure data.</title>
@@ -2845,6 +2880,11 @@
 		    |       notifyChanged();
 		</programlisting>
 		<simpara>Checked Column_0.Start.Prev IRMs - the tree is too vast. This is because of the specifics of Columns container topology - slots CPs comprises very long chains.</simpara>
+		<simpara>Checked with profiler the time consumed by invalidateIrm - it takes 2/3 of total system run (column#3 gives the num, #4 - min dur, #5- max, #6 - total duration):</simpara>
+		<programlisting>
+		    2       IFC_U_INV       17593   0.000001        0.071517        2.918130        0.000166        0.001689        0
+		    1001    IFC_LNCH_RUN    1       4.307730        4.307730        4.307730        4.307730        0.000000        0
+		</programlisting>
 	    </sect3>
 	</sect2>
     </sect1>

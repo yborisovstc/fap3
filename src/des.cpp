@@ -46,12 +46,79 @@ void CpState::onIfpInvalidated(MIfProv* aProv)
 
 /* Connection point - input of combined chain state AStatec */
 
+#ifdef DES_CPS_IFC
+
+CpStateInp::CpStateInp(const string &aType, const string& aName, MEnv* aEnv): CpState(aType, aName, aEnv), mIop(this)
+{
+    bool res = setContent("Provided", "MDesInpObserver");
+    res = setContent("Required", "MDVarGet");
+    assert(res);
+}
+
+void CpStateInp::onInpUpdated()
+{
+    auto* ifcs = mIop.mIfr.ifaces();
+    for (auto* ifc : *ifcs) {
+	assert (ifc != dynamic_cast<MDesInpObserver*>(this));
+	reinterpret_cast<MDesInpObserver*>(ifc)->onInpUpdated();
+    }
+}
+
+MIface* CpStateInp::MNode_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MDesInpObserver>(aType));
+    else res = CpState::MNode_getLif(aType);
+    return res;
+}
+
+void CpStateInp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+{
+    if (aName == MDesInpObserver::Type()) {
+	if (aReq->provided()->isRequestor(&mIop)) {
+	    // Redirect the request to owner
+	    auto owner = Owner();
+	    MUnit* ownu = owner ? const_cast<MOwner*>(owner)->lIf(ownu): nullptr;
+	    if (ownu) {
+		ownu->resolveIface(aName, aReq);
+	    }
+	} else {
+	    addIfpLeaf(dynamic_cast<MDesInpObserver*>(this), aReq);
+	}
+    } else {
+	CpState::resolveIfc(aName, aReq);
+    }
+}
+
+MIface* CpStateInp::InpObsProvider::MIfProvOwner_getLif(const char *aType)
+{
+    return nullptr;
+}
+
+void CpStateInp::InpObsProvider::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+{
+    mHost->resolveIface(aName, aReq);
+}
+
+void CpStateInp::InpObsProvider::onIfpDisconnected(MIfProv* aProv)
+{
+}
+
+void CpStateInp::InpObsProvider::onIfpInvalidated(MIfProv* aProv)
+{
+}
+
+
+#else // DES_CPS_IFC
+
 CpStateInp::CpStateInp(const string &aType, const string& aName, MEnv* aEnv): CpState(aType, aName, aEnv)
 {
     bool res = setContent("Provided", "MDesInpObserver");
     res = setContent("Required", "MDVarGet");
     assert(res);
 }
+
+#endif // DES_CPS_IFC
 
 /* Connection point - output of combined chain state AStatec */
 
@@ -100,6 +167,74 @@ ExtdStateOutp::ExtdStateOutp(const string &aType, const string& aName, MEnv* aEn
     bool res = attachOwned(cp);
     assert(res);
 }
+
+/// CpStateOutp direct extender with ifaces impl
+
+ExtdStateOutpI::ExtdStateOutpI(const string &aType, const string& aName, MEnv* aEnv): ExtdStateOutp(aType, aName, aEnv)
+{
+}
+
+MIface* ExtdStateOutpI::MNode_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MDVarGet>(aType));
+    else res = ExtdStateOutp::MNode_getLif(aType);
+    return res;
+}
+
+
+void ExtdStateOutpI::onInpUpdated()
+{
+    // Rederect to call to pairs
+    for (auto pair : mPairs) {
+	MUnit* pe = pair->lIf(pe);
+	auto* ifcs = pe ? pe->getTIfs<MDesInpObserver>() : nullptr;
+	for (auto obs : *ifcs) {
+	    // assert(obs);
+	    obs->onInpUpdated();
+	}
+    }
+}
+
+const DtBase* ExtdStateOutpI::VDtGet(const string& aType)
+{
+    // Redirect to internal point
+    MVert* intcp = getExtd();
+    MUnit* intcpu = intcp ? intcp->lIf(intcpu) : nullptr;
+    MDVarGet* inpvg = intcpu ? intcpu->getSif(inpvg) : nullptr;
+    return inpvg ? inpvg->VDtGet(aType) : nullptr;
+}
+
+string ExtdStateOutpI::VarGetIfid() const
+{
+    // Redirect to internal point
+    auto* self = const_cast<ExtdStateOutpI*>(this);
+    MVert* intcp = self->getExtd();
+    MUnit* intcpu = intcp ? intcp->lIf(intcpu) : nullptr;
+    MDVarGet* inpvg = intcpu ? intcpu->getSif(inpvg) : nullptr;
+    return inpvg ? inpvg->VarGetIfid() : nullptr;
+}
+
+void ExtdStateOutpI::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+{
+    MIface* ifr = MNode_getLif(aName.c_str()); // Local
+    if (ifr) {
+	addIfpLeaf(ifr, aReq);
+    } else if (aName == MDesInpObserver::Type()) {
+	// Enable MDesInpObserver resolution for input
+	MVert* intcp = getExtd();
+	MUnit* intcpu = intcp ? intcp->lIf(intcpu) : nullptr;
+	MIfProvOwner* intcpo = intcpu ? intcpu->lIf(intcpo) : nullptr;
+	if (intcpo && aReq->provided()->isRequestor(intcpo)) {
+	    ifr = dynamic_cast<MDesInpObserver*>(this);
+	    addIfpLeaf(ifr, aReq);
+	}
+    } else {
+	ExtdStateOutp::resolveIfc(aName, aReq);
+    }
+}
+
+
 
 /// CpStateMnodeOutp direct extender 
 
@@ -1445,7 +1580,8 @@ bool DesLauncher::Run(int aCount, int aIdleCount)
 #endif
 	    //updateCounter(cnt); // TODO Is it needed?
 	    LOGN(EDbg, ">>> Update [" + to_string(cnt) + "], count: " + to_string(countOfActive()) +
-		    ", prev_dur: " + PFL_DUR_VALUE(PEvents::EDurStat_LaunchActive));
+		    ", dur: " + PFL_DUR_VALUE(PEvents::EDurStat_LaunchActive) +
+		    ", inv: " + PFL_DUR_STAT_CNT(PEvents::EDurStat_UInvldIrm));
 	    PFL_DUR_START(PEvents::EDurStat_LaunchActive);
 	    PFL_DUR_STAT_START(PEvents::EDurStat_LaunchActive);
 	    PFL_DUR_STAT_START(PEvents::EDurStat_LaunchUpdate);

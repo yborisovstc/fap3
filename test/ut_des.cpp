@@ -16,12 +16,13 @@ class Ut_des : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST_SUITE(Ut_des);
     //CPPUNIT_TEST(test_des_data);
     /*
-    */
     CPPUNIT_TEST(test_des_1);
-    /*
     CPPUNIT_TEST(test_des_ades_1);
     CPPUNIT_TEST(test_des_dmc_1);
     CPPUNIT_TEST(test_des_ifr_inval_1);
+    */
+    CPPUNIT_TEST(test_des_ifr_inval_2);
+    /*
     CPPUNIT_TEST(test_des_tr_1);
     CPPUNIT_TEST(test_des_tr_tres_1);
     CPPUNIT_TEST(test_des_asr_1);
@@ -45,6 +46,7 @@ class Ut_des : public CPPUNIT_NS::TestFixture
     void test_des_ades_1();
     void test_des_dmc_1();
     void test_des_ifr_inval_1();
+    void test_des_ifr_inval_2();
     void test_des_tr_1();
     void test_des_tr_tres_1();
     void test_des_asr_1();
@@ -313,6 +315,26 @@ void Ut_des::test_des_ifr_inval_1()
     delete mEnv;
 }
 
+/** @brief Test of ifr invalidation on DES reconfiguration
+ * Means of reducing invalidation, ref ds_irm_wprc
+ * */
+void Ut_des::test_des_ifr_inval_2()
+{
+    cout << endl << "=== Test of ifr invalidation on DES reconfiguration: minimize ===" << endl;
+
+    const string specn("ut_des_if_inval_2");
+    string ext = "chs";
+    MNode* root = constructSystem(specn);
+    CPPUNIT_ASSERT_MESSAGE("Fail to get root", root);
+
+    // Run
+    bool res = mEnv->RunSystem(4);
+    CPPUNIT_ASSERT_MESSAGE("Failed running system", res);
+
+    delete mEnv;
+}
+
+
 /** @brief Test of ifr activation on DES reconfiguration
  * */
 void Ut_des::test_des_asr_1()
@@ -457,6 +479,7 @@ void Ut_des::test_des_1()
     cout << endl << "=== Test of simple DES ===" << endl;
 
 
+#if 0
     // Benchmarking
     constructSystem("ut_des_1_2");
     mEnv->RunSystem(10000, 2);
@@ -464,6 +487,7 @@ void Ut_des::test_des_1()
     constructSystem("ut_des_1_3");
     mEnv->RunSystem(10000, 2);
     delete mEnv;
+#endif
 
 
     MNode* root = constructSystem("ut_des_1");

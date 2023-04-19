@@ -200,5 +200,6 @@ inline int Node::getLocLogLevel() const
 #define PFL_DUR_START(ID) PROF_DUR_START(PFLE(), PROF_DUR, ID)
 #define PFL_DUR_REC(ID) PROF_DUR_REC(PFLE(), PROF_DUR, ID)
 #define PFL_DUR_VALUE(ID) PROF_FIELD(PFLE(), PROF_DUR, ID, PIndFId::EInd_VAL)
+#define PFL_DUR_STAT_CNT(ID) PROF_FIELD(PFLE(), PROF_DUR_STAT, ID, PIndFId::EStat_CNT)
 
 #endif //  __FAP3_NODE_H

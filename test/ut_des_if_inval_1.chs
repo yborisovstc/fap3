@@ -5,7 +5,7 @@ MyRoot : Elem {
                 = "SI 0"
                 Debug.LogLevel = "Dbg"
             }
-            Const_1 : State {
+            Const_1 : Const {
                 = "SI 1"
             }
             Add : TrAddVar

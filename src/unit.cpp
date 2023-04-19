@@ -133,6 +133,10 @@ void Unit::invalidateIrm()
 {
     if (!mIrns.empty()) {
 	PFL_DUR_STAT_START(PEvents::EDurStat_UInvldIrm);
+	int pcount = 0;
+	for (auto node : mIrns) {
+	    pcount += node->pcount(true);
+	}
 	for (auto node : mIrns) {
 	    if (node->isValid()) {
 		node->setValid(false);

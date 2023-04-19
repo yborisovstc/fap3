@@ -17,6 +17,8 @@
 // Experimental oprimization of DES cycle, ref ds_mdc_sw
 #define DES_LISTS_SWAP
 
+// Experimantal. Cp connpoints with ifaces impl. IRM prb solution ds_irm_wprc_uic. Not completed, errors happen.
+//#define DES_CPS_IFC
 
 /** @brief State Connection point
  * */
@@ -35,6 +37,44 @@ class CpState: public ConnPointu
 	void notifyInpsUpdated();
 };
 
+#ifdef DES_CPS_IFC
+/** @brief Connection point - input of combined chain state AStatec
+ * Just ConnPointMcu with pre-configured prepared/required
+ * */
+class CpStateInp: public CpState, public MDesInpObserver
+{
+    protected:
+	/** @brief Ifc provider to redirect IRM request to owner.  Trans as owner require RQ context
+	 * for IRM algo. So this provider makes the context required
+	 * */
+	struct InpObsProvider : public MIfProvOwner {
+	    InpObsProvider(CpStateInp* aHost): mHost(aHost), mIfr(this, MDesInpObserver::Type())  {}
+	    // From MIfProvOwner
+	    virtual string MIfProvOwner_Uid() const override { return mHost->getUid<MIfProvOwner>() + "~Iop";}
+	    virtual MIface* MIfProvOwner_getLif(const char *aType) override;
+	    virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	    virtual void onIfpDisconnected(MIfProv* aProv) override;
+	    virtual void onIfpInvalidated(MIfProv* aProv) override;
+	    CpStateInp* mHost;
+	    IfrNodeRoot mIfr;
+	};
+    public:
+	static const char* Type() { return "CpStateInp";};
+	CpStateInp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+    public:
+	// From Node
+	virtual MIface* MNode_getLif(const char *aType) override;
+	// From Unit.MIfProvOwner
+	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	// From MDesInpObserver
+	virtual string MDesInpObserver_Uid() const {return getUid<MDesInpObserver>();}
+	virtual void MDesInpObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+	virtual void onInpUpdated() override;
+    protected:
+	InpObsProvider mIop;
+};
+
+#else // DES_CPS_IFC
 /** @brief Connection point - input of combined chain state AStatec
  * Just ConnPointMcu with pre-configured prepared/required
  * */
@@ -44,7 +84,9 @@ class CpStateInp: public CpState
 	static const char* Type() { return "CpStateInp";};
 	CpStateInp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 };
+#endif // DES_CPS_IFC
 
+#ifdef DES_CPS_IFC
 /** @brief Connection point - output of combined chain state AStatec
  * Just ConnPointMcu with pre-configured prepared/required
  * */
@@ -54,6 +96,18 @@ class CpStateOutp: public CpState
 	static const char* Type() { return "CpStateOutp";};
 	CpStateOutp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 };
+
+#else // DES_CPS_IFC
+/** @brief Connection point - output of combined chain state AStatec
+ * Just ConnPointMcu with pre-configured prepared/required
+ * */
+class CpStateOutp: public CpState
+{
+    public:
+	static const char* Type() { return "CpStateOutp";};
+	CpStateOutp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+};
+#endif // DES_CPS_IFC
 
 /** @brief Connection point - input of state required MNode iface
  * Just ConnPointu with pre-configured prepared/required
@@ -91,6 +145,28 @@ class ExtdStateMnodeOutp : public Extd
 	static const char* Type() { return "ExtdStateMnodeOutp";};
 	ExtdStateMnodeOutp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 };
+
+/** @brief CpStateOutp direct extender (extd as outp) with ifaces impl, ref ds_irm_wprc_blc
+ * !! Supports only single MDVarGet input
+ * */
+class ExtdStateOutpI : public ExtdStateOutp, public MDVarGet, protected MDesInpObserver
+{
+    public:
+	static const char* Type() { return "ExtdStateOutpI";};
+	ExtdStateOutpI(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	virtual MIface* MNode_getLif(const char *aType) override;
+	// From MDesInpObserver
+	virtual string MDesInpObserver_Uid() const {return getUid<MDesInpObserver>();}
+	virtual void MDesInpObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+	virtual void onInpUpdated() override;
+	// From MDVarGet
+	virtual string MDVarGet_Uid() const override { return getUid<MDVarGet>();}
+	virtual MIface* DoGetDObj(const char *aName) override { return nullptr;}
+	virtual const DtBase* VDtGet(const string& aType) override;
+	virtual string VarGetIfid() const override;
+	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+};
+
 
 
 /** @brief Connection point - output of state provided MNode iface
@@ -539,7 +615,7 @@ class DesEIbb: public MDesInpObserver, public MDesSyncable
 	string getUri() const { return mUri;}
 	// From MDesInpObserver
 	virtual void onInpUpdated() override { setActivated();}
-	virtual string MDesInpObserver_Uid() const override {return MDesInpObserver::Type();}
+	virtual string MDesInpObserver_Uid() const override { return MDesInpObserver::Type();}
 	virtual void MDesInpObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
 	// From MDesSyncable
 	virtual string MDesSyncable_Uid() const override {return MDesSyncable::Type();} 

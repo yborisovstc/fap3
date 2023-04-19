@@ -126,7 +126,7 @@ class MNcpp
 	virtual TPair* firstPair() = 0;
 	virtual TPair* nextPair(TPair* aPair) = 0;
 	/** @brief Gets pairs count */
-	virtual int pcount() const = 0;
+	virtual int pcount(bool aRcr = false) const = 0;
 	virtual const TPair* pairAt(int aInd) const = 0;
 	virtual TPair* pairAt(const string aId) = 0;
 	virtual const TPair* pairAt(const string aId) const = 0;
@@ -218,7 +218,7 @@ class NCpOmi2 : public MNcp<TPif, TRif>
 	virtual const TPair* at(const string aId) const { return mPairs.count(aId) > 0 ? mPairs.at(aId) : nullptr;;}
 	virtual TPair* at(const string aId) { return mPairs.count(aId) > 0 ? mPairs.at(aId) : nullptr;;}
 	// Local
-	virtual int pcount() const override { return mPairs.size(); }
+	virtual int pcount(bool aRcr = false) const override { return mPairs.size(); }
 	virtual const TPair* pairAt(int aInd) const override { for (auto it = mPairs.begin(); it != mPairs.end(); it++) if (aInd-- == 0) return it->second; return nullptr; }
 	virtual TPair* pairAt(int aInd) override { for (auto it = mPairs.begin(); it != mPairs.end(); it++) if (aInd-- == 0) return it->second; return nullptr; }
 	virtual TPair* firstPair() { return mPairs.size() > 0 ? mPairs.begin()->second : nullptr;}
@@ -413,7 +413,7 @@ class NCpOmip : public MNcpp<TPif, TRif>
 	virtual TSelf* firstLeafB() override { return nullptr;}
 	virtual TPair* nextLeaf(TPair* aLeaf) override { return nullptr;}
 	virtual TSelf* nextLeaf() override { return nullptr;}
-	virtual int pcount() const override { return mPairs.size(); }
+	virtual int pcount(bool aRcr = false) const override { return mPairs.size(); }
 	virtual const TPair* pairAt(int aInd) const override { for (auto it = mPairs.begin(); it != mPairs.end(); it++) if (aInd-- == 0) return it->second; return nullptr; }
 	virtual TPair* pairAt(int aInd) override { for (auto it = mPairs.begin(); it != mPairs.end(); it++) if (aInd-- == 0) return it->second; return nullptr; }
 	virtual TPair* pairAt(const string aId) { return mPairs.count(aId) > 0 ? mPairs.at(aId) : nullptr;}
@@ -766,7 +766,16 @@ class NCpOmnp : public MNcpp<TPif, TRif>
 	    return res;
 	}
 	virtual TSelf* nextLeaf() override { return nullptr;}
-	virtual int pcount() const override { return mPairs.size(); }
+	virtual int pcount(bool aRcr = false) const override {
+	    int res = mPairs.size();
+	    if (aRcr) {
+		for (auto it = mPairs.begin(); it != mPairs.end(); it++) {
+		    auto pair = *it;
+		    res += pair->pcount(aRcr);
+		}
+	    }
+	    return res;
+	}
 	virtual const TPair* pairAt(int aInd) const override { for (auto it = mPairs.begin(); it != mPairs.end(); it++) if (aInd-- == 0) return *it; return nullptr; }
 	virtual TPair* pairAt(int aInd) override { for (auto it = mPairs.begin(); it != mPairs.end(); it++) if (aInd-- == 0) return *it; return nullptr; }
 	virtual TPair* pairAt(const string aId) { return nullptr;}
@@ -862,7 +871,7 @@ class NCpOnp : public MNcpp<TPif, TRif>
 	virtual TSelf* nextLeaf() override {
 	    return mPair ? mPair->nextLeaf(this) : nullptr;
 	}
-	virtual int pcount() const override {return mPair ? 1 : 0;}
+	virtual int pcount(bool aRcr = false) const override {return mPair ? 1 : 0;}
 	virtual const TPair* pairAt(int aInd) const override { return (aInd < pcount()) ? mPair : nullptr; }
 	virtual TPair* pairAt(int aInd) override { return (aInd < pcount()) ? mPair : nullptr; }
 	virtual TPair* pairAt(const string aId) override { return nullptr;}
@@ -1071,6 +1080,9 @@ class NTnnp : public NCpOnp<TProv, TReq>
 	    bool res = TScp::disconnectAll();
 	    res = res && mCnode.disconnectAll();
 	    return res;
+	}
+	virtual int pcount(bool aRcr = false) const override {
+	    return mCnode.pcount(aRcr);
 	}
     protected:
 	Cnode mCnode;
