@@ -1327,3 +1327,87 @@ bool ASdcExtract::doCtl()
     } while (0);
     return res;
 }
+
+
+/* SDC agent "Pause manageable" */
+
+ASdcPause::ASdcPause(const string &aType, const string& aName, MEnv* aEnv): ASdc(aType, aName, aEnv)
+{ }
+
+MDesManageable* ASdcPause::getDesManageable()
+{
+    MDesManageable* res = nullptr;
+    MUnit* magu = mMag->lIf(magu);
+    res = magu ? magu->getSif(res) : nullptr;
+    return res;
+}
+
+bool ASdcPause::getState(bool aConf)
+{
+    bool res = false;
+    if (mMag) {
+	MDesManageable* magm = getDesManageable();
+	if (!magm) {
+	    LOGN(EErr, "Managed agent isn't DES manageable");
+	} else {
+	    res = magm->isPaused();
+	}
+    }
+    return res;
+}
+
+bool ASdcPause::doCtl()
+{
+    bool res = false;
+    MDesManageable* magm = getDesManageable();
+    if (!magm) {
+	LOGN(EErr, "Managed agent isn't DES manageable");
+    } else {
+	magm->pauseDes();
+	res = true;
+    }
+    return res;
+}
+
+
+/* SDC agent "Resume manageable" */
+
+ASdcResume::ASdcResume(const string &aType, const string& aName, MEnv* aEnv): ASdc(aType, aName, aEnv)
+{ }
+
+MDesManageable* ASdcResume::getDesManageable()
+{
+    MDesManageable* res = nullptr;
+    MUnit* magu = mMag->lIf(magu);
+    res = magu ? magu->getSif(res) : nullptr;
+    return res;
+}
+
+bool ASdcResume::getState(bool aConf)
+{
+    bool res = false;
+    if (mMag) {
+	MDesManageable* magm = getDesManageable();
+	if (!magm) {
+	    LOGN(EErr, "Managed agent isn't DES manageable");
+	} else {
+	    res = !magm->isPaused();
+	}
+    }
+    return res;
+}
+
+bool ASdcResume::doCtl()
+{
+    bool res = false;
+    MDesManageable* magm = getDesManageable();
+    if (!magm) {
+	LOGN(EErr, "Managed agent isn't DES manageable");
+    } else {
+	magm->resumeDes();
+	res = true;
+    }
+    return res;
+}
+
+

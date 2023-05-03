@@ -531,6 +531,38 @@ class ASdcExtract : public ASdc
 };
 
 
+/** @brief SDC agent "Pause manageable"
+ * */
+class ASdcPause : public ASdc
+{
+    public:
+	static const char* Type() { return "ASdcPause";};
+	ASdcPause(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+    protected:
+	// From ASdc
+	virtual bool getState(bool aConf = false) override;
+	bool doCtl() override;
+    protected:
+	MDesManageable* getDesManageable();
+};
+
+/** @brief SDC agent "Resume manageable"
+ * */
+class ASdcResume : public ASdc
+{
+    public:
+	static const char* Type() { return "ASdcResume";};
+	ASdcResume(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+    protected:
+	// From ASdc
+	virtual bool getState(bool aConf = false) override;
+	bool doCtl() override;
+    protected:
+	MDesManageable* getDesManageable();
+};
+
+
+
 
 
 

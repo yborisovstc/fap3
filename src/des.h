@@ -436,7 +436,8 @@ class Des: public Syst, public MDesSyncable, public MDesObserver
  * TODO Do we really need it? It cannot be embedded to ordinary system, but to DES
  * (it needs owner to be MDesObserver or resolve this iface). Consider to remove.
 * */
-class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver, public MObserver
+class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver, public MObserver,
+      public MDesManageable
 {
     public:
 	using TAgtCp = NCpOnp<MAgent, MAhost>;  /*!< Agent conn point */
@@ -477,6 +478,11 @@ class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver
 	virtual void onObsChanged(MObservable* aObl) override {}
 	// From Node.MOwned
 	virtual void onOwnerAttached() override;
+	// From MDesManageable
+	virtual string MDesManageable_Uid() const override {return getUid<MDesManageable>();}
+	virtual void pauseDes() override;
+	virtual void resumeDes() override;
+	virtual bool isPaused() const override;
     protected:
 	MNode* ahostGetNode(const GUri& aUri);
 	MNode* ahostNode();
@@ -496,6 +502,7 @@ class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver
 	bool mUpdNotified;               //<! Sign of that State notified observers on Update
 	bool mActNotified;               //<! Sign of that State notified observers on Activation
 	bool mUpd = false;
+	bool mPaused;                    //<! Status of pause of DES evolving
 };
 
 

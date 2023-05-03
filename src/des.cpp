@@ -41,7 +41,10 @@ void CpState::onDisconnected()
 void CpState::onIfpInvalidated(MIfProv* aProv)
 {
     ConnPointu::onIfpInvalidated(aProv);
-    notifyInpsUpdated();
+    if (aProv->name() == MDVarGet::Type()) {
+	// Notify DES inps only in case of MDVarGet invalidated, ref ds_asr_cbscpd_ahoi
+	notifyInpsUpdated();
+    }
 }
 
 /* Connection point - input of combined chain state AStatec */
@@ -615,7 +618,6 @@ void State::onIfpInvalidated(MIfProv* aProv)
 {
     Vertu::onIfpInvalidated(aProv);
     setActivated();
-    NotifyInpsUpdated();
 }
 
 void State::refreshInpObsIfr()
@@ -859,7 +861,7 @@ void Const::onDisconnected()
 void Const::onIfpInvalidated(MIfProv* aProv)
 {
     Vertu::onIfpInvalidated(aProv);
-    NotifyInpsUpdated();
+    //NotifyInpsUpdated();
 }
 
 void Const::refreshInpObsIfr()
@@ -1199,7 +1201,8 @@ void Des::MDesObserver_doDump(int aLevel, int aIdt, ostream& aOs) const
 
 ///// ADES
 
-ADes::ADes(const string &aType, const string &aName, MEnv* aEnv): Unit(aType, aName, aEnv), mOrCp(this), mAgtCp(this), mUpdNotified(false), mActNotified(false)
+ADes::ADes(const string &aType, const string &aName, MEnv* aEnv): Unit(aType, aName, aEnv), mOrCp(this), mAgtCp(this), mUpdNotified(false), mActNotified(false),
+    mPaused(false)
 {
 }
 
@@ -1214,6 +1217,7 @@ MIface* ADes::MNode_getLif(const char *aType)
     if (res = checkLif<MDesSyncable>(aType));
     else if (res = checkLif<MAgent>(aType));
     else if (res = checkLif<MDesObserver>(aType));
+    else if (res = checkLif<MDesManageable>(aType));
     else res = Unit::MNode_getLif(aType);
     return res;
 }
@@ -1224,6 +1228,7 @@ MIface* ADes::MAgent_getLif(const char *aType)
     if (res = checkLif<MDesSyncable>(aType));
     else if (res = checkLif<MUnit>(aType)); // To allow client to request IFR
     else if (res = checkLif<MDesObserver>(aType));
+    else if (res = checkLif<MDesManageable>(aType));
     return res;
 }
 
@@ -1282,18 +1287,20 @@ void ADes::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 void ADes::update()
 {
     mUpd = true;
-    for (auto* comp : *mActive) {
-	try {
-	    comp->update();
-	} catch (std::exception e) {
-	    LOGN(EErr, "Error on update [" + comp->Uid() + "]");
+    if (!mPaused) {
+	for (auto* comp : *mActive) {
+	    try {
+		comp->update();
+	    } catch (std::exception e) {
+		LOGN(EErr, "Error on update [" + comp->Uid() + "]");
+	    }
 	}
+	// Swapping the lists
+	auto upd = mUpdated;
+	mUpdated = mActive;
+	mActive = upd;
+	mActive->clear();
     }
-    // Swapping the lists
-    auto upd = mUpdated;
-    mUpdated = mActive;
-    mActive = upd;
-    mActive->clear();
 
     mActNotified = false;
     mUpd = false;
@@ -1317,8 +1324,10 @@ void ADes::update()
 #ifdef DES_LISTS_SWAP
 void ADes::confirm()
 {
-    for (auto* comp : *mUpdated) {
-	comp->confirm();
+    if (!mPaused) {
+	for (auto* comp : *mUpdated) {
+	    comp->confirm();
+	}
     }
     mUpdNotified = false;
 }
@@ -1552,6 +1561,23 @@ MNode* ADes::ahostGetNode(const GUri& aUri)
     MNode* res = hostn ? hostn->getNode(aUri, this) : nullptr;
     return res;
 }
+
+void ADes::pauseDes()
+{
+    mPaused = true;
+}
+
+void ADes::resumeDes()
+{
+    mPaused = false;
+    setActivated();
+}
+
+bool ADes::isPaused() const
+{
+    return mPaused;
+}
+
 
 //// DesLauncher
 

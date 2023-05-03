@@ -145,4 +145,23 @@ class MDesSpc: public MIface
 	virtual string getId() const = 0;
 };
 
+/** @brief DES manageable
+ * */
+class MDesManageable: public MIface
+{
+    public:
+	static const char* Type() { return "MDesManageable";}
+	// From MIface
+	virtual string Uid() const override { return MDesManageable_Uid();}
+	virtual string MDesManageable_Uid() const = 0;
+	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+	// Local
+	/** @brief Pause system evolvement */
+	virtual void pauseDes() = 0;
+	/** @brief Resume system evolvement */
+	virtual void resumeDes() = 0;
+	/** @brief Sign of system is paused */
+	virtual bool isPaused() const = 0;
+};
+
 #endif

@@ -15,6 +15,7 @@ ut_fap3_lib_SOURCES = \
 		       ut_dessdc.cpp \
 		       ut_desctx.cpp \
 		       ut_desas.cpp \
+		       ut_deslsc.cpp \
 		       ut_nn.cpp
 
 ut_fap3_lib_LDFLAGS=-L../src/.libs/ -lfap3  -lcppunit -lrt
