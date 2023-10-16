@@ -229,12 +229,30 @@
 
 	<glossentry id="gls_osm"><glossterm>OSM</glossterm> <acronym>OSM</acronym>
 	    <glossdef> <para>
-		riginal Sequence of Mutations - 
+		Original Sequence of Mutations - 
 		The approach of models creation where the same mutation order is
 		used for model creation as on construction phase, ref
 		    <ulink url="../../../grayb/doc/design/index.html#ds_mut_osm"/>. Ref
 		    <xref linkend="gls_dhc"/> for another approach.  Ref also
 		    <xref linkend="gls_eosm"/> for extended solutions.
+	</para></glossdef> </glossentry>
+
+	<glossentry id="gls_odb"><glossterm>ODB</glossterm> <acronym>ODB</acronym>
+	    <glossdef> <para>
+		An object database or object-oriented database is a database management system in which information is represented
+		in the form of objects as used in object-oriented programming.
+		    <ulink url="https://en.wikipedia.org/wiki/Object_database"/> and
+		    <ulink url="https://www.service-architecture.com/articles/object-oriented-databases/"/>.
+	</para></glossdef> </glossentry>
+
+
+	<glossentry id="gls_orm"><glossterm>ORM</glossterm> <acronym>ORM</acronym>
+	    <glossdef> <para>
+		Object–relational mapping (ORM, O/RM, and O/R mapping tool) in computer science is a programming technique
+		for converting data between a relational database and the heap of an object-oriented programming language.
+		This creates, in effect, a virtual object database that can be used from within the programming language.
+		    <ulink url="https://en.wikipedia.org/wiki/Object%E2%80%93relational_mapping"/> and
+		    <ulink url="https://www.service-architecture.com/articles/object-oriented-databases/object-relational-mapping.html"/>.
 	</para></glossdef> </glossentry>
 
 	<glossentry id="gls_mae"><glossterm>MAE</glossterm>
@@ -1843,6 +1861,16 @@
 	    <sect3 id="ds_asr_cbscpd_ahoi"><title>Interim solution: avoid handling invalidation ifaces other that MDVarGet</title>
 		<simpara>Currently CpState notifies DES inputs irrespectively to iface. But the notification actually does make
 		    sense only if MDVarGet iface gets invalidated. So we can just avoid notif in case if iface isn't MDVarGet.</simpara>
+		<simpara>Performance metrics for Ut_avr::test_VertDrp_2:</simpara>
+		<programlisting>
+		    Was:
+		    2       IFC_U_INV       17656   0.000001        0.071789        2.938181        0.000166        0.001650        0
+		    1001    IFC_LNCH_RUN    1       4.335055        4.335055        4.335055        4.335055        0.000000        0
+
+		    Now:
+		    2       IFC_U_INV       16444   0.000001        0.005683        0.422340        0.000026        0.000124        0
+		    1001    IFC_LNCH_RUN    1       2.381778        2.381778        2.381778        2.381778        0.000000        0
+		</programlisting>
 		<simpara>This solution is interim and doesn't cancel LSC approach.</simpara>
 	    </sect3>
 	</sect2>
@@ -1961,7 +1989,9 @@
 		    <simpara>Ref <xref linkend="ds_irm_wprc_lsc"/> for the issue description and initial analysis.</simpara>
 		    <simpara>The system peroformance is degraded because of a lot of IRM invalidation and related to that DES inputs notifications. This
 			mechanism supports DES actual with re-configuration performed but makes the system run slower.</simpara>
-		    <simpara>The idea is to stop controlled system, make all controlled system re-configuration, perform IRM invalidation and DES inp notification and then run the 
+		    <simpara>The idea is to extend MDesSyncable with pause/resume/run so controlling system can use this method to manage controlled system.
+			Controlling system shall be on "upper" layer in term that it can manage controlled system via SDCs. So controlling system
+			stops controlled system, makes all controlled system re-configuration, performs IRM invalidation and DES inp notification and then resumes the 
 			controlled system again.</simpara>
 		</sect4>
 		<sect4><title>How to "perform IRM invalidation and DES inp notification"?</title>
@@ -1976,765 +2006,770 @@
 	</sect2>
 	<sect2 id="ds_dcs_cssd"><title>System update: chromo vs system structure data.</title>
 	    <sect3><title>Intro</title>
-	    <simpara>
-		Currently the mut is used to update system structure via Node DES adapter (NodeAdp). But this solution is not convenient - the mut is specific
-		data and we need to form this data via rather complicated transition. What is the alternative? It is the solution where system structure data
-		is represented as simple data, for instance boolean data that represened the sign of some component of the system. Updating this data to true
-		means that system shall create that compoment.
-	    </simpara>
-	</sect3>
-	<sect3><title>System structue data is just another representation of Node DES adapter.</title>
-	    <simpara>
-		Indeed, the structure data can be implemented in the scope of adapter with adding specific inputs, outputs and internal modules.
-		Morover the system structure update via structure data finally uses mutation - we just don't have another way to change system structure.
-	    </simpara>
-	    <simpara>
-		However these two approach differs from usage point of view. With NodeAdp we need to form the sequence of mutations with complex transitions. System structure
-		data potentially can be implemeted as separate DES. Let's call this DES "system data controller". In that case With system structure data we can create two
-		controllers. There is an argument that we could create two adapters with embedded system data controller feature, but this would be rather expensive. Another
-		way is to create controller in the adapter.
-	    </simpara>
-	    <simpara>
-		Actually forming mutation for adapter is not true DES approach - in most cases we form just the sequence of mutations. With DES approach we shouldn't use
-		the sequence by set mutation depending on some valuable data (not just sequence counter).
-	    </simpara>
-	</sect3>
-	<sect3><title>System DES controller</title>
-	    <simpara>Ref <xref linkend="ds_dcs_sdc"/></simpara>
-	</sect3>
-    </sect2>
-    <sect2 id="ds_dcs_sdc"><title>System DES controller (<xref linkend="gls_sdc"/>).</title>
-	<sect3><title>Controller as controlling system agent.</title>
-	    <simpara>
-		It is the common case that controlling DES is implemented right in controlled DES. We can intoduce specific agents - 
-		<xref linkend="gls_sdc"/> to simplify the control. This agent input on one hand form "query" to managed system so the query provides
-		    boolean result (for instance, for "Comp" controller that creates new comp there are inputs "Name", "Parent" that forms the query
-		    "Is there component of type "Parent" and name "Name"). Let's call the query result as "output" of controller.
-		    On another hand the inputs forms control action - "Comp" controller creates the component.
-		    Controller also contains special boolean input "Enable" that enables the contolling action.
-		    Such controller scheme allows to create the controlling DES more convenient. One controller output connects to another controller
-		    "Enable" input so DES-stype dependencies are simply established.
-	    </simpara>
-	    <simpara>The main idea of this approach is "distributed" nature of controlling : there can be complex controlling scheme that includes
-		many controlling agents. The agents forms "standard" DES via connecting one to another.</simpara>
-	</sect3>
-	<sect3><title>How to control "remote" system.</title>
-	    <simpara>
-		Another case is when controlled system is not direct owner of controller. The solution here can be collect the controllers in
-		special host DES where we can provide controllers with "environmental" access to controlled system. This "environmental" access can
-		be implemented as the link to managed system that (this link is "known" to controllers). If we need to support more comples use-cases
-		(for instance the main case of modnav - select managed sub-system via navigation thru given system) then we can create custorm host DES that updates this 
-		link to managed system in same manner as DES adaptor does.
-	    </simpara>
-	</sect3>
-	<sect3><title>Controller can be implemented as non-native agent</title>
-	    <simpara>
-		Indeed, we can have controller as a system that includes adapter to managed system. The control action can be done via
-		the mutation thru the adapter, the controller output can be formed via specific functions getting data from the adapter.
-	    </simpara>
-	    <simpara>
-		The problem here is that the adapter performs the mutation on confirmation phase but the sequence of confirmation is not
-		detarministic: some inputs can be changed.
-	    </simpara>
-	</sect3>
-	<sect3><title>Controller native implementation.</title>
-	    <simpara>
-		Native implementation can help to avoid the problem with non-deterministic inputs update on confirmation phase, see the problem
-		description above.
-	    </simpara>
-	</sect3>
-	<sect3><title>"Multi-client" controlling.</title>
-	    <simpara>Major benefit of SDC solution is that the controlling of target system can be performed from many points of the model. It is
-		similar to "client-server" approach. However we can see the potential problems here. Let's look at fap3-vis DContainer. It embeds the 
-		controlling syb-system that allows to add widget. DController expose specific socket as an input to this subsystem. Also the controlling status
-		output is included into the socket.</simpara>
-	    <simpara>But what is we need that DContainer control performs from tho parts of the model? How to support this?  </simpara>
-	    <simpara> The firt approach is to 
-		pull out this controlling subsystem from DContainer. In that case we can create two controlling sybsystem for each controlling 
-		parts ("clients"). However we need to support such "remote" controlling providing the controlling system with access to managed system like it
-		is done for DES adapter. Also it is not nice solution. The controlling DES is specific for DContainer so it would be architecturally more
-		correct way to have controling system incapsulated into container.</simpara>
-	    <simpara>Another solution would be to keep controlling subsytem inside DContainer but provide the container with means of creating other such
-		controling subsystem (again via controloing of DContainer.</simpara>
-	</sect3>
-	<sect3 id="ds_dcs_sdc_uc"><title>Use-cases</title>
-	    <sect4><title>[<glossterm id="uc_sdc_01">UC_SDC_01</glossterm>] Loading the pipeline</title>
-		<simpara>The first data is loaded the pipeline (for container example it is that Name value is set for IoAddWidg.Enable input)
-		    - The controlling chain is completed (for container example it is that the widget was added and last SDCs in the chain sets outp Outp to true)
-		    - New Name is set to pipeline input - the controlling chain creates new widget successfully.</simpara>
-		<sect5><title>Discussion</title>
-		    <simpara>This UC seems not valid. Ref <xref linkend="uc_sdc_05"/> for another UC that seems more reasonable.</simpara>
-		</sect5>
-	    </sect4>
-	    <sect4><title>[<glossterm id="uc_sdc_02">UC_SDC_02</glossterm>] Controller doesn't change system in case of DES Inp notification comes but inputs are not changed actually</title>
-		<simpara>The first data is loaded the pipeline (for container example it is that Name value is set for IoAddWidg.Enable input)
-		    - The controlling chain is completed (for container example it is that the widget was added and last SDCs in the chain sets outp Outp to true)
-		    - Some controller input (for instance IoAddWidg.Name) gets DES inp notification comes but the input data is not changed actually (this can happed
-		    especially if the input connects to some function output and func input is changed but doesn't cause func outp change actually)
-		    - Controller doesn't change the system.</simpara>
-		<sect5><title>Discussion</title>
-		    <simpara>This means that controller is not sensitive to "fake" input change. In regular DES such feature is not needed - in case of 
-			"fake" change DES just recalculate it't states (they keep unchanged in result). But for SDC it is inportant because the controller DES data
-			is not simple dataThis means that controller is not sensitive to "fake" input change. In regular DES such feature is not needed - in case of 
-			"fake" change DES just recalculate it't states (they keep unchanged in result). But for SDC it is inportant because the controller DES data
-			is not simple data, controller changes the system structure incrementally. </simpara>
-		    <simpara>But do we really need this? Ponentially controller can avoid incorrect system update via checking if the system is updated already.</simpara>
-		</sect5>
-	    </sect4>
-	    <sect4><title>[<glossterm id="uc_sdc_03">UC_SDC_03</glossterm>] SDCs form right control trigger</title>
 		<simpara>
-		    There is the pipeline of SDCs: SDC_1 (creating node_1), SDC_2 (creating node_2), SDC_3 (removing node_1), SDC_4 (removing node_2).
-		    SDC_4 triggering condition is SDC_3 status (Outp). This mean SDC_4 is to remove node_2 only after node_1 is removed. 
-		    System starts, SDC_3 formal condition is met (because on this phase node_1 doesn't exitst). SDC_4 gets correct trigger only creating and then removeing node_1.
+		    Currently the mut is used to update system structure via Node DES adapter (NodeAdp). But this solution is not convenient - the mut is specific
+		    data and we need to form this data via rather complicated transition. What is the alternative? It is the solution where system structure data
+		    is represented as simple data, for instance boolean data that represened the sign of some component of the system. Updating this data to true
+		    means that system shall create that compoment.
 		</simpara>
-	    </sect4>
-	    <sect4><title>[<glossterm id="uc_sdc_04">UC_SDC_04</glossterm>] Creating/removing component in cycle</title>
+	    </sect3>
+	    <sect3><title>System structue data is just another representation of Node DES adapter.</title>
 		<simpara>
-		    There is the pipeline of SDCs: SDC_1 (creating component "Comp"), SDC_2 (removing component "Comp").
-		    SDC_2 triggering condition is SDC_1 status (Outp). This mean SDC_2 is to remove component "Comp" only after SDC_1 has created the comp. 
-		    SDC_1 triggering condition is SDC_2 status (Outp). This mean SDC_1 is to create component "Comp" only after SDC_2 has removed the comp. 
-		    System starts and run N ticks - SDCs create and remove component "Comp" N times.
+		    Indeed, the structure data can be implemented in the scope of adapter with adding specific inputs, outputs and internal modules.
+		    Morover the system structure update via structure data finally uses mutation - we just don't have another way to change system structure.
 		</simpara>
-		<sect5><title>Notes</title>
-		    <simpara>Ref ut_dessdc.cpp:test_Sdc_3 (ut_sdc_3.chs) for correspoiding unit test.</simpara>
-		    <simpara>Ref <xref linkend="ds_dcs_sdc_dsgn_os"/> for desing item.</simpara>
-		</sect5>
-	    </sect4>
-	    <sect4><title>[<glossterm id="uc_sdc_05">UC_SDC_05</glossterm>] Controller change system when being notified thru "Enable" inp event inp value is not changed</title>
-		<simpara>The direct specifying this case is rather exhausted. Ref fap3/test/ut_sdc_2.chs for the model. This UC contradicts to <xref linkend="uc_sdc_01"/></simpara>
-		<simpara>PRECONDITIONS</simpara>
-		<programlisting>
-		    There is the model that contains 3 SDCs: SDC_Comp - creation component - list node, SDC_Insert - inserting the node into the list,
-		    SDC_Extract - extracting the node from the list. The model insert/extract the node in the cycle. To do this SDC_Insert trigger ("Enable" inp)
-		    depends on the switch that initially is switched to SDC_Comp status and then, after insertion switches to extraction status.
-		</programlisting>
-		<simpara>STEPS</simpara>
-		<programlisting>
-		    #0 - link node is created
-		    #1 - insertion trigger is ok (switcher on status of creation). Node is inserted.
-		    #2 - insertion status is OK, i.e. extraction trigger is OK. Switcher is still on status of creation (OK). Extracted.
-		    #3 - Switcher on extraction status - OK, i.e insertion trigger is still 1. Expecting that insertion SDC performs the control.
-		</programlisting>
-		<sect5><title>Discussion.</title>
-		    <simpara>Acc to <xref linkend="uc_sdc_01"/> the insertion on #3 cannot happen because the trigger value is not change.</simpara>
-		</sect5>
-		<sect5><title>Design</title>
-		    <simpara>Ref <xref linkend="ds_dcs_sdc_dsgn_oin"/> for the desing</simpara>
-		</sect5>
-	    </sect4>
-	</sect3>
-	<sect3 id="ds_dcs_sdc_dsgn"><title>Pipelined controlling. Design of native SDC</title>
-	    <sect4><title>Intro</title>
-		<simpara>The tipical system controlling consists of number of SDCs combining in a chain so that some controlling operation happens depending on
-		    "previous" operation gets completed. This structure actually creates controlling pipeline. The example is the adding the widget into vis container,
-		    refer to fap3-vis/modules/container.chs. Initial SDC design already contains support of such pipeline - there was input "Enable" and "Outp" output:
-		    The current SDC depends(inp Enable) on previous SDCs completion (out Outp).  Such structure however posesses its specific use-cases and design specifics.</simpara>
-		<simpara>Ref <xref linkend="ds_dcs_sdc_uc"/> for the pipeline specific use-cases.</simpara>
-	    </sect4>
-	    <sect4><title>Controlling phase</title>
-		<simpara>SDC changes the controlled system on Confirmation phase.</simpara>
-	    </sect4>
-	    <sect4><title>Inputs buffering</title>
-		<simpara>To support of controlling on confirmation phase the controller buffers all the inputs. Ref fap3 6db8376c3f3e:src/dessdc ASdc::Iap desing
-		    (mUdt, mCdt etc).</simpara>
 		<simpara>
-		    Is this really needed? Why not just get the inputs data on confirmation phase when controlling? This is the support of
-		    <xref linkend="uc_sdc_02"/>. But as stated in the UC discussion there are other desing solution for that.
+		    However these two approach differs from usage point of view. With NodeAdp we need to form the sequence of mutations with complex transitions. System structure
+		    data potentially can be implemeted as separate DES. Let's call this DES "system data controller". In that case With system structure data we can create two
+		    controllers. There is an argument that we could create two adapters with embedded system data controller feature, but this would be rather expensive. Another
+		    way is to create controller in the adapter.
 		</simpara>
-	    </sect4>
-	    <sect4 id="ds_dcs_sdc_dsgn_idp"><title>Inputs data pipeline in SDC</title>
 		<simpara>
-		    <xref linkend="uc_sdc_01"/> assumes that next pipeline chain proceeds reacting the data from previous one. For instance for the container example SdcConnWdg
-			reacts on same IoAddWidg.Name that previous SDCs (CreateWdg, AddSlot) are reacting. But SdcConnWdg "V1" input cannot be connected directly to IoAddWidg.Name.
-			This is because this input can be changed after CreateWdg is done. So we need to have SdcConnWdg "V1" input same data that CreateWdg was reacting. 
-			The solution here is to pipeline the IoAddWidg.Name data also. For that we need to have IoAddWidg.Name corresponding output OutpName so input data is copyind
-			to output.
+		    Actually forming mutation for adapter is not true DES approach - in most cases we form just the sequence of mutations. With DES approach we shouldn't use
+		    the sequence by set mutation depending on some valuable data (not just sequence counter).
 		</simpara>
-	    </sect4>
-	    <sect4 id="ds_dcs_sdc_dsgn_cc"><title>Forming status. Taking into account the completion of controlling.</title>
-		<simpara>Ref <xref linkend="uc_sdc_03"/> for the use-case.  </simpara>
-		<simpara>The desing supporting this use-case is that we need to form pipeline controllers status with taking into account that the sign of controlling completion.</simpara>
-		<sect5><title>Status</title>
-		    <simpara>This feature is disabled because of clear indication that the use-case is not valid. Alternative design Solution#2 is used - to check the status before 
-			performing the control.</simpara>
-		</sect5>
-	    </sect4>
-	    <sect4 id="ds_dcs_sdc_dsgn_os"><title>Controller observs controlled system status and notifies inputs of Outp (SDC status) changed.</title>
-		<simpara>Ref <xref linkend="uc_sdc_04"/> for the use-case.  </simpara>
-		<simpara>Controller needs to notify controlling status (Outp) change on controlled system change. For that controller needs to observe controlled system.</simpara>
-		<simpara>It is not obvious consideration but without this notification the cycle scheme described in use-case doesn't work. The root-cause of this problem is that for 
-		    instance SDC_1 doesn't notify SDC_2 on status update when SDC_2 removes the comp thus the controling system sticks.</simpara>
-	    </sect4>
-	    <sect4 id="ds_dcs_sdc_dsgn_oin"><title>Controller updating on inps notifications even input value not changed</title>
-		<simpara>Ref <xref linked="uc_sdc_05"/> for the UC</simpara>
-		<simpara>Main Solution#1 is simple - just enable control if inp was notified even its value is unchanged.  </simpara>
-		<simpara>Alternative Solution#2 is to set SDC as updated (i.e. enable performing control) if controlled system data observation
-		    (MagDobs) gets the event. The idea is that the event means the status can be changed, so we need to recalc the status and
-		    perform the control if status isn't met.</simpara>
-	    </sect4>
-	</sect3>
-    </sect2>
-    <sect2 id="ds_dcs_sdo"><title>System DES oberving (<xref linkend="gls_sdo"/>) </title>
-	<sect3><title>Intro</title>
-	    <simpara>Very often we need to observe the controlled system when creating controlling DES. Sometimes status functions embedded to SDC is enough, but in many cases
-		we need separate functions to get controlled system status.</simpara>
-	</sect3>
-	<sect3 id="ds_dcs_aes"><title>Design: access to explorable system</title>
-	    <sect4><title>Intro</title>
-		<simpara>SDO needs the access to explorable system. By default any owned components don't have an access to their owners. Same problem is actual for DCS. Current DCS
-		    design utilized MAgent interface that allows DCS (i.e. agent) to have the acces to its owner. However this solution is not far from perfect. This is because MAgent interface
-		    was not introduced for such purpose as system controlling. Instead it is just to establish "trusted" relationship between agent owner and agent so the agent can play the
-		    role of owener "consiliary". Fro instance owener event redirects IRM requests to its agents.  So MAgent iface is too "heavy" for the purpose of observing.</simpara>
-	    </sect4>
-	    <sect4 id="ds_dcs_aes_acp"><title>Soution: Owner accessibility controlled by owner props</title>
-		<simpara>The idea is to utilize MOwner local iface resolution mechanism to provide an access depending on owner props. For instance if owner property "Explorable" equals "y"
-		    then MOwner provides owned with iface allowing exploring of the owner.</simpara>
-		<simpara>The potential problem here is that this access is given for all owned compoments that expose the vulnerability. We can solve this problem using IRM mechanism instead
-		    of local iface resolution. With IRM the requestor (owend) gets accessible to the owner so the owner can set some restriction. For instance the restriction can be that the owner
-		    request some iface (kimd of MExploring) from the requestor.</simpara>
-	    </sect4>
-	</sect3>
-	<sect3 id="ds_dcs_sdo_owi"><title><xref linkend="gls_sdo"/> operating with ifaces. Ifaces identifying in <xref linkend="gls_sdo"/></title>
-	    <sect4><title>Intro</title>
-		<simpara> It is required to represent iface in systems DES controlling (<xref linkend="gls_sdc"/>) and observing (<xref linkend="gls_sdo"/>).
-		    Such DES operate with ifaces as if they are data. To support this, ifaces are represented by identificator. Currently (20220705) URI is used for that. But URI doesn't indentify the iface but
-		    just MNode underlying. Operating with MNode in SDO is not secure, more correct is to operate with ifaces. In that case we also need to use iface identification (UID) for 
-		    idenffying ifaces.</simpara>
-	    </sect4>
-	</sect3>
-	<sect3 id="ds_dcs_sdo_gmn"><title>Use-case: getting MNode by MVert in SDO </title>
-	    <sect4><title>Intro</title>
-		<simpara>The use-case is as: DES controlling fap3-vis columns layout checks if columns exist. For that it uses first SdoPair to get the pair of the 
-		    layout "End" connpooint. SdoPair needs to get URI of its pair (note currently URI is used as iface identificator in SDO) but it's not possible to get URI from pair (MVert).
-		    To do that we need to get MNode first that is prohibited. Controlling DES then needs to get name of the pair, but this required getting MNode from
-		    MVert that is prohibited.</simpara>
-		<simpara>The noce solution here would be to enable the owner (i.e. SDO system under exploring (SUE)) to get MNode from MVert. Potentially we could extend
-		    MIface::getLif() method passing owner as the argument. But this solution looks ugly.</simpara>
-		<simpara>Currently there is a workaround: MVert gets MUnit - for ConnPoint iface resolution allows getting MNode:</simpara>
-		<programlisting>
-		    void ConnPointu::resolveIfc(const string&amp; aName, MIfReq::TIfReqCp* aReq)
-		    -   {
-		    |       MIface* ifr = MNode_getLif(aName.c_str()); // Local
-		    |-      if (ifr) {
-		    ||          addIfpLeaf(ifr, aReq);
-		    ||      }
-		</programlisting>
-		<simpara>Actually this workaround can be improved - resolveIfc() can check context and enable MVert in case if context is MNode owner. But the problem here that
-		    MUnit iface resolution doesn't know from what iitial iface (MVert from instance) was the request.</simpara>
-	    </sect4>
-	</sect3>
-    </sect2>
-    <sect2 id="ds_dcs_cda"><title>Composite DES adapter as the context for controllers and observers.</title>
-	<sect3><title>Intro</title>
-	    <simpara>Currently [5734b4e935a0, 20220403] the initial desing of DES adapter is in usage - tha adapter is monolitic and iface specific
-		(MNode, MElem etc). This design has the number of cons: it makes overhead (not all CPs are used etc. So we consider another desing - 
-		comopsite adapter. With this desing the adapter itself provides the context for owning controllers and observers. The main part of the context
-		is the link to managed agent.</simpara>
-	</sect3>
-    </sect2>
-    <sect2 id="ds_dcs_ord"><title>DCS example/test - ordering of agents.</title>
-	<sect3><title>Intro</title>
-	    <simpara>We need to create numberer of examples to discover the weaknesses of the current DCS approach and find the proper solutions. The first
-		example is ordering of agents.</simpara>
-	    <simpara>The model is as "fap3/test/ut_adp_dcs_1.chs".</simpara>
-	</sect3>
-    </sect2>
-    <sect2><title>Activating system via implicit dependencies.</title>
-	<sect3><title>Intro</title>
-	    <simpara>
-		It is normal case in the system using controlling when the controlled system (i.e. system + adapter) depends on itlself implicitly. The example is
-		<xref linkend="ds_dcs_ord"/> - the system is mutated with transition that gets system itself (acually internal connections) as input.
-	    </simpara>
-	    <simpara>In contrast of typical DES there aren't explicit dependencies, e.g states that depends each other.</simpara>
-	    <simpara>
-		The question is how to understand if subsystem depends on another subsystem (or even on itself) if threre aren't explicit dependencies?
-		Let's look at the example
-		<xref linkend="ds_dcs_ord"/>: how to get known if controlled system (Root.Launcher) depends on itself via the mutating
-		    transition?
-	    </simpara>
-	</sect3>
-    </sect2>
-    <sect2 id="ds_dcs_trs"><title>DCS transaction</title>
-	<sect3><title>Intro</title>
-	    <simpara>Let's consider an example: DContainer adding widget. It is DCS SDC solution that includes 4 SDCs: CreateWdg, CreateSlot, ConnectSlot, InsertSlot.
-		What if some SDC fails, lets say InsertSlot. In that case we will have the managed system messed: there will be created widget, new slot but the widget
-		will not be shown. It is clear that we need to consider all these 4 SDCs as the single controlling DES. It looks like the transaction in database
-		solutions.  </simpara>
-	</sect3>
-    </sect2>
-    <sect2 id="ds_dcs_iui"><title>Inputs update indication</title>
-	<sect3 id="ds_dcs_iui_itr"><title>Intro</title>
-	    <simpara>Let's look at FAP3-VIS VertDrp for the primary use-case. In VertDrp there is subsystem that positions the CRPs. This subsystem gets the inputs of CRPs params "CrpPars".
-		Then the subs iterates thru the inputs and performs poistioning for each CRP. But what is CRP pars changed during the iteration? In that case we need to reset the iterator and
-		start the positioning process from scratch. The question is of how to get this CrpPars inputs update indication in "DES compatible" form that allows us to use it as
-		reset data.</simpara>
-	    <simpara>Even if the problems seems simple it is not. The first thinking is that we can use some DES level subsystem to form this indication basing solely on MDesInpObserver 
-		notifications. But this seems not reachable - the notification just indicates the updates so subsystem states re-calculates its value. I couldn't find the universal way of 
-		implementing the update DES indication using solely DES elements. The only solution I invented is getting data form the input and form the data change indication.
-		So to have universal method we need creating specific native agents to get the indication.</simpara>
-	    <simpara>So there are at least three approaches in creating such native agent: </simpara>
+	    </sect3>
+	    <sect3><title>System DES controller</title>
+		<simpara>Ref <xref linkend="ds_dcs_sdc"/></simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_dcs_sdc"><title>System DES controller (<xref linkend="gls_sdc"/>).</title>
+	    <sect3><title>Controller as controlling system agent.</title>
+		<simpara>
+		    It is the common case that controlling DES is implemented right in controlled DES. We can intoduce specific agents - 
+		    <xref linkend="gls_sdc"/> to simplify the control. This agent input on one hand form "query" to managed system so the query provides
+			boolean result (for instance, for "Comp" controller that creates new comp there are inputs "Name", "Parent" that forms the query
+			"Is there component of type "Parent" and name "Name"). Let's call the query result as "output" of controller.
+			On another hand the inputs forms control action - "Comp" controller creates the component.
+			Controller also contains special boolean input "Enable" that enables the contolling action.
+			Such controller scheme allows to create the controlling DES more convenient. One controller output connects to another controller
+			"Enable" input so DES-stype dependencies are simply established.
+		</simpara>
+		<simpara>The main idea of this approach is "distributed" nature of controlling : there can be complex controlling scheme that includes
+		    many controlling agents. The agents forms "standard" DES via connecting one to another.</simpara>
+	    </sect3>
+	    <sect3><title>How to control "remote" system.</title>
+		<simpara>
+		    Another case is when controlled system is not direct owner of controller. The solution here can be collect the controllers in
+		    special host DES where we can provide controllers with "environmental" access to controlled system. This "environmental" access can
+		    be implemented as the link to managed system that (this link is "known" to controllers). If we need to support more comples use-cases
+		    (for instance the main case of modnav - select managed sub-system via navigation thru given system) then we can create custorm host DES that updates this 
+		    link to managed system in same manner as DES adaptor does.
+		</simpara>
+	    </sect3>
+	    <sect3><title>Controller can be implemented as non-native agent</title>
+		<simpara>
+		    Indeed, we can have controller as a system that includes adapter to managed system. The control action can be done via
+		    the mutation thru the adapter, the controller output can be formed via specific functions getting data from the adapter.
+		</simpara>
+		<simpara>
+		    The problem here is that the adapter performs the mutation on confirmation phase but the sequence of confirmation is not
+		    detarministic: some inputs can be changed.
+		</simpara>
+	    </sect3>
+	    <sect3><title>Controller native implementation.</title>
+		<simpara>
+		    Native implementation can help to avoid the problem with non-deterministic inputs update on confirmation phase, see the problem
+		    description above.
+		</simpara>
+	    </sect3>
+	    <sect3><title>"Multi-client" controlling.</title>
+		<simpara>Major benefit of SDC solution is that the controlling of target system can be performed from many points of the model. It is
+		    similar to "client-server" approach. However we can see the potential problems here. Let's look at fap3-vis DContainer. It embeds the 
+		    controlling syb-system that allows to add widget. DController expose specific socket as an input to this subsystem. Also the controlling status
+		    output is included into the socket.</simpara>
+		<simpara>But what is we need that DContainer control performs from tho parts of the model? How to support this?  </simpara>
+		<simpara> The firt approach is to 
+		    pull out this controlling subsystem from DContainer. In that case we can create two controlling sybsystem for each controlling 
+		    parts ("clients"). However we need to support such "remote" controlling providing the controlling system with access to managed system like it
+		    is done for DES adapter. Also it is not nice solution. The controlling DES is specific for DContainer so it would be architecturally more
+		    correct way to have controling system incapsulated into container.</simpara>
+		<simpara>Another solution would be to keep controlling subsytem inside DContainer but provide the container with means of creating other such
+		    controling subsystem (again via controloing of DContainer.</simpara>
+	    </sect3>
+	    <sect3 id="ds_dcs_sdc_uc"><title>Use-cases</title>
+		<sect4><title>[<glossterm id="uc_sdc_01">UC_SDC_01</glossterm>] Loading the pipeline</title>
+		    <simpara>The first data is loaded the pipeline (for container example it is that Name value is set for IoAddWidg.Enable input)
+			- The controlling chain is completed (for container example it is that the widget was added and last SDCs in the chain sets outp Outp to true)
+			- New Name is set to pipeline input - the controlling chain creates new widget successfully.</simpara>
+		    <sect5><title>Discussion</title>
+			<simpara>This UC seems not valid. Ref <xref linkend="uc_sdc_05"/> for another UC that seems more reasonable.</simpara>
+		    </sect5>
+		</sect4>
+		<sect4><title>[<glossterm id="uc_sdc_02">UC_SDC_02</glossterm>] Controller doesn't change system in case of DES Inp notification comes but inputs are not changed actually</title>
+		    <simpara>The first data is loaded the pipeline (for container example it is that Name value is set for IoAddWidg.Enable input)
+			- The controlling chain is completed (for container example it is that the widget was added and last SDCs in the chain sets outp Outp to true)
+			- Some controller input (for instance IoAddWidg.Name) gets DES inp notification comes but the input data is not changed actually (this can happed
+			especially if the input connects to some function output and func input is changed but doesn't cause func outp change actually)
+			- Controller doesn't change the system.</simpara>
+		    <sect5><title>Discussion</title>
+			<simpara>This means that controller is not sensitive to "fake" input change. In regular DES such feature is not needed - in case of 
+			    "fake" change DES just recalculate it't states (they keep unchanged in result). But for SDC it is inportant because the controller DES data
+			    is not simple dataThis means that controller is not sensitive to "fake" input change. In regular DES such feature is not needed - in case of 
+			    "fake" change DES just recalculate it't states (they keep unchanged in result). But for SDC it is inportant because the controller DES data
+			    is not simple data, controller changes the system structure incrementally. </simpara>
+			<simpara>But do we really need this? Ponentially controller can avoid incorrect system update via checking if the system is updated already.</simpara>
+		    </sect5>
+		</sect4>
+		<sect4><title>[<glossterm id="uc_sdc_03">UC_SDC_03</glossterm>] SDCs form right control trigger</title>
+		    <simpara>
+			There is the pipeline of SDCs: SDC_1 (creating node_1), SDC_2 (creating node_2), SDC_3 (removing node_1), SDC_4 (removing node_2).
+			SDC_4 triggering condition is SDC_3 status (Outp). This mean SDC_4 is to remove node_2 only after node_1 is removed. 
+			System starts, SDC_3 formal condition is met (because on this phase node_1 doesn't exitst). SDC_4 gets correct trigger only creating and then removeing node_1.
+		    </simpara>
+		</sect4>
+		<sect4><title>[<glossterm id="uc_sdc_04">UC_SDC_04</glossterm>] Creating/removing component in cycle</title>
+		    <simpara>
+			There is the pipeline of SDCs: SDC_1 (creating component "Comp"), SDC_2 (removing component "Comp").
+			SDC_2 triggering condition is SDC_1 status (Outp). This mean SDC_2 is to remove component "Comp" only after SDC_1 has created the comp. 
+			SDC_1 triggering condition is SDC_2 status (Outp). This mean SDC_1 is to create component "Comp" only after SDC_2 has removed the comp. 
+			System starts and run N ticks - SDCs create and remove component "Comp" N times.
+		    </simpara>
+		    <sect5><title>Notes</title>
+			<simpara>Ref ut_dessdc.cpp:test_Sdc_3 (ut_sdc_3.chs) for correspoiding unit test.</simpara>
+			<simpara>Ref <xref linkend="ds_dcs_sdc_dsgn_os"/> for desing item.</simpara>
+		    </sect5>
+		</sect4>
+		<sect4><title>[<glossterm id="uc_sdc_05">UC_SDC_05</glossterm>] Controller change system when being notified thru "Enable" inp event inp value is not changed</title>
+		    <simpara>The direct specifying this case is rather exhausted. Ref fap3/test/ut_sdc_2.chs for the model. This UC contradicts to <xref linkend="uc_sdc_01"/></simpara>
+		    <simpara>PRECONDITIONS</simpara>
+		    <programlisting>
+			There is the model that contains 3 SDCs: SDC_Comp - creation component - list node, SDC_Insert - inserting the node into the list,
+			SDC_Extract - extracting the node from the list. The model insert/extract the node in the cycle. To do this SDC_Insert trigger ("Enable" inp)
+			depends on the switch that initially is switched to SDC_Comp status and then, after insertion switches to extraction status.
+		    </programlisting>
+		    <simpara>STEPS</simpara>
+		    <programlisting>
+			#0 - link node is created
+			#1 - insertion trigger is ok (switcher on status of creation). Node is inserted.
+			#2 - insertion status is OK, i.e. extraction trigger is OK. Switcher is still on status of creation (OK). Extracted.
+			#3 - Switcher on extraction status - OK, i.e insertion trigger is still 1. Expecting that insertion SDC performs the control.
+		    </programlisting>
+		    <sect5><title>Discussion.</title>
+			<simpara>Acc to <xref linkend="uc_sdc_01"/> the insertion on #3 cannot happen because the trigger value is not change.</simpara>
+		    </sect5>
+		    <sect5><title>Design</title>
+			<simpara>Ref <xref linkend="ds_dcs_sdc_dsgn_oin"/> for the desing</simpara>
+		    </sect5>
+		</sect4>
+	    </sect3>
+	    <sect3 id="ds_dcs_sdc_dsgn"><title>Pipelined controlling. Design of native SDC</title>
+		<sect4><title>Intro</title>
+		    <simpara>The tipical system controlling consists of number of SDCs combining in a chain so that some controlling operation happens depending on
+			"previous" operation gets completed. This structure actually creates controlling pipeline. The example is the adding the widget into vis container,
+			refer to fap3-vis/modules/container.chs. Initial SDC design already contains support of such pipeline - there was input "Enable" and "Outp" output:
+			The current SDC depends(inp Enable) on previous SDCs completion (out Outp).  Such structure however posesses its specific use-cases and design specifics.</simpara>
+		    <simpara>Ref <xref linkend="ds_dcs_sdc_uc"/> for the pipeline specific use-cases.</simpara>
+		</sect4>
+		<sect4><title>Controlling phase</title>
+		    <simpara>SDC changes the controlled system on Confirmation phase.</simpara>
+		</sect4>
+		<sect4><title>Inputs buffering</title>
+		    <simpara>To support of controlling on confirmation phase the controller buffers all the inputs. Ref fap3 6db8376c3f3e:src/dessdc ASdc::Iap desing
+			(mUdt, mCdt etc).</simpara>
+		    <simpara>
+			Is this really needed? Why not just get the inputs data on confirmation phase when controlling? This is the support of
+			<xref linkend="uc_sdc_02"/>. But as stated in the UC discussion there are other desing solution for that.
+		    </simpara>
+		</sect4>
+		<sect4 id="ds_dcs_sdc_dsgn_idp"><title>Inputs data pipeline in SDC</title>
+		    <simpara>
+			<xref linkend="uc_sdc_01"/> assumes that next pipeline chain proceeds reacting the data from previous one. For instance for the container example SdcConnWdg
+			    reacts on same IoAddWidg.Name that previous SDCs (CreateWdg, AddSlot) are reacting. But SdcConnWdg "V1" input cannot be connected directly to IoAddWidg.Name.
+			    This is because this input can be changed after CreateWdg is done. So we need to have SdcConnWdg "V1" input same data that CreateWdg was reacting. 
+			    The solution here is to pipeline the IoAddWidg.Name data also. For that we need to have IoAddWidg.Name corresponding output OutpName so input data is copyind
+			    to output.
+		    </simpara>
+		</sect4>
+		<sect4 id="ds_dcs_sdc_dsgn_cc"><title>Forming status. Taking into account the completion of controlling.</title>
+		    <simpara>Ref <xref linkend="uc_sdc_03"/> for the use-case.  </simpara>
+		    <simpara>The desing supporting this use-case is that we need to form pipeline controllers status with taking into account that the sign of controlling completion.</simpara>
+		    <sect5><title>Status</title>
+			<simpara>This feature is disabled because of clear indication that the use-case is not valid. Alternative design Solution#2 is used - to check the status before 
+			    performing the control.</simpara>
+		    </sect5>
+		</sect4>
+		<sect4 id="ds_dcs_sdc_dsgn_os"><title>Controller observs controlled system status and notifies inputs of Outp (SDC status) changed.</title>
+		    <simpara>Ref <xref linkend="uc_sdc_04"/> for the use-case.  </simpara>
+		    <simpara>Controller needs to notify controlling status (Outp) change on controlled system change. For that controller needs to observe controlled system.</simpara>
+		    <simpara>It is not obvious consideration but without this notification the cycle scheme described in use-case doesn't work. The root-cause of this problem is that for 
+			instance SDC_1 doesn't notify SDC_2 on status update when SDC_2 removes the comp thus the controling system sticks.</simpara>
+		</sect4>
+		<sect4 id="ds_dcs_sdc_dsgn_oin"><title>Controller updating on inps notifications even input value not changed</title>
+		    <simpara>Ref <xref linked="uc_sdc_05"/> for the UC</simpara>
+		    <simpara>Main Solution#1 is simple - just enable control if inp was notified even its value is unchanged.  </simpara>
+		    <simpara>Alternative Solution#2 is to set SDC as updated (i.e. enable performing control) if controlled system data observation
+			(MagDobs) gets the event. The idea is that the event means the status can be changed, so we need to recalc the status and
+			perform the control if status isn't met.</simpara>
+		</sect4>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_dcs_sdo"><title>System DES oberving (<xref linkend="gls_sdo"/>) </title>
+	    <sect3><title>Intro</title>
+		<simpara>Very often we need to observe the controlled system when creating controlling DES. Sometimes status functions embedded to SDC is enough, but in many cases
+		    we need separate functions to get controlled system status.</simpara>
+	    </sect3>
+	    <sect3 id="ds_dcs_aes"><title>Design: access to explorable system</title>
+		<sect4><title>Intro</title>
+		    <simpara>SDO needs the access to explorable system. By default any owned components don't have an access to their owners. Same problem is actual for DCS. Current DCS
+			design utilized MAgent interface that allows DCS (i.e. agent) to have the acces to its owner. However this solution is not far from perfect. This is because MAgent interface
+			was not introduced for such purpose as system controlling. Instead it is just to establish "trusted" relationship between agent owner and agent so the agent can play the
+			role of owener "consiliary". Fro instance owener event redirects IRM requests to its agents.  So MAgent iface is too "heavy" for the purpose of observing.</simpara>
+		</sect4>
+		<sect4 id="ds_dcs_aes_acp"><title>Soution: Owner accessibility controlled by owner props</title>
+		    <simpara>The idea is to utilize MOwner local iface resolution mechanism to provide an access depending on owner props. For instance if owner property "Explorable" equals "y"
+			then MOwner provides owned with iface allowing exploring of the owner.</simpara>
+		    <simpara>The potential problem here is that this access is given for all owned compoments that expose the vulnerability. We can solve this problem using IRM mechanism instead
+			of local iface resolution. With IRM the requestor (owend) gets accessible to the owner so the owner can set some restriction. For instance the restriction can be that the owner
+			request some iface (kimd of MExploring) from the requestor.</simpara>
+		</sect4>
+	    </sect3>
+	    <sect3 id="ds_dcs_sdo_owi"><title><xref linkend="gls_sdo"/> operating with ifaces. Ifaces identifying in <xref linkend="gls_sdo"/></title>
+		<sect4><title>Intro</title>
+		    <simpara> It is required to represent iface in systems DES controlling (<xref linkend="gls_sdc"/>) and observing (<xref linkend="gls_sdo"/>).
+			Such DES operate with ifaces as if they are data. To support this, ifaces are represented by identificator. Currently (20220705) URI is used for that. But URI doesn't indentify the iface but
+			just MNode underlying. Operating with MNode in SDO is not secure, more correct is to operate with ifaces. In that case we also need to use iface identification (UID) for 
+			idenffying ifaces.</simpara>
+		</sect4>
+	    </sect3>
+	    <sect3 id="ds_dcs_sdo_gmn"><title>Use-case: getting MNode by MVert in SDO </title>
+		<sect4><title>Intro</title>
+		    <simpara>The use-case is as: DES controlling fap3-vis columns layout checks if columns exist. For that it uses first SdoPair to get the pair of the 
+			layout "End" connpooint. SdoPair needs to get URI of its pair (note currently URI is used as iface identificator in SDO) but it's not possible to get URI from pair (MVert).
+			To do that we need to get MNode first that is prohibited. Controlling DES then needs to get name of the pair, but this required getting MNode from
+			MVert that is prohibited.</simpara>
+		    <simpara>The noce solution here would be to enable the owner (i.e. SDO system under exploring (SUE)) to get MNode from MVert. Potentially we could extend
+			MIface::getLif() method passing owner as the argument. But this solution looks ugly.</simpara>
+		    <simpara>Currently there is a workaround: MVert gets MUnit - for ConnPoint iface resolution allows getting MNode:</simpara>
+		    <programlisting>
+			void ConnPointu::resolveIfc(const string&amp; aName, MIfReq::TIfReqCp* aReq)
+			-   {
+			|       MIface* ifr = MNode_getLif(aName.c_str()); // Local
+			|-      if (ifr) {
+			||          addIfpLeaf(ifr, aReq);
+			||      }
+		    </programlisting>
+		    <simpara>Actually this workaround can be improved - resolveIfc() can check context and enable MVert in case if context is MNode owner. But the problem here that
+			MUnit iface resolution doesn't know from what iitial iface (MVert from instance) was the request.</simpara>
+		</sect4>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_dcs_cda"><title>Composite DES adapter as the context for controllers and observers.</title>
+	    <sect3><title>Intro</title>
+		<simpara>Currently [5734b4e935a0, 20220403] the initial desing of DES adapter is in usage - tha adapter is monolitic and iface specific
+		    (MNode, MElem etc). This design has the number of cons: it makes overhead (not all CPs are used etc. So we consider another desing - 
+		    comopsite adapter. With this desing the adapter itself provides the context for owning controllers and observers. The main part of the context
+		    is the link to managed agent.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_dcs_ord"><title>DCS example/test - ordering of agents.</title>
+	    <sect3><title>Intro</title>
+		<simpara>We need to create numberer of examples to discover the weaknesses of the current DCS approach and find the proper solutions. The first
+		    example is ordering of agents.</simpara>
+		<simpara>The model is as "fap3/test/ut_adp_dcs_1.chs".</simpara>
+	    </sect3>
+	</sect2>
+	<sect2><title>Activating system via implicit dependencies.</title>
+	    <sect3><title>Intro</title>
+		<simpara>
+		    It is normal case in the system using controlling when the controlled system (i.e. system + adapter) depends on itlself implicitly. The example is
+		    <xref linkend="ds_dcs_ord"/> - the system is mutated with transition that gets system itself (acually internal connections) as input.
+		</simpara>
+		<simpara>In contrast of typical DES there aren't explicit dependencies, e.g states that depends each other.</simpara>
+		<simpara>
+		    The question is how to understand if subsystem depends on another subsystem (or even on itself) if threre aren't explicit dependencies?
+		    Let's look at the example
+		    <xref linkend="ds_dcs_ord"/>: how to get known if controlled system (Root.Launcher) depends on itself via the mutating
+			transition?
+		</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_dcs_trs"><title>DCS transaction</title>
+	    <sect3><title>Intro</title>
+		<simpara>Let's consider an example: DContainer adding widget. It is DCS SDC solution that includes 4 SDCs: CreateWdg, CreateSlot, ConnectSlot, InsertSlot.
+		    What if some SDC fails, lets say InsertSlot. In that case we will have the managed system messed: there will be created widget, new slot but the widget
+		    will not be shown. It is clear that we need to consider all these 4 SDCs as the single controlling DES. It looks like the transaction in database
+		    solutions.  </simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_dcs_iui"><title>Inputs update indication</title>
+	    <sect3 id="ds_dcs_iui_itr"><title>Intro</title>
+		<simpara>Let's look at FAP3-VIS VertDrp for the primary use-case. In VertDrp there is subsystem that positions the CRPs. This subsystem gets the inputs of CRPs params "CrpPars".
+		    Then the subs iterates thru the inputs and performs poistioning for each CRP. But what is CRP pars changed during the iteration? In that case we need to reset the iterator and
+		    start the positioning process from scratch. The question is of how to get this CrpPars inputs update indication in "DES compatible" form that allows us to use it as
+		    reset data.</simpara>
+		<simpara>Even if the problems seems simple it is not. The first thinking is that we can use some DES level subsystem to form this indication basing solely on MDesInpObserver 
+		    notifications. But this seems not reachable - the notification just indicates the updates so subsystem states re-calculates its value. I couldn't find the universal way of 
+		    implementing the update DES indication using solely DES elements. The only solution I invented is getting data form the input and form the data change indication.
+		    So to have universal method we need creating specific native agents to get the indication.</simpara>
+		<simpara>So there are at least three approaches in creating such native agent: </simpara>
+		<itemizedlist>
+		    <listitem>Data change indication (depends on data type), ref <xref linkend="ds_dcs_iui_dci"/> for details</listitem>
+		    <listitem>Transition that gives the data "hash", ref <xref linkend="ds_dcs_iui_tgh"/> for details.</listitem>
+		    <listitem>State like agent that exposes bool -inp changed- indication, ref <xref linkend="ds_dcs_iui_sla"/> for details.</listitem>
+		</itemizedlist>
+	    </sect3>
+	    <sect3 id="ds_dcs_iui_dci"><title>Data change indication (depends on data type)</title>
+		<sect4><title>Intro</title>
+		    <simpara>This is the straightforward solution. It is used in ut_des_utl_2.chs, ref ChgDetector_Neq. If the input is mutiiface then trans like TrAddVar can be used
+			to get "common" data.</simpara>
+		</sect4>
+	    </sect3>
+	    <sect3 id="ds_dcs_iui_tgh"><title>Transition giving the input data hash</title>
+		<sect4><title>Intro</title>
+		    <simpara>The idea is to form the inputs hash and expose it in form of DES integer data. The data then can be used in DES to form hash change bool indication.
+			Actually this is almost same as detecting the data change method mentioned in <xref linkend="ds_dcs_iui_itr"/> but kind of universal, i.e. not depends on
+			    the particular data type.
+			    The cons of this approach (comparing with "State like agent" is that it can be used in cases where we need to form the change indication not just for 
+			    the whole input data but form the component of the data (the component of tuple for instance). This case if quite often. For instance VertCRP forms pairs most left
+			    position by iterating pairs params. The params is the tuple but the iterator checks the only one comp of the tuple - column pos.
+		    </simpara>
+		</sect4>
+	    </sect3>
+	    <sect3 id="ds_dcs_iui_sla"><title>State like agent that exposes bool -inp changed- indication</title>
+		<sect4><title>Intro</title>
+		    <simpara>The cons is that it is not possible to form the change indicator for container compoment, other solution allows this.</simpara>
+		</sect4>
+	    </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_dbg"><title>Debugging</title>
+	<sect2><title>Intro</title>
+	    <simpara>The following improvements can be considered: </simpara>
 	    <itemizedlist>
-		<listitem>Data change indication (depends on data type), ref <xref linkend="ds_dcs_iui_dci"/> for details</listitem>
-		<listitem>Transition that gives the data "hash", ref <xref linkend="ds_dcs_iui_tgh"/> for details.</listitem>
-		<listitem>State like agent that exposes bool -inp changed- indication, ref <xref linkend="ds_dcs_iui_sla"/> for details.</listitem>
+		<listitem>
+		    Unify the usage of debugging level 
+		    <para>
+			Currently the debugging level is almost unusable. Also in parallel the property "Update" is used to
+			specify the particular logging feature to log the state update whereas it is just specific logging level.
+			So we need to get rid of using the Update property.
+		    </para>
+		</listitem>
+		<listitem> Logging level forcing to owned, ref <xref linkend="ds_dbg_llf"/> </listitem>
+		<listitem>Using symbolic values for logging level, lile "Dbg.1"</listitem>
 	    </itemizedlist>
-	</sect3>
-	<sect3 id="ds_dcs_iui_dci"><title>Data change indication (depends on data type)</title>
-	    <sect4><title>Intro</title>
-		<simpara>This is the straightforward solution. It is used in ut_des_utl_2.chs, ref ChgDetector_Neq. If the input is mutiiface then trans like TrAddVar can be used
-		    to get "common" data.</simpara>
-	    </sect4>
-	</sect3>
-	<sect3 id="ds_dcs_iui_tgh"><title>Transition giving the input data hash</title>
-	    <sect4><title>Intro</title>
-		<simpara>The idea is to form the inputs hash and expose it in form of DES integer data. The data then can be used in DES to form hash change bool indication.
-		    Actually this is almost same as detecting the data change method mentioned in <xref linkend="ds_dcs_iui_itr"/> but kind of universal, i.e. not depends on
-			the particular data type.
-			The cons of this approach (comparing with "State like agent" is that it can be used in cases where we need to form the change indication not just for 
-			the whole input data but form the component of the data (the component of tuple for instance). This case if quite often. For instance VertCRP forms pairs most left
-			position by iterating pairs params. The params is the tuple but the iterator checks the only one comp of the tuple - column pos.
+	</sect2>
+	<sect2 id="ds_dbg_llf"><title>Logging level forcing to owned</title>
+	    <sect3><title>Intro</title>
+		<simpara>The idea is to provide the system developer the ability to quick set the logging level for the whole system or its part.
+		    Currently the logging level is set locally for the particular node only and doesn't affect the other nodes, even the owneds.</simpara>
+		<simpara>Ref <xref linkend="ds_log_elc"/> for details.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_dbg_sfll"><title>Symbolic form of logging level</title>
+	    <sect3><title>Intro</title>
+		<simpara>The idea is to set logging level in symbolic form like "Dbg.2" where "Dbg" is the name of level and "2" is the extension.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2><title>Tips</title>
+	    <programlisting>
+		p Dbg::getElem(this)->Chromos().Root().Dump()
+		p Dbg::getElem(mEnv->Root())->Chromos().Root().Dump()
+		p Dbg::getElem(mEnv->Root()->getNodeS("S1"))->Chromos().Root().Dump()
+	    </programlisting>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_log"><title>Logging</title>
+	<sect2 id="ds_log_elc"><title>Hierarchical logging control</title>
+	    <sect3><title>Status</title>
+		<simpara>20230329 Initially implemented.</simpara>
+	    </sect3>
+	    <sect3><title>Intro</title>
+		<simpara>The current design of FAP logging means is not completed - it allows to control the logging the only local native hier node. 
+		    Ref <xref linkend="ds_dbg_llf"/> for the enhancement proposal.</simpara>
+	    </sect3>
+	    <sect3><title>Local and Owned levels</title>
+		<sect4><title>Intro</title>
+		    <simpara>In the FAP any system is the native hier where logging decision is the responsibility of node. This means that we need to
+			distribute the "global" setting thru native hier to have global affect. So the idea is to introduce node specific content
+			"Owned Logging Level" that sets logging level for all node owned by the given node.</simpara>
+		</sect4>
+	    </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_iis"><title>Setting initial invalid status of State</title>
+	<sect2><title>Intro</title>
+	    <simpara>It is the common case when we need to set the initial "invalid" value to State. For instance quite often we need to define state signature, i.e SS but
+		we don't want to set the value that can cause system movement, so currently we use something like "SS nil" assuming that the value "nil" has to be specifically handled
+		(but actually it is not). It would be good if we have support setting of kind of "invalid" or "value-is-not-set" value. Current State desing doesn't allow doing that. </simpara>
+	    <simpara>Not sure that currently supported by data "invalid" indication is suitable for such puproses. This indication currently interpreted as error.</simpara>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_dee"><title>DES elements embedded</title>
+	<sect2><title>Intro</title>
+	    <simpara>Often it is required to create monolitic native DES specialized for the given usage. Such solution allows
+		significantly inclrease the overall system desing effectiveness. There were already many local solutions for that, ref
+		ASdc, AAdp etc. for instance. Having this local solution causes the code duplication and problems with support.
+		So it is time to provide the proper framework for this solutions.  </simpara>
+	    <simpara>The main idea of having DES embedded elements is to interfit native DES with DES agent's internal desing.</simpara>
+	</sect2>
+	<sect2 id="ds_dee_ssi"><title>Double buffered input</title>
+	    <sect3><title>Intro</title>
+		<simpara>The base DES desing states that we need to update the state value on Update phase and then actualize (confirm) it
+		    on Confirm phase. But sometimes we can use another way for embedded solution. Let's consider tipical DES adapter (ref desadp.cpp):
+		    the adapter embeds "Managed agent" (MAG) state. With standard desing we need to have adapter input "MagUri" that value points
+		    to MAG relatively to MAG base and dedication state "MAG". Adaprer gets activated thru "MagUri" input notification (confirm phase)
+		    and set "MAG" state as activated, then on Update phase form preliminary MAG value and then on next confirm phase actualize
+		    the "MAG" value</simpara>
+		<simpara>This scheme assumes two embedded entities (input and state) and native connections between them.</simpara>
+		<simpara>Alternative option is to have double buffered input. In that case the "MagUri" input is fixed on confirmation phase.
+		    On confirmation phase the adapter can just check if new MagUri is confirmed and apply it to MAG. The pros of this variant
+		    is that state transition can be implemented in host that simplify the code.</simpara>
+		<simpara>Note that local transition (ref <xref linkend="ds_dee_sac"/> is the alternative solution, probably more elegant (this
+		    is questionable).</simpara>
+	    </sect3>
+	    <sect3 id="ds_dee_ssi_vgd"><title>Solution as the variant of DES generic desing</title>
+		<simpara>Let's look at "Dedicated states ..." solution from DES generic desing point of view. Currently the DES cycle is based on
+		    calculate new states values in Update phase (states freezed), confirm states and notify deps on Confirm phase - states are double-buffered,
+		    states are freezed on Update.</simpara>
+		<simpara>But there was alternative desing, that we considered on earlier fap2 (or even fap1) projects. This desing is to freeze transitions
+		    inputs instead of states: calculate new states values in Update phase (inputs freezed), confirm inputs and notify deps on Confirm phase - inputs are
+		    double buffered, states are freezed on conirm phase.</simpara>
+		<simpara>This "Double buffered input" solution follows exactly such approach. The problem here is that for double buff inp solution DES cycle is
+		    inverted the question is of how to align the parts working with contradicted phases. This problem can be simply solved in case of 
+		    "embedded" states - DES just can control Confirmation phase: update the double buff inputs on early stage of confirm phase (so freeze them) and
+		    then do the standart Confirm processing.</simpara>
+	    </sect3>
+	    <sect3><title>Solution as embedded state connected to host input</title>
+		<simpara>The double buffered input above can be also intepreted as the embedded state connected to host input. Probably this intepretation is
+		    simpler that <xref linken="ds_dee_ssi_vgd"/></simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_dee_sac"><title>Sharing DES agent context to transitions.</title>
+	    <sect3><title>Intro</title>
+		<simpara>It is common case when we decide to move some part of DES functionality into "internal" native desing because the transitions depends on
+		    internal agent context. The example is fap3-vis widget: requisition states depends of font size but the transition depends on C++ font instance created
+		    in the scope of the agent. The idea of how to solve this is to keep fap3 DES style topology but give the agent context to the transition.</simpara>
+	    </sect3>
+	    <sect3 id="ds_dee_sac_ait"><title>Solution: Exposing agent interface to transition.</title>
+		<simpara>This solution is base of IFR. Currently owner in fap3 native hier provides local MUnit iface. This allows a transition to request
+		    some iface from the owner (actually in case of DES agent the owned system will route the request to the agent). So we can introduce the generic
+		    MDestContext interface that a transition can use for access to agent's resources. This iface IFR can provide access to the agent specifically
+		    defined iface, in case of fap3-vis widget example is can be MWidgetContext that resolves all the dependencies from the agent for the transition.</simpara>
+	    </sect3>
+	    <sect3 id="ds_dee_sac_asp"><title>Solution: creating binded transition via agent's specific provider.</title>
+		<simpara>The idea is to pass the context to the transition on transition contstruction phase. This can be done with using agent specific provider.
+		    Currently it is possible for the agent to register it's own provider via env addProvider(). Such provider can create the transition and pass the context
+		    pointer to transition instance on creation phase. It that case the agent just implements MProvider interface.</simpara>
+		<simpara>The potential problem here is that adding the provider affects global behaviour. Can we improve Env providers mechanism to have "local" provider?
+		    Yes, ref <xref linkend="ds_lps"/> for the design. </simpara>
+	    </sect3>
+	    <sect3 id="ds_dee_sac_taee"><title>Node: Embedded transition as the alternative of other DES embedded elements.</title>
+		<simpara>
+		    Let's again consider the use-case: fap3-vis widget (widget.h) needs to update embedded font instance depending on font path state. Initial
+		    solution was to utilize Buffered input DES embedded element, ref
+		    <xref linkend="ds_dee_ssi"/>. With this solution we need to add embedded elements
+			support to widget agent (this is quite a lot of code). Alternative solution would be using local scope transition: we have state FontPath, state
+			FontApplied and local scope transition "ApplyFont" that containts the agent content and updates (re-creates) the embedded font instance.
 		</simpara>
-	    </sect4>
-	</sect3>
-	<sect3 id="ds_dcs_iui_sla"><title>State like agent that exposes bool -inp changed- indication</title>
-	    <sect4><title>Intro</title>
-		<simpara>The cons is that it is not possible to form the change indicator for container compoment, other solution allows this.</simpara>
-	    </sect4>
-	</sect3>
-    </sect2>
-</sect1>
+		<simpara>The question here if this scheme provides better understanding of the system. From my view embedded elems still makes system better undertstanding.
+		    this is because the transistion "hides" the actual context so it is hard to see that the transition changes the context of agent.</simpara>
+	    </sect3>
+	</sect2>
+    </sect1>
 
-<sect1 id="ds_dbg"><title>Debugging</title>
-    <sect2><title>Intro</title>
-	<simpara>The following improvements can be considered: </simpara>
-	<itemizedlist>
-	    <listitem>
-		Unify the usage of debugging level 
-		<para>
-		    Currently the debugging level is almost unusable. Also in parallel the property "Update" is used to
-		    specify the particular logging feature to log the state update whereas it is just specific logging level.
-		    So we need to get rid of using the Update property.
-		</para>
-	    </listitem>
-	    <listitem> Logging level forcing to owned, ref <xref linkend="ds_dbg_llf"/> </listitem>
-	    <listitem>Using symbolic values for logging level, lile "Dbg.1"</listitem>
-	</itemizedlist>
-    </sect2>
-    <sect2 id="ds_dbg_llf"><title>Logging level forcing to owned</title>
-	<sect3><title>Intro</title>
-	    <simpara>The idea is to provide the system developer the ability to quick set the logging level for the whole system or its part.
-		Currently the logging level is set locally for the particular node only and doesn't affect the other nodes, even the owneds.</simpara>
-	    <simpara>Ref <xref linkend="ds_log_elc"/> for details.</simpara>
-	</sect3>
-    </sect2>
-    <sect2 id="ds_dbg_sfll"><title>Symbolic form of logging level</title>
-	<sect3><title>Intro</title>
-	    <simpara>The idea is to set logging level in symbolic form like "Dbg.2" where "Dbg" is the name of level and "2" is the extension.</simpara>
-	</sect3>
-    </sect2>
-    <sect2><title>Tips</title>
-	<programlisting>
-	    p Dbg::getElem(this)->Chromos().Root().Dump()
-	    p Dbg::getElem(mEnv->Root())->Chromos().Root().Dump()
-	    p Dbg::getElem(mEnv->Root()->getNodeS("S1"))->Chromos().Root().Dump()
-	</programlisting>
-    </sect2>
-</sect1>
+    <sect1 id="ds_lps"><title>Improving provider iface to limit the provider's scope</title>
+	<sect2><title>Intro</title>
+	    <simpara>Curently MEnv iface allows any agent in native hier to register provider, ref MEnv::addProvider(). This creates the vulnarability: local agent can
+		affect the whole system by creatng improper node. We need to close this hole.</simpara>
+	    <simpara>Ref <xref linkend="ds_dee_sac_asp"/> for the use-case.</simpara>
+	</sect2>
+	<sect2><title>Solution: add the context indication to provider iface.</title>
+	    <simpara>The idea is to extend MProvider API by adding getContext() method. This method will return the node of native hier in which scope the provider is actual.
+		If the context is root then the provider is "global" for the system. Note that currently root is available from env but this needs to be disabled.
+		Node mutation methods shall check this context when creating node. If the method see that provider tries to create node in the upper scope the method
+		needs to deny the creation.</simpara>
+	</sect2>
+    </sect1>
 
-<sect1 id="ds_log"><title>Logging</title>
-    <sect2 id="ds_log_elc"><title>Hierarchical logging control</title>
-	<sect3><title>Status</title>
-	    <simpara>20230329 Initially implemented.</simpara>
-	</sect3>
-	<sect3><title>Intro</title>
-	    <simpara>The current design of FAP logging means is not completed - it allows to control the logging the only local native hier node. 
-		Ref <xref linkend="ds_dbg_llf"/> for the enhancement proposal.</simpara>
-	</sect3>
-	<sect3><title>Local and Owned levels</title>
-	    <sect4><title>Intro</title>
-		<simpara>In the FAP any system is the native hier where logging decision is the responsibility of node. This means that we need to
-		    distribute the "global" setting thru native hier to have global affect. So the idea is to introduce node specific content
-		    "Owned Logging Level" that sets logging level for all node owned by the given node.</simpara>
-	    </sect4>
-	</sect3>
-    </sect2>
-</sect1>
+    <sect1 id="ds_mtc"><title>Mutation as a transaction</title>
+	<sect2><title>Intro</title>
+	    <simpara>Curently the mutation is implemented very primitive: node try to apply the mutation, if mutation fails then the node just record this event into the log.
+		The fact of mutation failure doesn't affect the overall mutation process - the node then tries to apply next mutation. This approach ever simple is wrong: 
+		in result the inconsistent system can be created.</simpara>
+	    <simpara>This problem significantly affects sysetems DES controlling (<xref linkend="gls_sdc"/>). Ref for instance the use-case described in <xref linkend="ds_mtc"/>:
+		the controller cannot be sure that the required mutation segment is applied so the controller status is not fully deterministic here.</simpara>
+	</sect2>
+    </sect1>
 
-<sect1 id="ds_iis"><title>Setting initial invalid status of State</title>
-    <sect2><title>Intro</title>
-	<simpara>It is the common case when we need to set the initial "invalid" value to State. For instance quite often we need to define state signature, i.e SS but
-	    we don't want to set the value that can cause system movement, so currently we use something like "SS nil" assuming that the value "nil" has to be specifically handled
-	    (but actually it is not). It would be good if we have support setting of kind of "invalid" or "value-is-not-set" value. Current State desing doesn't allow doing that. </simpara>
-	<simpara>Not sure that currently supported by data "invalid" indication is suitable for such puproses. This indication currently interpreted as error.</simpara>
-    </sect2>
-</sect1>
+    <sect1 id="ds_dctx"><title>[DS_DCTX] DES context for components</title>
+	<sect2><title>Intro</title>
+	    <simpara>It is abundant use-case where some DES needs to share some context for its components. The example is fap3-vis Detail Representation (DRP). DRP
+		creates a number of compact representations (CRP) to visualize represented agent's components. Each CRP needs info of the component it is representing: link to the whole
+		model and component's URI related to this model. This info can be provided to CRP via connections but it creates significant overhead.</simpara>
+	    <simpara>So the idea is to create the mechanism that can be used to establish such connection "automatically" OR even allow (in our example) CRP to get access to DRPs 
+		states containing this info (this creates actually "virtual" connection that does't require such resources as explicit connection.</simpara>
+	    <simpara>This feature requirements can vary. At the moment we can limit them by just sharing a socket. So the feature in that case looks like as:
+		DRP has "shared" socket, CRP creates compatible socket in it's scope. Crp can use this interal socket as if the socket is connected to DRP socket via
+		"virtual" connection.</simpara>
+	    <simpara>Actually there is two approaches of creating such "virtual" connection. Approach#1 is to esablish native connection (via native conn).
+		Approach#2 is to not establish explicit native connection but use some intermediate ifaces to get access to Provided and Required ifaces, ifaces in that case
+		are not persistent but accessible via intermediate ifaces. Actually the intermediate "helper" ifaces are needed even for Approach#1 to establish persistent
+		native conn.</simpara>
+	</sect2>
+	<sect2 id="ds_dctx_dic"><title>Solution#1: dedicated supplier-consumer interface for DES context resolution, explicit connection</title>
+	    <sect3><title>Intro</title>
+		<simpara>This solution follows Approach#1. We need to introduce the interfaces MDesContextSupplier/MDesContextConsumer for consumer and supplier negotiation and
+		    establishing connection. Consumer shall initiate supplier iface resolution. Then as soon as provider iface is resolver the consumer requests
+		    binding it's parameters (StateCPs) to correspoinding CPs of supplier.</simpara>
+		<simpara>The supplier posseses the number of output CPs and consumer - the number of input CPs. Consumer requests the supplier to connect it's input CPs
+		    to the corresponding output CP of supplier.</simpara>
+		<simpara>Having both supplier and consumer ifaces assumes that there will be persistent connections between them. The connection is one (supplier) to many
+		    (providers).</simpara>
+	    </sect3>
+	    <sect3 id="ds_dctx_dic_rs"><title>How to resolve supplier?</title>
+		<sect4><title>Intro</title>
+		    <simpara>There can be a number of suppliers in consumer owning model part. The supplier resolution mechanism depends on the use-cases of context.
+			Let's at the moment keep the simplest use-case: consumer resolves the supplier basing on single paremeter. The paremeter can be supplier ID, or given
+			property etc. The problem here is that currently IRM doesn't support resolution by name + parameter but by name only. So we need to use two-stager 
+			resolution: first we resolve supplier iface by iface name, then select the iface with given paremeter from them. This approach has a number of disadvantages.
+			One of them is that the supplier iface resolution tree includes the paths to all suppliers even not matched the parementer. So the number of IRM interactions like
+			invalidation grows. </simpara>
+		</sect4>
+	    </sect3>
+	    <sect3><title>How to handle the changes in both parts?</title>
+		<simpara>Both supplier and consumer can be changed. One use-case is that supplier adds new CPs that was expected by consumer but messed earlier. </simpara>
+	    </sect3>
+	    <sect3><title>Supplying restrictions</title>
+		<simpara>Do we need to allow any consumer connect to any supplier? Is there use-case where supplier shall provide an access to some specific consumers?
+		    We can imagine such use-cases, but is it realistic to implement them? Actually binding by ID is also kind of such restrictions. The massive case is that
+		    some system inluceds components from module, this component requires some context with given ID, so it is up to the system to provide the compoment with
+		    such context. The component doesn't know ID of other possible contexts.</simpara>
+	    </sect3>
+	    <sect3 id="ds_dctx_dic_bnd"><title>Context Binding scheme</title>
+		<simpara>We assume that there should be automatic binding. This means that we need to specify the rule assosiating supplier ouput an consumer input. </simpara>
+		<simpara>Soution_1 is that consumer has components (ctx) as CPs (actually extenders) which the names corresponding to supplier ctx names.
+		    Then consumer requests supplier to bind ctx extender.</simpara>
+	    </sect3>
+	    <sect3 id="ds_dctx_dic_cs"><title>How to resolve same ID suppliers. Dependent context stack.</title>
+		<sect4><title>Intro</title>
+		    <simpara>It is possible that consumer owners provide more that one ctx suppliers with same ID. How to resolve them? What should be the policies of handling
+			this. There is the concrete use-case: fap3-vis widget styles. The owner style can be considered as the context for owned widget. Most often case that
+			there is top-level style that can be overriden. </simpara>
+		    <simpara>For widget style we can consider the context with same ID  dependent one from another from bottom to top creating context stack.
+			Lower level context in the stack (stack head) can override the owner context by implementing specific transition structure. With this approach we need to
+			implement contex access policy to resolve lower level supplier. How this resolution policy can be desinged?</simpara>
+		    <simpara>Solution_1 is to have supplier iface specific method to get head supplier like getHeadSpl(). With such supplier API the resolution sequence will be as:</simpara>
+		    <simpara>Solution_2 is to involve supplier itself in the supplier iface resolution. Supplier shall request owner for ifaces and filter out the upper suppliers
+			with same ID.</simpara>
+		    <programlisting>
+			consumer request owner to resolve suppliers
+			owner gives consumer the set of suppliers ifaces (owner resolves it from bottom to top)
+			consumer finds the first supplier with given ID and ask it for head supplier
+			supplier finds head suppler using getHeadSpl() and gives it to consumer
+			consumer registers itself to supplier
+			consumer binds context
+		    </programlisting>
+		    <simpara>As for widgets style the scheme can be as follow (binding Solution_1):</simpara>
+		    <programlisting>
+			|   OwningWdg : Widget {
+			|       Style : CtxSpl {
+			|           Color : State;
+			|       }
+			|       OwnedWdg : Widget {
+			|           ColorOverride : State;
+			|           Style : CtxSpl {
+			|               Style : CtxCsm {
+			|                   Color : ExtdStateOutp;
+			|               }
+			|               Color : TrSvld @ {
+			|                   Inp1 ~ ColorOverride;
+			|                   Inp2 ~ Style.Color;
+			|               }
+			|           }
+			|       }
+			|   }
+		    </programlisting>
+		    <simpara>Here OwningWdg and OwnedWdg has the context supplier with same ID. OwnedWdg ctx suppiler includes ctx consumer to get overrided ctx (Color) and then
+			overrides Color ctx with ColorOverride.</simpara>
+		</sect4>
+		<sect4><title>Binding in ctx stack.</title>
+		    <simpara>What if head supplier does't override the context? In that case it should redirect binding request to upper layer.</simpara>
+		    <simpara>What if after that head supplier overrides the context? In that case it should notiry consumer so that it can re-bind the context.</simpara>
+		</sect4>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_dctx_cvai"><title>Context vs access infrastructure.</title>
+	    <simpara>Turning back to our DRP-CRP example. Actually there is another way to allow CRP access to common states - access infrastructure. This approach is already
+		successfull applied in VIS container desing: the container deals with it's widget components via the sockets that are combined in some structure. For linear layout 
+		container such structure is the linked list.</simpara>
+	    <simpara>So we just can extend containers socket to distribute "model base" to all the CRPs.</simpara>
+	    <simpara>Node_1: Even CRP "personal" state like "model component's URI related" can be
+		distributed via sockets as "current CompName", CRP just needs to have the subsystem that "catches" this data on CRP creation phase.</simpara>
+	    <simpara>The cons of this approach is rather big overhead: for instance the number of connpoints is increased significantly.</simpara>
+	</sect2>
+	<sect2><title>Status [IN_PROGRESS]</title>
+	</sect2>
+    </sect1>
 
-<sect1 id="ds_dee"><title>DES elements embedded</title>
-    <sect2><title>Intro</title>
-	<simpara>Often it is required to create monolitic native DES specialized for the given usage. Such solution allows
-	    significantly inclrease the overall system desing effectiveness. There were already many local solutions for that, ref
-	    ASdc, AAdp etc. for instance. Having this local solution causes the code duplication and problems with support.
-	    So it is time to provide the proper framework for this solutions.  </simpara>
-	<simpara>The main idea of having DES embedded elements is to interfit native DES with DES agent's internal desing.</simpara>
-    </sect2>
-    <sect2 id="ds_dee_ssi"><title>Double buffered input</title>
-	<sect3><title>Intro</title>
-	    <simpara>The base DES desing states that we need to update the state value on Update phase and then actualize (confirm) it
-		on Confirm phase. But sometimes we can use another way for embedded solution. Let's consider tipical DES adapter (ref desadp.cpp):
-		the adapter embeds "Managed agent" (MAG) state. With standard desing we need to have adapter input "MagUri" that value points
-		to MAG relatively to MAG base and dedication state "MAG". Adaprer gets activated thru "MagUri" input notification (confirm phase)
-		and set "MAG" state as activated, then on Update phase form preliminary MAG value and then on next confirm phase actualize
-		the "MAG" value</simpara>
-	    <simpara>This scheme assumes two embedded entities (input and state) and native connections between them.</simpara>
-	    <simpara>Alternative option is to have double buffered input. In that case the "MagUri" input is fixed on confirmation phase.
-		On confirmation phase the adapter can just check if new MagUri is confirmed and apply it to MAG. The pros of this variant
-		is that state transition can be implemented in host that simplify the code.</simpara>
-	    <simpara>Note that local transition (ref <xref linkend="ds_dee_sac"/> is the alternative solution, probably more elegant (this
-		is questionable).</simpara>
-	</sect3>
-	<sect3 id="ds_dee_ssi_vgd"><title>Solution as the variant of DES generic desing</title>
-	    <simpara>Let's look at "Dedicated states ..." solution from DES generic desing point of view. Currently the DES cycle is based on
-		calculate new states values in Update phase (states freezed), confirm states and notify deps on Confirm phase - states are double-buffered,
-		states are freezed on Update.</simpara>
-	    <simpara>But there was alternative desing, that we considered on earlier fap2 (or even fap1) projects. This desing is to freeze transitions
-		inputs instead of states: calculate new states values in Update phase (inputs freezed), confirm inputs and notify deps on Confirm phase - inputs are
-		double buffered, states are freezed on conirm phase.</simpara>
-	    <simpara>This "Double buffered input" solution follows exactly such approach. The problem here is that for double buff inp solution DES cycle is
-		inverted the question is of how to align the parts working with contradicted phases. This problem can be simply solved in case of 
-		"embedded" states - DES just can control Confirmation phase: update the double buff inputs on early stage of confirm phase (so freeze them) and
-		then do the standart Confirm processing.</simpara>
-	</sect3>
-	<sect3><title>Solution as embedded state connected to host input</title>
-	    <simpara>The double buffered input above can be also intepreted as the embedded state connected to host input. Probably this intepretation is
-		simpler that <xref linken="ds_dee_ssi_vgd"/></simpara>
-	</sect3>
-    </sect2>
-    <sect2 id="ds_dee_sac"><title>Sharing DES agent context to transitions.</title>
-	<sect3><title>Intro</title>
-	    <simpara>It is common case when we decide to move some part of DES functionality into "internal" native desing because the transitions depends on
-		internal agent context. The example is fap3-vis widget: requisition states depends of font size but the transition depends on C++ font instance created
-		in the scope of the agent. The idea of how to solve this is to keep fap3 DES style topology but give the agent context to the transition.</simpara>
-	</sect3>
-	<sect3 id="ds_dee_sac_ait"><title>Solution: Exposing agent interface to transition.</title>
-	    <simpara>This solution is base of IFR. Currently owner in fap3 native hier provides local MUnit iface. This allows a transition to request
-		some iface from the owner (actually in case of DES agent the owned system will route the request to the agent). So we can introduce the generic
-		MDestContext interface that a transition can use for access to agent's resources. This iface IFR can provide access to the agent specifically
-		defined iface, in case of fap3-vis widget example is can be MWidgetContext that resolves all the dependencies from the agent for the transition.</simpara>
-	</sect3>
-	<sect3 id="ds_dee_sac_asp"><title>Solution: creating binded transition via agent's specific provider.</title>
-	    <simpara>The idea is to pass the context to the transition on transition contstruction phase. This can be done with using agent specific provider.
-		Currently it is possible for the agent to register it's own provider via env addProvider(). Such provider can create the transition and pass the context
-		pointer to transition instance on creation phase. It that case the agent just implements MProvider interface.</simpara>
-	    <simpara>The potential problem here is that adding the provider affects global behaviour. Can we improve Env providers mechanism to have "local" provider?
-		Yes, ref <xref linkend="ds_lps"/> for the design. </simpara>
-	</sect3>
-	<sect3 id="ds_dee_sac_taee"><title>Node: Embedded transition as the alternative of other DES embedded elements.</title>
+    <sect1 id="ds_dsv"><title>Data special values</title>
+	<sect2><title>Intro</title>
+	    <simpara>It is common use-case when we need to analyze if the data is erroneous or the data isn't set yet. Data erroneous (validity) indication (mValid) is already supported in
+		DtBase (ref rdata.h). "Isn't set" indicator is not supported yet, not sure we need it, probably validity indicator is enough even these indicators has different meaning
+		actually.</simpara>
+	    <simpara>But it is not possible to set this special value via mutation and the special values don't have text representation.</simpara>
+	</sect2>
+	<sect2><title>Option#1. Special values text representation.</title>
+	    <simpara>We can use for instance the syntax of special values text representatio as: </simpara>
+	    <programlisting>
+		    representation = SIGNATURE " " "&lt;" special_value "&gt;"
+		special_value = special_value_invalid | special_value_unset
+		special_value_invalid = "ERR"
+		special_value_unset = "NIL"
+	    </programlisting>
+	</sect2>
+	<sect2><title>Option#2.Special values text representation.</title>
+	    <simpara>We can use for instance the syntax of special values text representatio as: </simpara>
+	    <programlisting>
+		representation = SIGNATURE " " special_value
+		special_value = special_value_invalid | special_value_unset
+		special_value_invalid = "_INV"
+		special_value_unset = "_NIL"
+	    </programlisting>
+	    <simpara>We can introduce also escaping such special values</simpara>
+	</sect2>
+	<sect2><title>Option#3 Use missing data criteria instead of special values</title>
+	    <simpara>Using special value is annoying. In many cases we need to initialize the state with invalid data. It is more compact sintax if 
+		we classify the data as invalid in case of the symbols after data signature are missing but same time classifying this as no data error
+		(because no data is specified). The reasoning here is as: There is no data, so data is not set, i.e. invalid, but there is not data syntax error,
+		because of not data specified.</simpara>
+	    <simpara>We still need special_value_invalid in rare cases for instance when specifying invalid data in tuple (there are no signature when specifying
+		field data in tuple, ref <xref linkend="iss_011"/>)</simpara>
+	</sect2>
+	<sect2><title>Status</title>
+	    <simpara>20230130 Implemented Option#3 but Option#2 special_value_invalid also enabled.</simpara>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_rdi"><title>Redesign of data interfaces.</title>
+	<sect2><title>Intro</title>
+	    <simpara>Current desing weakness is exposed by the use-case: how to simply check MDtBase IsValid() parameter. This parameter is the base one, i.e. not
+		specific for type of data. It happens that it is not possible to get data base parameter in simply manner. Ref dest.h TrIsValid.</simpara>
+	    <simpara>Currently the data ifaces are MDVarGet and parametrized MDtGet plus similar ifaces for setting data. All data related features are based on this
+		parametrized data ifaces. This data parametrized iface approach causes a lot of related solutions. For instance there are paremetrized functions so 
+		transitions just dynamically creates the function that matches output and input data types.</simpara>
+	    <simpara>This approach was originated on earlier FAP design where is was assumed that any data types are allowed in the model. But then the
+		idea of universal data was introduced, ref MDataBase iface. This approach allows to get rid of parametrized data at least for the model parts relation.
+		But parametrized data was remain. We need to redesign the data ifaces to support universal data iface. This can vastly simplify DES framework.</simpara>
+	</sect2>
+	<sect2><title>Solution_1: Keep MDVarGet but use non-paremetrized MDget iface instead of paremetrized MDtGet. </title>
+	    <simpara>Pros: This solution allows smooth migration from templated iface. We just can redesing DES framework part by part.</simpara>
+	    <simpara>Cons: MDVarGet actually is not needed in our case - it aims exactly to support different type of data instead of generic one.</simpara>
+	</sect2>
+	<sect2><title>Solution_2: Get rid of parametrized MDtGet iface?</title>
+	    <sect3><title>Intro</title>
+		<simpara>
+		    Potentially we can have only MDVarGet with the method:
+		    <programlisting> virtual bool DtbGet(MDtBase&amp; aData) </programlisting>
+			With this method it is possible both resolving the suitable data getter and obtain the data.
+		</simpara>
+		<simpara>Cons if this approach is that MDVarGet implementation shall cast data instance from MDtBase to particular data type
+		    on each DtbGet call. With parametrized MDVarGet iface such cast is not required.</simpara>
+	    </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_sor"><title>Redesing transtions to simplify MDesInpObserver routing.</title>
+	<sect2><title>Intro</title>
+	    <simpara>Ref <xref linkend="iss_009"/> for the problem description. The exact root-cause is that the routing of MDesInpObserver can
+		be very complex depending on tansition topology. This is because the transitions just routes the IRM request to pairs.</simpara>
+	</sect2>
+	<sect2><title>Solution#1 Disable transition MDesInpObserver IRM redirecting.</title>
+	    <sect3><title>Intro</title>
+		<simpara>The idea is to restrict this routing complexity by implementing MDesInpObserver in transition and rederecting the iface methods to
+		    pairs. This will drastically reduce the model scope of MDesInpObserver resolution so simplifies the IRM pahtes.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2><title>Status: [DONE]</title>
+	    <simpara>20220412 e015e4e41</simpara>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_cist"><title>[Impl] Constant instead of State</title>
+	<sect2><title>Status</title>
+	    20230407 Implemented
+	</sect2>
+	<sect2><title>Intro</title>
+	    <simpara>Currently there are a lot of usages States in constant roles. Using States that are not changed creates
+		an overhead. This needs to be optimized.</simpara>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_gibu"><title>Getting interface by its UID</title>
+	<sect2><title>Intro</title>
+	    <simpara>Currently the utilization of UID looks very weak - UID just indentifies the iface. But what is the sense of identifying withiout
+		possibility to get the iface by UID.</simpara>
+	    <simpara>We need the feature of environmnet (and possible even owner) getting access to iface by UID.</simpara>
+	    <simpara>There is the feeling that current implementation is not consistent regarding "atomic" object of the system. The idea was that iface is
+		such atomic entity. If so then we need more instruments to operate with ifaces (and identify them).</simpara>
+	    <simpara>Ref <xref linkend="ds_dcs_sdo_owi"/> for <xref linkend="gls_sdo"/> operating with ifaces.</simpara>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_egio"><title>Enable getting ifaces for owner.</title>
+	<sect2><title>Intro</title>
+	    <simpara>It is common case that we request iface to get another iface (ref MIface::getLif()). Many ifaces restrict such ifaces resolution. For instance
+		MVert disables getting MNode to allow access to MNode from pair (the pair can be part of separate system. </simpara>
+	    <simpara>The idea is to enable local iface resolution for owner. Such solution already was implemented in earlier FAP versions where the context was passed
+		to the resoltuion method.</simpara>
+	    <simpara>Ref <xref linkend="ds_dcs_sdo_gmn"/> for use-case related to  <xref linkend="gls_sdo"/>.</simpara>
+	</sect2>
+	<sect2><title>Solution#1 MNode new method getIface(const Uid&amp;)</title>
+	    <simpara>The idea to add new MNode method that utilizes getting iface by UID, ref <ulink url="ds_gibu"/>. It is assumed that UID identifies not only iface itself but
+		also iface MNode "bearer" (current version of UID = URI + iface_name allows it). So the owner will be able to get the iface MNode bearer.</simpara>
+	</sect2>
+	<sect2><title>Solution#2 Pass owner as the context via getLif new argument. </title>
+	    <simpara>The context should be another MIface.</simpara>
+	    <simpara>Looks complicated. We expect to have simplistic operation when resolving ifaces locally.</simpara>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_des_idmux"><title>DES inputs demultiplexor</title>
+	<sect2><title>Intro</title>
+	    <simpara>It is common case where a number of same subsystems react on similar data. Ofter it is designed as one connpoint to what many "supplying" subsystem output
+		are connected. The example is FAP3-VIS vertex DRP where DRP has context connpoint to what all CRPs are connected. DRP needs to react (create ordering) on all CRPs
+		data - DRP has ordering subsystem that needs to order all CRPs connected. The naive "direct" solution would be to have separate ordering DRP subsystem for
+		each CRP but it is too expensive. Another solution is to have just one ordering subsystem and react on each input one-by-one implementing kind of inputs
+		demultiplexor.</simpara>
+	    <simpara>The demultiplexor has input resolving the number of ifaces and output that connects to "demultiplexed" subsystem input.
+		Multiplexor "connects" output the input first interface, thus update demultiplexed subsystem input. Then mutliplexor waits till demultiplexed subsystem reaction
+		gets completed (it needs special indication from subsystem) and switches to next iface.</simpara>
+	    <simpara>We need to consider at least two cases:</simpara>
+	    <itemizedlist>
+		<listitem>Multiplexer input is state input. Multiple MDVarGet ifaces are resolved on the input.</listitem>
+		<listitem>
+		    Multiplexer input is generic input. It even can be a socket.
+		    <para>This is exaclty the case of Vertex DRP where the input is socket {CRP uri, vector of pairs}</para>
+		</listitem>
+	    </itemizedlist>
+	</sect2>
+	<sect2><title>Design: demux is similar to multi-input transition.</title>
 	    <simpara>
-		Let's again consider the use-case: fap3-vis widget (widget.h) needs to update embedded font instance depending on font path state. Initial
-		solution was to utilize Buffered input DES embedded element, ref
-		<xref linkend="ds_dee_ssi"/>. With this solution we need to add embedded elements
-		    support to widget agent (this is quite a lot of code). Alternative solution would be using local scope transition: we have state FontPath, state
-		    FontApplied and local scope transition "ApplyFont" that containts the agent content and updates (re-creates) the embedded font instance.
+		Demux can be considered as multi-input transition. Indeed, the controlled system shouldn't have "unique" states bacause the system is one for
+		all inputs. For instance for Vertex DRP the controlled system just updates the common pseudo states, DRP structure, via
+		<xref linkend="gls_sdc"/>.
 	    </simpara>
-	    <simpara>The question here if this scheme provides better understanding of the system. From my view embedded elems still makes system better undertstanding.
-		this is because the transistion "hides" the actual context so it is hard to see that the transition changes the context of agent.</simpara>
-	</sect3>
-    </sect2>
-</sect1>
-
-<sect1 id="ds_lps"><title>Improving provider iface to limit the provider's scope</title>
-    <sect2><title>Intro</title>
-	<simpara>Curently MEnv iface allows any agent in native hier to register provider, ref MEnv::addProvider(). This creates the vulnarability: local agent can
-	    affect the whole system by creatng improper node. We need to close this hole.</simpara>
-	<simpara>Ref <xref linkend="ds_dee_sac_asp"/> for the use-case.</simpara>
-    </sect2>
-    <sect2><title>Solution: add the context indication to provider iface.</title>
-	<simpara>The idea is to extend MProvider API by adding getContext() method. This method will return the node of native hier in which scope the provider is actual.
-	    If the context is root then the provider is "global" for the system. Note that currently root is available from env but this needs to be disabled.
-	    Node mutation methods shall check this context when creating node. If the method see that provider tries to create node in the upper scope the method
-	    needs to deny the creation.</simpara>
-    </sect2>
-</sect1>
-
-<sect1 id="ds_mtc"><title>Mutation as a transaction</title>
-    <sect2><title>Intro</title>
-	<simpara>Curently the mutation is implemented very primitive: node try to apply the mutation, if mutation fails then the node just record this event into the log.
-	    The fact of mutation failure doesn't affect the overall mutation process - the node then tries to apply next mutation. This approach ever simple is wrong: 
-	    in result the inconsistent system can be created.</simpara>
-	<simpara>This problem significantly affects sysetems DES controlling (<xref linkend="gls_sdc"/>). Ref for instance the use-case described in <xref linkend="ds_mtc"/>:
-	    the controller cannot be sure that the required mutation segment is applied so the controller status is not fully deterministic here.</simpara>
-    </sect2>
-</sect1>
-
-<sect1 id="ds_dctx"><title>[DS_DCTX] DES context for components</title>
-    <sect2><title>Intro</title>
-	<simpara>It is abundant use-case where some DES needs to share some context for its components. The example is fap3-vis Detail Representation (DRP). DRP
-	    creates a number of compact representations (CRP) to visualize represented agent's components. Each CRP needs info of the component it is representing: link to the whole
-	    model and component's URI related to this model. This info can be provided to CRP via connections but it creates significant overhead.</simpara>
-	<simpara>So the idea is to create the mechanism that can be used to establish such connection "automatically" OR even allow (in our example) CRP to get access to DRPs 
-	    states containing this info (this creates actually "virtual" connection that does't require such resources as explicit connection.</simpara>
-	<simpara>This feature requirements can vary. At the moment we can limit them by just sharing a socket. So the feature in that case looks like as:
-	    DRP has "shared" socket, CRP creates compatible socket in it's scope. Crp can use this interal socket as if the socket is connected to DRP socket via
-	    "virtual" connection.</simpara>
-	<simpara>Actually there is two approaches of creating such "virtual" connection. Approach#1 is to esablish native connection (via native conn).
-	    Approach#2 is to not establish explicit native connection but use some intermediate ifaces to get access to Provided and Required ifaces, ifaces in that case
-	    are not persistent but accessible via intermediate ifaces. Actually the intermediate "helper" ifaces are needed even for Approach#1 to establish persistent
-	    native conn.</simpara>
-    </sect2>
-    <sect2 id="ds_dctx_dic"><title>Solution#1: dedicated supplier-consumer interface for DES context resolution, explicit connection</title>
-	<sect3><title>Intro</title>
-	    <simpara>This solution follows Approach#1. We need to introduce the interfaces MDesContextSupplier/MDesContextConsumer for consumer and supplier negotiation and
-		establishing connection. Consumer shall initiate supplier iface resolution. Then as soon as provider iface is resolver the consumer requests
-		binding it's parameters (StateCPs) to correspoinding CPs of supplier.</simpara>
-	    <simpara>The supplier posseses the number of output CPs and consumer - the number of input CPs. Consumer requests the supplier to connect it's input CPs
-		to the corresponding output CP of supplier.</simpara>
-	    <simpara>Having both supplier and consumer ifaces assumes that there will be persistent connections between them. The connection is one (supplier) to many
-		(providers).</simpara>
-	</sect3>
-	<sect3 id="ds_dctx_dic_rs"><title>How to resolve supplier?</title>
-	    <sect4><title>Intro</title>
-		<simpara>There can be a number of suppliers in consumer owning model part. The supplier resolution mechanism depends on the use-cases of context.
-		    Let's at the moment keep the simplest use-case: consumer resolves the supplier basing on single paremeter. The paremeter can be supplier ID, or given
-		    property etc. The problem here is that currently IRM doesn't support resolution by name + parameter but by name only. So we need to use two-stager 
-		    resolution: first we resolve supplier iface by iface name, then select the iface with given paremeter from them. This approach has a number of disadvantages.
-		    One of them is that the supplier iface resolution tree includes the paths to all suppliers even not matched the parementer. So the number of IRM interactions like
-		    invalidation grows. </simpara>
-	    </sect4>
-	</sect3>
-	<sect3><title>How to handle the changes in both parts?</title>
-	    <simpara>Both supplier and consumer can be changed. One use-case is that supplier adds new CPs that was expected by consumer but messed earlier. </simpara>
-	</sect3>
-	<sect3><title>Supplying restrictions</title>
-	    <simpara>Do we need to allow any consumer connect to any supplier? Is there use-case where supplier shall provide an access to some specific consumers?
-		We can imagine such use-cases, but is it realistic to implement them? Actually binding by ID is also kind of such restrictions. The massive case is that
-		some system inluceds components from module, this component requires some context with given ID, so it is up to the system to provide the compoment with
-		such context. The component doesn't know ID of other possible contexts.</simpara>
-	</sect3>
-	<sect3 id="ds_dctx_dic_bnd"><title>Context Binding scheme</title>
-	    <simpara>We assume that there should be automatic binding. This means that we need to specify the rule assosiating supplier ouput an consumer input. </simpara>
-	    <simpara>Soution_1 is that consumer has components (ctx) as CPs (actually extenders) which the names corresponding to supplier ctx names.
-		Then consumer requests supplier to bind ctx extender.</simpara>
-	</sect3>
-	<sect3 id="ds_dctx_dic_cs"><title>How to resolve same ID suppliers. Dependent context stack.</title>
-	    <sect4><title>Intro</title>
-		<simpara>It is possible that consumer owners provide more that one ctx suppliers with same ID. How to resolve them? What should be the policies of handling
-		    this. There is the concrete use-case: fap3-vis widget styles. The owner style can be considered as the context for owned widget. Most often case that
-		    there is top-level style that can be overriden. </simpara>
-		<simpara>For widget style we can consider the context with same ID  dependent one from another from bottom to top creating context stack.
-		    Lower level context in the stack (stack head) can override the owner context by implementing specific transition structure. With this approach we need to
-		    implement contex access policy to resolve lower level supplier. How this resolution policy can be desinged?</simpara>
-		<simpara>Solution_1 is to have supplier iface specific method to get head supplier like getHeadSpl(). With such supplier API the resolution sequence will be as:</simpara>
-		<simpara>Solution_2 is to involve supplier itself in the supplier iface resolution. Supplier shall request owner for ifaces and filter out the upper suppliers
-		    with same ID.</simpara>
-		<programlisting>
-		    consumer request owner to resolve suppliers
-		    owner gives consumer the set of suppliers ifaces (owner resolves it from bottom to top)
-		    consumer finds the first supplier with given ID and ask it for head supplier
-		    supplier finds head suppler using getHeadSpl() and gives it to consumer
-		    consumer registers itself to supplier
-		    consumer binds context
-		</programlisting>
-		<simpara>As for widgets style the scheme can be as follow (binding Solution_1):</simpara>
-		<programlisting>
-		    |   OwningWdg : Widget {
-		    |       Style : CtxSpl {
-		    |           Color : State;
-		    |       }
-		    |       OwnedWdg : Widget {
-		    |           ColorOverride : State;
-		    |           Style : CtxSpl {
-		    |               Style : CtxCsm {
-		    |                   Color : ExtdStateOutp;
-		    |               }
-		    |               Color : TrSvld @ {
-		    |                   Inp1 ~ ColorOverride;
-		    |                   Inp2 ~ Style.Color;
-		    |               }
-		    |           }
-		    |       }
-		    |   }
-		</programlisting>
-		<simpara>Here OwningWdg and OwnedWdg has the context supplier with same ID. OwnedWdg ctx suppiler includes ctx consumer to get overrided ctx (Color) and then
-		    overrides Color ctx with ColorOverride.</simpara>
-	    </sect4>
-	    <sect4><title>Binding in ctx stack.</title>
-		<simpara>What if head supplier does't override the context? In that case it should redirect binding request to upper layer.</simpara>
-		<simpara>What if after that head supplier overrides the context? In that case it should notiry consumer so that it can re-bind the context.</simpara>
-	    </sect4>
-	</sect3>
-    </sect2>
-    <sect2 id="ds_dctx_cvai"><title>Context vs access infrastructure.</title>
-	<simpara>Turning back to our DRP-CRP example. Actually there is another way to allow CRP access to common states - access infrastructure. This approach is already
-	    successfull applied in VIS container desing: the container deals with it's widget components via the sockets that are combined in some structure. For linear layout 
-	    container such structure is the linked list.</simpara>
-	<simpara>So we just can extend containers socket to distribute "model base" to all the CRPs.</simpara>
-	<simpara>Node_1: Even CRP "personal" state like "model component's URI related" can be
-	    distributed via sockets as "current CompName", CRP just needs to have the subsystem that "catches" this data on CRP creation phase.</simpara>
-	<simpara>The cons of this approach is rather big overhead: for instance the number of connpoints is increased significantly.</simpara>
-    </sect2>
-    <sect2><title>Status [IN_PROGRESS]</title>
-    </sect2>
-</sect1>
-
-<sect1 id="ds_dsv"><title>Data special values</title>
-    <sect2><title>Intro</title>
-	<simpara>It is common use-case when we need to analyze if the data is erroneous or the data isn't set yet. Data erroneous (validity) indication (mValid) is already supported in
-	    DtBase (ref rdata.h). "Isn't set" indicator is not supported yet, not sure we need it, probably validity indicator is enough even these indicators has different meaning
-	    actually.</simpara>
-	<simpara>But it is not possible to set this special value via mutation and the special values don't have text representation.</simpara>
-    </sect2>
-    <sect2><title>Option#1. Special values text representation.</title>
-	<simpara>We can use for instance the syntax of special values text representatio as: </simpara>
-	<programlisting>
-		representation = SIGNATURE " " "&lt;" special_value "&gt;"
-	    special_value = special_value_invalid | special_value_unset
-	    special_value_invalid = "ERR"
-	    special_value_unset = "NIL"
-	</programlisting>
-    </sect2>
-    <sect2><title>Option#2.Special values text representation.</title>
-	<simpara>We can use for instance the syntax of special values text representatio as: </simpara>
-	<programlisting>
-	    representation = SIGNATURE " " special_value
-	    special_value = special_value_invalid | special_value_unset
-	    special_value_invalid = "_INV"
-	    special_value_unset = "_NIL"
-	</programlisting>
-	<simpara>We can introduce also escaping such special values</simpara>
-    </sect2>
-    <sect2><title>Option#3 Use missing data criteria instead of special values</title>
-	<simpara>Using special value is annoying. In many cases we need to initialize the state with invalid data. It is more compact sintax if 
-	    we classify the data as invalid in case of the symbols after data signature are missing but same time classifying this as no data error
-	    (because no data is specified). The reasoning here is as: There is no data, so data is not set, i.e. invalid, but there is not data syntax error,
-	    because of not data specified.</simpara>
-	<simpara>We still need special_value_invalid in rare cases for instance when specifying invalid data in tuple (there are no signature when specifying
-	    field data in tuple, ref <xref linkend="iss_011"/>)</simpara>
-    </sect2>
-    <sect2><title>Status</title>
-	<simpara>20230130 Implemented Option#3 but Option#2 special_value_invalid also enabled.</simpara>
-    </sect2>
-</sect1>
-
-<sect1 id="ds_rdi"><title>Redesign of data interfaces.</title>
-    <sect2><title>Intro</title>
-	<simpara>Current desing weakness is exposed by the use-case: how to simply check MDtBase IsValid() parameter. This parameter is the base one, i.e. not
-	    specific for type of data. It happens that it is not possible to get data base parameter in simply manner. Ref dest.h TrIsValid.</simpara>
-	<simpara>Currently the data ifaces are MDVarGet and parametrized MDtGet plus similar ifaces for setting data. All data related features are based on this
-	    parametrized data ifaces. This data parametrized iface approach causes a lot of related solutions. For instance there are paremetrized functions so 
-	    transitions just dynamically creates the function that matches output and input data types.</simpara>
-	<simpara>This approach was originated on earlier FAP design where is was assumed that any data types are allowed in the model. But then the
-	    idea of universal data was introduced, ref MDataBase iface. This approach allows to get rid of parametrized data at least for the model parts relation.
-	    But parametrized data was remain. We need to redesign the data ifaces to support universal data iface. This can vastly simplify DES framework.</simpara>
-    </sect2>
-    <sect2><title>Solution_1: Keep MDVarGet but use non-paremetrized MDget iface instead of paremetrized MDtGet. </title>
-	<simpara>Pros: This solution allows smooth migration from templated iface. We just can redesing DES framework part by part.</simpara>
-	<simpara>Cons: MDVarGet actually is not needed in our case - it aims exactly to support different type of data instead of generic one.</simpara>
-    </sect2>
-    <sect2><title>Solution_2: Get rid of parametrized MDtGet iface?</title>
-	<sect3><title>Intro</title>
 	    <simpara>
-		Potentially we can have only MDVarGet with the method:
-		<programlisting> virtual bool DtbGet(MDtBase&amp; aData) </programlisting>
-		    With this method it is possible both resolving the suitable data getter and obtain the data.
+		Using this analogy we can say that use-case 
+		<xref linkend="ds_des_idmux_uc_ginu"/> is not really suitable for our case - in multi-input transition all
+		    inputs are important, even those that are not updated.
 	    </simpara>
-	    <simpara>Cons if this approach is that MDVarGet implementation shall cast data instance from MDtBase to particular data type
-		on each DtbGet call. With parametrized MDVarGet iface such cast is not required.</simpara>
-	</sect3>
-    </sect2>
-</sect1>
-
-<sect1 id="ds_sor"><title>Redesing transtions to simplify MDesInpObserver routing.</title>
-    <sect2><title>Intro</title>
-	<simpara>Ref <xref linkend="iss_009"/> for the problem description. The exact root-cause is that the routing of MDesInpObserver can
-	    be very complex depending on tansition topology. This is because the transitions just routes the IRM request to pairs.</simpara>
-    </sect2>
-    <sect2><title>Solution#1 Disable transition MDesInpObserver IRM redirecting.</title>
-	<sect3><title>Intro</title>
-	    <simpara>The idea is to restrict this routing complexity by implementing MDesInpObserver in transition and rederecting the iface methods to
-		pairs. This will drastically reduce the model scope of MDesInpObserver resolution so simplifies the IRM pahtes.</simpara>
-	</sect3>
-    </sect2>
-    <sect2><title>Status: [DONE]</title>
-	<simpara>20220412 e015e4e41</simpara>
-    </sect2>
-</sect1>
-
-<sect1 id="ds_cist"><title>[Impl] Constant instead of State</title>
-    <sect2><title>Status</title>
-	20230407 Implemented
-    </sect2>
-    <sect2><title>Intro</title>
-	<simpara>Currently there are a lot of usages States in constant roles. Using States that are not changed creates
-	    an overhead. This needs to be optimized.</simpara>
-    </sect2>
-</sect1>
-
-<sect1 id="ds_gibu"><title>Getting interface by its UID</title>
-    <sect2><title>Intro</title>
-	<simpara>Currently the utilization of UID looks very weak - UID just indentifies the iface. But what is the sense of identifying withiout
-	    possibility to get the iface by UID.</simpara>
-	<simpara>We need the feature of environmnet (and possible even owner) getting access to iface by UID.</simpara>
-	<simpara>There is the feeling that current implementation is not consistent regarding "atomic" object of the system. The idea was that iface is
-	    such atomic entity. If so then we need more instruments to operate with ifaces (and identify them).</simpara>
-	<simpara>Ref <xref linkend="ds_dcs_sdo_owi"/> for <xref linkend="gls_sdo"/> operating with ifaces.</simpara>
-    </sect2>
-</sect1>
-
-<sect1 id="ds_egio"><title>Enable getting ifaces for owner.</title>
-    <sect2><title>Intro</title>
-	<simpara>It is common case that we request iface to get another iface (ref MIface::getLif()). Many ifaces restrict such ifaces resolution. For instance
-	    MVert disables getting MNode to allow access to MNode from pair (the pair can be part of separate system. </simpara>
-	<simpara>The idea is to enable local iface resolution for owner. Such solution already was implemented in earlier FAP versions where the context was passed
-	    to the resoltuion method.</simpara>
-	<simpara>Ref <xref linkend="ds_dcs_sdo_gmn"/> for use-case related to  <xref linkend="gls_sdo"/>.</simpara>
-    </sect2>
-    <sect2><title>Solution#1 MNode new method getIface(const Uid&amp;)</title>
-	<simpara>The idea to add new MNode method that utilizes getting iface by UID, ref <ulink url="ds_gibu"/>. It is assumed that UID identifies not only iface itself but
-	    also iface MNode "bearer" (current version of UID = URI + iface_name allows it). So the owner will be able to get the iface MNode bearer.</simpara>
-    </sect2>
-    <sect2><title>Solution#2 Pass owner as the context via getLif new argument. </title>
-	<simpara>The context should be another MIface.</simpara>
-	<simpara>Looks complicated. We expect to have simplistic operation when resolving ifaces locally.</simpara>
-    </sect2>
-</sect1>
-
-<sect1 id="ds_des_idmux"><title>DES inputs demultiplexor</title>
-    <sect2><title>Intro</title>
-	<simpara>It is common case where a number of same subsystems react on similar data. Ofter it is designed as one connpoint to what many "supplying" subsystem output
-	    are connected. The example is FAP3-VIS vertex DRP where DRP has context connpoint to what all CRPs are connected. DRP needs to react (create ordering) on all CRPs
-	    data - DRP has ordering subsystem that needs to order all CRPs connected. The naive "direct" solution would be to have separate ordering DRP subsystem for
-	    each CRP but it is too expensive. Another solution is to have just one ordering subsystem and react on each input one-by-one implementing kind of inputs
-	    demultiplexor.</simpara>
-	<simpara>The demultiplexor has input resolving the number of ifaces and output that connects to "demultiplexed" subsystem input.
-	    Multiplexor "connects" output the input first interface, thus update demultiplexed subsystem input. Then mutliplexor waits till demultiplexed subsystem reaction
-	    gets completed (it needs special indication from subsystem) and switches to next iface.</simpara>
-	<simpara>We need to consider at least two cases:</simpara>
-	<itemizedlist>
-	    <listitem>Multiplexer input is state input. Multiple MDVarGet ifaces are resolved on the input.</listitem>
-	    <listitem>
-		Multiplexer input is generic input. It even can be a socket.
-		<para>This is exaclty the case of Vertex DRP where the input is socket {CRP uri, vector of pairs}</para>
-	    </listitem>
-	</itemizedlist>
-    </sect2>
-    <sect2><title>Design: demux is similar to multi-input transition.</title>
-	<simpara>Demux can be considered as multi-input transition. Indeed, the controlled system shouldn't have "unique" states bacause the system is one for
-	    all inputs. For instance for Vertex DRP the controlled system just updates the common pseudo states, DRP structure, via <xref linkend="gls_sdc"/>.</simpara>
-	<simpara>Using this analogy we can say that use-case <xref linkend="ds_des_idmux_uc_ginu"/> is not really suitable for our case - in multi-input transition all
-	    inputs are important, even those that are not updated.
-    </simpara>
-</sect2>
-<sect2 id="ds_des_idmux_uc"><title>Use-cases</title>
-    <sect3 id="ds_des_idmux_uc_ginu"><title>Demux given input notifies of update - Demux updates controlled system for this input</title>
-	<sect4><title>Clarification</title>
-	    <simpara>On Vertex DRP example: given vertex is updated (got new connection for instance) - demux updates controlled system (i.e. CRPs orderer) so that 
-		corresponding CRP is reordered.</simpara>
-	</sect4>
-	<sect4><title>Status</title>
-	    <simpara>This use-case is not covered in the current design. This is because demux cannot understand what input notifies of update.</simpara>
-	</sect4>
-    </sect3>
-</sect2>
+	</sect2>
+	<sect2 id="ds_des_idmux_uc"><title>Use-cases</title>
+	    <sect3 id="ds_des_idmux_uc_ginu"><title>Demux given input notifies of update - Demux updates controlled system for this input</title>
+		<sect4><title>Clarification</title>
+		    <simpara>On Vertex DRP example: given vertex is updated (got new connection for instance) - demux updates controlled system (i.e. CRPs orderer) so that 
+			corresponding CRP is reordered.</simpara>
+		</sect4>
+		<sect4><title>Status</title>
+		    <simpara>This use-case is not covered in the current design. This is because demux cannot understand what input notifies of update.</simpara>
+		</sect4>
+	    </sect3>
+	</sect2>
     </sect1>
 
     <sect1 id="ds_desas"><title>DES active subsystem (<xref linkend="gls_desas"/>)</title>
@@ -2900,7 +2935,7 @@
 	    </sect3>
 	</sect2>
 	<sect2 id="ds_desopt_est"><title>Fap3-vis ut_avr_vert_drp_2. Extracting VertCRP Slot takes long time.</title>
-	    <sect3><title>Into</title>
+	    <sect3><title>Intro</title>
 		<simpara>Analysis of the log shows that extracting VertCrp Slot takes long time.</simpara>
 		<programlisting>
 		    04/09/23 16:27:33.446340883;INF;;.testroot.Test.Window.Scene.Drp.SdcReposExtrSlot;Started extracting node [.testroot.Test.Window.Scene.Drp.Slot_Model_vert2%MNode]
@@ -2927,6 +2962,9 @@
 		    1001    IFC_LNCH_RUN    1       4.307730        4.307730        4.307730        4.307730        0.000000        0
 		</programlisting>
 	    </sect3>
+	    <sect3><title>Status</title>
+		<simpara>20230501 Ref <xref linkend="ds_asr_cbscpd"/> for the problem analysis. Implemented interim soluiton <xref linkend="ds_asr_cbscpd_ahoi"/>.</simpara>
+	    </sect3>
 	</sect2>
     </sect1>
 
@@ -2946,598 +2984,623 @@
 		Created new agent TrSwitchBool2. Added MDesInpObserver call redirection. Tested on fap3-vis ut_avr_vert_drp_2 -
 		there is no performance valuable improvement. This weak affect to the performance can be explained: transitions cache (
 		<xref linkend="ds_desopt_tdc"/>) was introduced some time ago so even the dependent state is notified extra times the state just 
-		    takes the trans cache (that is unchanged), so no re-calculation happens)</simpara>
-	    </sect2>
-	</sect1>
+		    takes the trans cache (that is unchanged), so no re-calculation happens)
+	    </simpara>
+	</sect2>
+    </sect1>
 
-	<sect1 id="ds_rdr"><title>Row data redesign.</title>
-	    <sect2 id="ds_rdr_itr"><title>Intro</title>
-		<simpara>The current implementation of row data has a number of problems that are indicated by use-cases below</simpara>
-		<sect3><title>Hierarchical composite data: serialization instead of direct parsing.</title>
-		    <simpara>The current design of row data is not consistent enough.</simpara>
-		    <simpara>The first problem is the composite data inconsistent text representation.
-			The use-case that expose the design problem is the container "Vector of Pair of string", signature "VPS",
-			ref rdata.cpp. The problem here is at least in the data deserialization from the text representation. It is assumed in the current design that the textual representation
-			of composite data is rather simple: just peace of text separated by space. This doesn't work for the composite data whose component is also composite data,
-			for instance Vector of Pairs.</simpara>
-		    <simpara>So, we need to re-design row-data at least in point of serialization/deserialization. We need to use subsequentual serialization from/to stream instead
-			of direct parsting of string.</simpara>
-		</sect3>
-		<sect3><title>Scalar data of string</title>
-		    <simpara>Migrating to serialization affects scalar data of string: now we need to understand where are the start and end of the string, i.e. string representation
-			syntax needs to include string delimiters.</simpara>
-		</sect3>
-		<sect3 id="ds_rdr_itr_ovst"><title>Overhead in Containers size transition.</title>
-		    <simpara>Look at TrSizeVar. Here we don't actually need to know what is the type of Vectors element. We simply need to get the size of Vector. But with the 
-			current design we need to exactly resolve the full type of Vector, i.e. have a number Vector variants supported.</simpara>
-		</sect3>
-		<sect3 id="ds_rdr_itr_senl"><title>Data text represenation syntax error is not logged</title>
-		    <simpara>The root-cause is that row-data has only one mValid flag that covers both undefined data and the data that gets erroneous because of wrong text representation.</simpara>
-		    <simpara>The solution would be have separate flags for these two cases.</simpara>
-		</sect3>
-		<sect3><title>Row data supporting of container components access interfaces</title>
-		    <simpara>This would be much more effective then copy container and then get compoments from it. Refer FAtVect&lt;T&gt;::DtGet():</simpara>
-		    <programlisting>
-			||          Vector&lt;T&gt; arg;
-			||          dfget->DtGet(arg); !! YB the data is copied
-			...
-			234                 aData.mValid = arg.GetElem(ind.mData, aData.mData);
-		    </programlisting>
-		</sect3>
-	    </sect2>
-	    <sect2><title>Data text representation syntax</title>
-		<sect3><title>Intro</title>
-		    <simpara>Ref <ulink url="../../../grayb/doc/design/index.html#ds_agt_data_repr"/> for the data represntation syntax in fap2 (and actually the current one).</simpara>
-		</sect3>
-		<sect3><title>Syntax</title>
-		    <programlisting>
-			data_repr = (scalar_data_repr | composite_date_repr)
-			composite_date_repr = (container_data_repr | tuple_data_repr)
-			container_data_repr = type, separator, container_data_value
-			type = type_signature, [ "," , type_parameters ]
-			value = (scalar_data_value | composite_data_value)
-			container_data_value = "(", [[separator], component_data_value], {[separator], ",", component_data_value}, ")"
-			component_data_value = data_repr
+    <sect1 id="ds_rdr"><title>Row data redesign.</title>
+	<sect2 id="ds_rdr_itr"><title>Intro</title>
+	    <simpara>The current implementation of row data has a number of problems that are indicated by use-cases below</simpara>
+	    <sect3><title>Hierarchical composite data: serialization instead of direct parsing.</title>
+		<simpara>The current design of row data is not consistent enough.</simpara>
+		<simpara>The first problem is the composite data inconsistent text representation.
+		    The use-case that expose the design problem is the container "Vector of Pair of string", signature "VPS",
+		    ref rdata.cpp. The problem here is at least in the data deserialization from the text representation. It is assumed in the current design that the textual representation
+		    of composite data is rather simple: just peace of text separated by space. This doesn't work for the composite data whose component is also composite data,
+		    for instance Vector of Pairs.</simpara>
+		<simpara>So, we need to re-design row-data at least in point of serialization/deserialization. We need to use subsequentual serialization from/to stream instead
+		    of direct parsting of string.</simpara>
+	    </sect3>
+	    <sect3><title>Scalar data of string</title>
+		<simpara>Migrating to serialization affects scalar data of string: now we need to understand where are the start and end of the string, i.e. string representation
+		    syntax needs to include string delimiters.</simpara>
+	    </sect3>
+	    <sect3 id="ds_rdr_itr_ovst"><title>Overhead in Containers size transition.</title>
+		<simpara>Look at TrSizeVar. Here we don't actually need to know what is the type of Vectors element. We simply need to get the size of Vector. But with the 
+		    current design we need to exactly resolve the full type of Vector, i.e. have a number Vector variants supported.</simpara>
+	    </sect3>
+	    <sect3 id="ds_rdr_itr_senl"><title>Data text represenation syntax error is not logged</title>
+		<simpara>The root-cause is that row-data has only one mValid flag that covers both undefined data and the data that gets erroneous because of wrong text representation.</simpara>
+		<simpara>The solution would be have separate flags for these two cases.</simpara>
+	    </sect3>
+	    <sect3><title>Row data supporting of container components access interfaces</title>
+		<simpara>This would be much more effective then copy container and then get compoments from it. Refer FAtVect&lt;T&gt;::DtGet():</simpara>
+		<programlisting>
+		    ||          Vector&lt;T&gt; arg;
+		    ||          dfget->DtGet(arg); !! YB the data is copied
+		    ...
+		    234                 aData.mValid = arg.GetElem(ind.mData, aData.mData);
+		</programlisting>
+	    </sect3>
+	</sect2>
+	<sect2><title>Data text representation syntax</title>
+	    <sect3><title>Intro</title>
+		<simpara>Ref <ulink url="../../../grayb/doc/design/index.html#ds_agt_data_repr"/> for the data represntation syntax in fap2 (and actually the current one).</simpara>
+	    </sect3>
+	    <sect3><title>Syntax</title>
+		<programlisting>
+		    data_repr = (scalar_data_repr | composite_date_repr)
+		    composite_date_repr = (container_data_repr | tuple_data_repr)
+		    container_data_repr = type, separator, container_data_value
+		    type = type_signature, [ "," , type_parameters ]
+		    value = (scalar_data_value | composite_data_value)
+		    container_data_value = "(", [[separator], component_data_value], {[separator], ",", component_data_value}, ")"
+		    component_data_value = data_repr
 
-			(* Node that native_string_repr differs from scalar_string_data:
-			native_string_repr terminates with space whereas scalar_string_data terminates by end_of_data 
-			native_string_repr = sybmbols, space
+		    (* Node that native_string_repr differs from scalar_string_data:
+		    native_string_repr terminates with space whereas scalar_string_data terminates by end_of_data 
+		    native_string_repr = sybmbols, space
 
-			space = " "
-			scalar_data_repr = (scalar_string_repr | scalar_int_repr | ...)
-			scalar_string_repr = scalar_string_sig, separator, scalar_string_data
-			scalar_string_data = "'", {symbol}, "'"
-		    </programlisting>
-		</sect3>
-	    </sect2>
-	    <sect2><title>[STATUS]</title>
-		<simpara>20230109 Initial implementation. Tested with modnav.</simpara>
-	    </sect2>
-	    <sect2 id="ds_rdr_cnt"><title>Containers of non-typed data</title>
-		<sect3><title>Intro</title>
-		    <simpara>In the current design the containers are used where the elements are typed data. The only exception is Tuple.
-			It contains non-typed DtBase elements. It makes sense to propagate Tuple approach to other containers.</simpara>
-		</sect3>
-	    </sect2>
-	</sect1>
+		    space = " "
+		    scalar_data_repr = (scalar_string_repr | scalar_int_repr | ...)
+		    scalar_string_repr = scalar_string_sig, separator, scalar_string_data
+		    scalar_string_data = "'", {symbol}, "'"
+		</programlisting>
+	    </sect3>
+	</sect2>
+	<sect2><title>[STATUS]</title>
+	    <simpara>20230109 Initial implementation. Tested with modnav.</simpara>
+	</sect2>
+	<sect2 id="ds_rdr_cnt"><title>Containers of non-typed data</title>
+	    <sect3><title>Intro</title>
+		<simpara>In the current design the containers are used where the elements are typed data. The only exception is Tuple.
+		    It contains non-typed DtBase elements. It makes sense to propagate Tuple approach to other containers.</simpara>
+	    </sect3>
+	</sect2>
+    </sect1>
 
-	<sect1 id="ds_ssp"><title>System Service point (<xref linkend="gls_ssp"/>)</title>
-	    <sect2><title>Status</title>
+    <sect1 id="ds_ssp"><title>System Service point (<xref linkend="gls_ssp"/>)</title>
+	<sect2><title>Status</title>
+	    <itemizedlist>
+		<listitem>20230302 Initial variant, unit-case. Not completed. High-level use-cases are not confirmed. </listitem>
+	    </itemizedlist>
+	</sect2>
+	<sect2><title>Intro</title>
+	    <itemizedlist>
+		<listitem>
+		    Ref <ulink url="../../../fap3-vis/doc/design/index.html#ds_vtxdrp_ecr"/> for the primary use-cases.
+		    <para>The main use-case if the system consisting from a number of "client" syb-system and "service" sub-system.
+			Here the "clients" update theirs's state depending on "service" states. In the use-case above the EdgeCRP points states
+			(coordinates) depends on DRP states set.</para>
+		</listitem>
+	    </itemizedlist>
+	</sect2>
+	<sect2 id="ds_ssp_dip"><title>Design initial points</title>
+	    <sect3><title>Single conn point, multiple client updating (servicing) subsystems.</title>
+		<simpara>It makes sense to simplify the interface for the clients. Because the clients are same from states updates needs we can have
+		    "service" system single connpoint for all such clients. Even having signle connpoints the service system needs to have client's
+		    dedicated subsystems to update each client.</simpara>
+		<simpara>There should be dedicated servicing subsystem created for each client. Let's consider the simple servicing scheme.</simpara>
+		<simpara>There are Servicing system SS, service connpoint CP with simplem interface (one inp Inp and one outp Outp),
+		    clients A and B, and servicing subsystem SSS that "gets" the inp, gets SS context, and updates clients via CP output.</simpara>
+		<programlisting>
+		    |        |-------------|
+		    |        |   SS        |
+		    |   A---|  |---|SSS_A| |
+		    |       |CP|           |     
+		    |   B---|  |---|SSS_B| |
+		    |        |             |
+		    |        |-------------|
+		</programlisting>
+		<simpara>CP shall have special iface resolution rules to resolve iface depending on what the iface request comes from. For instance
+		    if MDesInpObserver resolution request comes from client A then CP shall redirct iface resolution request to SSS_A input. In turn if iface 
+		    resoution request comes from SSS_A then CP shall redirect the request to client A.</simpara>
+	    </sect3>
+	    <sect3 id="ds_ssp_dip_sss"><title>Can we have single updating (servicing) subsystem for clients?</title>
+		<simpara>Note, that having single servicing subsystem makes sense only for the subsystem in form of transition, i.e. without any
+		    states. If there are some states in subsystem there have to be separate subsystems.</simpara>
+		<simpara>Yes, potentially such design can be used. But in that case we need to have enhanced interface resolution mechanism. Let's
+		    consider same simple 2-clients schema:</simpara>
+		<programlisting>
+		    |        |-----------|
+		    |   A---|  | SS      |
+		    |       |CP|---|SSS| |     
+		    |   B---|  |         |
+		    |        |-----------|
+		</programlisting>
+		<simpara>There are Servicing system SS, service connpoint CP with simplem interface (one inp Inp and one outp Outp),
+		    clients A and B, and servicing subsystem SSS that "gets" the inp, gets SS context, and updates clients via CP output.</simpara>
+		<simpara>
+		    When client A gets updated, it sends DES input update notification (MDesInpObserver) thru CP Inp. SSS should pass this
+		    notif back to A thru CP Outp. When B get updated SSS should pass inp update notif back to B. So CP shall resolve MDesInpObserver
+		    depending on iface resolution context, i.e. on what client makes the request.
+		    Yes, CP Iface resolution rules can use iface resolution requestor. But the problem here is
+		    that MDesInpObserver iface resolution request coming to CP doens't contain the full context - even each transition "breaks" the request context.
+		</simpara>
+		<simpara>
+		    Current iface resolutin mechanism supports only context in form of requestor chain. But it is not enough in our case. We needs to have the 
+		    context that can be somehow passed to the agent where it can be actually used. In our case for instance it will be the MDesInpObserver request
+		    to CP. So we need to have the enhanced iface resoution mechanism to support single servicing subsystem schema. With the current resolution
+		    mechanism the solution will not work. Ref <xref linkend="ds_irm_ctx"/> for IFR design materials.
+		</simpara>
+		<simpara>Potentially the solution would be keeping the request context in CP. For instance client A requests CP for MDVarGet, CP stores 
+		    the request context (client A) and uses this context when servicing subsystem in turn requests CP for MDVarGet iface - CP will redirect the request to
+		    client A.</simpara>
+	    </sect3>
+	    <sect3><title>How to create servicing subsystem for the clent.</title>
+		<simpara>We need to have native agent "Servicing point" (or multi-clent point) for that. This agent specifics are:</simpara>
 		<itemizedlist>
-		    <listitem>20230302 Initial variant, unit-case. Not completed. High-level use-cases are not confirmed. </listitem>
+		    <listitem>It creates corresponding servicing subsystem on client connected event.</listitem>
+		    <listitem>It removes corresponding servicing subsystem on client disconnected event.</listitem>
+		    <listitem>It has specific iface resolution rules "binding" client to its servicing subsystem.</listitem>
 		</itemizedlist>
-	    </sect2>
-	    <sect2><title>Intro</title>
+	    </sect3>
+	</sect2>
+	<sect2><title>Design. Separate servicing subsystem for each client.</title>
+	    <sect3><title>Intro</title>
+		<simpara>Single servicing subsystem desing options (ref <xref linkend="ds_ssp_dip_sss"/>) is not clarified so far. So we need to focuse on
+		    the initial design option where separate servicing subsystem is created for each client.</simpara>
+	    </sect3>
+	    <sect3><title>Structure</title>
+		<simpara>The structure is as:</simpara>
+		<programlisting>
+		    |
+		    |
+		    |                          -------------------------------------------------------------------------
+		    |                          |   SSM                                                                 | 
+		    |                          |                                                                       |
+		    |    ------------------    |   -----------------      --------------------------                   |
+		    |    |        ------- |    |   |       ------- |      |  --------     -------- |         --------  |
+		    |    | Client | CCP |----------| ECP   | Int |-----------| CCPM | SS  | SCXC |-----------| SCXS |------------
+		    |    |        ------- |    |   |       ------- |      |  --------     -------- |         --------  |
+		    |    ------------------    |   -----------------      --------------------------                   |
+		    |                          |                                                                       |
+		    |                          -------------------------------------------------------------------------
+		</programlisting>
+		<simpara>Where:</simpara>
+		<programlisting>
+		    SSM - serivcing subsystems manager
+		    CCP - Client Connection Point (Socket)
+		    ECP - Client connection point extender - specific native agent inherited from Extd and having specific IFR.
+		    CCPM - Client Connection Point mate
+		    SS - servicing subsystem
+		    SCXC - Servicing context consumer
+		    SCXS - Servicing context supplier
+		</programlisting>
+		<simpara>SSM creates SS for each client connected to ECP and name SS with assosiation to its client. Such names assosiation is used to the proper 
+		    iface resolution.  </simpara>
+	    </sect3>
+	    <sect3><title>How to resolver ifaces for client and servicing subsystem?</title>
+		<sect4><title>Intro</title>
+		    <simpara>Threre should be the proper IFR mechanism that "binds" assosiated client and service. To correctly resolve the ifaces the IFR nodes owners
+			(CCP, ECP, ECP.Int, CCPM) should have the proper contex. We can use some client/service identification as the context at the moment.
+			Let's use client and sevicing subsystem names (they should be same) as the identification. There is no existing means of how to get the names.
+			So we need to create such means. We can propose the following mechanism of gettig the context: introduce dedicated iface MDesSpc for
+			obtaining ID (this ifaces shall be implemented specific managing agents embedding to Client and SS). IFR nodes owners needs to be
+			customized to use MDesSpc when obtaining ID.</simpara>
+		</sect4>
+	    </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1><title>Code review</title>
+	<sect2><title>20221216 Native hier, protocols, node</title>
+	    <sect3><title>Can the protocol of the manager of protocols be used instead of each protocole getLif()</title>
+		<simpara>The ifaces (protocols) base MIface contains getLif() method so each of protocol needs to iplement it.
+		    Does it make sense to have just one protocol (named "protocol mager") to have this method.</simpara>
+	    </sect3>
+	    <sect3><title>MNode is too complex, separate tree nav and mutation?</title>
+	    </sect3>
+	    <sect3><title>Env - is it really needed, especially each node access to env?</title>
+	    </sect3>
+	    <sect3><title>Does it make sense to use composition paradigm in native agents instead of inheritance? </title>
+		<simpara>Protocols are used - this is element of composition paradign. Why the inheritance is used to
+		    create native agents?</simpara>
+	    </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1 id="ds_ver"><title>Agents versioning</title>
+	<sect2><title>Intro</title>
+	    <simpara>Systems real development environment assumes that the modules are updated same time as the system is developed. So it is 
+		important to be able to select the right version of the modules nodes. </simpara>
+	</sect2>
+    </sect1>
+
+    <sect1><title>System persisting</title>
+	<sect2><title>Intro</title>
+	    <sect3><title>Usefull refs</title>
 		<itemizedlist>
 		    <listitem>
-			Ref <ulink url="../../../fap3-vis/doc/design/index.html#ds_vtxdrp_ecr"/> for the primary use-cases.
-			<para>The main use-case if the system consisting from a number of "client" syb-system and "service" sub-system.
-			    Here the "clients" update theirs's state depending on "service" states. In the use-case above the EdgeCRP points states
-			    (coordinates) depends on DRP states set.</para>
+			<ulink url="https://www.codesynthesis.com/products/odb/doc/manual.xhtml"/> - C++ Object Persistence with <xref linkend="gls_odb"/>
+		    </listitem>
+		    <listitem>
+			<ulink url="https://www.service-architecture.com/articles/database/"/> - articles explaining object-relational mapping (
+			<xref linkend="gls_orm"/>) and object-oriented database (<xref linkend="gls_odb"/>)
 		    </listitem>
 		</itemizedlist>
-	    </sect2>
-	    <sect2 id="ds_ssp_dip"><title>Design initial points</title>
-		<sect3><title>Single conn point, multiple client updating (servicing) subsystems.</title>
-		    <simpara>It makes sense to simplify the interface for the clients. Because the clients are same from states updates needs we can have
-			"service" system single connpoint for all such clients. Even having signle connpoints the service system needs to have client's
-			dedicated subsystems to update each client.</simpara>
-		    <simpara>There should be dedicated servicing subsystem created for each client. Let's consider the simple servicing scheme.</simpara>
-		    <simpara>There are Servicing system SS, service connpoint CP with simplem interface (one inp Inp and one outp Outp),
-			clients A and B, and servicing subsystem SSS that "gets" the inp, gets SS context, and updates clients via CP output.</simpara>
-		    <programlisting>
-			|        |-------------|
-			|        |   SS        |
-			|   A---|  |---|SSS_A| |
-			|       |CP|           |     
-			|   B---|  |---|SSS_B| |
-			|        |             |
-			|        |-------------|
-		    </programlisting>
-		    <simpara>CP shall have special iface resolution rules to resolve iface depending on what the iface request comes from. For instance
-			if MDesInpObserver resolution request comes from client A then CP shall redirct iface resolution request to SSS_A input. In turn if iface 
-			resoution request comes from SSS_A then CP shall redirect the request to client A.</simpara>
-		</sect3>
-		<sect3 id="ds_ssp_dip_sss"><title>Can we have single updating (servicing) subsystem for clients?</title>
-		    <simpara>Note, that having single servicing subsystem makes sense only for the subsystem in form of transition, i.e. without any
-			states. If there are some states in subsystem there have to be separate subsystems.</simpara>
-		    <simpara>Yes, potentially such design can be used. But in that case we need to have enhanced interface resolution mechanism. Let's
-			consider same simple 2-clients schema:</simpara>
-		    <programlisting>
-			|        |-----------|
-			|   A---|  | SS      |
-			|       |CP|---|SSS| |     
-			|   B---|  |         |
-			|        |-----------|
-		    </programlisting>
-		    <simpara>There are Servicing system SS, service connpoint CP with simplem interface (one inp Inp and one outp Outp),
-			clients A and B, and servicing subsystem SSS that "gets" the inp, gets SS context, and updates clients via CP output.</simpara>
-		    <simpara>
-			When client A gets updated, it sends DES input update notification (MDesInpObserver) thru CP Inp. SSS should pass this
-			notif back to A thru CP Outp. When B get updated SSS should pass inp update notif back to B. So CP shall resolve MDesInpObserver
-			depending on iface resolution context, i.e. on what client makes the request.
-			Yes, CP Iface resolution rules can use iface resolution requestor. But the problem here is
-			that MDesInpObserver iface resolution request coming to CP doens't contain the full context - even each transition "breaks" the request context.
-		    </simpara>
-		    <simpara>
-			Current iface resolutin mechanism supports only context in form of requestor chain. But it is not enough in our case. We needs to have the 
-			context that can be somehow passed to the agent where it can be actually used. In our case for instance it will be the MDesInpObserver request
-			to CP. So we need to have the enhanced iface resoution mechanism to support single servicing subsystem schema. With the current resolution
-			mechanism the solution will not work. Ref <xref linkend="ds_irm_ctx"/> for IFR design materials.
-		    </simpara>
-		    <simpara>Potentially the solution would be keeping the request context in CP. For instance client A requests CP for MDVarGet, CP stores 
-			the request context (client A) and uses this context when servicing subsystem in turn requests CP for MDVarGet iface - CP will redirect the request to
-			client A.</simpara>
-		</sect3>
-		<sect3><title>How to create servicing subsystem for the clent.</title>
-		    <simpara>We need to have native agent "Servicing point" (or multi-clent point) for that. This agent specifics are:</simpara>
-		    <itemizedlist>
-			<listitem>It creates corresponding servicing subsystem on client connected event.</listitem>
-			<listitem>It removes corresponding servicing subsystem on client disconnected event.</listitem>
-			<listitem>It has specific iface resolution rules "binding" client to its servicing subsystem.</listitem>
-		    </itemizedlist>
-		</sect3>
-	    </sect2>
-	    <sect2><title>Design. Separate servicing subsystem for each client.</title>
-		<sect3><title>Intro</title>
-		    <simpara>Single servicing subsystem desing options (ref <xref linkend="ds_ssp_dip_sss"/>) is not clarified so far. So we need to focuse on
-			the initial design option where separate servicing subsystem is created for each client.</simpara>
-		</sect3>
-		<sect3><title>Structure</title>
-		    <simpara>The structure is as:</simpara>
-		    <programlisting>
-			|
-			|
-			|                          -------------------------------------------------------------------------
-			|                          |   SSM                                                                 | 
-			|                          |                                                                       |
-			|    ------------------    |   -----------------      --------------------------                   |
-			|    |        ------- |    |   |       ------- |      |  --------     -------- |         --------  |
-			|    | Client | CCP |----------| ECP   | Int |-----------| CCPM | SS  | SCXC |-----------| SCXS |------------
-			|    |        ------- |    |   |       ------- |      |  --------     -------- |         --------  |
-			|    ------------------    |   -----------------      --------------------------                   |
-			|                          |                                                                       |
-			|                          -------------------------------------------------------------------------
-		    </programlisting>
-		    <simpara>Where:</simpara>
-		    <programlisting>
-			SSM - serivcing subsystems manager
-			CCP - Client Connection Point (Socket)
-			ECP - Client connection point extender - specific native agent inherited from Extd and having specific IFR.
-			CCPM - Client Connection Point mate
-			SS - servicing subsystem
-			SCXC - Servicing context consumer
-			SCXS - Servicing context supplier
-		    </programlisting>
-		    <simpara>SSM creates SS for each client connected to ECP and name SS with assosiation to its client. Such names assosiation is used to the proper 
-			iface resolution.  </simpara>
-		</sect3>
-		<sect3><title>How to resolver ifaces for client and servicing subsystem?</title>
-		    <sect4><title>Intro</title>
-			<simpara>Threre should be the proper IFR mechanism that "binds" assosiated client and service. To correctly resolve the ifaces the IFR nodes owners
-			    (CCP, ECP, ECP.Int, CCPM) should have the proper contex. We can use some client/service identification as the context at the moment.
-			    Let's use client and sevicing subsystem names (they should be same) as the identification. There is no existing means of how to get the names.
-			    So we need to create such means. We can propose the following mechanism of gettig the context: introduce dedicated iface MDesSpc for
-			    obtaining ID (this ifaces shall be implemented specific managing agents embedding to Client and SS). IFR nodes owners needs to be
-			    customized to use MDesSpc when obtaining ID.</simpara>
-		    </sect4>
-		</sect3>
-	    </sect2>
-	</sect1>
+	    </sect3>
+	</sect2>
+    </sect1>
 
-	<sect1><title>Code review</title>
-	    <sect2><title>20221216 Native hier, protocols, node</title>
-		<sect3><title>Can the protocol of the manager of protocols be used instead of each protocole getLif()</title>
-		    <simpara>The ifaces (protocols) base MIface contains getLif() method so each of protocol needs to iplement it.
-			Does it make sense to have just one protocol (named "protocol mager") to have this method.</simpara>
-		</sect3>
-		<sect3><title>MNode is too complex, separate tree nav and mutation?</title>
-		</sect3>
-		<sect3><title>Env - is it really needed, especially each node access to env?</title>
-		</sect3>
-		<sect3><title>Does it make sense to use composition paradigm in native agents instead of inheritance? </title>
-		    <simpara>Protocols are used - this is element of composition paradign. Why the inheritance is used to
-			create native agents?</simpara>
-		</sect3>
-	    </sect2>
-	</sect1>
+    <sect1 id="ds_ibc"><title>Tracking: Design items to be handed</title>
+	<sect2><title>Intro</title>
+	    <simpara>Ref <xref linkend="ds_itr_sp"/> for the initial list of the problems need to be addressed in FAP3.</simpara>
+	</sect2>
+	<sect2 id="ds_ibc_roncc"><title>Root as the only node containing chromo</title>
+	    <sect3><title>Intro</title>
+		<simpara>
+		    Currently the model can contain many nodes that have theyrs own chromos - any Elem based nodes. This simplifies creating these nodes
+		    heirs. But on another hand this causes chromo duplication. Actually any node chromo can be "calculated" from root chromo. This approach
+		    was tried in some earlier version of FAP.
+		    This approach potentially can improve the model performance. We need to consider such design.
+		</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_ibc_dgit"><title>[DS_IBC_DGIT] Do we need MDtGet iface as templated one?</title>
+	    <simpara>Potentially we can have non-templated MDtGet that provides the access to base data iface MDtBase.</simpara>
+	    <simpara>The indication of week desing is the problems with TrTuple: it is not possible to update the tuple components. The input of the 
+		transition can get the access to data only via templated MDtGet but the type isn't explicitly known.</simpara>
+	</sect2>
+	<sect2><title>Intitial invalid status of State</title>
+	    <simpara>Ref <xref linkend="ds_iis"/></simpara>
+	</sect2>
+	<sect2><title>Localize provider's scope</title>
+	    <simpara>Ref <xref linkend="ds_lps"/></simpara>
+	</sect2>
+	<sect2><title>Chromo named segments</title>
+	    <simpara>Ref <xref linkend="ds_cli_nseg"/></simpara>
+	</sect2>
+	<sect2><title>Mutation as transaction</title>
+	    <simpara>Ref <xref linkend="ds_mtc"/></simpara>
+	</sect2>
+	<sect2><title>DES context</title>
+	    <simpara>Ref <xref linkend="ds_dctx"/></simpara>
+	</sect2>
+	<sect2><title>Data special values.</title>
+	    <simpara>Ref <xref linkend="ds_dsv"/></simpara>
+	</sect2>
+	<sect2><title>Redesing data interfaces.</title>
+	    <simpara>Ref <xref linkend="ds_rdi"/></simpara>
+	</sect2>
+	<sect2><title>Introduce constant data instead of State</title>
+	    <simpara>Ref <xref linkend="ds_cist"/></simpara>
+	</sect2>
+	<sect2><title>DES based objects</title>
+	    <simpara>Ref <xref linkend="ds_dcs_sl_dbo"/></simpara>
+	</sect2>
+	<sect2><title>DCS transactions</title>
+	    <simpara>Ref <xref linkend="ds_dcs_trs"/></simpara>
+	</sect2>
+	<sect2><title><xref linkend="ds_gibu"/></title> </sect2>
+	<sect2><title><xref linkend="ds_egio"/></title> </sect2>
+	<sect2><title><xref linkend="ds_desopt_ums"/></title> </sect2>
+	<sect2><title><xref linkend="ds_desopt_asdc"/></title> </sect2>
+	<sect2><title><xref linkend="ds_ndes"/></title> </sect2>
+	<sect2><title><xref linkend="ds_irm_ctx"/></title> </sect2>
+	<sect2><title><xref linkend="ds_nn_efcoop"/></title> </sect2>
+	<sect2><title><xref linkend="ds_uinn_cs"/></title> </sect2>
+	<sect2><title><xref linkend="ds_nn_abo"/></title> </sect2>
+	<sect2><title><xref linkend="ds_dsps"/></title> </sect2>
+	<sect2><title><xref linkend="ds_desopt_est"/></title> </sect2>
+	<sect2><title><xref linkend="ds_ver"/></title> </sect2>
+    </sect1>
 
-	<sect1 id="ds_ibc"><title>Tracking: Design items to be handed</title>
-	    <sect2><title>Intro</title>
-		<simpara>Ref <xref linkend="ds_itr_sp"/> for the initial list of the problems need to be addressed in FAP3.</simpara>
-	    </sect2>
-	    <sect2 id="ds_ibc_roncc"><title>Root as the only node containing chromo</title>
-		<sect3><title>Intro</title>
-		    <simpara>
-			Currently the model can contain many nodes that have theyrs own chromos - any Elem based nodes. This simplifies creating these nodes
-			heirs. But on another hand this causes chromo duplication. Actually any node chromo can be "calculated" from root chromo. This approach
-			was tried in some earlier version of FAP.
-			This approach potentially can improve the model performance. We need to consider such design.
-		    </simpara>
-		</sect3>
-	    </sect2>
-	    <sect2 id="ds_ibc_dgit"><title>[DS_IBC_DGIT] Do we need MDtGet iface as templated one?</title>
-		<simpara>Potentially we can have non-templated MDtGet that provides the access to base data iface MDtBase.</simpara>
-		<simpara>The indication of week desing is the problems with TrTuple: it is not possible to update the tuple components. The input of the 
-		    transition can get the access to data only via templated MDtGet but the type isn't explicitly known.</simpara>
-	    </sect2>
-	    <sect2><title>Intitial invalid status of State</title>
-		<simpara>Ref <xref linkend="ds_iis"/></simpara>
-	    </sect2>
-	    <sect2><title>Localize provider's scope</title>
-		<simpara>Ref <xref linkend="ds_lps"/></simpara>
-	    </sect2>
-	    <sect2><title>Chromo named segments</title>
-		<simpara>Ref <xref linkend="ds_cli_nseg"/></simpara>
-	    </sect2>
-	    <sect2><title>Mutation as transaction</title>
-		<simpara>Ref <xref linkend="ds_mtc"/></simpara>
-	    </sect2>
-	    <sect2><title>DES context</title>
-		<simpara>Ref <xref linkend="ds_dctx"/></simpara>
-	    </sect2>
-	    <sect2><title>Data special values.</title>
-		<simpara>Ref <xref linkend="ds_dsv"/></simpara>
-	    </sect2>
-	    <sect2><title>Redesing data interfaces.</title>
-		<simpara>Ref <xref linkend="ds_rdi"/></simpara>
-	    </sect2>
-	    <sect2><title>Introduce constant data instead of State</title>
-		<simpara>Ref <xref linkend="ds_cist"/></simpara>
-	    </sect2>
-	    <sect2><title>DES based objects</title>
-		<simpara>Ref <xref linkend="ds_dcs_sl_dbo"/></simpara>
-	    </sect2>
-	    <sect2><title>DCS transactions</title>
-		<simpara>Ref <xref linkend="ds_dcs_trs"/></simpara>
-	    </sect2>
-	    <sect2><title><xref linkend="ds_gibu"/></title> </sect2>
-	    <sect2><title><xref linkend="ds_egio"/></title> </sect2>
-	    <sect2><title><xref linkend="ds_desopt_ums"/></title> </sect2>
-	    <sect2><title><xref linkend="ds_desopt_asdc"/></title> </sect2>
-	    <sect2><title><xref linkend="ds_ndes"/></title> </sect2>
-	    <sect2><title><xref linkend="ds_irm_ctx"/></title> </sect2>
-	    <sect2><title><xref linkend="ds_nn_efcoop"/></title> </sect2>
-	    <sect2><title><xref linkend="ds_uinn_cs"/></title> </sect2>
-	    <sect2><title><xref linkend="ds_nn_abo"/></title> </sect2>
-	    <sect2><title><xref linkend="ds_mdc_sw"/></title> </sect2>
-	    <sect2><title><xref linkend="ds_desopt_tdc"/></title> </sect2>
-	    <sect2><title><xref linkend="ds_dsps"/></title> </sect2>
-	    <sect2><title><xref linkend="ds_desopt_est"/></title> </sect2>
-	</sect1>
+    <sect1 id="ds_ic"><title>Tracking: Design items completed</title>
+	<sect2><title><xref linkend="ds_mdc_sw"/></title> </sect2>
+	<sect2><title><xref linkend="ds_desopt_tdc"/></title> </sect2>
+    </sect1>
 
-	<sect1 id="ds_ic"><title>Tracking: Design items completed</title>
-	</sect1>
-
-	<sect1 id="ds_iss"><title>Issues</title>
-	    <sect2 id="ds_iss_001"><title>[DS_ISS_001] Wrong chromo forming in case of namespace segment.</title>
-		<sect3><title>Intro</title>
-		    <simpara>
-			Ref ut_elem.cpp:test_elem_inh_1() chromo ut_elem_inh_1.chs. The problem is that mutation 
-			<programlisting>About = "N1_1 new";</programlisting>
-			    will be included into E1 chormo twice: first entry is in the scope of namespace segment
-			<programlisting>
-			    N1_1 @ {
-			    About = "N1_1 new";
-			    }
-			</programlisting>
-			    and the second - in E1 chromo directly
-		    </simpara>
-		    <simpara>
-			Ref <xref linkend="ds_eosm"/> for the details of <xref linkend="gls_eosm"/> current solution. The reported problem is
-			    caused by this solution bad design.
-		    </simpara>
-		</sect3>
-		<sect3><title>Analysis</title>
-		    <simpara>
-			The root-cause is that the algorithm of E1 chromo forming is wrong: mutation and "About = ..." will be included even 
-			the namespace segment is alredy included.
-		    </simpara>
-		</sect3>
-	    </sect2>
-	    <sect2 id="ds_iss_002"><title>[DS_ISS_002] Cannot define monitored agent for <xref linkend="gls_adp"/></title>
-		<sect3><title>Intro</title>
-		    <simpara>
-			It is very common case that the adapter is not owner of monitored agent. Potentially we can put monitored
-			agent to adaper owneds but it is not convenient - there can be many adapters associated to single monitored object.
-		    </simpara>
-		    <simpara>
-			This "not owning" causes the problem that we cannot simply define monitored object via URI - adapter will not
-			be able to get not owned node.
-		    </simpara>
-		    <simpara>
-			Ref <xref linkend="ds_sn_aul"/> for details of generic problem and approaches of how to workaround the
-			    access restrictions.
-		    </simpara>
-		</sect3>
-	    </sect2>
-	    <sect2 id="ds_iss_003"><title>[DS_ISS_003] 20211212 git:930bb4ea585ece. Incorrect IFR for sockets</title>
-		<sect3><title>Intro</title>
-		    <simpara> UT Ut_ifr::test_inval_sock_1() fails. This means that IFR works incorrectly in case of sockets connecting/disconnecting.  </simpara>
-		</sect3>
-		<sect3><title>Analysis</title>
-		    <simpara>The current implementation of IFR tree update (ref <xref liknend="ds_irm_ut"/>) supports only vert connect/disconnect. The 
-			Vert::connect() just invalidates the vertexes IFR. But for sockets it doesn't work - the pins are not invalidated.</simpara>
-		</sect3>
-		<sect3><title>Fix proposal</title>
-		    <simpara>We need to redesing IFR:</simpara>
-		    <itemizedlist>
-			<listitem>
-			    IFR node validity sign shall indicate that node has to be updated
-			    <para>Currently the validity is set based on resolution result - node is considered as valid if the iface is resolved.
-				If not, then node is marked as invalid and is removed then.</para>
-			    <para>We don't need to mark node as invalid in case of iface is not resolved. The whole branch has to be marked as valid even
-				it is iface is not resolved. This branch cannot "provide" iface but shows us the path of resolution attempt.</para>
-			</listitem>
-			<listitem>
-			    Invalidated unit has to invalidate its own nodes and theirs owners (requestors, i.e clients). Owned nodes are to be removed.
-			    <para>The logic here is: the local node says to the requestors: "Im invalid, you are using me so you needs to be updated,
-				this means you are also invalid.</para>
-			    <para>The owned nodes don't need to be invalidated - these branches are created by the current nodes, so they needs to be
-				removed and re-created according to new environment.</para>
-			</listitem>
-		    </itemizedlist>
-		</sect3>
-	    </sect2>
-	    <sect2 id="ds_iss_004"><title>[DS_ISS_004] Visualization error: sometimes CRP is not set hight requisizion</title>
-		<sect3><title>Intro</title>
-		    <simpara>The issue happens after introducing <xref linkend="gls_asr"/> solution, ref <xref linkend="ds_asr_cbs"/></simpara>
-		</sect3>
-	    </sect2>
-	    <sect2 id="ds_iss_005"><title>[DS_ISS_005] Chromo2 desing assumes the top is mut_create_chromo - it is inconvenient</title>
-		<sect3><title>Intro</title>
-		    <simpara>
-			The inconvenience is that very ofter we need just segment chromo without root. Currently we need to use
-			mutation operation option "TreatAsChromo". Ref for instance  desadp.cpp:AMnodeAdp::ApplyMut():
-		    </simpara>
+    <sect1 id="ds_iss"><title>Issues</title>
+	<sect2 id="ds_iss_001"><title>[DS_ISS_001] Wrong chromo forming in case of namespace segment.</title>
+	    <sect3><title>Intro</title>
+		<simpara>
+		    Ref ut_elem.cpp:test_elem_inh_1() chromo ut_elem_inh_1.chs. The problem is that mutation 
+		    <programlisting>About = "N1_1 new";</programlisting>
+			will be included into E1 chormo twice: first entry is in the scope of namespace segment
 		    <programlisting>
-			mMag->mutate(chromo.Root(), false, mutctx, true);
+			N1_1 @ {
+			About = "N1_1 new";
+			}
 		    </programlisting>
-		    <simpara>So we need to redesign chromo to support pure "segment" chromo.</simpara>
-		</sect3>
-	    </sect2>
-	    <sect2 id="ds_iss_006"><title>[DS_ISS_006] NodeAdp current sytem update-confirm scheme is wrong.</title>
-		<sect3><title>Intro</title>
-		    <simpara>Ref <xref linkend="ds_dcs_ucs_cip"/></simpara>
-		</sect3>
-	    </sect2>
-	    <sect2 id="ds_iss_007"><title>[DS_ISS_007] State content change on creation phase blocks update notification</title>
-		<sect3><title>Intro</title>
-		    <simpara>Ver next to 3ebc09ad1022d85</simpara>
-		    <simpara>
-			Created fap3/modules/dutil.chs. Tested with test/ut_des.cpp:ut_des_utl_1.chs. Observed the problem that BChange DES doesn't confirm even Delay state updated from false to true.
-			Analyzed. The root-cause is that Delay state content is set on creation phase - state notifies thru incomplete owning chain (so didn't reach the launcher) but the flag 
-			mUpdated was set, that prevent complete owning chain notifying on the first update.
-		    </simpara>
-		    <simpara>Curren solution is Solution#2, ref below.</simpara>
-		</sect3>
-		<sect3><title>Solution#1: avoid setting state mPdata and mCdata on content change.</title>
-		    <simpara>With this solution State doesn't change its datas immediately on content change but just keeps content and change mPdata on update phase from content kept.</simpara>
-		    <simpara>This solution doesn't work properly. The reason is that in the first init the constant state are undefined. This causes to dependent states gets undefined that
-			in turn causes the whole DES stop. Shortly saying we don't have initial conditions set for DES actually.</simpara>
-		</sect3>
-		<sect3><title>Solution#2: activate owned on owned attached</title>
-		    <simpara> The idea is to force owned active when attaching it to owner. There are variations of this solution.  </simpara>
-		    <simpara> The Var#1 is rather "brutal" - just to activate the owner unconditionally.  </simpara>
-		    <simpara> The Var#2 is to activate only if the owned was already activated. We need to add methods "isActivated" and "isUpdated" to MDesSyncable in this case.</simpara>
-		</sect3>
-	    </sect2>
-	    <sect2 id="ds_iss_008"><title>[<glossterm id="iss_008">DS_ISS_008</glossterm>] Parent located in second level module cannot be found.</title>
-		<sect3><title>Intro</title>
-		    <simpara>
-			The problem reproduced in [fap3-vis:5734b4e935a] [fap3:8228680d62a] in test fap3-vis/test/ut_avr_node_drp.chs with the change AvrMdl to AvrMdl2:
-			<programlisting> ERR;;.testroot.Test.Window.Scene.Drp;Creating [Slot_Model_comp1] - parent [FHLayoutSlot] not found </programlisting>
-		    </simpara>
-		</sect3>
-		<sect3><title>Analysis</title>
-		    <simpara>System topology is as</simpara>
+			and the second - in E1 chromo directly
+		</simpara>
+		<simpara>
+		    Ref <xref linkend="ds_eosm"/> for the details of <xref linkend="gls_eosm"/> current solution. The reported problem is
+			caused by this solution bad design.
+		</simpara>
+	    </sect3>
+	    <sect3><title>Analysis</title>
+		<simpara>
+		    The root-cause is that the algorithm of E1 chromo forming is wrong: mutation and "About = ..." will be included even 
+		    the namespace segment is alredy included.
+		</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_iss_002"><title>[DS_ISS_002] Cannot define monitored agent for <xref linkend="gls_adp"/></title>
+	    <sect3><title>Intro</title>
+		<simpara>
+		    It is very common case that the adapter is not owner of monitored agent. Potentially we can put monitored
+		    agent to adaper owneds but it is not convenient - there can be many adapters associated to single monitored object.
+		</simpara>
+		<simpara>
+		    This "not owning" causes the problem that we cannot simply define monitored object via URI - adapter will not
+		    be able to get not owned node.
+		</simpara>
+		<simpara>
+		    Ref <xref linkend="ds_sn_aul"/> for details of generic problem and approaches of how to workaround the
+			access restrictions.
+		</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_iss_003"><title>[DS_ISS_003] 20211212 git:930bb4ea585ece. Incorrect IFR for sockets</title>
+	    <sect3><title>Intro</title>
+		<simpara> UT Ut_ifr::test_inval_sock_1() fails. This means that IFR works incorrectly in case of sockets connecting/disconnecting.  </simpara>
+	    </sect3>
+	    <sect3><title>Analysis</title>
+		<simpara>The current implementation of IFR tree update (ref <xref liknend="ds_irm_ut"/>) supports only vert connect/disconnect. The 
+		    Vert::connect() just invalidates the vertexes IFR. But for sockets it doesn't work - the pins are not invalidated.</simpara>
+	    </sect3>
+	    <sect3><title>Fix proposal</title>
+		<simpara>We need to redesing IFR:</simpara>
+		<itemizedlist>
+		    <listitem>
+			IFR node validity sign shall indicate that node has to be updated
+			<para>Currently the validity is set based on resolution result - node is considered as valid if the iface is resolved.
+			    If not, then node is marked as invalid and is removed then.</para>
+			<para>We don't need to mark node as invalid in case of iface is not resolved. The whole branch has to be marked as valid even
+			    it is iface is not resolved. This branch cannot "provide" iface but shows us the path of resolution attempt.</para>
+		    </listitem>
+		    <listitem>
+			Invalidated unit has to invalidate its own nodes and theirs owners (requestors, i.e clients). Owned nodes are to be removed.
+			<para>The logic here is: the local node says to the requestors: "Im invalid, you are using me so you needs to be updated,
+			    this means you are also invalid.</para>
+			<para>The owned nodes don't need to be invalidated - these branches are created by the current nodes, so they needs to be
+			    removed and re-created according to new environment.</para>
+		    </listitem>
+		</itemizedlist>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_iss_004"><title>[DS_ISS_004] Visualization error: sometimes CRP is not set hight requisizion</title>
+	    <sect3><title>Intro</title>
+		<simpara>The issue happens after introducing <xref linkend="gls_asr"/> solution, ref <xref linkend="ds_asr_cbs"/></simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_iss_005"><title>[DS_ISS_005] Chromo2 desing assumes the top is mut_create_chromo - it is inconvenient</title>
+	    <sect3><title>Intro</title>
+		<simpara>
+		    The inconvenience is that very ofter we need just segment chromo without root. Currently we need to use
+		    mutation operation option "TreatAsChromo". Ref for instance  desadp.cpp:AMnodeAdp::ApplyMut():
+		</simpara>
+		<programlisting>
+		    mMag->mutate(chromo.Root(), false, mutctx, true);
+		</programlisting>
+		<simpara>So we need to redesign chromo to support pure "segment" chromo.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_iss_006"><title>[DS_ISS_006] NodeAdp current sytem update-confirm scheme is wrong.</title>
+	    <sect3><title>Intro</title>
+		<simpara>Ref <xref linkend="ds_dcs_ucs_cip"/></simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_iss_007"><title>[DS_ISS_007] State content change on creation phase blocks update notification</title>
+	    <sect3><title>Intro</title>
+		<simpara>Ver next to 3ebc09ad1022d85</simpara>
+		<simpara>
+		    Created fap3/modules/dutil.chs. Tested with test/ut_des.cpp:ut_des_utl_1.chs. Observed the problem that BChange DES doesn't confirm even Delay state updated from false to true.
+		    Analyzed. The root-cause is that Delay state content is set on creation phase - state notifies thru incomplete owning chain (so didn't reach the launcher) but the flag 
+		    mUpdated was set, that prevent complete owning chain notifying on the first update.
+		</simpara>
+		<simpara>Curren solution is Solution#2, ref below.</simpara>
+	    </sect3>
+	    <sect3><title>Solution#1: avoid setting state mPdata and mCdata on content change.</title>
+		<simpara>With this solution State doesn't change its datas immediately on content change but just keeps content and change mPdata on update phase from content kept.</simpara>
+		<simpara>This solution doesn't work properly. The reason is that in the first init the constant state are undefined. This causes to dependent states gets undefined that
+		    in turn causes the whole DES stop. Shortly saying we don't have initial conditions set for DES actually.</simpara>
+	    </sect3>
+	    <sect3><title>Solution#2: activate owned on owned attached</title>
+		<simpara> The idea is to force owned active when attaching it to owner. There are variations of this solution.  </simpara>
+		<simpara> The Var#1 is rather "brutal" - just to activate the owner unconditionally.  </simpara>
+		<simpara> The Var#2 is to activate only if the owned was already activated. We need to add methods "isActivated" and "isUpdated" to MDesSyncable in this case.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_iss_008"><title>[<glossterm id="iss_008">DS_ISS_008</glossterm>] Parent located in second level module cannot be found.</title>
+	    <sect3><title>Intro</title>
+		<simpara>
+		    The problem reproduced in [fap3-vis:5734b4e935a] [fap3:8228680d62a] in test fap3-vis/test/ut_avr_node_drp.chs with the change AvrMdl to AvrMdl2:
+		    <programlisting> ERR;;.testroot.Test.Window.Scene.Drp;Creating [Slot_Model_comp1] - parent [FHLayoutSlot] not found </programlisting>
+		</simpara>
+	    </sect3>
+	    <sect3><title>Analysis</title>
+		<simpara>System topology is as</simpara>
+		<programlisting>
+		    root
+		    |
+		    |---Modules
+		    |       |
+		    |       |---AvrMdl
+		    |             |
+		    |             |---Modules
+		    |                     |
+		    |                     |---ContainerMod
+		    |                               |
+		    ...                             ...
+		    |                               |--- FHLayoutSlot
+		    |                            
+		    |  
+		    |--- Slot (parent FHLayoutSlot)
+		</programlisting>
+		<simpara>
+		    Current parent resolution mechanism doesn't work here. The mutation is as:
 		    <programlisting>
-			root
-			|
-			|---Modules
-			|       |
-			|       |---AvrMdl
-			|             |
-			|             |---Modules
-			|                     |
-			|                     |---ContainerMod
-			|                               |
-			...                             ...
-			|                               |--- FHLayoutSlot
-			|                            
-			|  
-			|--- Slot (parent FHLayoutSlot)
-		    </programlisting>
-		    <simpara>
-			Current parent resolution mechanism doesn't work here. The mutation is as:
-			<programlisting>
-			    364		parent = getParent(prnturi);
-			    (gdb) p Uid()
-			    $12 = ".testroot.Test.Window.Scene.Drp%MOwned"
-			    (gdb) p mContext->Uid()
-			    $13 = ".testroot.Modules.AvrMdl2%MOwner"
-			</programlisting>
-			    The mechanism is pritty simple (func getParent):
-			<programlisting>
-			    - look up in local scope (mutation scope) using getNode()
-			    - redirect to owner's getParent()
-			    - look up in modules using modules->getNode()
-			</programlisting>
-			    note that mContext of ".testroot.Modules.AvrMdl2%MOwner" ecuals 0. So the look up trace is as:
-			<programlisting>
-			    .testroot.Test.Window.Scene.Drp
-			    .testroot.Modules.AvrMdl2
-			    .testroot.Modules (owenr of AvrMdl2 as AvrMdl2 doesn't have a context).
-			    .testroot.Test.Window.Scene
-			    ...
-			    fail
-			</programlisting>
-		    </simpara>
-		    <simpara>Hmm, but such resolution works in modnav2. Right, in modnav2 the slot is created from </simpara>
-		    <programlisting>.testroot.Launcher.Window.Scene.VBox.ModelView.Drp</programlisting>
-		    <simpara>
-			So the look up trace is as:
-			<programlisting>
-			    .testroot.Launcher.Window.Scene.VBox.ModelView.Drp
-			    .testroot.Modules.AvrMdl2
-			    .testroot.Modules (owner of AvrMdl2 as AvrMdl2 doesn't have a context).
-			    .testroot.Launcher.Window.Scene.VBox.ModelView
-			    (context) Modules.ContainerMod
-			    ...
-			    ok
-			</programlisting>
-			    The resolution is ok, but this result is just "accidental", because the "right" owner of Drp.
-		    </simpara>
-		    <simpara>
-			Real root-cause is that the ContainerMod module desing is wrong:
-			<programlisting>
-			    317     DHLayout : DLinearLayout
-			    318     {
-			    ...
-			    325         SlotParent &lt; = "SS FHLayoutSlot";
-			</programlisting>
-			    SlotParent paremeter is set here incorrectly. It should be set from the real context where it is used, i.e. from the test system
-			    (fap3-vis/test/ut_avr_node_drp.chs):
-			<programlisting>
-			    39                 Drp : AvrMdl2.NodeDrp {
-			    40                     SlotParent &lt; = "SS ContainerMod.FHLayoutSlot";
-			    41                 }
-			</programlisting>
-		    </simpara>
-		</sect3>
-		<sect3><title>Solution</title>
-		    <simpara>To set SlotParent parameter from the real context where it is used.</simpara>
-		</sect3>
-	    </sect2>
-	    <sect2 id="ds_iss_009"><title>[<glossterm id="iss_009">DS_ISS_009</glossterm>] 20220412 modnav2 stucks on creation phase.</title>
-		<sect2><title>Intro</title>
-		    <simpara>The app stucks on creation phase, just toolbar is layouted, but model view is not.</simpara>
-		</sect2>
-		<sect2><title>Analysis</title>
-		    <simpara>The problem's root-cause is that IRM creates a massive amount of routing pathes for MDesInpObserver iface. This makes the IRM data update very slow,
-			especially when the nodes invalidate its IRM nodes. Additional mechamisms like <xref linkend="gls_asr"/> exacerbates the problem.</simpara>
-		    <simpara>The trigger of emerging of this problem is the VIS container update to handle button press event. This update assumes adding
-			to the socket the transitions that sequentially (this is container socket philosophy) forms the right URI of pressed widget. But this new transition
-			creates very complex structure for IRM because the transition are not just chain but each node of the chain creates the nomber of IRM pathes. To
-			the overall number of IRM pathes grows dramatically (some thousands for instance).</simpara>
-		    <simpara>Simplifying of the new transitions and reducing the number of IRM pathes partially helps, but the app creating is still slow.</simpara>
-		</sect2>
-		<sect2><title>Solution</title>
-		    <simpara>We need to redesing IRM rouing for MDesInpObserver iface. Ref <xref linkend="ds_sor"/> for the desing change details.</simpara>
-		</sect2>
-	    </sect2>
-	    <sect2 id="ds_iss_010"><title>[<glossterm id="iss_010">DS_ISS_010</glossterm>] 20230114 Socket resolves iface even the iface is not provided by socket pins</title>
-		<simpara>There is still the redirection to the socket pair event if iface isn't resolved by pins. </simpara>
-		<sect3><title>Solution</title>
-		    <simpara>To disable redirecting to the socket pair if iface isn't resolved by pins.</simpara>
-		</sect3>
-		<sect3><title>Status</title>
-		    <simpara>Fixed 20230115</simpara>
-		</sect3>
-	    </sect2>
-	    <sect2 id="ds_iss_011"><title>[<glossterm id="iss_011">DS_ISS_011</glossterm>] 20230128 Cannot set invalid string Sdata field in tuple</title>
-		<sect3><title>Status</title>
-		    <simpara>20230130 Implemented, ref also dependent design item <xref linkend="ds_dsv"/> </simpara>
-		</sect3>
-	    </sect2>
-	    <sect2 id="ds_iss_012"><title>[<glossterm id="iss_012">DS_ISS_012</glossterm>] 20230225 Exception when resolving iface in socket extd topology.</title>
-		<sect3><title>Intro</title>
-		    <simpara>Trying to create UT for <xref linkend="gls_ssp"/> but see the exception. Checked with socket UT, modified ut_syst_sock_3 - the problem
-			is reqproduced.</simpara>
-		    <simpara>Ref ut_syst_sock_3.chs tag ISS_012. The exception happens here: </simpara>
-		    <programlisting>
-			#7  0x00007ffff7c6fe53 in Socket::resolveIfc (this=0x55555563bc70, aName="MTIf1", aReq=0x55555563d158) at syst.cpp:315
-			315						assert(apair == reqn);
-
+			364		parent = getParent(prnturi);
 			(gdb) p Uid()
-			$2 = ".MyRoot.S1.S1_2.Sck1%MSocket"
+			$12 = ".testroot.Test.Window.Scene.Drp%MOwned"
+			(gdb) p mContext->Uid()
+			$13 = ".testroot.Modules.AvrMdl2%MOwner"
 		    </programlisting>
-		</sect3>
-		<sect3><title>Analysis</title>
-		    <simpara>The root-cause is wrong alogrithm of moving assosiated pair to extender, ref Socket::resolveIfc() tagged DS_ISS_012.</simpara>
-		</sect3>
-	    </sect2>
-	    <sect2 id="ds_iss_013"><title>[<glossterm id="iss_013">DS_ISS_013</glossterm>] 20230315 ASdcInsert2 operates incorrectly in case of the number of list comps.</title>
-		<sect3><title>Status</title>
-		    <simpara>Fixed 20230316</simpara>
-		</sect3>
-		<sect3><title>Intro</title>
-		    <simpara>The problems discovered when adding EdgeCrp default vert segment slot insertion and tested with 2 edges, ref fap3-vis/modules/avr2.chs, SdcInsertVs.</simpara>
-		    <simpara>The root-cause of the problem is incorrect update of sdc status - ASdcInsert2 uses weak criteria checking if given comp is already inserted -
-			it check if comp.Prev is connected in Pname.Next. But this works only if comp is before Pname. So status gets false with other conditions and sdc tries to
-			insert the comp again.</simpara>
-		</sect3>
-	    </sect2>
-	    <sect2 id="ds_iss_014"><title>[<glossterm id="iss_014">DS_ISS_014</glossterm>] 20230321 Transitions with multi-connecting inputs doesn't indicate invalid result properly.</title>
-		<sect3><title>Status</title>
-		    <simpara>In progress</simpara>
-		</sect3>
-		<sect3><title>Intro</title>
-		    <simpara>Lets lood at TrAddVar. If two outputs are connected to the transition input Inp but one of the output doesn't provide iface as expected then the tranistion
-			output will be still valid.</simpara>
-		</sect3>
-		<sect3><title>Solution</title>
-		    <simpara>To have specific transitions with one-connection inputs.</simpara>
-		</sect3>
-	    </sect2>
-	    <sect2 id="ds_iss_015"><title>[<glossterm id="iss_015">DS_ISS_015</glossterm>] [Resolved] 20230403 SdoPairsCount doesn't observes the target existence</title>
-		<sect3><title>Status</title>
-		    <simpara>Resolved 20230404</simpara>
-		</sect3>
-	    </sect2>
-	    <sect2 id="ds_iss_016"><title>[<glossterm id="iss_016">DS_ISS_016</glossterm>] [Open] 20230403 SdoCompComp doesn't observes the target existence</title>
-		<sect3><title>Status</title>
-		    <simpara>Postponed ATM. CompComp seems to be unusable at all.</simpara>
-		</sect3>
-	    </sect2>
-	</sect1>
-
-	<sect1><title>Tools</title>
-	    <sect2><title>chs formatting in VIM</title>
-		<sect3><title>Set-up .vimrc</title>
+			The mechanism is pritty simple (func getParent):
 		    <programlisting>
-			    "=====================================================
-			" vim-autoformat settings
-			    "=====================================================
-
-			    "let g:autoformat_verbosemode=1
-
-			let g:formatdef_yb_chs = '"/media/sf_vbx_shared/projects/fap/fap3/clm/fapm3 -f"'
-			let g:formatters_chs = ['yb_chs']
-
-			" Disable autoindenting, retab and removing trailing spaces
-			let g:autoformat_autoindent = 0
-			let g:autoformat_retab = 0
-			let g:autoformat_remove_trailing_spaces = 0
-
-			" map to &lt;Leader&gt;cf
-			    autocmd FileType chs nnoremap &lt;buffer&gt;&lt;Leader&gt;ff :&lt;C-u&gt;Autoformat&lt;CR&gt;
-
-			" vim-autoformat settings end
+			- look up in local scope (mutation scope) using getNode()
+			- redirect to owner's getParent()
+			- look up in modules using modules->getNode()
 		    </programlisting>
-		</sect3>
+			note that mContext of ".testroot.Modules.AvrMdl2%MOwner" ecuals 0. So the look up trace is as:
+		    <programlisting>
+			.testroot.Test.Window.Scene.Drp
+			.testroot.Modules.AvrMdl2
+			.testroot.Modules (owenr of AvrMdl2 as AvrMdl2 doesn't have a context).
+			.testroot.Test.Window.Scene
+			...
+			fail
+		    </programlisting>
+		</simpara>
+		<simpara>Hmm, but such resolution works in modnav2. Right, in modnav2 the slot is created from </simpara>
+		<programlisting>.testroot.Launcher.Window.Scene.VBox.ModelView.Drp</programlisting>
+		<simpara>
+		    So the look up trace is as:
+		    <programlisting>
+			.testroot.Launcher.Window.Scene.VBox.ModelView.Drp
+			.testroot.Modules.AvrMdl2
+			.testroot.Modules (owner of AvrMdl2 as AvrMdl2 doesn't have a context).
+			.testroot.Launcher.Window.Scene.VBox.ModelView
+			(context) Modules.ContainerMod
+			...
+			ok
+		    </programlisting>
+			The resolution is ok, but this result is just "accidental", because the "right" owner of Drp.
+		</simpara>
+		<simpara>
+		    Real root-cause is that the ContainerMod module desing is wrong:
+		    <programlisting>
+			317     DHLayout : DLinearLayout
+			318     {
+			...
+			325         SlotParent &lt; = "SS FHLayoutSlot";
+		    </programlisting>
+			SlotParent paremeter is set here incorrectly. It should be set from the real context where it is used, i.e. from the test system
+			(fap3-vis/test/ut_avr_node_drp.chs):
+		    <programlisting>
+			39                 Drp : AvrMdl2.NodeDrp {
+			40                     SlotParent &lt; = "SS ContainerMod.FHLayoutSlot";
+			41                 }
+		    </programlisting>
+		</simpara>
+	    </sect3>
+	    <sect3><title>Solution</title>
+		<simpara>To set SlotParent parameter from the real context where it is used.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_iss_009"><title>[<glossterm id="iss_009">DS_ISS_009</glossterm>] 20220412 modnav2 stucks on creation phase.</title>
+	    <sect2><title>Intro</title>
+		<simpara>The app stucks on creation phase, just toolbar is layouted, but model view is not.</simpara>
 	    </sect2>
-	</sect1>
+	    <sect2><title>Analysis</title>
+		<simpara>The problem's root-cause is that IRM creates a massive amount of routing pathes for MDesInpObserver iface. This makes the IRM data update very slow,
+		    especially when the nodes invalidate its IRM nodes. Additional mechamisms like <xref linkend="gls_asr"/> exacerbates the problem.</simpara>
+		<simpara>The trigger of emerging of this problem is the VIS container update to handle button press event. This update assumes adding
+		    to the socket the transitions that sequentially (this is container socket philosophy) forms the right URI of pressed widget. But this new transition
+		    creates very complex structure for IRM because the transition are not just chain but each node of the chain creates the nomber of IRM pathes. To
+		    the overall number of IRM pathes grows dramatically (some thousands for instance).</simpara>
+		<simpara>Simplifying of the new transitions and reducing the number of IRM pathes partially helps, but the app creating is still slow.</simpara>
+	    </sect2>
+	    <sect2><title>Solution</title>
+		<simpara>We need to redesing IRM rouing for MDesInpObserver iface. Ref <xref linkend="ds_sor"/> for the desing change details.</simpara>
+	    </sect2>
+	</sect2>
+	<sect2 id="ds_iss_010"><title>[<glossterm id="iss_010">DS_ISS_010</glossterm>] 20230114 Socket resolves iface even the iface is not provided by socket pins</title>
+	    <simpara>There is still the redirection to the socket pair event if iface isn't resolved by pins. </simpara>
+	    <sect3><title>Solution</title>
+		<simpara>To disable redirecting to the socket pair if iface isn't resolved by pins.</simpara>
+	    </sect3>
+	    <sect3><title>Status</title>
+		<simpara>Fixed 20230115</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_iss_011"><title>[<glossterm id="iss_011">DS_ISS_011</glossterm>] 20230128 Cannot set invalid string Sdata field in tuple</title>
+	    <sect3><title>Status</title>
+		<simpara>20230130 Implemented, ref also dependent design item <xref linkend="ds_dsv"/> </simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_iss_012"><title>[<glossterm id="iss_012">DS_ISS_012</glossterm>] 20230225 Exception when resolving iface in socket extd topology.</title>
+	    <sect3><title>Intro</title>
+		<simpara>Trying to create UT for <xref linkend="gls_ssp"/> but see the exception. Checked with socket UT, modified ut_syst_sock_3 - the problem
+		    is reqproduced.</simpara>
+		<simpara>Ref ut_syst_sock_3.chs tag ISS_012. The exception happens here: </simpara>
+		<programlisting>
+		    #7  0x00007ffff7c6fe53 in Socket::resolveIfc (this=0x55555563bc70, aName="MTIf1", aReq=0x55555563d158) at syst.cpp:315
+		    315						assert(apair == reqn);
 
-    </article>
+		    (gdb) p Uid()
+		    $2 = ".MyRoot.S1.S1_2.Sck1%MSocket"
+		</programlisting>
+	    </sect3>
+	    <sect3><title>Analysis</title>
+		<simpara>The root-cause is wrong alogrithm of moving assosiated pair to extender, ref Socket::resolveIfc() tagged DS_ISS_012.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_iss_013"><title>[<glossterm id="iss_013">DS_ISS_013</glossterm>] 20230315 ASdcInsert2 operates incorrectly in case of the number of list comps.</title>
+	    <sect3><title>Status</title>
+		<simpara>Fixed 20230316</simpara>
+	    </sect3>
+	    <sect3><title>Intro</title>
+		<simpara>The problems discovered when adding EdgeCrp default vert segment slot insertion and tested with 2 edges, ref fap3-vis/modules/avr2.chs, SdcInsertVs.</simpara>
+		<simpara>The root-cause of the problem is incorrect update of sdc status - ASdcInsert2 uses weak criteria checking if given comp is already inserted -
+		    it check if comp.Prev is connected in Pname.Next. But this works only if comp is before Pname. So status gets false with other conditions and sdc tries to
+		    insert the comp again.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_iss_014"><title>[<glossterm id="iss_014">DS_ISS_014</glossterm>] 20230321 Transitions with multi-connecting inputs doesn't indicate invalid result properly.</title>
+	    <sect3><title>Status</title>
+		<simpara>In progress</simpara>
+	    </sect3>
+	    <sect3><title>Intro</title>
+		<simpara>Lets lood at TrAddVar. If two outputs are connected to the transition input Inp but one of the output doesn't provide iface as expected then the tranistion
+		    output will be still valid.</simpara>
+	    </sect3>
+	    <sect3><title>Solution</title>
+		<simpara>To have specific transitions with one-connection inputs.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_iss_015"><title>[<glossterm id="iss_015">DS_ISS_015</glossterm>] [Resolved] 20230403 SdoPairsCount doesn't observes the target existence</title>
+	    <sect3><title>Status</title>
+		<simpara>Resolved 20230404</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_iss_016"><title>[<glossterm id="iss_016">DS_ISS_016</glossterm>] [Open] 20230403 SdoCompComp doesn't observes the target existence</title>
+	    <sect3><title>Status</title>
+		<simpara>Postponed ATM. CompComp seems to be unusable at all.</simpara>
+	    </sect3>
+	</sect2>
+    </sect1>
+
+    <sect1><title>Tools</title>
+	<sect2><title>chs formatting in VIM</title>
+	    <sect3><title>Set-up .vimrc</title>
+		<programlisting>
+			"=====================================================
+		    " vim-autoformat settings
+			"=====================================================
+
+			"let g:autoformat_verbosemode=1
+
+		    let g:formatdef_yb_chs = '"/media/sf_vbx_shared/projects/fap/fap3/clm/fapm3 -f"'
+		    let g:formatters_chs = ['yb_chs']
+
+		    " Disable autoindenting, retab and removing trailing spaces
+		    let g:autoformat_autoindent = 0
+		    let g:autoformat_retab = 0
+		    let g:autoformat_remove_trailing_spaces = 0
+
+		    " map to &lt;Leader&gt;cf
+			autocmd FileType chs nnoremap &lt;buffer&gt;&lt;Leader&gt;ff :&lt;C-u&gt;Autoformat&lt;CR&gt;
+
+		    " vim-autoformat settings end
+		</programlisting>
+	    </sect3>
+	</sect2>
+    </sect1>
+
+</article>
 
