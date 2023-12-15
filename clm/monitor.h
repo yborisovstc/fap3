@@ -53,6 +53,8 @@ class Monitor
 	 * @return Sign of success
 	 * */
 	bool addEVar(const string& aName, const string& aValue);
+	/** @brief Sets model idle cycles limit */
+	void SetIdleCyclesLimit(int aLimit);
     protected:
 	/** @brief Creates input handler for given command */
 	InputHandler* createHandler(const string& aCmd);
@@ -71,6 +73,7 @@ class Monitor
 	/** Input handlers factory function registry */
 	static const TIhReg mIhReg;
 	TEVars mEVars; /*!< Env variables */
+	int mIdleCyclesLimit;  /*! Idle cycles limit */
 };
 
 /** Input handler base */

@@ -29,6 +29,7 @@ Options:\n\
 -m <path> - path to module files\n\
 -a        - auto-run\n\
 -s <file> - spec file\n\
+-i <limit> - idle cycles limit\n\
 -o <file> - converted spec file\n\
 -e <name,value> - environment variable\n\
 \n";
@@ -96,6 +97,10 @@ int main(int argc, char* argv[])
 	    } else if (arg.compare("-f") == 0) {
 		// Format
 		mFormat = true;
+	    } else if (arg.compare("-i") == 0) {
+		// Idle cycles limit
+		string lims(argv[++i]);
+		mnt.SetIdleCyclesLimit(stoi(lims));
 	    } else if (arg.compare("-e") == 0) {
 		// Environment variable
 		string sevar(argv[++i]);

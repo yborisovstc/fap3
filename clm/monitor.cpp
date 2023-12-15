@@ -25,7 +25,8 @@ template<typename T> pair<string, Monitor::TIhFact*> Item() {
 	(T::command(), T::create);
 }
 
-Monitor::Monitor(): mEnv(nullptr), mPrompt(KDefPrompt)
+Monitor::Monitor(): mEnv(nullptr), mPrompt(KDefPrompt),
+    mIdleCyclesLimit(0)
 {
 
 }
@@ -38,6 +39,11 @@ void Monitor::setSpecName(const string& aFileName)
 {
     assert(mSpecName.empty());
     mSpecName = aFileName;
+}
+
+void Monitor::SetIdleCyclesLimit(int aLimit)
+{
+    mIdleCyclesLimit = aLimit;
 }
 
 void Monitor::initEnv(bool aVerbose)
@@ -69,7 +75,7 @@ void Monitor::runModel()
     assert(mEnv != nullptr);
     mEnv->constructSystem();
     if (mEnv->Root() != NULL) {
-	bool res = mEnv->RunSystem();
+	bool res = mEnv->RunSystem(0, mIdleCyclesLimit);
 	if (!res) {
 	    mEnv->Logger()->Write(EErr, NULL, "Monitor: Failed running the model");
 	}

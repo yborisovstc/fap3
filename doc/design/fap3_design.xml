@@ -1909,14 +1909,19 @@
 	</sect2>
 	<sect2><title>DES controlling phiylosophy: object as data</title>
 	    <sect3><title>Intro</title>
-		<simpara>DES controlling needs to be considered in the scope of DES nature: updating the states data via transormation of the data of
-		    dependencies. The only specific of DES controlling is that the data to be updating is the controlled object.</simpara>
+		<simpara>
+		    DES controlling (
+		    <xref linkend="gls_dcs"/> needs to be considered in the scope of DES nature:
+			updating the states data via transormation of the data of
+			dependencies. The only specific of DES controlling is that the data to be updating is the controlled object.
+		</simpara>
 	    </sect3>
 	</sect2>
 	<sect2 id="ds_dcs_ucs"><title>How to support update-confirm scheme when controlling system</title>
-	    <sect3><title>Into</title>
+	    <sect3 id="ds_dcs_ucs_itr"><title>Into</title>
 		<simpara>
-		    DES architecture is based on updata-confirm principle: current sytem state is updated (calculated new state value). Current DES
+		    DES architecture is based on update-confirm principle: current sytem state is updated (calculated new state value) basing on "freezed"
+		    confirmed data. Current DES
 		    desing implements the current-new system state via update-confirm pattern. Confirmed data is the current state whereas updated data is new state.
 		    This desing is compact and effective in case of updating regular data. But how this pattern can be apply to updating system structure?
 		</simpara>
@@ -1943,23 +1948,27 @@
 			is independent!</simpara>
 		    <simpara>The previous NodeAdp implementation perfored the system mutation on update phase. But is also was wrong because the change of system structure
 			affects the system states so affects the process of update depending states.</simpara>
-		    <simpara>Another problem is that system data depends on system structure so it needs to be studied if slystem structure change affect system data confirmation.</simpara>
+		    <simpara>Another problem is that system data depends on system structure so it needs to be studied if system structure change affect system data confirmation.</simpara>
 		</sect4>
 		<sect4><title>Solution : to buffer the mutation</title>
 		    <simpara>We can avoid the system mut dependency from system data by buffering the mut. With that approach NodeAdp updates and save mut on update phase and
 			apply the buffered mut on confirm phase.</simpara>
 		</sect4>
-		<sect4><title>Solution: using inputs buffering instead of state data buffering.</title>
+		<sect4 id="ds_dcs_ucs_cip_ib"><title>Solution: using inputs buffering instead of state data buffering.</title>
 		    <simpara>Let's consider two dependent system that needs to be changed: S1 and S2 and let's try to change them.
-			Actually the dependencies can be interpreted as dependencies on some parameters of system, but not on whole system. For instance S2 depends on P1(S1), ... Pn(S1)
+			Actually the dependencies can be interpreted as dependencies on some parameters of system, but not on whole system.
+			For instance S2 depends on P1(S1), ... Pn(S1)
 			and vice versa. These parameters (i.e. data) are the inputs of transition S2_T performing S2 change. We can freeze these inputs on confirmation phase.
 			In this case S2_T inputs will be stable during S2 update. </simpara>
 		    <simpara>This inputs freeze scheme was considered earlier (fapws?) also for data but that time state data freeze was choose because it is more effective -
 			if some state is connected to N inputs then inputs freeze approach needs N double buffering instead of just one for data freeze.</simpara>
-		    <simpara>Actually this solution aleady attempted to be applied in the current DES controller implementation, ref dessdc.h::SdcIapb and dessdc.cpp::ASdc::confirm() -
-			inputs are freezed (confirmed) before controller controlling action. However this implementation is wrong - if we consider two dependent systems S1 and S2 then
+		    <simpara>Actually this solution aleady attempted to be applied in the current DES controller implementation,
+			ref dessdc.h::SdcIapb and dessdc.cpp::ASdc::confirm() -
+			inputs are freezed (confirmed) before controller controlling action. However this implementation is wrong -
+			if we consider two dependent systems S1 and S2 then
 			the confirmation is performed one to another. This means that for instance S1 handle confirmation first then S2. S1 params (i.e. S2 inps) are freezed on
-			S2 confirmation. So S2 will be updated with NEW (not current) S1 params. The result will be affected (in common cases) by confirmation order (S2, S1 vs S1, S2) </simpara>
+			S2 confirmation. So S2 will be updated with NEW (not current) S1 params.
+			The result will be affected (in common cases) by confirmation order (S2, S1 vs S1, S2) </simpara>
 		</sect4>
 	    </sect3>
 	</sect2>
@@ -2087,6 +2096,29 @@
 		<simpara>Another solution would be to keep controlling subsytem inside DContainer but provide the container with means of creating other such
 		    controling subsystem (again via controloing of DContainer.</simpara>
 	    </sect3>
+	    <sect3 id="ds_dcs_sdc_acc"><title>One more note about using change on confirmed phase with buffering inputs on update phase.</title>
+		<simpara>
+		    There was a number of discussion regarding DES "movement" design. Ref
+		    <xref linkend="ds_dcs_ucs_itr"/>
+		    Normally we use two-phase scheme (update-confirm) for that:
+		    we calculate new values of states on update phase (the transition inputs are freezed) and freeze the values on confirm phase.
+		    There is another approach - to calculate new value on confirm phase.
+		</simpara>
+		<simpara>In case of <xref linkend="gls_dcs"/> the important point is that the update-confirm scheme used for state simple data is
+		    not convenient for controlling where the "data" is the whole controlled system. Obviously it is not possible to keep two instances of
+		    data - confirmed and updated.</simpara>
+		<simpara>Note that currently even simple state update mechanism is optimized, ref <xref linkend="ds_desopt_ums"/> but with this optimization
+		    there are still two data instances.
+		</simpara>
+		<simpara>Why we need two instances"? Actually it is not necessary. What we actually need is to keep freezed current data when we 
+		    calculate new value. In case of <xref linkend="gls_dcs"/> we can freeze not whole current data (i.e. not whole managed system structure)
+			but just parts of it. This is more simple. In that case we can freeze data on controling system transitions inputs.
+			It is already discussed in <xref linkend="ds_dcs_ucs_cip_ib"/>. So the current note is just highlighting of that solution.
+		</simpara>
+		<simpara>It what clarified that using combines scheme (true update-confirm for system data and mut on confirmation for system structure) has
+		    the problem, ref <xref linkend="ds_dcs_ucs_cip"/>. But this problem can be avoided with approach <xref linkend="ds_dcs_sl_lsc"/>.
+		</simpara>
+	    </sect3>
 	    <sect3 id="ds_dcs_sdc_uc"><title>Use-cases</title>
 		<sect4><title>[<glossterm id="uc_sdc_01">UC_SDC_01</glossterm>] Loading the pipeline</title>
 		    <simpara>The first data is loaded the pipeline (for container example it is that Name value is set for IoAddWidg.Enable input)
@@ -2104,8 +2136,6 @@
 			- Controller doesn't change the system.</simpara>
 		    <sect5><title>Discussion</title>
 			<simpara>This means that controller is not sensitive to "fake" input change. In regular DES such feature is not needed - in case of 
-			    "fake" change DES just recalculate it't states (they keep unchanged in result). But for SDC it is inportant because the controller DES data
-			    is not simple dataThis means that controller is not sensitive to "fake" input change. In regular DES such feature is not needed - in case of 
 			    "fake" change DES just recalculate it't states (they keep unchanged in result). But for SDC it is inportant because the controller DES data
 			    is not simple data, controller changes the system structure incrementally. </simpara>
 			<simpara>But do we really need this? Ponentially controller can avoid incorrect system update via checking if the system is updated already.</simpara>
@@ -3285,6 +3315,7 @@
 	<sect2><title><xref linkend="ds_dsps"/></title> </sect2>
 	<sect2><title><xref linkend="ds_desopt_est"/></title> </sect2>
 	<sect2><title><xref linkend="ds_ver"/></title> </sect2>
+	<sect2><title><xref linkend="ds_dcs_sl_lsc"/></title> </sect2>
     </sect1>
 
     <sect1 id="ds_ic"><title>Tracking: Design items completed</title>
