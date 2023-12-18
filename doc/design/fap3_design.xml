@@ -215,7 +215,7 @@
 	    <glossdef> <para>
 		Layered System Control. Controlling of DES specific approach where controlling part is isolated from controlled in separate "layer".
 		Ref
-		    <xref linkend="ds_dcs_sl_lsc"/> for details.  </para></glossdef>
+		    <xref linkend="ds_dcs_sl"/> for details.  </para></glossdef>
 	</glossentry>
 
 
@@ -1972,7 +1972,7 @@
 		</sect4>
 	    </sect3>
 	</sect2>
-	<sect2 id="ds_dcs_sl"><title>Using special layer for controlling systems.</title>
+	<sect2 id="ds_dcs_sl"><title>Using special layer for controlling systems (<xref linkend="gls_lsc"/> approach).</title>
 	    <sect3><title>Intro</title>
 		<simpara>On initial times of DES design there was the idea of how such systems can be controlled. The idea was that specific layer needs to be used.
 		    This layer considers underlying layer (controlled) as a data (same manner as regular DES considers states simple data as a data).
@@ -1990,13 +1990,13 @@
 		</simpara>
 	    </sect3>
 	    <sect3 id="ds_dcs_sl_dbo"><title>DES based objects</title>
-		<simpara>This philosophy can be interpreted with another manner - we can create object which chromo (or some another exquivalend of structure representation) parts
-		    are states. Obviously this will be "higher" level objects, that can be called "DES based" objects.</simpara>
+		<simpara>This philosophy can be interpreted with another manner - we can create object which chromo (or some another equivalent of structure
+		    representation) parts are states. Obviously this will be "higher" level objects, that can be called "DES based" objects.</simpara>
 	    </sect3>
-	    <sect3 id="ds_dcs_sl_lsc"><title>Layered system control (<xref linkend="gls_lsc"/> as the solution of system performance issue.</title>
+	    <sect3 id="ds_dcs_sl_lsc"><title>Layered system control (<xref linkend="gls_lsc"/>) as the solution of system performance issue.</title>
 		<sect4><title>Intro</title>
 		    <simpara>Ref <xref linkend="ds_irm_wprc_lsc"/> for the issue description and initial analysis.</simpara>
-		    <simpara>The system peroformance is degraded because of a lot of IRM invalidation and related to that DES inputs notifications. This
+		    <simpara>The system performance is degraded because of a lot of IRM invalidation and related to that DES inputs notifications. This
 			mechanism supports DES actual with re-configuration performed but makes the system run slower.</simpara>
 		    <simpara>The idea is to extend MDesSyncable with pause/resume/run so controlling system can use this method to manage controlled system.
 			Controlling system shall be on "upper" layer in term that it can manage controlled system via SDCs. So controlling system
@@ -2005,11 +2005,40 @@
 		</sect4>
 		<sect4><title>How to "perform IRM invalidation and DES inp notification"?</title>
 		    <simpara>
-			This insists that we need to diasble IRM invalidation and DES inp notification before staring the control of manageable system. But there are no
+			This insists that we need to disable IRM invalidation and DES inp notification before staring the control of manageable system. But there are no
 			proper mechanism of how to disable them. One solution is to just remove DES inp notification from CPs onIfpInvalidated
 			but this will lead to "normal" systems not working (ref
 			<xref linkend="ds_asr_cbscpd"/>) 
 		    </simpara>
+		</sect4>
+	    </sect3>
+	    <sect3 id="ds_dcs_sl_hil"><title>How to implement LSC layers?</title>
+		<sect4 id="ds_dcs_sl_hil_s1"><tite>Solution#1 Managed subsystem owned by managing subsystem.</tite>
+		    <simpara>
+			One approach is to have managed agent adapter, then keep managed subsystem MSS inside so the adapter points to owned MSS and then
+			managing subsystem inside the adapter.
+		    </simpara>
+		    <simpara>
+			With this approach we have simple access from managing subsystem to managed one.
+		    </simpara>
+		</sect4>
+	    </sect3>
+	    <sect3 id="ds_dcs_sl_nti"><title>What needs to be improved for applying LSC approach</title>
+		<sect4><title>Intro</title>
+		    <simpara>
+			Current design is not optimal for using LSC approach. For instance it assumes that special "Managed agent adapter" needs
+			to be used to give controlling part access to managed part.
+		    </simpara>
+		</sect4>
+		<sect4 id="ds_dcs_sl_nti_sa"><title>Simpify managed agent adapter (DAdp agent)</title>
+		    <simpara>Currently the adapter agent needs to be linked to some owner of managed system. Link agent is used for that linking.
+			It works ok but create some overhead in case if managed subsystem is owned by the adapter itself. This can be simplified:
+			adapter can assume that ower of managed system is adapter itself in case if link is not established.</simpara>
+		</sect4>
+		<sect4><title>Managing subsystem is "flat" in the current solution. Needs to have it in hier form. </title>
+		    <simpara>Let's look at the solution <xref linkend="ds_dcs_sl_hil_s1"/> - it is not possible to create hierarchical managing
+			subsystem here because any <xref linkend="gls_sdc"/> agents became access to managed agent via owner (adapter in our case). </simpara>
+		    <simpara>We need some solution that allows creating complex enough, hierarchical managing subsystems.</simpara>
 		</sect4>
 	    </sect3>
 	</sect2>
@@ -2112,10 +2141,18 @@
 		</simpara>
 		<simpara>Why we need two instances"? Actually it is not necessary. What we actually need is to keep freezed current data when we 
 		    calculate new value. In case of <xref linkend="gls_dcs"/> we can freeze not whole current data (i.e. not whole managed system structure)
-			but just parts of it. This is more simple. In that case we can freeze data on controling system transitions inputs.
+			but just parts of it that are required to calculate the change to managed system.
+			This is more simple. In that case we can freeze data on controling system transitions inputs.
 			It is already discussed in <xref linkend="ds_dcs_ucs_cip_ib"/>. So the current note is just highlighting of that solution.
 		</simpara>
-		<simpara>It what clarified that using combines scheme (true update-confirm for system data and mut on confirmation for system structure) has
+		<simpara>
+		    There were many doubts that the scheme described above (mutating controlled system on confirmation phase) is not complied with 
+		    standard scheme used for simple DES.
+		    But actually this approach fully conforms to the "classic" simple DES update-confirm. Simple DES prepares the change on update phase and applies
+		    the change on confirm phase. Same is performed with the scheme described above: "prepare change" means prepare all inputs that required to
+		    perform mutation, "apply change" means perform mutation.
+		</simpara>
+		<simpara>It was clarified that using combines scheme (true update-confirm for system data and mut on confirmation for system structure) has
 		    the problem, ref <xref linkend="ds_dcs_ucs_cip"/>. But this problem can be avoided with approach <xref linkend="ds_dcs_sl_lsc"/>.
 		</simpara>
 	    </sect3>
@@ -3316,6 +3353,7 @@
 	<sect2><title><xref linkend="ds_desopt_est"/></title> </sect2>
 	<sect2><title><xref linkend="ds_ver"/></title> </sect2>
 	<sect2><title><xref linkend="ds_dcs_sl_lsc"/></title> </sect2>
+	<sect2><title><xref linkend="ds_dcs_sl_nti"/></title> </sect2>
     </sect1>
 
     <sect1 id="ds_ic"><title>Tracking: Design items completed</title>

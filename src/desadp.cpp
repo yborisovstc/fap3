@@ -886,8 +886,8 @@ void DAdp::confirm()
 {
     PFL_DUR_STAT_START(PEvents::EDurStat_DAdpConfirm);
     for (auto iap : mIbs) {
+	iap->mChanged = false;
 	if (iap->mUpdated) {
-	    iap->mChanged = false;
 	    iap->confirm();
 	}
     }
@@ -925,6 +925,10 @@ bool DAdp::UpdateMagBase()
 void DAdp::UpdateMag()
 {
     bool res = false;
+    // Simplifying adapter scheme, ref ds_dcs_sl_nti_sa
+    if (!mMagBase) {
+	mMagBase = this;
+    }
     if (mIbMagUri.mValid && mMagBase) {
 	MNode* magn = mMagBase->getNode(mIbMagUri.data().mData);
 	if (magn && magn != mMag) {

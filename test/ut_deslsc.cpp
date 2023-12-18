@@ -14,8 +14,8 @@ class Ut_deslsc : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_deslsc);
 
-    //CPPUNIT_TEST(test_DesLsc_1);
-    CPPUNIT_TEST(test_DesLsc_2);
+    CPPUNIT_TEST(test_DesLsc_1);
+    //CPPUNIT_TEST(test_DesLsc_2);
     CPPUNIT_TEST_SUITE_END();
     public:
     virtual void setUp();
@@ -73,7 +73,7 @@ void Ut_deslsc::tearDown()
 void Ut_deslsc::test_DesLsc_1()
 {
     printf("\n === Test of DES LSC: simple system\n");
-    MNode* root = constructSystem("ut_deslsc_1");
+    MNode* root = constructSystem("ut_deslsc_1_2");
     bool res = mEnv->RunSystem(9, 2);
 
     // Verify that incrementors have same status
