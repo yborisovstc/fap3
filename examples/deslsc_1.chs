@@ -1,42 +1,42 @@
 Root : Elem {
     # "Test of LSC, simple system"
     Incrementor : Des {
-        Count : State @  {
+        Count : State (
             Explorable = "y"
             _@ <  {
                 = "SI 0"
                 Debug.LogLevel = "Dbg"
             }
-            Inp ~ : TrAdd2Var @  {
+            Inp ~ : TrAdd2Var (
                 Inp ~ Count
-                Inp2 ~ : TrSwitchBool @  {
+                Inp2 ~ : TrSwitchBool (
                     Inp1 ~ SI_1
                     Inp2 ~ SI_0
-                    Sel ~ Cmp_Ge : TrCmpVar @  {
+                    Sel ~ Cmp_Ge : TrCmpVar (
                         Inp ~ Count
                         Inp2 ~ : State {
                             = "SI 8"
                         }
-                    }
-                }
-            }
-        }
-        : Sout @  {
+                    )
+                )
+            )
+        )
+        : Sout (
             _@ <  {
                 = "SS"
             }
-            Inp ~ : TrApndVar @  {
-                Inp1 ~ : TrApndVar @  {
+            Inp ~ : TrApndVar (
+                Inp1 ~ : TrApndVar (
                     Inp1 ~ : SdoName
                     Inp2 ~ : State {
                         = "SS ':  '"
                     }
-                }
-                Inp2 ~ : TrTostrVar @  {
+                )
+                Inp2 ~ : TrTostrVar (
                     Inp ~ Count
-                }
-            }
-        }
+                )
+            )
+        )
     }
     Launcher : DesLauncher {
         Debug.LogLevel = "Dbg"
@@ -50,19 +50,19 @@ Root : Elem {
                 MntpOutp : CpStateMnodeOutp
             }
             MgbLink ~ Manageable
-            MgbAdp : DAdp @  {
+            MgbAdp : DAdp (
                 # "Adapter to manageable"
                 InpMagBase ~ MgbLink.MntpOutp
                 InpMagUri ~ : Const {
                     = "URI _$"
                 }
-            }
+            )
             MgbAdp <  {
-                SdcPause : ASdcPause @  {
+                SdcPause : ASdcPause (
                     _@ < Debug.LogLevel = "Dbg"
                     Enable ~ : SB_True
-                }
-                CreateIncr1 : ASdcComp @  {
+                )
+                CreateIncr1 : ASdcComp (
                     _@ < Debug.LogLevel = "Dbg"
                     Enable ~ SdcPause.Outp
                     Name ~ : Const {
@@ -71,8 +71,8 @@ Root : Elem {
                     Parent ~ : Const {
                         = "SS Incrementor"
                     }
-                }
-                CreateIncr2 : ASdcComp @  {
+                )
+                CreateIncr2 : ASdcComp (
                     _@ < Debug.LogLevel = "Dbg"
                     Enable ~ CreateIncr1.Outp
                     Name ~ : Const {
@@ -81,11 +81,11 @@ Root : Elem {
                     Parent ~ : Const {
                         = "SS Incrementor"
                     }
-                }
-                SdcResume : ASdcResume @  {
+                )
+                SdcResume : ASdcResume (
                     _@ < Debug.LogLevel = "Dbg"
                     Enable ~ CreateIncr2.Outp
-                }
+                )
             }
         }
     }

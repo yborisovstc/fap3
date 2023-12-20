@@ -19,7 +19,8 @@ class Ut_chromo2 : public CPPUNIT_NS::TestFixture
 //    CPPUNIT_TEST(test_Chr4);
 //    CPPUNIT_TEST(test_Chr5);
 //    CPPUNIT_TEST(test_Chr_Err_1);
-    CPPUNIT_TEST(test_Ddmc);
+//    CPPUNIT_TEST(test_Ddmc);
+    CPPUNIT_TEST(test_Ddmc_Css);
     CPPUNIT_TEST_SUITE_END();
 public:
     virtual void setUp();
@@ -32,6 +33,7 @@ private:
     void test_Chr5();
     void test_Chr_Err_1();
     void test_Ddmc();
+    void test_Ddmc_Css();
 private:
     //Env* iEnv;
 };
@@ -231,4 +233,40 @@ void Ut_chromo2::test_Ddmc()
     chr2.Convert(chr);
     chr2.Root().Dump();
     chr2.Save("ut_chr2_ddmc_conv.chs");
+}
+
+/** @brief DDMC and Context specific segment, ref ds_cli_pi_css
+ * */
+void Ut_chromo2::test_Ddmc_Css()
+{
+    cout << endl << "=== Test of Chromo2 DDMC&CSS" << endl;
+    Chromo2 chr;
+    // Parse the chromo
+    chr.SetFromFile("ut_chr2_ddmc_css.chs");
+    if (chr.IsError()) {
+	cout << "Pos: " << chr.Error().mPos << " -- " << chr.Error().mText << endl;
+    }
+    chr.Root().Dump();
+    cout << "Root first node dump: " << endl;
+    ChromoNode cn1 = *chr.Root().Begin();
+    cn1.Dump();
+    chr.Root().Dump();
+    cout << endl;
+    chr.Save("ut_chr2_ddmc_css_saved.chs");
+
+    // Trying second time parsing
+    chr.SetFromFile("ut_chr2_ddmc_css_saved.chs");
+    if (chr.IsError()) {
+	cout << "Saved chromo error" << endl;
+	cout << "Pos: " << chr.Error().mPos << " -- " << chr.Error().mText << endl;
+    }
+    chr.Root().Dump();
+    cout << endl;
+
+    cout << "Convert chromo " << endl;
+    // Trying convertion
+    Chromo2 chr2;
+    chr2.Convert(chr);
+    chr2.Root().Dump();
+    chr2.Save("ut_chr2_ddmc_css_conv.chs");
 }

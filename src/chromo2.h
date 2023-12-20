@@ -164,6 +164,7 @@ class Chromo2Mdl: public MChromoMdl
 	bool rdp_mut_remove(istream& aIs, C2MdlNode& aMnode);
 	bool rdp_sep(istream& aIs);
 	bool rdp_segment(istream& aIs, C2MdlNode& aMnode);
+	bool rdp_ns_segment(istream& aIs, C2MdlNode& aMnode);
 	bool rdp_segment_target(istream& aIs, C2MdlNode& aMnode, C2MdlNode& aDepSeg);
 	bool rdp_segment_namespace(istream& aIs, C2MdlNode& aMnode, C2MdlNode& aDepSeg);
 	bool rdp_chromo_node(istream& aIs, C2MdlNode& aMnode);
@@ -175,6 +176,7 @@ class Chromo2Mdl: public MChromoMdl
 	bool rdp_context_target_ext(istream& aIs, C2MdlNode& aMnode, C2MdlNode& aDepSeg);
 	bool rdp_context_namespace(istream& aIs, C2MdlNode& aMnode);
 	bool rdp_context_namespace_ext(istream& aIs, C2MdlNode& aMnode, C2MdlNode& aDepSeg);
+	bool rdp_context_namespace_ext_obj(istream& aIs, C2MdlNode& aMnode, C2MdlNode& aDepSeg, string& aNsUri);
     protected:
 	void SetErr(istream& aIs, const string& aDescr);
 	void SetErr(const string& aDescr);

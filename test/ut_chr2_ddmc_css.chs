@@ -26,12 +26,15 @@ root : Elem {
     v4 ~ : v1 @  {
         # "Anonymous namespace"
     }
+    v4 ~ : v1 ( 
+        # "Anonymous namespace specific segment"
+    )
     _ <  {
         # "Special name nil"
     }
-    v5 : Vert @  {
+    v5 : Vert (
         # "mut_add with NS segment"
-    }
+    )
     v6 : Vert <  {
         # "mut_add with Targ segment"
     }

@@ -974,12 +974,13 @@
 			ctx_mutation = [context, separator ]  mutation;
 			ctx_segment = segment_target | segment_namespace;
 			ctx_mutation_create_chromo = [context, separator ] mutation_create_chromo;
-			segment_namespace = context_namespace_ext, [separator], segment;
+			segment_namespace = (context_namespace_ext, [separator], segment) | (context_namespace_ext_obj, [separator], ns_segment);
 			segment_target = target_primary_segment, [ target_secondary_segment ];
 			target_primary_segment = context_target_ext, [separator], segment;
 			target_secondary_segment = impliclit_context_unit, [separator] segment;
 
 			segment = '{', [separator], chromo_node, { node_separator, chromo_node }, [separator], '}';
+			ns_segment = '(', [separator], chromo_node, { node_separator, chromo_node }, [separator], ')';
 
 			(* Mutation Create with assosiated chromo *)
 			mutation_create_chromo = mutation_create, [separator], segment;
@@ -990,6 +991,7 @@
 			context_node = mutation_node;
 			context_namespace = uri, separator, "@";
 			context_namespace_ext = (uri | mutation_create), separator, "@";
+			context_namespace_ext_obj = (uri | mutation_create);
 			implicit_context_unit = context_type;
 			context_source = mutation_node | node_uri;
 
@@ -1164,7 +1166,7 @@
 			# &gt;
 		</programlisting>
 	    </sect3>
-	    <sect3><title>To introduce segment type depending on context.</title>
+	    <sect3 id="ds_cli_pi_css"><title>To introduce context specific segment type</title>
 		<simpara>
 		    For instance the segment type "target" can have "{}" boundaries, but "namespace" segment - "()".
 		</simpara>

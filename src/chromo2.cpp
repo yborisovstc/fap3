@@ -6,11 +6,18 @@
 
 #include "chromo2.h"
 
+
+static constexpr bool _CHR2_DEBUG = false;
+
+#define dbg if (!_CHR2_DEBUG) {} else std::cout << "CHR2 " << __func__  << ", "
+
 /** @brief Chromo grammar terminals
  * */
 const char KT_MutSeparator = ';';
 const char KT_ChromoStart = '{';
 const char KT_ChromoEnd = '}';
+const char KT_NsSegStart = '(';
+const char KT_NsSegEnd = ')';
 const char KT_TextDelim = '"';
 const char KT_Escape = '\\';
 const char KT_MutAdd = ':';
@@ -28,6 +35,8 @@ const char KT_SpecialNameNil = '_';
 
 const string KTS_ChromoStart = string(1, KT_ChromoStart);
 const string KTS_ChromoEnd = string(1, KT_ChromoEnd);
+const string KTS_NsSegStart = string(1, KT_NsSegStart);
+const string KTS_NsSegEnd = string(1, KT_NsSegEnd);
 const string KTS_Space = string(1, KT_Space);
 const string KTS_Target = string(1, KT_Target);
 const string KTS_Namespace = string(1, KT_Namespace);
@@ -117,6 +126,7 @@ static const string RDPE_Unspecified = "Unspecified error";
 static const string RDPE_WrongCommentString = "Wrong comment string";
 static const string RDPE_MissingSepBeforeMut = "Missing separator before mutation symbol";
 static const string RDPE_WrongMutLeftPart = "Wrong mutation left part";
+static const string RDPE_UnrecognizedChrNode = "Unrecognized segment node";
 
 /** @brief Segment offset when node output */
 const int KA_OutOffset = 3;
@@ -999,7 +1009,12 @@ void Chromo2Mdl::OutputNode(const C2MdlNode& aNode, ostream& aOs, int aLevel, in
     if (!aNode.mCtxType.empty()) {
 	if (!aNode.mContext.empty()) {
 	    if (aIndFl) { Offset(aLevel, aIndent, aOs); }
-	    aOs << aNode.mContext << KTS_Space << aNode.mCtxType << KTS_Space; cnt = true;
+            if (aNode.mCtxType == KTS_Namespace) {
+                // For namespace we use specific segment so no need to output ctx symbol
+                aOs << aNode.mContext << KTS_Space; cnt = true;
+            } else {
+                aOs << aNode.mContext << KTS_Space << aNode.mCtxType << KTS_Space; cnt = true;
+            }
 	} else {
 	    cnt_ext = true;
 	}
@@ -1021,7 +1036,10 @@ void Chromo2Mdl::OutputNode(const C2MdlNode& aNode, ostream& aOs, int aLevel, in
     }
 
     if (cnt_ext) {
-	aOs << KTS_Space << aNode.mCtxType << KTS_Space;
+        if (aNode.mCtxType != KTS_Namespace) {
+            // For namespace we use specific segment so no need to output ctx symbol
+            aOs << KTS_Space << aNode.mCtxType << KTS_Space;
+        }
     }
 
     if (cnum > 0) {
@@ -1032,13 +1050,22 @@ void Chromo2Mdl::OutputNode(const C2MdlNode& aNode, ostream& aOs, int aLevel, in
 	} else {
 	    if (!cnt && !cnt_ext && !mut) { Offset(aLevel, aIndent, aOs);
 	    } else  { aOs << KTS_Space; }
-	    aOs << KTS_ChromoStart << endl;
+            if (aNode.mCtxType == KTS_Namespace) {
+                aOs << KTS_NsSegStart << endl;
+            } else {
+                aOs << KTS_ChromoStart << endl;
+            }
 	    for (TC2MdlNodesCiter it = aNode.mChromo.begin(); it != aNode.mChromo.end(); it++) {
 		const C2MdlNode& node = *it;
 		OutputNode(node, aOs, aLevel + 1, aIndent);
 		aOs << endl;
 	    }
-	    Offset(aLevel, aIndent, aOs); aOs << KTS_ChromoEnd;
+	    Offset(aLevel, aIndent, aOs);
+            if (aNode.mCtxType == KTS_Namespace) {
+                aOs << KTS_NsSegEnd;
+            } else {
+                aOs << KTS_ChromoEnd;
+            }
 	}
     }
 
@@ -1325,25 +1352,34 @@ bool Chromo2Mdl::rdp_chromo_node(istream& aIs, C2MdlNode& aMnode)
 {
     bool res = true;
     streampos pos = aIs.tellg();
+    dbg << "pos: " << pos << endl;
     C2MdlNode node;
     // Set owner by advance to support dependent mut (DMC)
     node.mOwner = &aMnode;
     res = rdp_segment_target(aIs, node, aMnode);
+    dbg << "segment_target: " << res << endl;
     if (!res) {
 	rdpBacktrack(aIs, pos);
 	res = rdp_segment_namespace(aIs, node, aMnode);
+        dbg << "segment_namespace: " << res << endl;
 	if (!res) {
 	    rdpBacktrack(aIs, pos);
 	    res = rdp_ctx_mut_create_chromo(aIs, node);
+            dbg << "ctx_mut_create_chromo: " << res << endl;
 	    if (!res) {
 		rdpBacktrack(aIs, pos);
 		res = rdp_segment(aIs, node);
+                dbg << "segment: " << res << endl;
 		if (!res) {
 		    rdpBacktrack(aIs, pos);
 		    res = rdp_ctx_mutation(aIs, node);
+                    dbg << "ctx_mutation: " << res << endl;
 		    if (res) {
 			aMnode.mChromo.push_back(node);
-		    }
+		    } else {
+                        dbg << "err -- unrec segment node, pos: " << pos << endl;
+                        SetErr(aIs, RDPE_UnrecognizedChrNode);
+                    }
 		} else {
 		    aMnode.mChromo.push_back(node);
 		}
@@ -1393,6 +1429,42 @@ bool Chromo2Mdl::rdp_segment(istream& aIs, C2MdlNode& aMnode)
     return res;
 }
 
+bool Chromo2Mdl::rdp_ns_segment(istream& aIs, C2MdlNode& aMnode)
+{
+    bool res = true;
+    streampos pos = aIs.tellg(); // Debug
+    dbg << "pos: " << pos << endl;
+    char c = aIs.get();
+    if (c == KT_NsSegStart) {
+	res = rdp_sep(aIs);
+	if (res) {
+	    pos = aIs.tellg();
+	    c = aIs.get();
+	    if (c != KT_NsSegEnd) {
+		aIs.seekg(pos, aIs.beg); // Backtrack
+		res = rdp_chromo_node(aIs, aMnode);
+		if (res) {
+		    do {
+			res = rdp_sep(aIs);
+			if (res) {
+			    c = aIs.get();
+			    if (c == KT_NsSegEnd) {
+			    } else {
+				aIs.seekg(-1, aIs.cur);
+				res = rdp_chromo_node(aIs, aMnode);
+			    }
+			}
+		    } while (res && c != KT_NsSegEnd);
+		}
+	    }
+	}
+    } else {
+	res = false;
+    }
+    return res;
+}
+
+
 bool Chromo2Mdl::rdp_segment_target(istream& aIs, C2MdlNode& aMnode, C2MdlNode& aDepSeg)
 {
     bool res = true;
@@ -1410,12 +1482,29 @@ bool Chromo2Mdl::rdp_segment_target(istream& aIs, C2MdlNode& aMnode, C2MdlNode& 
 bool Chromo2Mdl::rdp_segment_namespace(istream& aIs, C2MdlNode& aMnode, C2MdlNode& aDepSeg)
 {
     bool res = true;
+    streampos pos = aIs.tellg();
+    dbg << "pos: " << pos << endl;
     res = rdp_context_namespace_ext(aIs, aMnode, aDepSeg);
     if (res) {
 	res = rdp_sep(aIs);
 	if (res) {
 	    res = rdp_segment(aIs, aMnode);
 	}
+    }
+    if (!res) {
+	rdpBacktrack(aIs, pos);
+        string nsuri;
+        res = rdp_context_namespace_ext_obj(aIs, aMnode, aDepSeg, nsuri);
+        if (res) {
+            res = rdp_sep(aIs);
+            if (res) {
+                res = rdp_ns_segment(aIs, aMnode);
+                if (res) {
+                    aMnode.AddContext(KTS_Namespace, nsuri);
+                    dbg << "ns uri: " << nsuri << endl;
+                }
+            }
+        }
     }
     return res;
 }
@@ -1425,10 +1514,10 @@ bool Chromo2Mdl::rdp_mut_create_chromo(istream& aIs, C2MdlNode& aMnode)
 {
     bool res = rdp_mut_create(aIs, aMnode);
     if (res) {
-	res = rdp_sep(aIs);
-	if (res) {
-	    res = rdp_segment(aIs, aMnode);
-	}
+        res = rdp_sep(aIs);
+        if (res) {
+            res = rdp_segment(aIs, aMnode);
+        }
     }
     return res;
 }
@@ -1439,6 +1528,7 @@ bool Chromo2Mdl::rdp_mut_create(istream& aIs, C2MdlNode& aMnode)
     string name;
     bool anon = false;
     streampos pos = aIs.tellg();
+    dbg << "pos: " << pos << endl;
     res = rdp_name(aIs, name);
     if (!res) {
 	// Anonymous creation
@@ -1464,6 +1554,7 @@ bool Chromo2Mdl::rdp_mut_create(istream& aIs, C2MdlNode& aMnode)
 		    aMnode.mMut.mR = string(1, KT_MutAdd);
 		    aMnode.mMut.mQ = parent;
 		    aMnode.mChromoPos = pos;
+                    dbg << "Mut.P: " << aMnode.mMut.mP << ", Mut.R: " << aMnode.mMut.mR << ", Mut.Q: " << aMnode.mMut.mQ << endl;
 		}
 	    }
 	} else {
@@ -1693,6 +1784,8 @@ bool Chromo2Mdl::rdp_mut_content_err_q(istream& aIs, C2MdlNode& aMnode)
 bool Chromo2Mdl::rdp_mut_comment(istream& aIs, C2MdlNode& aMnode)
 {
     bool res = true;
+    streampos pos = aIs.tellg();
+    dbg << "pos: " << pos << endl;
     char c = aIs.get();
     if (c == KT_MutComment) {
 	res = rdp_sep(aIs);
@@ -1704,6 +1797,7 @@ bool Chromo2Mdl::rdp_mut_comment(istream& aIs, C2MdlNode& aMnode)
 		aMnode.mMut.mQ = text;
 		streampos pos = aIs.tellg();
 		aMnode.mChromoPos = pos;
+                dbg << "Mut.Q: " << text << endl;
 	    }
 	}
     } else {
@@ -1929,6 +2023,22 @@ bool Chromo2Mdl::rdp_context_target_ext(istream& aIs, C2MdlNode& aMnode, C2MdlNo
     return res;
 }
 
+bool Chromo2Mdl::rdp_context_namespace_ext_obj(istream& aIs, C2MdlNode& aMnode, C2MdlNode& aDepSeg, string& aNsUri)
+{
+    bool res = true;
+    streampos pos = aIs.tellg();
+    res = rdp_mut_create(aIs, aMnode);
+    string uri;
+    if (!res) {
+	rdpBacktrack(aIs, pos);
+	res = rdp_uri(aIs, uri);
+        if (res) {
+            aNsUri = uri;
+        }
+    }
+    return res;
+}
+
 bool Chromo2Mdl::rdp_context_namespace_ext(istream& aIs, C2MdlNode& aMnode, C2MdlNode& aDepSeg)
 {
     bool res = true;
@@ -2062,6 +2172,7 @@ Chromo2& Chromo2::operator=(const Chromo2& aSrc)
 
 void Chromo2::SetFromFile(const string& aFileName)
 {
+    dbg << "====================================== file name: " << aFileName << endl;
     THandle root = mMdl.SetFromFile(aFileName);
     C2MdlNode* nroot = root.Data(nroot);
     mRootNode = ChromoNode(&mMdl, root);
