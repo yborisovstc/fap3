@@ -73,7 +73,7 @@ void Ut_deslsc::tearDown()
 void Ut_deslsc::test_DesLsc_1()
 {
     printf("\n === Test of DES LSC: simple system\n");
-    MNode* root = constructSystem("ut_deslsc_1_2");
+    MNode* root = constructSystem("ut_deslsc_1");
     bool res = mEnv->RunSystem(9, 2);
 
     // Verify that incrementors have same status

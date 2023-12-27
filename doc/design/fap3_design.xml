@@ -2013,7 +2013,7 @@
 		</sect4>
 	    </sect3>
 	    <sect3 id="ds_dcs_sl_hil"><title>How to implement LSC layers?</title>
-		<sect4 id="ds_dcs_sl_hil_s1"><tite>Solution#1 Managed subsystem owned by managing subsystem.</tite>
+		<sect4 id="ds_dcs_sl_hil_s1"><tite>Solution#1 Managed subsystem owned (MSO) by managing subsystem.</tite>
 		    <simpara>
 			One approach is to have managed agent adapter, then keep managed subsystem MSS inside so the adapter points to owned MSS and then
 			managing subsystem inside the adapter.
@@ -2021,6 +2021,13 @@
 		    <simpara>
 			With this approach we have simple access from managing subsystem to managed one.
 		    </simpara>
+		    <simpara>The question is if this approach covers all the use-cases? For instance current fap3-vis agents visial representation
+			(AVR) module uses "remote" controlling - managed agent base if obtained via MNode link. Can AVR module be re-designed to
+			use MSO approach? With current AVR design Edge CRP manages it's owner - DRP that doesn't follow MSO approach. This
+			solution actually based on obvious reasons: Edge CRP is linked to Edge pairs vertex CRPs so posesses the info required to create
+			and layout edges segments. Same time the edges segments are the part of DRP. So, logically, DRP "delegates" managing to
+			its owned Edge CRP.</simpara>
+		    <simpara>Seems MSO approach is suitable for only some limited configuration of the system.</simpara>
 		</sect4>
 	    </sect3>
 	    <sect3 id="ds_dcs_sl_nti"><title>What needs to be improved for applying LSC approach</title>
@@ -2034,6 +2041,9 @@
 		    <simpara>Currently the adapter agent needs to be linked to some owner of managed system. Link agent is used for that linking.
 			It works ok but create some overhead in case if managed subsystem is owned by the adapter itself. This can be simplified:
 			adapter can assume that ower of managed system is adapter itself in case if link is not established.</simpara>
+		    <simpara>This approach was tried in ae750283cb but caused problem on fap3-vis ut_avr_vert_drp_2. The root-cause is that simple
+			assuming "owner of managed system is adapter itself in case if link is not established" doesn't work because MAG base input connection
+			can be deferred in the model. In that case MAG base initial set to adapter itself is the mistake.</simpara>
 		</sect4>
 		<sect4><title>Managing subsystem is "flat" in the current solution. Needs to have it in hier form. </title>
 		    <simpara>Let's look at the solution <xref linkend="ds_dcs_sl_hil_s1"/> - it is not possible to create hierarchical managing

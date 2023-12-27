@@ -1,7 +1,5 @@
 Root : Elem {
-    # "Example of layered system controlling."
-    # "Controller pause managed system, constructs couple of simple systems - incrementors"
-    # "and then runs managed system"
+    # "Test of LSC, simple system"
     Incrementor : Des {
         Count : State @  {
             Explorable = "y"
@@ -42,46 +40,52 @@ Root : Elem {
     }
     Launcher : DesLauncher {
         Debug.LogLevel = "Dbg"
-        : Sout {
-            = "SS 'Example of layered system controlling.'"
-        }
-        Controller : DAdp {
-            # "Controller owns both controlling part and controlled subsystem - LSC approach."
-            Debug.LogLevel = "Dbg"
-            InpMagUri ~ : Const {
-                = "URI Manageable"
-            }
+        Controller : Des {
+            # "Controller"
             Manageable : Syst {
-                # "Managed subsystem"
+                # "Managed system"
                 DesAgt : ADes
             }
-            SdcPause : ASdcPause @  {
-                _@ < Debug.LogLevel = "Dbg"
-                Enable ~ : SB_True
+            MgbLink : Link {
+                MntpOutp : CpStateMnodeOutp
             }
-            CreateIncr1 : ASdcComp @  {
-                _@ < Debug.LogLevel = "Dbg"
-                Enable ~ SdcPause.Outp
-                Name ~ : Const {
-                    = "SS Incr1"
-                }
-                Parent ~ : Const {
-                    = "SS Incrementor"
+            MgbLink ~ Manageable
+            MgbAdp : DAdp @  {
+                # "Adapter to manageable"
+                InpMagBase ~ MgbLink.MntpOutp
+                InpMagUri ~ : Const {
+                    = "URI _$"
                 }
             }
-            CreateIncr2 : ASdcComp @  {
-                _@ < Debug.LogLevel = "Dbg"
-                Enable ~ CreateIncr1.Outp
-                Name ~ : Const {
-                    = "SS Incr2"
+            MgbAdp <  {
+                SdcPause : ASdcPause @  {
+                    _@ < Debug.LogLevel = "Dbg"
+                    Enable ~ : SB_True
                 }
-                Parent ~ : Const {
-                    = "SS Incrementor"
+                CreateIncr1 : ASdcComp @  {
+                    _@ < Debug.LogLevel = "Dbg"
+                    Enable ~ SdcPause.Outp
+                    Name ~ : Const {
+                        = "SS Incr1"
+                    }
+                    Parent ~ : Const {
+                        = "SS Incrementor"
+                    }
                 }
-            }
-            SdcResume : ASdcResume @  {
-                _@ < Debug.LogLevel = "Dbg"
-                Enable ~ CreateIncr2.Outp
+                CreateIncr2 : ASdcComp @  {
+                    _@ < Debug.LogLevel = "Dbg"
+                    Enable ~ CreateIncr1.Outp
+                    Name ~ : Const {
+                        = "SS Incr2"
+                    }
+                    Parent ~ : Const {
+                        = "SS Incrementor"
+                    }
+                }
+                SdcResume : ASdcResume @  {
+                    _@ < Debug.LogLevel = "Dbg"
+                    Enable ~ CreateIncr2.Outp
+                }
             }
         }
     }

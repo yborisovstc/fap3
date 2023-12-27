@@ -925,10 +925,6 @@ bool DAdp::UpdateMagBase()
 void DAdp::UpdateMag()
 {
     bool res = false;
-    // Simplifying adapter scheme, ref ds_dcs_sl_nti_sa
-    if (!mMagBase) {
-	mMagBase = this;
-    }
     if (mIbMagUri.mValid && mMagBase) {
 	MNode* magn = mMagBase->getNode(mIbMagUri.data().mData);
 	if (magn && magn != mMag) {

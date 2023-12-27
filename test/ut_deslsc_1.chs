@@ -2,13 +2,39 @@ Root : Elem {
     # "Test of LSC, simple system"
     Incrementor : Des {
         Count : State @  {
+            Explorable = "y"
             _@ <  {
                 = "SI 0"
                 Debug.LogLevel = "Dbg"
             }
             Inp ~ : TrAdd2Var @  {
                 Inp ~ Count
-                Inp2 ~ SI_1
+                Inp2 ~ : TrSwitchBool @  {
+                    Inp1 ~ SI_1
+                    Inp2 ~ SI_0
+                    Sel ~ Cmp_Ge : TrCmpVar @  {
+                        Inp ~ Count
+                        Inp2 ~ : State {
+                            = "SI 8"
+                        }
+                    }
+                }
+            }
+        }
+        : Sout @  {
+            _@ <  {
+                = "SS"
+            }
+            Inp ~ : TrApndVar @  {
+                Inp1 ~ : TrApndVar @  {
+                    Inp1 ~ : SdoName
+                    Inp2 ~ : State {
+                        = "SS ':  '"
+                    }
+                }
+                Inp2 ~ : TrTostrVar @  {
+                    Inp ~ Count
+                }
             }
         }
     }
