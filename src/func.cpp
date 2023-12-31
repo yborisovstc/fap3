@@ -638,10 +638,40 @@ const DtBase* FHeadUri::FDtGet()
     const TData* inp = GetInpData(EInp, inp);
     const TData* tail = GetInpData(ETail, tail);
     if (inp && tail && inp->IsValid() && tail->IsValid()) {
+	LOGF(EDbg, "Inp [" + (inp ? inp->ToString(true) : "nil") + "], Tail [" + (tail ? tail->ToString(true) : "nil")  + "]");
 	mRes.mValid = inp->mData.getHead(tail->mData, mRes.mData);
     }
     return &mRes;
 }
+
+
+/// Getting head with given tail len, URI
+
+Func* FHeadTnUri::Create(Host* aHost, const string& aOutId)
+{
+    Func* res = NULL;
+    if (aOutId == TData::TypeSig()) {
+	res = new FHeadTnUri(*aHost);
+    }
+    return res;
+}
+
+const DtBase* FHeadTnUri::FDtGet()
+{
+    mRes.mValid = false;
+    const TData* inp = GetInpData(EInp, inp);
+    const TNum* tailn = GetInpData(ETailn, tailn);
+    if (inp && tailn && inp->IsValid() && tailn->IsValid()) {
+	LOGF(EDbg, "Inp [" + (inp ? inp->ToString(true) : "nil") + "], Tailn [" + (tailn ? tailn->ToString(true) : "nil")  + "]");
+	int len = inp->mData.size() - tailn->mData;
+	len = (len >= 0) ? len : 0;
+	mRes.mData = inp->mData.head(len);
+	mRes.mValid = mRes.mData.isValid();
+    }
+    return &mRes;
+}
+
+
 
 
 /// Getting tail as num of elems, URI

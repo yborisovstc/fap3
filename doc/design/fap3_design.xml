@@ -3654,6 +3654,19 @@
 		<simpara>Postponed ATM. CompComp seems to be unusable at all.</simpara>
 	    </sect3>
 	</sect2>
+	<sect2 id="ds_iss_017"><title>[<glossterm id="iss_017">DS_ISS_017</glossterm>] [Open] 20231231 URI data format is inconsistent</title>
+	    <sect3><title>Description</title>
+		<simpara>There was a problem that empty URI is interpreted as invalid according to improved data format (where the data w/o specified value is
+		    considered invalid). So the "simplistic" approach was used - special URI element "current - _$" was introduced. But this element handling was not
+		    properly implemented. For instance URI _$.some_element is not interpreted correctly. This causes the problem with URI manipulation - getting head etc.</simpara>
+	    </sect3>
+	    <sect3><title>Solution</title>
+		<simpara>It is simple to introduce just data specific value for empty URI. Proposed to use '' that is aligned with string data syntax. </simpara>
+	    </sect3>
+	    <sect3><title>Status</title>
+		<simpara>Resolved 20231231</simpara>
+	    </sect3>
+	</sect2>
     </sect1>
 
     <sect1><title>Tools</title>

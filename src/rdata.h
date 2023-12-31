@@ -522,6 +522,8 @@ class RdpUtil
 	static bool sep(istream& aIs);
 	static bool val_inv(istream& aIs);
 	static bool sstring(istream& aIs, string& aRes);
+	static string strings(const string& aInp);
+	static bool isEmptyStr(const string& aInp);
 };
 
 

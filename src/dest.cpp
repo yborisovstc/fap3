@@ -808,7 +808,15 @@ void TrHeadVar::Init(const string& aIfaceName)
 	delete mFunc;
 	mFunc = NULL;
     }
-    if ((mFunc = FHeadUri::Create(this, aIfaceName)));
+    string ifaceName(aIfaceName);
+    if (ifaceName.empty()) {
+	// Output is empty, try to deduct from input
+	MDVarGet* inp = GetInp(FHeadBase::EInp);
+	if (inp) {
+	    ifaceName = inp->VarGetIfid();
+	}
+    }
+    if ((mFunc = FHeadUri::Create(this, ifaceName)));
     else {
 	LOGN(EWarn, "Failed init function");
     }
@@ -820,6 +828,46 @@ FInp* TrHeadVar::GetFinp(int aId)
     else if (aId == FHeadBase::ETail) return &mInpTail;
     else return nullptr;
 }
+
+///// Head by tail len
+
+const string TrHeadtnVar::K_InpInp = "Inp";
+const string TrHeadtnVar::K_InpTailn = "Tlen";
+
+TrHeadtnVar::TrHeadtnVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv),
+    mInpInp(K_InpInp), mInpTailn(K_InpTailn)
+{
+    AddInput(K_InpInp);
+    AddInput(K_InpTailn);
+}
+
+void TrHeadtnVar::Init(const string& aIfaceName)
+{
+    if (mFunc) {
+	delete mFunc;
+	mFunc = NULL;
+    }
+    string ifaceName(aIfaceName);
+    if (ifaceName.empty()) {
+	// Output is empty, try to deduct from input
+	MDVarGet* inp = GetInp(FHeadBase::EInp);
+	if (inp) {
+	    ifaceName = inp->VarGetIfid();
+	}
+    }
+    if ((mFunc = FHeadTnUri::Create(this, ifaceName)));
+    else {
+	LOGN(EWarn, "Failed init function");
+    }
+}
+
+FInp* TrHeadtnVar::GetFinp(int aId)
+{
+    if (aId == FHeadTnBase::EInp) return &mInpInp;
+    else if (aId == FHeadTnBase::ETailn) return &mInpTailn;
+    else return nullptr;
+}
+
 
 
 ///// Tail as num of elems

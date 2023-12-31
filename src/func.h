@@ -387,7 +387,7 @@ class FHead: public FHeadBase {
 };
 
 
-/** @brief Getting tail, URI
+/** @brief Getting head, URI
  * */
 class FHeadUri: public FHead<DGuri> {
     public:
@@ -395,6 +395,44 @@ class FHeadUri: public FHead<DGuri> {
 	FHeadUri(Host& aHost): FHead<DGuri>(aHost) {};
 	virtual const DtBase* FDtGet() override;
 };
+
+
+
+/** @brief Gettng head by given tail len. Base
+ * */
+class FHeadTnBase: public Func {
+    public:
+	using TNum = Sdata<int>;
+    public:
+	enum { EInp = EInp1, ETailn = EInp2 };
+	FHeadTnBase(Host& aHost): Func(aHost) {};
+};
+
+
+/** @brief Gettng head by given tail len
+ * */
+template <typename T>
+class FHeadTn: public FHeadTnBase {
+    public:
+	using TData = T;
+    public:
+	FHeadTn(Host& aHost): FHeadTnBase(aHost) {};
+	virtual string GetInpExpType(int aId) const override { return TData::TypeSig(); }
+	virtual string IfaceGetId() const { return TData::TypeSig();}
+    public:
+	TData mRes;
+};
+
+
+/** @brief Getting head with given tail len, URI
+ * */
+class FHeadTnUri: public FHeadTn<DGuri> {
+    public:
+	static Func* Create(Host* aHost, const string& aString);
+	FHeadTnUri(Host& aHost): FHeadTn<DGuri>(aHost) {};
+	virtual const DtBase* FDtGet() override;
+};
+
 
 
 /** @brief Gettng tail as num of elems base

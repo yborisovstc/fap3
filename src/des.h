@@ -692,8 +692,9 @@ template <typename T> void DesEIbd<T>::update()
     DesEIbb::update();
     MNode* inp = TP::mHost->getNode(TP::mUri);
     if (inp) TP::mValid = GetGData(inp, this->mUdt);
-    if (!TP::mValid) this->eHost()->logEmb(TLogRecCtg::EDbg, TLog(TP::mHost) + "Cannot get input [" + this->mUri + "]");
-    else { this->mActivated = false; this->setUpdated(); }
+    if (!TP::mValid) {
+	this->eHost()->logEmb(TLogRecCtg::EDbg, TLog(TP::mHost) + "Cannot get input [" + this->mUri + "]");
+    } else { this->mActivated = false; this->setUpdated(); }
 }
 
 
@@ -715,8 +716,9 @@ template <typename T> void DesEIbs<T>::update()
     DesEIbb::update();
     MNode* inp = TP::mHost->getNode(TP::mUri);
     if (inp) TP::mValid = GetSData(inp, this->mUdt);
-    if (!TP::mValid) this->eHost()->logEmb(TLogRecCtg::EDbg, TLog(TP::mHost) + "Cannot get input [" + this->mUri + "]");
-    else { this->mActivated = false; this->setUpdated(); }
+    if (!TP::mValid) {
+	this->eHost()->logEmb(TLogRecCtg::EDbg, TLog(TP::mHost) + "Cannot get input [" + this->mUri + "]");
+    } else { this->mActivated = false; this->setUpdated(); }
 }
 
 

@@ -45,11 +45,13 @@ const ProvDef::TFReg ProvDef::mReg ( {
 	Item<CpStateInp>(), Item<CpStateOutp>(), Item<ExtdStateInp>(), Item<ExtdStateOutp>(), Item<ExtdStateOutpI>(), Item<ExtdStateMnodeOutp>(),
 	Item<CpStateMnodeInp>(),  Item<CpStateMnodeOutp>(),
 	Item<DesLauncher>(), Item<Sout>(), Item<ADes>(), Item<Socket>(),
+	/* Transitions */
 	Item<TrMinVar>(), Item<TrMaxVar>(), Item<TrSwitchBool>(), Item<TrSwitchBool2>(), Item<TrCmpVar>(), Item<TrApndVar>(),
 	Item<TrAndVar>(), Item<TrOrVar>(), Item<TrNegVar>(), Item<TrToUriVar>(), Item<TrTostrVar>(),
 	Item<TrMutNode>(), Item<TrMutConn>(), Item<TrMutDisconn>(), Item<TrMutCont>(), Item<TrHash>(), Item<TrPair>(),
 	Item<TrSizeVar>(), Item<TrAtVar>(), Item<TrAtgVar>(), Item<TrMplVar>(), Item<TrDivVar>(), Item<TrSvldVar>(), Item<TrInpSel>(), Item<TrInpCnt>(),
 	Item<TrTuple>(), Item<TrTupleSel>(), Item<TrChr>(), Item<TrChrc>(), Item<TrIsValid>(), Item<TrTailVar>(), Item<TrHeadVar>(), Item<TrTailnVar>(),
+        Item<TrHeadtnVar>(), 
 	/* Des adapters */
 	Item<AMnodeAdp>(), Item<AMelemAdp>(), Item<AMntp>(), Item<DAdp>(),
 	/* SDCs */

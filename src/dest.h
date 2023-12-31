@@ -428,6 +428,22 @@ class TrHeadVar: public TrVar
 	static const string K_InpInp, K_InpTail;
 };
 
+/** @brief Transition agent "Head by tail length"
+ * */
+class TrHeadtnVar: public TrVar
+{
+    public:
+	static const char* Type() { return "TrHeadtnVar";}
+	TrHeadtnVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From ATrVar
+	virtual void Init(const string& aIfaceName) override;
+	virtual FInp* GetFinp(int aId) override;
+    protected:
+	FInp mInpInp, mInpTailn;
+	static const string K_InpInp, K_InpTailn;
+};
+
+
 /** @brief Transition agent "Tail as num of elems"
  * */
 class TrTailnVar: public TrVar

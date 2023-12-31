@@ -14,8 +14,8 @@
 class Ut_des : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_des);
-    /*
     CPPUNIT_TEST(test_des_data);
+    /*
     CPPUNIT_TEST(test_des_1);
     CPPUNIT_TEST(test_des_ades_1);
     CPPUNIT_TEST(test_des_dmc_1);
@@ -543,8 +543,31 @@ void Ut_des::test_des_data()
 {
     cout << endl << "=== Test of DES data  ===" << endl;
 
+    // Empty string
+    Sdata<string> ds1;
+    ds1.FromString("SS ''");
+    string ds1s = ds1.ToString();
+    CPPUNIT_ASSERT_MESSAGE("Failed empty string", ds1s == "SS ''");
+
+    // Invalid URI
     DGuri du1;
     du1.FromString("URI  ");
+    string du1s = du1.ToString();
+    CPPUNIT_ASSERT_MESSAGE("Failed invalid URI", du1s == "URI <ERR>");
+
+    // Empty URI
+    DGuri du2;
+    du2.FromString("URI ''");
+    string du2s = du2.ToString();
+    CPPUNIT_ASSERT_MESSAGE("Failed empty URI", du2s == "URI ''");
+
+    // Regular URI
+    DGuri du3;
+    du3.FromString("URI  n1.n2");
+    string du3s = du3.ToString();
+    CPPUNIT_ASSERT_MESSAGE("Failed regular URI", du3s == "URI n1.n2");
+
+
 
     /*
     const string specn("ut_des_utl_1");

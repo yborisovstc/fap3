@@ -21,6 +21,7 @@ const string KSep = " \t\n\r";
 static const string KSCompDataStart = string(1, KCompDataStart);
 static const string KSCompDataEnd = string(1, KCompDataEnd);
 static const string  KSSStringDelim = string(1, KSStringDelim);
+static const string  KSSEmptyString = string(2, KSStringDelim);
 
 
 // Scalar data
@@ -1099,4 +1100,12 @@ bool RdpUtil::sstring(istream& aIs, string& aRes)
     return res;
 }
 
+string RdpUtil::strings(const string& aInp)
+{
+    return  KSSStringDelim + aInp + KSSStringDelim;
+}
 
+bool RdpUtil::isEmptyStr(const string& aInp)
+{
+    return (aInp == KSSEmptyString);
+}

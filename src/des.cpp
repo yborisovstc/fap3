@@ -1843,8 +1843,9 @@ void DesEIbMnode::update()
 	    mUdt = mmtl->pair(); res = true;
 	}
     }
-    if (!res) this->eHost()->logEmb(TLogRecCtg::EDbg, TLog(TP::mHost) + "Cannot get input [" + this->mUri + "]");
-    else {
+    if (!res) {
+        this->eHost()->logEmb(TLogRecCtg::EDbg, TLog(TP::mHost) + "Cannot get input [" + this->mUri + "]");
+    } else {
 	this->mActivated = false;
 	this->setUpdated();
     }
