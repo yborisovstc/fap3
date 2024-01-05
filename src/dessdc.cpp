@@ -693,8 +693,10 @@ bool ASdcConn::getState(bool aConf)
 		LOGN(EDbg, "Cannot find CP [" + (v1n ? v2s.mData : v1s.mData) + "]");
 	    }
 	} else {
-	    LOGN(EDbg, "Managed agent is not set");
+	    LOGN(EDbg, "Vertexes URIs are not valid: " + string(v1s.IsValid() ? "v2" : "v1"));
 	}
+    } else {
+        LOGN(EDbg, "Managed agent is not set");
     }
     return res;
 }
