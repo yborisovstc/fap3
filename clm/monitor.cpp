@@ -20,7 +20,7 @@ const string Monitor::KDefPrompt = ">";
 const string K_Chr2Ext = "chs";
 
 /** Generator of input handlers factory registry item */
-template<typename T> pair<string, Monitor::TIhFact*> Item() {
+template<typename T> constexpr pair<string, Monitor::TIhFact*> Item() {
     return pair<string, Monitor::TIhFact*>
 	(T::command(), T::create);
 }
@@ -69,17 +69,36 @@ void Monitor::initEnv(bool aVerbose)
     }
 }
 
-
-void Monitor::runModel()
+void Monitor::runModel(int aCount)
 {
     assert(mEnv != nullptr);
     mEnv->constructSystem();
     if (mEnv->Root() != NULL) {
-	bool res = mEnv->RunSystem(0, mIdleCyclesLimit);
+	bool res = mEnv->RunSystem(aCount, mIdleCyclesLimit);
 	if (!res) {
 	    mEnv->Logger()->Write(EErr, NULL, "Monitor: Failed running the model");
 	}
+    } else {
+	cout << "Error: model construction failed" << endl;
     }
+}
+
+void Monitor::continueRunningModel(int aCount)
+{
+    assert(mEnv != nullptr);
+    if (mEnv->Root() != NULL) {
+	bool res = mEnv->RunSystem(aCount, mIdleCyclesLimit);
+	if (!res) {
+	    mEnv->Logger()->Write(EErr, NULL, "Monitor: Failed running the model");
+	}
+    } else {
+	cout << "Error: model is not running" << endl;
+    }
+}
+
+int Monitor::modelRunCount() const
+{
+    return (mEnv->Launcher()) ? mEnv->Launcher()->GetCounter() : 0;
 }
 
 bool Monitor::setProfPath(const string& aPath)
@@ -137,21 +156,24 @@ bool Monitor::run()
 	string input(buf); 
 
 	if (!input.empty()) {
-	    if (input == "exit") {
+	    if (input == "q") {
 		end = true;
 	    } else {
 		size_t pos = input.find_first_of(' ');
 		string command = input.substr(0, pos);
-		string args = input.substr(pos + 1);
-		// Create handler
-		unique_ptr<InputHandler> handler(createHandler(command));
-		if (handler.get() == nullptr) {
-		    cout << "Error: unknown command [" << command << "]";
-		} else {
-		    handler->handle(args);
-		}
-	    }
-	}
+                string args;
+                if (pos != string::npos) {
+                    args = input.substr(pos + 1);
+                }
+                // Create handler
+                unique_ptr<InputHandler> handler(createHandler(command));
+                if (handler.get() == nullptr) {
+                    cout << "Error: unknown command [" << command << "]" << endl;
+                } else {
+                    handler->handle(args);
+                }
+            }
+        }
     } while (!end);
     return res;
 }
@@ -261,6 +283,11 @@ bool Monitor::addEVar(const string& aName, const string& aValue)
     return res.second;
 }
 
+bool Monitor::addBp(int aSidx)
+{
+    mBps.push_back(aSidx);
+    return true;
+}
 
 
 
@@ -270,21 +297,68 @@ bool Monitor::addEVar(const string& aName, const string& aValue)
 class IhRun: public InputHandler
 {
     public:
-	static const string command() { return "run";}
+	static const string command() { return "r";}
 	static InputHandler* create(Monitor& aHost) { return new IhRun(aHost);}
 
 	IhRun(Monitor& aHost): InputHandler(aHost) {}
-	virtual bool handle(const string& aArgs) override {
-	    // Init env and run
-	    mHost.initEnv();
-	    mHost.runModel();
-	    bool sdres = mHost.saveProfilerData();
-	    if (!sdres) {
-		cout << "Error on saving profile data to file";
-	    }
-	    return true;
-	}
+        virtual bool handle(const string& aArgs) override {
+            bool res = false;
+            int count = -1;
+            if (aArgs.size() == 0) {
+                count = 0;
+            } else {
+                try {
+                    count = stoi(aArgs);
+                } catch (exception& e) {
+                    cout << "wrong argument" << endl;
+                }
+            }
+            if (count >= 0) {
+                // Init env and run
+                mHost.initEnv();
+                mHost.runModel(count);
+                bool sdres = mHost.saveProfilerData();
+                cout << "Count: " << mHost.modelRunCount() << endl;
+                if (!sdres) {
+                    cout << "Error on saving profile data to file";
+                } else {
+                    res = true;
+                }
+            }
+            return res;
+        }
 };
+
+/** Handler of 'continue running' command
+ * Creates environment  and runs model with given spec
+ */
+class IhContinue: public InputHandler
+{
+    public:
+	static const string command() { return "c";}
+	static InputHandler* create(Monitor& aHost) { return new IhContinue(aHost);}
+	IhContinue(Monitor& aHost): InputHandler(aHost) {}
+        virtual bool handle(const string& aArgs) override {
+            bool res = false;
+            int count = -1;
+            if (aArgs.size() == 0) {
+                count = 0;
+            } else {
+                try {
+                    count = stoi(aArgs);
+                } catch (exception& e) {
+                    cout << "wrong argument" << endl;
+                }
+            }
+            if (count >= 0) {
+                mHost.continueRunningModel(count);
+                cout << "Count: " << mHost.modelRunCount() << endl;
+                res = true;
+            }
+            return res;
+        }
+};
+
 
 /** Handler of 'save' command
  * Saves models spec (OSM)
@@ -301,10 +375,68 @@ class IhSave: public InputHandler
 	}
 };
 
+/** Handler of 'step' command
+ */
+class IhStep: public InputHandler
+{
+    public:
+	static const string command() { return "s";}
+	static InputHandler* create(Monitor& aHost) { return new IhStep(aHost);}
+	IhStep(Monitor& aHost): InputHandler(aHost) {}
+	virtual bool handle(const string& aArgs) override {
+	    bool res = mHost.saveModel(aArgs);
+	    return res;
+	}
+};
+
+/** Handler of 'add breakpoint' command
+ */
+class IhAddBp: public InputHandler
+{
+    public:
+        static const string command() { return "b";}
+        static InputHandler* create(Monitor& aHost) { return new IhAddBp(aHost);}
+        IhAddBp(Monitor& aHost): InputHandler(aHost) {}
+        virtual bool handle(const string& aArgs) override {
+            bool res = false;
+            int sidx = -1;
+            try {
+                sidx = stoi(aArgs);
+            } catch (exception& e) {
+                cout << "wrong step index" << endl;
+            }
+            if (sidx >= 0) {
+                bool res = mHost.addBp(sidx);
+            }
+            return res;
+        }
+};
+
+/** Handler of 'info breakpoints' command
+ */
+class IhInfoBps: public InputHandler
+{
+    public:
+        static const string command() { return "ib";}
+        static InputHandler* create(Monitor& aHost) { return new IhInfoBps(aHost);}
+        IhInfoBps(Monitor& aHost): InputHandler(aHost) {}
+        virtual bool handle(const string& aArgs) override {
+            bool res = false;
+            auto bps = mHost.bps();
+            for (int i = 0; i < bps.size(); i++) {
+                cout << i << ": " << bps.at(i) << endl;
+            }
+            return res;
+        }
+};
+
+
+
+
 
 const Monitor::TIhReg Monitor::mIhReg = {
     {IhRun::command(), IhRun::create},
-    Item<IhSave>()
+    Item<IhSave>(), Item<IhAddBp>(), Item<IhInfoBps>(), Item<IhContinue>(),
 };
 
 

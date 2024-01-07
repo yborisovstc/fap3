@@ -523,6 +523,7 @@ class DesLauncher: public Des, public MLauncher
 	virtual string MLauncher_Uid() const override {return getUid<MLauncher>();}
 	virtual bool Run(int aCount = 0, int aIdleCount = 0) override;
 	virtual bool Stop() override;
+	virtual int GetCounter() const override { return mCounter; }
 	// Local
 	virtual void OnIdle();
     protected:

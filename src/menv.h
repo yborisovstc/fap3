@@ -5,6 +5,7 @@
 #include "mprov.h"
 #include "mlog.h"
 #include "mprof.h"
+#include "mlauncher.h"
 
 
 /** @brief Imprort manager interface
@@ -50,6 +51,8 @@ class MEnv : public MIface
 	/** @brief Gets root node */
 	// TODO Security gap, remove
 	virtual MNode* Root() const = 0;
+	/** @brief Gets root system launcher */
+	virtual MLauncher* Launcher() const = 0;
 	/** @brief Adds provider */
 	virtual bool addProvider(MProvider* aProv) = 0;
 	/** @brief Removes provider */

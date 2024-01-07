@@ -23,6 +23,8 @@ class Monitor
 	/** @brief Environment variables type: name, value */
 	using TEVarElem = pair<string, string>;
 	using TEVars = map<string, string>;
+        /** @brief Breakpoints */
+        using TBps = vector<int>;
     public:
 	Monitor();
 	~Monitor();
@@ -32,7 +34,9 @@ class Monitor
 	bool setLogFile(const string& aPath);
 	bool setProfPath(const string& aPath);
 	void initEnv(bool aVerbose = true);
-	void runModel();
+	void runModel(int aCount = 0);
+	void continueRunningModel(int aCount = 0);
+        int modelRunCount() const;
 	bool saveModel(const string& aPath);
 	bool saveProfilerData();
 	/** @brief Runs user interaction loop */
@@ -55,6 +59,9 @@ class Monitor
 	bool addEVar(const string& aName, const string& aValue);
 	/** @brief Sets model idle cycles limit */
 	void SetIdleCyclesLimit(int aLimit);
+        /** @brief Add breakpoint */
+        bool addBp(int aSidx);
+        const TBps& bps() const { return mBps; }
     protected:
 	/** @brief Creates input handler for given command */
 	InputHandler* createHandler(const string& aCmd);
@@ -74,6 +81,7 @@ class Monitor
 	static const TIhReg mIhReg;
 	TEVars mEVars; /*!< Env variables */
 	int mIdleCyclesLimit;  /*! Idle cycles limit */
+        TBps mBps;             /*! Breakpoints */
 };
 
 /** Input handler base */

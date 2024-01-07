@@ -46,6 +46,20 @@ MIface* Elem::MNode_getLif(const char *aType)
     return res;
 }
 
+string Elem::parentName() const
+{
+    string res;
+    GUri uri;
+    const MParent* prnt = parent();
+    if (prnt) {
+        prnt->getUriPrnt(uri);
+        if (uri.isValid()) {
+            res = uri.tailn(1);
+        }
+    }
+    return res;
+}
+
 void Elem::notifyParentMutated(const TMut& aMut)
 {
 }
@@ -222,6 +236,12 @@ MParent* Elem::parent()
     return fp ? fp->provided() : nullptr;
 }
 
+const MParent* Elem::parent() const
+{
+    auto fp = const_cast<TInhTreeNode&>(mInode).firstPair();
+    return fp ? fp->provided() : nullptr;
+}
+
 bool Elem::attachChild(MChild* aChild)
 {
     return mInode.binded()->connect(aChild->cP());
@@ -245,4 +265,9 @@ MParent* Elem::asParent()
 MChild::TCp* Elem::cP()
 {
     return &mInode;
+}
+
+void Elem::getUriPrnt(GUri& aUri) const
+{
+    getUri(aUri);
 }

@@ -24,6 +24,7 @@ class Unit : public Node, public MUnit, public MIfProvOwner
 	// From MNode
 	virtual MIface* MNode_getLif(const char *aType) override;
 	virtual MIface* MOwned_getLif(const char *aType);
+	virtual string parentName() const { return Type(); }
 	// From MUnit
 	virtual string MUnit_Uid() const override {  return getUid<MUnit>();}
 	virtual MIface* MUnit_getLif(const char *aType) override;

@@ -28,6 +28,12 @@ class MParent : public MIface
 	/** @brief Create heir as parent */
 	virtual MNode* createHeirPrnt(const string& aName) = 0;
 	virtual bool attachChild(MChild* aChild) = 0;
+	/** @brief Get URI (absolutie) as parent
+         * This method is intended mostly for navigation thru system
+         * TODO consider alternative way: to get MNode via Lif, or maybe introduce new "light" MNode
+         * iface to avoid vulnerability with getting MNode
+         * */
+	virtual void getUriPrnt(GUri& aUri) const = 0;
 };
 
 

@@ -19,6 +19,7 @@ class Elem: public Unit, public MElem, public MParent, public MChild
 	virtual ~Elem();
 	// From MNode.MIface
 	virtual MIface* MNode_getLif(const char *aType) override;
+	virtual string parentName() const override;
 	// From MElem.MIface
 	virtual string MElem_Uid() const override { return getUid<MElem>();}
 	virtual MIface* MElem_getLif(const char *aType) override;
@@ -39,6 +40,7 @@ class Elem: public Unit, public MElem, public MParent, public MChild
 	virtual bool onChildRenaming(MChild* aChild, const string& aNewName) override;
 	virtual MNode* createHeirPrnt(const string& aName) override;
 	virtual bool attachChild(MChild* aChild) override;
+	virtual void getUriPrnt(GUri& aUri) const override;
 	// From MChild
 	virtual string MChild_Uid() const override {return getUid<MParent>();}
 	virtual MIface* MChild_getLif(const char *aType) override;
@@ -52,6 +54,7 @@ class Elem: public Unit, public MElem, public MParent, public MChild
 	virtual MNode* mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx) override;
 	virtual void onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx) override;
 	MParent* parent();
+	const MParent* parent() const;
 	// Local
 	// TODO Should it be the method of MParent as attachChild is?
 	bool detachChild(MChild* aChild);

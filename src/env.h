@@ -61,6 +61,7 @@ class Env: public MEnv
 	inline virtual MProfiler *profiler() override { return mProf;}
 	virtual MImportMgr* ImpsMgr() override { return mImpMgr;}
 	virtual MNode* Root() const override;
+	virtual MLauncher* Launcher() const { return mLauncher;}
 	virtual bool RunSystem(int aCount = 0, int aIdleCount = 0) override;
 	virtual bool StopSystem() override;
 	bool addProvider(MProvider* aProv) override;

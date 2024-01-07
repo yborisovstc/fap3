@@ -1599,13 +1599,14 @@ bool DesLauncher::Run(int aCount, int aIdleCount)
     LOGN(EInfo, "START");
     PFL_DUR_STAT_START(PEvents::EDurStat_LaunchRun);
     while (!mStop && (aCount == 0 || cnt < aCount) && (aIdleCount == 0 || idlecnt < aIdleCount)) {
+        mCounter++;
 #ifdef DES_LISTS_SWAP
 	if (!mActive->empty()) {
 #else
 	if (!mActive.empty()) {
 #endif
 	    //updateCounter(cnt); // TODO Is it needed?
-	    LOGN(EDbg, ">>> Update [" + to_string(cnt) + "], count: " + to_string(countOfActive()) +
+	    LOGN(EDbg, ">>> Update [" + to_string(mCounter) + "], count: " + to_string(countOfActive()) +
 		    ", dur: " + PFL_DUR_VALUE(PEvents::EDurStat_LaunchActive) +
 		    ", inv: " + PFL_DUR_STAT_CNT(PEvents::EDurStat_UInvldIrm));
 	    PFL_DUR_START(PEvents::EDurStat_LaunchActive);
@@ -1616,13 +1617,13 @@ bool DesLauncher::Run(int aCount, int aIdleCount)
 	    PFL_DUR_STAT_START(PEvents::EDurStat_LaunchConfirm);
 #ifdef DES_LISTS_SWAP
 	    if (isLogLevel(EDbg)) {
-		LOGN(EDbg, ">>> Confirm [" + to_string(cnt) + "]");
+		LOGN(EDbg, ">>> Confirm [" + to_string(mCounter) + "]");
 	    }
 	    //outputCounter(cnt); // TODO Is it needed?
 	    confirm();
 #else
 	    if (!mUpdated.empty()) {
-		LOGN(EDbg, ">>> Confirm [" + to_string(cnt) + "]");
+		LOGN(EDbg, ">>> Confirm [" + to_string(mCounter) + "]");
 		//outputCounter(cnt); // TODO Is it needed?
 		confirm();
 	    }
@@ -1639,56 +1640,56 @@ bool DesLauncher::Run(int aCount, int aIdleCount)
 	    OnIdle();
 	    idlecnt++;
 	}
-	}
+    }
 	PFL_DUR_STAT_REC(PEvents::EDurStat_LaunchRun);
 	LOGN(EInfo, "END " + PFL_DUR_STAT_FIELD(PEvents::EDurStat_LaunchRun, PIndFId::EStat_SUM));
 	return res;
-    }
+}
 
 
-    bool DesLauncher::Stop()
-    {
-	mStop = true;
-	return true;
-    }
+bool DesLauncher::Stop()
+{
+    mStop = true;
+    return true;
+}
 
-    void DesLauncher::OnIdle()
-    {
-	this_thread::sleep_for(std::chrono::milliseconds(100));
-	//mStop = true;
-    }
+void DesLauncher::OnIdle()
+{
+    this_thread::sleep_for(std::chrono::milliseconds(100));
+    //mStop = true;
+}
 
-    MIface* DesLauncher::MOwned_getLif(const char *aType)
-    {
-	MIface* res = nullptr;
-	if (res = checkLif<MLauncher>(aType));
-	else res = Des::MOwned_getLif(aType);
-	return res;
-    }
+MIface* DesLauncher::MOwned_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MLauncher>(aType));
+    else res = Des::MOwned_getLif(aType);
+    return res;
+}
 
-    MIface* DesLauncher::MNode_getLif(const char *aType)
-    {
-	MIface* res = nullptr;
-	if (res = checkLif<MLauncher>(aType));
-	else res = Des::MNode_getLif(aType);
-	return res;
+MIface* DesLauncher::MNode_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MLauncher>(aType));
+    else res = Des::MNode_getLif(aType);
+    return res;
 }
 
 void DesLauncher::updateCounter(int aCnt)
 {
     MNode* ctrn = getNode(KUri_Counter);
     if (ctrn) {
-	MContentOwner* cnto = ctrn ? ctrn->lIf(cnto) : nullptr;
-	if (cnto) {
-	    cnto->setContent("", string("SS " + to_string(aCnt)));
-	}
+        MContentOwner* cnto = ctrn ? ctrn->lIf(cnto) : nullptr;
+        if (cnto) {
+            cnto->setContent("", string("SS " + to_string(aCnt)));
+        }
     }
 }
 
 void DesLauncher::outputCounter(int aCnt)
 {
     if (getCont(KCont_Output)) {
-	cout << "Count : " << aCnt << endl;
+        cout << "Count : " << aCnt << endl;
     }
 }
 
@@ -1709,100 +1710,100 @@ bool DesAs::Run(int aCount, int aIdleCount)
     int cnt = 0;
     int idlecnt = 0;
     do {
-	/*
-	MNode* ss = nullptr;
-	auto owdCp = owner()->firstPair();
-	while (owdCp) {
-	    MNode* compn = owdCp->provided()->lIf(compn);
-	    MDesSyncable* comps = compn ? compn->lIf(comps) : nullptr;
-	    if (comps) {
-		if (ss == nullptr) {
-		    ss = compn;
-		} else {
-		    // TODO Is this limination really needed?
-		    LOGN(EErr, "Subsystems number > 1");
-		}
-	    }
-	    owdCp = owner()->nextPair(owdCp);
-	}
-	if (ss == nullptr) {
-	    LOGN(EErr, "No subsystems found");
-	    break;
-	}
-	// Initiate subsystem, ref ds_desas_sis_iph
-	//MNode* ss = owner()->firstPair()->provided()->lIf(ss);
-	*/
-	MNode* ss = getNode(K_SsUri);
-	if (ss == nullptr) {
-	    LOGN(EErr, "No subsystem [" + K_SsUri + "] found");
-	    break;
-	}
-	MNode* ssinit = ss->getNode(K_SsInitUri);
-	if (!ssinit) {
-	    LOGN(EErr, "Couldn't find Init state");
-	    res = false; break;
-	}
-	MContentOwner* cntInit = ssinit->lIf(cntInit);
-	if (!cntInit) {
-	    LOGN(EErr, "Couldn't find Init state content");
-	    res = false; break;
-	}
-	cntInit->setContent("", "SB true");
+        /*
+           MNode* ss = nullptr;
+           auto owdCp = owner()->firstPair();
+           while (owdCp) {
+           MNode* compn = owdCp->provided()->lIf(compn);
+           MDesSyncable* comps = compn ? compn->lIf(comps) : nullptr;
+           if (comps) {
+           if (ss == nullptr) {
+           ss = compn;
+           } else {
+        // TODO Is this limination really needed?
+        LOGN(EErr, "Subsystems number > 1");
+        }
+        }
+        owdCp = owner()->nextPair(owdCp);
+        }
+        if (ss == nullptr) {
+        LOGN(EErr, "No subsystems found");
+        break;
+        }
+        // Initiate subsystem, ref ds_desas_sis_iph
+        //MNode* ss = owner()->firstPair()->provided()->lIf(ss);
+        */
+        MNode* ss = getNode(K_SsUri);
+        if (ss == nullptr) {
+            LOGN(EErr, "No subsystem [" + K_SsUri + "] found");
+            break;
+        }
+        MNode* ssinit = ss->getNode(K_SsInitUri);
+        if (!ssinit) {
+            LOGN(EErr, "Couldn't find Init state");
+            res = false; break;
+        }
+        MContentOwner* cntInit = ssinit->lIf(cntInit);
+        if (!cntInit) {
+            LOGN(EErr, "Couldn't find Init state content");
+            res = false; break;
+        }
+        cntInit->setContent("", "SB true");
 #ifdef DES_LISTS_SWAP
-	if (!mActive->empty()) {
-	    LOGN(EInfo, ">>> Init update");
-	    Des::update();
-	    if (!mUpdated->empty()) {
-		LOGN(EInfo, ">>> Init confirm");
-		Des::confirm();
-	    }
-	}
+        if (!mActive->empty()) {
+            LOGN(EInfo, ">>> Init update");
+            Des::update();
+            if (!mUpdated->empty()) {
+                LOGN(EInfo, ">>> Init confirm");
+                Des::confirm();
+            }
+        }
 #else
-	if (!mActive.empty()) {
-	    LOGN(EInfo, ">>> Init update");
-	    Des::update();
-	    if (!mUpdated.empty()) {
-		LOGN(EInfo, ">>> Init confirm");
-		Des::confirm();
-	    }
-	}
+        if (!mActive.empty()) {
+            LOGN(EInfo, ">>> Init update");
+            Des::update();
+            if (!mUpdated.empty()) {
+                LOGN(EInfo, ">>> Init confirm");
+                Des::confirm();
+            }
+        }
 #endif
-	cntInit->setContent("", "SB false");
-	// Run subsystem
-	while (!mStop && (aCount == 0 || cnt < aCount) && (aIdleCount == 0 || idlecnt < aIdleCount)) {
+        cntInit->setContent("", "SB false");
+        // Run subsystem
+        while (!mStop && (aCount == 0 || cnt < aCount) && (aIdleCount == 0 || idlecnt < aIdleCount)) {
 #ifdef DES_LISTS_SWAP
-	    if (!mActive->empty()) {
-		updateCounter(cnt);
-		LOGN(EInfo, ">>> Update [" + to_string(cnt) + "]");
-		Des::update();
-		if (!mUpdated->empty()) {
-		    LOGN(EInfo, ">>> Confirm [" + to_string(cnt) + "]");
-		    outputCounter(cnt);
-		    Des::confirm();
-		}
-		cnt++;
-	    } else {
-		OnIdle();
-		idlecnt++;
-	    }
+            if (!mActive->empty()) {
+                updateCounter(cnt);
+                LOGN(EInfo, ">>> Update [" + to_string(cnt) + "]");
+                Des::update();
+                if (!mUpdated->empty()) {
+                    LOGN(EInfo, ">>> Confirm [" + to_string(cnt) + "]");
+                    outputCounter(cnt);
+                    Des::confirm();
+                }
+                cnt++;
+            } else {
+                OnIdle();
+                idlecnt++;
+            }
 
 #else
-	    if (!mActive.empty()) {
-		updateCounter(cnt);
-		LOGN(EInfo, ">>> Update [" + to_string(cnt) + "]");
-		Des::update();
-		if (!mUpdated.empty()) {
-		    LOGN(EInfo, ">>> Confirm [" + to_string(cnt) + "]");
-		    outputCounter(cnt);
-		    Des::confirm();
-		}
-		cnt++;
-	    } else {
-		OnIdle();
-		idlecnt++;
-	    }
+            if (!mActive.empty()) {
+                updateCounter(cnt);
+                LOGN(EInfo, ">>> Update [" + to_string(cnt) + "]");
+                Des::update();
+                if (!mUpdated.empty()) {
+                    LOGN(EInfo, ">>> Confirm [" + to_string(cnt) + "]");
+                    outputCounter(cnt);
+                    Des::confirm();
+                }
+                cnt++;
+            } else {
+                OnIdle();
+                idlecnt++;
+            }
 #endif
-	}
+        }
     } while (false);
     return res;
 }
@@ -1814,7 +1815,7 @@ void DesAs::update()
     bool res = Run(0, 1);
     mRunning = false;
     if (!res) {
-	LOGN(EErr, "Failed run");
+        LOGN(EErr, "Failed run");
     }
     PFL_DUR_STAT_REC(PEvents::EDurStat_DesAsUpd);
 }
@@ -1822,7 +1823,7 @@ void DesAs::update()
 void DesAs::setActivated()
 {
     if (!mRunning) {
-	DesLauncher::setActivated();
+        DesLauncher::setActivated();
     }
 }
 
@@ -1837,17 +1838,17 @@ void DesEIbMnode::update()
     MNode* inp = TP::mHost->getNode(TP::mUri);
     MUnit* inpu = inp ? inp->lIf(inpu) : nullptr;
     if (inpu) {
-	// Resolve MLink first to avoid MNode wrong resolution
-	MLink* mmtl = inpu->getSif(mmtl);
-	if (mmtl) {
-	    mUdt = mmtl->pair(); res = true;
-	}
+        // Resolve MLink first to avoid MNode wrong resolution
+        MLink* mmtl = inpu->getSif(mmtl);
+        if (mmtl) {
+            mUdt = mmtl->pair(); res = true;
+        }
     }
     if (!res) {
         this->eHost()->logEmb(TLogRecCtg::EDbg, TLog(TP::mHost) + "Cannot get input [" + this->mUri + "]");
     } else {
-	this->mActivated = false;
-	this->setUpdated();
+        this->mActivated = false;
+        this->setUpdated();
     }
 }
 
@@ -1860,10 +1861,10 @@ void DesEOstb::NotifyInpsUpdated()
     MUnit* cpu = cp ? cp->lIf(cpu) : nullptr;
     auto ifaces = cpu->getIfs<MDesInpObserver>();
     if (ifaces) for (auto ifc : *ifaces) {
-	MDesInpObserver* ifco = reinterpret_cast<MDesInpObserver*>(ifc);
-	if (ifco) {
-	    ifco->onInpUpdated();
-	}
+        MDesInpObserver* ifco = reinterpret_cast<MDesInpObserver*>(ifc);
+        if (ifco) {
+            ifco->onInpUpdated();
+        }
     }
 }
 
@@ -1904,27 +1905,27 @@ MIface* DesCtxSpl::MDesCtxSpl_getLif(const char *aType)
 void DesCtxSpl::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 {
     if (aName == MDesCtxSpl::Type()) {
-	MIfReq* ireq = aReq->provided()->tail(); // Initial requestor
-	if (ireq) {
-	    MUnit* ownu = Owner()->lIf(ownu);
-	    if (ownu) {
-		auto ifaces = ownu->getIfs<MDesCtxSpl>();
-		// Filter out same id suppliers, ref ds_dctx_dic_cs Solution_2
-		if (ifaces) for (auto ifc : *ifaces) {
-		    MDesCtxSpl* spl = reinterpret_cast<MDesCtxSpl*>(ifc);
-		    if (spl->getSplId() != getSplId()) {
-			addIfpLeaf(spl, aReq);
-		    }
-		}
-	    }
-	} else { // Propagate request to owner
-	    MUnit* ownu = Owner()->lIf(ownu);
-	    if (ownu) {
-		ownu->resolveIface(aName, aReq);
-	    }
-	}
+        MIfReq* ireq = aReq->provided()->tail(); // Initial requestor
+        if (ireq) {
+            MUnit* ownu = Owner()->lIf(ownu);
+            if (ownu) {
+                auto ifaces = ownu->getIfs<MDesCtxSpl>();
+                // Filter out same id suppliers, ref ds_dctx_dic_cs Solution_2
+                if (ifaces) for (auto ifc : *ifaces) {
+                    MDesCtxSpl* spl = reinterpret_cast<MDesCtxSpl*>(ifc);
+                    if (spl->getSplId() != getSplId()) {
+                        addIfpLeaf(spl, aReq);
+                    }
+                }
+            }
+        } else { // Propagate request to owner
+            MUnit* ownu = Owner()->lIf(ownu);
+            if (ownu) {
+                ownu->resolveIface(aName, aReq);
+            }
+        }
     } else {
-	Des::resolveIfc(aName, aReq);
+        Des::resolveIfc(aName, aReq);
     }
 }
 
@@ -1947,21 +1948,21 @@ bool DesCtxSpl::bindCtx(const string& aCtxId, MVert* aCtx)
     MNode* ctxn =  getComp(aCtxId);
     MVert* ctxv = ctxn ? ctxn->lIf(ctxv) : nullptr;
     if (ctxv) {
-	res = MVert::connect(ctxv, aCtx);
+        res = MVert::connect(ctxv, aCtx);
     } else {
-	// Redirect to next supplier in the stack
-	// To use dedicated iface provider instead of finding supplier here
-	MUnit* ownu = Owner()->lIf(ownu);
-	if (ownu) {
-	    auto ifaces = ownu->getIfs<MDesCtxSpl>();
-	    // Find same id supplier
-	    if (ifaces) for (auto ifc : *ifaces) {
-		MDesCtxSpl* spl = reinterpret_cast<MDesCtxSpl*>(ifc);
-		if (spl->getSplId() == getSplId()) {
-		    res = spl->bindCtx(aCtxId, aCtx);
-		}
-	    }
-	}
+        // Redirect to next supplier in the stack
+        // To use dedicated iface provider instead of finding supplier here
+        MUnit* ownu = Owner()->lIf(ownu);
+        if (ownu) {
+            auto ifaces = ownu->getIfs<MDesCtxSpl>();
+            // Find same id supplier
+            if (ifaces) for (auto ifc : *ifaces) {
+                MDesCtxSpl* spl = reinterpret_cast<MDesCtxSpl*>(ifc);
+                if (spl->getSplId() == getSplId()) {
+                    res = spl->bindCtx(aCtxId, aCtx);
+                }
+            }
+        }
     }
     return res;
 }
@@ -2015,11 +2016,11 @@ void DesCtxCsm::update()
     // TODO init can cause des activation but it is prohibited on update phase, move to confirm
 #ifndef DES_LISTS_SWAP
     if (!mInitialized) {
-	mInitFailed = !init();
-	if (mInitFailed) {
-	    LOGN(EErr, "Init failed");
-	}
-	mInitialized = true;
+        mInitFailed = !init();
+        if (mInitFailed) {
+            LOGN(EErr, "Init failed");
+        }
+        mInitialized = true;
     }
 #endif
 }
@@ -2029,11 +2030,11 @@ void DesCtxCsm::confirm()
     Des::confirm();
 #ifdef DES_LISTS_SWAP
     if (!mInitialized) {
-	mInitFailed = !init();
-	if (mInitFailed) {
-	    LOGN(EErr, "Init failed");
-	}
-	mInitialized = true;
+        mInitFailed = !init();
+        if (mInitFailed) {
+            LOGN(EErr, "Init failed");
+        }
+        mInitialized = true;
     }
 #endif
 }
@@ -2045,17 +2046,17 @@ bool DesCtxCsm::init()
     bool res = false;
     MUnit* ownu = Owner()->lIf(ownu);
     if (ownu) {
-	auto ifaces = ownu->getIfs<MDesCtxSpl>();
-	if (ifaces) for (auto ifc : *ifaces) {
-	    MDesCtxSpl* spl = reinterpret_cast<MDesCtxSpl*>(ifc);
-	    if (spl->getSplId() == getCsmId()) {
-		res = spl->registerCsm(&mCsmCp);
-		if (res) {
-		    res = bindCtxs();
-		}
-		break;
-	    }
-	}
+        auto ifaces = ownu->getIfs<MDesCtxSpl>();
+        if (ifaces) for (auto ifc : *ifaces) {
+            MDesCtxSpl* spl = reinterpret_cast<MDesCtxSpl*>(ifc);
+            if (spl->getSplId() == getCsmId()) {
+                res = spl->registerCsm(&mCsmCp);
+                if (res) {
+                    res = bindCtxs();
+                }
+                break;
+            }
+        }
     }
     return res;
 }
@@ -2066,10 +2067,10 @@ bool DesCtxCsm::init()
     bool res = false;
     MDesCtxSpl* spl = getSif<MDesCtxSpl>(spl);
     if (spl) {
-	res = spl->registerCsm(&mCsmCp);
-	if (res) {
-	    res = bindCtxs();
-	}
+        res = spl->registerCsm(&mCsmCp);
+        if (res) {
+            res = bindCtxs();
+        }
     }
     return res;
 }
@@ -2087,16 +2088,16 @@ bool DesCtxCsm::bindCtxs()
     bool res = false;
     auto owdCp = owner()->firstPair();
     while (owdCp) {
-	MNode* compn = owdCp->provided()->lIf(compn);
-	MVert* compv = compn ? compn->lIf(compv) : nullptr;
-	if (compv) {
-	    MVert* extd = compv->getExtd();
-	    if (extd) {
-		res = mCsmCp.firstPair()->provided()->bindCtx(compn->name(), extd);
-		if (!res) break;
-	    }
-	}
-	owdCp = owner()->nextPair(owdCp);
+        MNode* compn = owdCp->provided()->lIf(compn);
+        MVert* compv = compn ? compn->lIf(compv) : nullptr;
+        if (compv) {
+            MVert* extd = compv->getExtd();
+            if (extd) {
+                res = mCsmCp.firstPair()->provided()->bindCtx(compn->name(), extd);
+                if (!res) break;
+            }
+        }
+        owdCp = owner()->nextPair(owdCp);
     }
     return res;
 }
@@ -2105,19 +2106,19 @@ bool DesCtxCsm::bindCtxs()
 void DesCtxCsm::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 {
     if (aName == MDesCtxSpl::Type()) {
-	// Propagate request to owner
-	MUnit* ownu = Owner()->lIf(ownu);
-	if (ownu) {
-	    auto ifaces = ownu->getIfs<MDesCtxSpl>();
-	    if (ifaces) for (auto ifc : *ifaces) {
-		MDesCtxSpl* spl = reinterpret_cast<MDesCtxSpl*>(ifc);
-		if (spl->getSplId() == getCsmId()) {
-		    addIfpLeaf(spl, aReq);
-		}
-	    }
-	}
+        // Propagate request to owner
+        MUnit* ownu = Owner()->lIf(ownu);
+        if (ownu) {
+            auto ifaces = ownu->getIfs<MDesCtxSpl>();
+            if (ifaces) for (auto ifc : *ifaces) {
+                MDesCtxSpl* spl = reinterpret_cast<MDesCtxSpl*>(ifc);
+                if (spl->getSplId() == getCsmId()) {
+                    addIfpLeaf(spl, aReq);
+                }
+            }
+        }
     } else {
-	Syst::resolveIfc(aName, aReq);
+        Syst::resolveIfc(aName, aReq);
     }
 }
 #endif
@@ -2158,7 +2159,7 @@ int DesInpDemux::getIfcCount()
     MUnit* inpu = inp ? inp->lIf(inpu) : nullptr;
     auto ifaces = inpu->getIfs<MDVarGet>();
     if (ifaces && !ifaces->empty()) {
-	res = ifaces->size();
+        res = ifaces->size();
     }
     return res;
 }
@@ -2166,33 +2167,33 @@ int DesInpDemux::getIfcCount()
 void DesInpDemux::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 {
     if (aName == MDVarGet::Type()) {
-	MNode* outp = getNode(K_Cp_Outp);
-	MUnit* outpu = outp ? outp->lIf(outpu) : nullptr;
-	MIfProvOwner* outppo = outpu ? outpu->lIf(outppo) : nullptr;
-	if (outppo && aReq->provided()->isRequestor(outppo)) {
-	    // Request from output
-	    MNode* inp = getNode(K_Cp_Inp);
-	    MUnit* inpu = inp ? inp->lIf(inpu) : nullptr;
-	    auto ifaces = inpu->getIfs<MDVarGet>();
-	    if (!ifaces || ifaces->empty() || ifaces->size() <= mIdx) {
-		Logger()->Write(EErr, this, "Ifaces idx overflow");
-	    } else {
-		auto* ifc = reinterpret_cast<MDVarGet*>(ifaces->at(mIdx));
-		addIfpLeaf(ifc, aReq);
-	    }
-	}
+        MNode* outp = getNode(K_Cp_Outp);
+        MUnit* outpu = outp ? outp->lIf(outpu) : nullptr;
+        MIfProvOwner* outppo = outpu ? outpu->lIf(outppo) : nullptr;
+        if (outppo && aReq->provided()->isRequestor(outppo)) {
+            // Request from output
+            MNode* inp = getNode(K_Cp_Inp);
+            MUnit* inpu = inp ? inp->lIf(inpu) : nullptr;
+            auto ifaces = inpu->getIfs<MDVarGet>();
+            if (!ifaces || ifaces->empty() || ifaces->size() <= mIdx) {
+                Logger()->Write(EErr, this, "Ifaces idx overflow");
+            } else {
+                auto* ifc = reinterpret_cast<MDVarGet*>(ifaces->at(mIdx));
+                addIfpLeaf(ifc, aReq);
+            }
+        }
     } else if (aName == MDesObserver::Type()) {
-	MNode* inp = getNode(K_Cp_Inp);
-	MUnit* inpu = inp ? inp->lIf(inpu) : nullptr;
-	MIfProvOwner* inppo = inpu ? inpu->lIf(inppo) : nullptr;
-	if (inppo && aReq->provided()->isRequestor(inppo)) {
-	    // Request from input, redirect to output
-	    MNode* outp = getNode(K_Cp_Outp);
-	    MUnit* outpu = outp ? outp->lIf(outpu) : nullptr;
-	    outpu->resolveIface(aName, aReq);
-	}
+        MNode* inp = getNode(K_Cp_Inp);
+        MUnit* inpu = inp ? inp->lIf(inpu) : nullptr;
+        MIfProvOwner* inppo = inpu ? inpu->lIf(inppo) : nullptr;
+        if (inppo && aReq->provided()->isRequestor(inppo)) {
+            // Request from input, redirect to output
+            MNode* outp = getNode(K_Cp_Outp);
+            MUnit* outpu = outp ? outp->lIf(outpu) : nullptr;
+            outpu->resolveIface(aName, aReq);
+        }
     } else {
-	Des::resolveIfc(aName, aReq);
+        Des::resolveIfc(aName, aReq);
     }
 }
 
@@ -2202,7 +2203,7 @@ void DesInpDemux::confirm()
     Des::confirm();
     int ifcnt = getIfcCount();
     if (mIdx < (ifcnt - 1)) {
-	mIdx++;
+        mIdx++;
     }
 
 }

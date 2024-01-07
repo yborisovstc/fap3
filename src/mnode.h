@@ -63,6 +63,10 @@ class MNode: public MIface
 	virtual void MNode_doDump(int aLevel, int aIdt, ostream& aOs) const = 0;
 	// Local
 	virtual string name() const = 0;
+        /** @brief Gets name of parent
+         * It is intended mostly for systems visual representation 
+         * TODO isn't it better to provide parents URI?
+         * */
 	virtual string parentName() const = 0;
 	// TODO !! All navigation thru native hier to be moved to owning iface ?
 	virtual const MNode* getComp(const string& aId) const = 0;

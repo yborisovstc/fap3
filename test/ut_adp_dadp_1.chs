@@ -4,32 +4,36 @@ testroot : Elem {
         # "MNode adapter test: observation of compoments number"
         # "Managed agent is not adapter owned - using input to access managed agent top owner"
         Controller : Des {
-            Targets : Node {
+            Elem1 : Elem
+            Elem2 : Elem1
+            Elem3 : Elem2
+            Targets : Syst {
                 # "Target_1"
                 Target : Node {
                     Cmp_0 : Node
                     Cmp_1 : Node
                 }
                 # "Target_2"
-                Target2 : Node {
+                Target2 : Unit {
                     Cmp2_0 : Node
                     Cmp2_1 : Node
                     Cmp2_2 : Node
                 }
                 # "Target_3"
-                Target3 : Node {
+                Target3 : Elem3 {
                     Cmp3_0 : Node
                     Cmp3_1 : Node
                     Cmp3_2 : Node
                     Cmp3_3 : Node
                 }
             }
-            # "Controller using adapter for access to target"
+            # "Controller uses adapter for access to target"
             Adapter : DAdp {
                 Debug.LogLevel = "Dbg"
                 CompsCount : SdoCompsCount
                 CompNames : SdoCompsNames
                 Name : SdoName
+                Parent : SdoParent
                 AddComp : ASdcComp {
                     Debug.LogLevel = "Dbg"
                 }
@@ -55,17 +59,23 @@ testroot : Elem {
             }
             CompNames.Inp ~ Adapter.CompNames
             # "Name"
-            Name_Dbg : State @  {
+            Name_Dbg : State (
                 _@ < Debug.LogLevel = "Dbg"
                 _@ < = "SS"
                 Inp ~ Adapter.Name
-            }
+            )
+            # "Parent"
+            Parent_Dbg : State (
+                _@ < Debug.LogLevel = "Dbg"
+                _@ < = "SS"
+                Inp ~ Adapter.Parent
+            )
             # "OutpMagUri debug"
-            OutpMagUri_Dbg : State @  {
+            OutpMagUri_Dbg : State (
                 _@ < Debug.LogLevel = "Dbg"
                 _@ < = "SS"
                 Inp ~ Adapter.OutpMagUri
-            }
+            )
             # "Tics_Counter"
             Counter : State {
                 Debug.LogLevel = "Dbg"
@@ -90,18 +100,18 @@ testroot : Elem {
             Const_3 : State {
                 = "SI 3"
             }
-            Sw : TrSwitchBool @  {
+            Sw : TrSwitchBool (
                 _@ < Debug.LogLevel = "Dbg"
-                Sel ~ Cmp_Ge : TrCmpVar @  {
+                Sel ~ Cmp_Ge : TrCmpVar (
                     Inp ~ Counter
                     Inp2 ~ Const_3
-                }
+                )
                 Inp1 ~ MagUri
                 Inp2 ~ MagUri2
-            }
-            Adapter.InpMagUri ~ : TrToUriVar @  {
+            )
+            Adapter.InpMagUri ~ : TrToUriVar (
                 Inp ~ Sw
-            }
+            )
             # "Mutating: adding component"
             Adapter.AddComp.Name ~ : State {
                 = "SS New_node"
@@ -109,19 +119,19 @@ testroot : Elem {
             Adapter.AddComp.Parent ~ : State {
                 = "SS Node"
             }
-            Adapter.AddComp.Enable ~ Cmp2_Eq : TrCmpVar @  {
+            Adapter.AddComp.Enable ~ Cmp2_Eq : TrCmpVar (
                 Inp ~ Counter
                 Inp2 ~ : State {
                     = "SI 6"
                 }
-            }
-            AddCompOutp_Dbg : State @  {
+            )
+            AddCompOutp_Dbg : State (
                 _@ <  {
                     Debug.LogLevel = "Dbg"
                     = "SB"
                 }
                 Inp ~ Adapter.AddComp.Outp
-            }
+            )
         }
     }
 }

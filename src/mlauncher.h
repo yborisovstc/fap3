@@ -15,6 +15,9 @@ class MLauncher: public MIface
 	// Local
 	virtual bool Run(int aCount = 0, int aIdleCount = 0) = 0;
 	virtual bool Stop() = 0;
+        /** @brief Gets runnning steps counter value
+         * */
+	virtual int GetCounter() const = 0;
 };
 
 #endif

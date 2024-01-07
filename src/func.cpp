@@ -353,9 +353,14 @@ template<class T> const DtBase* FMaxDt<T>::FDtGet()
 	for (auto dget : *InpIc) {
 	    const T* arg = dget->DtGet(arg);
 	    if (arg && arg->mValid) {
-		if (first) { mRes.mData = arg->mData; first = false;
-		} else { if (arg->mData > mRes.mData)  mRes.mData = arg->mData; }
+		if (first) {
+		    mRes.mData = arg->mData; first = false;
+		} else {
+		    if (arg->mData > mRes.mData)  mRes.mData = arg->mData;
+		}
+		LOGF(EDbg, "Inp [" + dget->Uid() + ": " + arg->ToString(true) + "], res [" + mRes.ToString(true) + "]");
 	    } else {
+		LOGF(EDbg, "Inp [" + dget->Uid() + ": _INV]");
 		mRes.mValid = false; break;
 	    }
 	}
