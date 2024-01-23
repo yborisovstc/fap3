@@ -66,7 +66,7 @@ template <class T> inline const T* TrBase::GetInpData(FInp& aInp, const T* aData
 	auto* get = (Ic->size() == 1) ? Ic->at(0) : nullptr;
 	data = get ? get->DtGet(data) : nullptr;
 	if (get && !data) { // There already is the log in GetInps
-	    Log(EDbg, TLog(this) + "Cannot get input  [" + aInp.mName + "]");
+	    Log(EDbg, TLog(this) + "Cannot get inputT  [" + aInp.mName + "]");
 	}
     }
     return data;
@@ -337,7 +337,7 @@ class TrOrVar: public TrBool
 };
 
 
-/** @brief Agent function "Boolena negation of Var data"
+/** @brief Agent function "Boolean negation of Var data"
  * */
 class TrNegVar: public TrBool
 {
@@ -506,6 +506,22 @@ class TrAtgVar: public TrVar
 	FInp mInpInp, mInpIndex;
 	static const string K_InpInp, K_InpIndex;
 };
+
+/** @brief Transition "Find in Vert<Pair<T>> by first element of pair"
+ * */
+class TrFindByP: public TrVar
+{
+    public:
+	static const char* Type() { return "TrFindByP";};
+	TrFindByP(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	virtual void Init(const string& aIfaceName) override;
+	virtual int GetInpCpsCount() const override {return 2;}
+	virtual FInp* GetFinp(int aId) override;
+    protected:
+	FInp mInpInp, mInpSample;
+	static const string K_InpInp, K_InpSample;
+};
+
 
 
 

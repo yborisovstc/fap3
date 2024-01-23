@@ -436,7 +436,7 @@ class Vector : public VectorBase
 	// Local
 	virtual bool GetElem(int aInd, T& aElem) const {
 	    bool res = true;
-	    if (aInd < Size()) aElem = mData.at(aInd);
+	    if (aInd >= 0 && aInd < Size()) aElem = mData.at(aInd);
 	    else res = false;
 	    return res; }
     public:

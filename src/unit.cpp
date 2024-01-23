@@ -133,14 +133,17 @@ void Unit::invalidateIrm()
 {
     if (!mIrns.empty()) {
 	PFL_DUR_STAT_START(PEvents::EDurStat_UInvldIrm);
-	int pcount = 0;
-	for (auto node : mIrns) {
-	    pcount += node->pcount(true);
-	}
+	// We need to invalidate all first and then to update.
+	// This is because there can be deps one iface from another
+	// example is dep of some iface on MAgent
 	for (auto node : mIrns) {
 	    if (node->isValid()) {
 		node->setValid(false);
-		// Keep ifaces actual, ref ds_desopt_uic
+	    }
+	}
+	// Keep ifaces actual, ref ds_desopt_uic
+	for (auto node : mIrns) {
+	    if (!node->isValid()) {
 		node->ifaces();
 	    }
 	}

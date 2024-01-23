@@ -126,6 +126,7 @@ class ExtdStateInp : public Extd
     public:
 	static const char* Type() { return "ExtdStateInp";};
 	ExtdStateInp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	virtual string parentName() const override { return Type(); }
 };
 
 /** @brief CpStateOutp direct extender (extd as outp)
@@ -135,6 +136,16 @@ class ExtdStateOutp : public Extd
     public:
 	static const char* Type() { return "ExtdStateOutp";};
 	ExtdStateOutp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	virtual string parentName() const override { return Type(); }
+};
+
+/** @brief CpStateInp direct extender (extd as inp)
+ * */
+class ExtdStateMnodeInp : public Extd
+{
+    public:
+	static const char* Type() { return "ExtdStateMnodeInp";};
+	ExtdStateMnodeInp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 };
 
 /** @brief CpStateOutp direct extender (extd as outp)

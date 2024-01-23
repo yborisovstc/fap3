@@ -54,6 +54,10 @@ class MChild : public MIface
 	virtual void MChild_doDump(int aLevel, int aIdt, ostream& aOs) const = 0;
 	// Local
 	virtual void onParentDeleting(MParent* aParent) = 0;
+        /** @brief Get child connection point
+         * TODO this opens access to the whole inheritance treee but not to childs only:
+         * having connpoint it is possible to get parents cp etc. Consider redesign
+         * */
 	virtual TCp* cP() = 0;
 };
 

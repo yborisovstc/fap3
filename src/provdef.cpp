@@ -43,7 +43,7 @@ const ProvDef::TFReg ProvDef::mReg ( {
 	Item<Syst>(), Item<ConnPointu>(), Item<CpMnodeOutp>(), Item<CpMnodeInp>(),
 	Item<Extd>(), Item<State>(), Item<Const>(), Item<Des>(), Item<TrAddVar>(), Item<TrAdd2Var>(), Item<TrSub2Var>(),
 	Item<CpStateInp>(), Item<CpStateOutp>(), Item<ExtdStateInp>(), Item<ExtdStateOutp>(), Item<ExtdStateOutpI>(), Item<ExtdStateMnodeOutp>(),
-	Item<CpStateMnodeInp>(),  Item<CpStateMnodeOutp>(),
+	Item<CpStateMnodeInp>(),  Item<CpStateMnodeOutp>(), Item<ExtdStateMnodeInp>(),
 	Item<DesLauncher>(), Item<Sout>(), Item<ADes>(), Item<Socket>(),
 	/* Transitions */
 	Item<TrMinVar>(), Item<TrMaxVar>(), Item<TrSwitchBool>(), Item<TrSwitchBool2>(), Item<TrCmpVar>(), Item<TrApndVar>(),
@@ -51,16 +51,16 @@ const ProvDef::TFReg ProvDef::mReg ( {
 	Item<TrMutNode>(), Item<TrMutConn>(), Item<TrMutDisconn>(), Item<TrMutCont>(), Item<TrHash>(), Item<TrPair>(),
 	Item<TrSizeVar>(), Item<TrAtVar>(), Item<TrAtgVar>(), Item<TrMplVar>(), Item<TrDivVar>(), Item<TrSvldVar>(), Item<TrInpSel>(), Item<TrInpCnt>(),
 	Item<TrTuple>(), Item<TrTupleSel>(), Item<TrChr>(), Item<TrChrc>(), Item<TrIsValid>(), Item<TrTailVar>(), Item<TrHeadVar>(), Item<TrTailnVar>(),
-        Item<TrHeadtnVar>(), 
+        Item<TrHeadtnVar>(), Item<TrFindByP>(),
 	/* Des adapters */
 	Item<AMnodeAdp>(), Item<AMelemAdp>(), Item<AMntp>(), Item<DAdp>(),
 	/* SDCs */
 	Item<ASdcMut>(), Item<ASdcComp>(), Item<ASdcRm>(), Item<ASdcConn>(), Item<ASdcDisconn>(), Item<ASdcInsert2>(), Item<ASdcInsertN>(),
 	Item<ASdcExtract>(), Item<ASdcPause>(), Item<ASdcResume>(),
 	/* SDOs */
-        Item<SdoName>(), Item<SdoUri>(), Item<SdoParent>(), Item<SdoComp>(), Item<SdoConn>(), Item<SdoCompsCount>(), Item<SdoCompsNames>(), 
+        Item<SdoName>(), Item<SdoUri>(), Item<SdoParent>(), Item<SdoParents>(), Item<SdoComp>(), Item<SdoConn>(), Item<SdoCompsCount>(), Item<SdoCompsNames>(), 
 	Item<SdoPairsCount>(), Item<SdoPair>(), Item<SdoCompOwner>(), Item<SdoCompComp>(), Item<SdoPairs>(), Item<SdoTPairs>(),
-        Item<SdoTcPair>(), Item<SdoEdges>(),
+        Item<SdoTcPair>(), Item<SdoEdges>(), Item<SdoCompsUri>(), 
 	/* DES context */
 	Item<DesCtxSpl>(), Item<DesCtxCsm>(), 
 	/* DES active subs */

@@ -601,6 +601,53 @@ template <class T> string FAtgPair<T>::GetInpExpType(int aId) const
     return res;
 }
 
+// Find in Vert<Pair<T>> by first element of pair
+//
+template <class T>
+Func* FFindByP<T>::Create(Host* aHost, const string& aOutIid, const string& aInpIid)
+{
+    Func* res = NULL;
+    if (!aOutIid.empty()) {
+	if (aOutIid == T::TypeSig() && aInpIid == Vector<Pair<T>>::TypeSig()) {
+	    res = new FFindByP<T>(*aHost);
+	}
+    } else {
+	// Weak negotiation - just base on input type
+	if (aInpIid == Vector<Pair<T>>::TypeSig()) {
+	    res = new FFindByP<T>(*aHost);
+	}
+    }
+    return res;
+}
+
+template <class T> const DtBase* FFindByP<T>::FDtGet()
+{
+    mRes.mValid = false;
+    const Vector<Pair<T>>* inp = GetInpData(EInp1, inp);
+    const T* sample = GetInpData(EInp2, sample);
+    if (inp && sample && inp->IsValid() && sample->IsValid()) {
+	for (auto elem : inp->mData) {
+	    if (elem.mData.first == *sample) {
+		mRes = elem.mData.second;
+		mRes.mValid = true;
+	    }
+	}
+	LOGF(EDbg, "Inp [" + (inp ? inp->ToString(true) : "nil") + "], Sample [" + (sample ? sample->ToString(true) : "nil")  + "], res [" + mRes.ToString(true) + "]");
+    }
+    return &mRes;
+}
+
+template <class T> string FFindByP<T>::GetInpExpType(int aId) const
+{
+    string res;
+    if (aId == EInp1) {
+	res = Vector<Pair<T>>::TypeSig();
+    } else if (aId == EInp2) {
+	res = T::TypeSig();
+    }
+    return res;
+}
+
 
 /// Getting tail, URI
 
@@ -766,6 +813,7 @@ void Init()
     FAtgVect<Pair<DGuri>>::Create(host, string(), string());
     FAtgPair<DGuri>::Create(host, string(), string());
     FAtgPair<Sdata<int>>::Create(host, string(), string());
+    FFindByP<DGuri>::Create(host, string(), string());
     FApnd<Sdata<string>>::Create(host, string(), string());
     FApnd<DGuri>::Create(host, string(), string());
     FPair<DGuri>::Create(host, "", "");

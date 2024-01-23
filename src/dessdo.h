@@ -181,6 +181,17 @@ class SdoParent : public Sdog<Sdata<string>>
 	virtual const DtBase* VDtGet(const string& aType) override;
 };
 
+/** @brief SDO "Parents heirarchy"
+ * */
+class SdoParents : public Sdog<Vector<DGuri>>
+{
+    public:
+	static const char* Type() { return "SdoParents";};
+	SdoParents(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	virtual const DtBase* VDtGet(const string& aType) override;
+};
+
+
 /** @brief SDO "Comp Owner"
  * */
 class SdoCompOwner : public Sdog<DGuri>
@@ -249,6 +260,8 @@ class SdoCompsCount : public Sdog<Sdata<int>>
 };
 
 /** @brief SDO "Component count"
+ * NOTE: Gives Vector<string> instead of Vector<Sdata<string>>
+ * this approach is obsolete and needs to be replaced
  * */
 class SdoCompsNames : public Sdog<Vector<string>>
 {
@@ -259,6 +272,19 @@ class SdoCompsNames : public Sdog<Vector<string>>
 	virtual void onEagOwnedAttached(MOwned* aOwned) override;
 	virtual void onEagOwnedDetached(MOwned* aOwned) override;
 };
+
+/** @brief SDO "Component count"
+ * */
+class SdoCompsUri : public Sdog<Vector<DGuri>>
+{
+    public:
+	static const char* Type() { return "SdoCompsUri";};
+	SdoCompsUri(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	virtual const DtBase* VDtGet(const string& aType) override;
+	virtual void onEagOwnedAttached(MOwned* aOwned) override;
+	virtual void onEagOwnedDetached(MOwned* aOwned) override;
+};
+
 
 
 

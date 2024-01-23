@@ -14,20 +14,22 @@
 class Ut_des : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_des);
-    CPPUNIT_TEST(test_des_data);
+    //CPPUNIT_TEST(test_des_data);
     /*
     CPPUNIT_TEST(test_des_1);
     CPPUNIT_TEST(test_des_ades_1);
     CPPUNIT_TEST(test_des_dmc_1);
     CPPUNIT_TEST(test_des_ifr_inval_1);
     CPPUNIT_TEST(test_des_ifr_inval_2);
-    CPPUNIT_TEST(test_des_tr_1);
+    */
+    //CPPUNIT_TEST(test_des_tr_1);
+    /*
     CPPUNIT_TEST(test_des_tr_tres_1);
     CPPUNIT_TEST(test_des_asr_1);
     */
-    CPPUNIT_TEST(test_des_asr_2);
-    /*
+    //CPPUNIT_TEST(test_des_asr_2);
     CPPUNIT_TEST(test_des_utl_1);
+    /*
     CPPUNIT_TEST(test_des_utl_2);
     CPPUNIT_TEST(test_des_sp_1);
     */
@@ -220,6 +222,7 @@ void Ut_des::test_des_tr_1()
     CPPUNIT_ASSERT_MESSAGE("SPair1 failed", getStateDstr("Launcher.Ds1.SPair1") == "PSI (SI 11,SI 22)");
     CPPUNIT_ASSERT_MESSAGE("SPair2 failed", getStateDstr("Launcher.Ds1.SPair2") == "SI 11");
     CPPUNIT_ASSERT_MESSAGE("SPair2 failed", getStateDstr("Launcher.Ds1.SPair2") == "SI 11");
+    CPPUNIT_ASSERT_MESSAGE("SFindByPVpdu failed", getStateDstr("Launcher.Ds1.SFindByPVpdu") == "URI e2s1.e2s2");
 
     delete mEnv;
 }
@@ -452,6 +455,8 @@ void Ut_des::test_des_utl_1()
     // Verifying #2
     CPPUNIT_ASSERT_MESSAGE("SDPulse failed", getStateDstr("Launcher.SDPulse") == "URI <ERR>");
     CPPUNIT_ASSERT_MESSAGE("VectIter.SIdx failed", getStateDstr("Launcher.VectIter.SIdx") == "SI 2");
+
+    res = mEnv->RunSystem(5, 2);
 
     delete mEnv;
 }

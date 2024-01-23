@@ -34,6 +34,7 @@ testroot : Elem {
                 CompNames : SdoCompsNames
                 Name : SdoName
                 Parent : SdoParent
+                Parents : SdoParents
                 AddComp : ASdcComp {
                     Debug.LogLevel = "Dbg"
                 }
@@ -70,6 +71,13 @@ testroot : Elem {
                 _@ < = "SS"
                 Inp ~ Adapter.Parent
             )
+            # "Parents"
+            Parents_Dbg : State (
+                _@ < Debug.LogLevel = "Dbg"
+                _@ < = "VDU"
+                Inp ~ Adapter.Parents
+            )
+
             # "OutpMagUri debug"
             OutpMagUri_Dbg : State (
                 _@ < Debug.LogLevel = "Dbg"

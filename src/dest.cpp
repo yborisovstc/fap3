@@ -92,7 +92,7 @@ Func::TInpIc* TrBase::GetInps(FInp& aInp)
     }
     res = aInp.mIfp ? aInp.mIfp->ifaces() : nullptr;
     if (!res || res->size() == 0) {
-	LOGN(EDbg, "Cannot get input  [" + aInp.mName + "]");
+	LOGN(EDbg, "Cannot get input [" + aInp.mName + "]");
     }
     return reinterpret_cast<Func::TInpIc*>(res);
 }
@@ -154,6 +154,8 @@ const DtBase* TrVar::doVDtGet(const string& aType)
     }
     if (mFunc) {
 	res = mFunc->FDtGet();
+    } else {
+	LOGN(EErr, "Failed initializing");
     }
     return res;
 }
@@ -1022,6 +1024,40 @@ FInp* TrAtgVar::GetFinp(int aId)
 }
 
 
+// Transition "Find in Vert<Pair<T>> by first element of pair"
+
+const string TrFindByP::K_InpInp = "Inp";
+const string TrFindByP::K_InpSample = "Sample";
+
+TrFindByP::TrFindByP(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv),
+    mInpInp(K_InpInp), mInpSample(K_InpSample)
+{
+    AddInput(K_InpInp);
+    AddInput(K_InpSample);
+}
+
+void TrFindByP::Init(const string& aIfaceName)
+{
+    if (mFunc) {
+	delete mFunc;
+	mFunc = NULL;
+     }
+    MDVarGet* inp_sample = GetInp(Func::EInp2);
+    MDVarGet* inp = GetInp(Func::EInp1);
+    if (inp_sample && inp) {
+	 string t_inp = inp->VarGetIfid();
+	if ((mFunc = FFindByP<DGuri>::Create(this, aIfaceName, t_inp)));
+    }
+}
+
+FInp* TrFindByP::GetFinp(int aId)
+{
+    if (aId == Func::EInp1) return &mInpInp;
+    else if (aId == Func::EInp2) return &mInpSample;
+    else return nullptr;
+}
+
+
 
 // Agent functions "Tuple composer"
 //
@@ -1064,7 +1100,7 @@ const DtBase* TrTuple::doVDtGet(const string& aType)
 			}
 		    } else {
 			elem->mValid = false;
-			LOGN(EDbg, "Cannot get input  [" + compn->name() + "]");
+			LOGN(EDbg, "Cannot get input [" + compn->name() + "]");
 		    }
 		} else {
 		    LOGN(EErr, "No such component [" + compn->name() + "] of tuple");

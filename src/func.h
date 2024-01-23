@@ -330,6 +330,21 @@ class FAtgPair: public FAtBase {
 	T mRes;
 };
 
+/** @brief Find in Vert<Pair<T>> by first element of pair
+ * */
+template <class T>
+class FFindByP: public Func {
+    public:
+	static Func* Create(Host* aHost, const string& aOutIid, const string& aInp1Id);
+	FFindByP(Host& aHost): Func(aHost) {};
+	virtual string IfaceGetId() const override { return T::TypeSig();}
+	virtual const DtBase* FDtGet() override;
+	virtual string GetInpExpType(int aId) const override;
+    protected:
+	T mRes;
+};
+
+
 
 
 /** @brief Gettng tail base

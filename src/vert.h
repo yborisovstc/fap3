@@ -22,6 +22,7 @@ class Vertu : public Unit, public MVert
 	virtual ~Vertu();
 	// From MNode
 	virtual MIface* MNode_getLif(const char *aType) override;
+	virtual string parentName() const { return Type(); }
 	// From MVert::MCIface
 	virtual bool connect(MCIface* aPair) override;
 	virtual bool disconnect(MCIface* aPair) override;
@@ -61,6 +62,7 @@ class Vert : public Elem, public MVert
 	virtual ~Vert();
 	// From MNode
 	virtual MIface* MNode_getLif(const char *aType) override;
+	virtual string parentName() const { return Type(); }
 	// From MVert::MCIface
 	virtual bool connect(MCIface* aPair) override;
 	virtual bool disconnect(MCIface* aPair) override;

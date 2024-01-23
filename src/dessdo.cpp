@@ -162,6 +162,42 @@ const DtBase* SdoParent::VDtGet(const string& aType)
     return &mRes;
 }
 
+///  SDO "Parents heirarchy"
+
+SdoParents::SdoParents(const string &aType, const string& aName, MEnv* aEnv): Sdog<Vector<DGuri>>(aType, aName, aEnv) { }
+
+const DtBase* SdoParents::VDtGet(const string& aType)
+{
+    if (mCInv) {
+	mRes.mValid = false;
+	mRes.mData.clear();
+	if (!mSue)  {
+	    LOGN(EWarn, "Owner is not explorable");
+	} else {
+	    MElem* suee = mSue->lIf(suee);
+	    if (suee) {
+		auto* cn = suee->asChild()->cP()->firstPair();
+		// TODO this solution exploits the access to upper inheritance tree
+		// that allowed thru MChild::cP() and creates vulnarability. Consider redesign. 
+		while (cn) {
+		    MParent* prnt = cn->provided();
+		    GUri uri;
+		    prnt->getUriPrnt(uri);
+		    mRes.mData.push_back(DGuri(uri));
+		    cn = cn->binded()->firstPair();
+		}
+	    } else {
+		// Explorable isn't elem - take just parent's name
+		mRes.mData.push_back(DGuri(mSue->parentName()));
+	    }
+	    mRes.mValid = true;
+	}
+	mCInv = false;
+    }
+    return &mRes;
+}
+
+
 
 
 
@@ -265,6 +301,45 @@ void SdoCompsNames::onEagOwnedDetached(MOwned* aOwned)
 {
     NotifyInpsUpdated();
 }
+
+///  SDO "Components names, output of DGuri"
+
+SdoCompsUri::SdoCompsUri(const string &aType, const string& aName, MEnv* aEnv): Sdog<Vector<DGuri>>(aType, aName, aEnv) { }
+
+const DtBase* SdoCompsUri::VDtGet(const string& aType)
+{
+    if (mCInv) {
+	string name;
+	mRes.mValid = false;
+	if (!mSue)  {
+	    LOGN(EWarn, "Owner is not explorable");
+	} else {
+	    Stype cnames;
+	    auto owdCp = mSue->owner()->firstPair();
+	    while (owdCp) {
+		MNode* osn = owdCp->provided()->lIf(osn);
+		DGuri curi(osn->name());
+		cnames.mData.push_back(curi);
+		owdCp = mSue->owner()->nextPair(owdCp);
+	    }
+	    mRes.mData = cnames.mData;
+	    mRes.mValid = true;
+	}
+	mCInv = false;
+    }
+    return &mRes;
+}
+
+void SdoCompsUri::onEagOwnedAttached(MOwned* aOwned)
+{
+    NotifyInpsUpdated();
+}
+
+void SdoCompsUri::onEagOwnedDetached(MOwned* aOwned)
+{
+    NotifyInpsUpdated();
+}
+
 
 ///  SDO "Component owner"
 

@@ -161,7 +161,7 @@ ExtdStateInp::ExtdStateInp(const string &aType, const string& aName, MEnv* aEnv)
     assert(res);
 }
 
-/// CpStateOutp direct extender 
+/// CpStateOutp direct extender
 
 ExtdStateOutp::ExtdStateOutp(const string &aType, const string& aName, MEnv* aEnv): Extd(aType, aName, aEnv)
 {
@@ -237,6 +237,16 @@ void ExtdStateOutpI::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
     }
 }
 
+
+/// CpStateMnodeInp direct extender 
+
+ExtdStateMnodeInp::ExtdStateMnodeInp(const string &aType, const string& aName, MEnv* aEnv): Extd(aType, aName, aEnv)
+{
+    MNode* cp = Provider()->createNode(CpStateMnodeOutp::Type(), Extd::KUriInt , mEnv);
+    assert(cp);
+    bool res = attachOwned(cp);
+    assert(res);
+}
 
 
 /// CpStateMnodeOutp direct extender 

@@ -28,6 +28,12 @@ class MElem: public MIface
 	virtual MChromo& Chromos() = 0;
 	virtual MChild* asChild() = 0;
 	virtual MParent* asParent() = 0;
+        /** @brief Get parents uri hierarchy
+         * Allows to get inheritance upper tree w/o providing access to tree elem
+         * Such approach is less vulnerable, but also need design analysis
+         * Using MChild::cP() atm, ref SdoParents::VDtGet
+         * */
+	//virtual vector<GUri> getParentsUri() const = 0;
 };
 
 
