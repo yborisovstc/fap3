@@ -618,7 +618,7 @@ bool Chromo2Mdl::AttrExists(const THandle& aHandle, TNodeAttr aAttr) const
 	res = (rel == KMS_Rename);
     } else if (aAttr == ENa_MutNode) {
 	if (rel == KMS_Remove) {
-	    res = !node->mMut.mP.empty();
+	    res = !node->mMut.mQ.empty();
 	} else {
 	    res = ((rel == KMS_Add) || (rel == KMS_Cont) || rel.empty()) && node->ExistsContextByAttr(ENa_MutNode);
 	}

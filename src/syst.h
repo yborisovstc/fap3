@@ -70,6 +70,24 @@ class Extd: public Vertu
 	static const string KUriInt;  /*!< Internal connpoint */
 };
 
+/** @brief Extender, chromoable, monolitic, multicontent, unit. Redirects request for iface to internal CP of extention.
+*/
+class Extde: public Vert
+{
+    public:
+	static const char* Type() { return "Extde";};
+	Extde(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From MVert
+	virtual bool isCompatible(MVert* aPair, bool aExt) override;
+	virtual MVert* getExtd() override;
+	virtual TDir getDir() const override;
+	// From Unit.MIfProvOwner
+	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+    public:
+	static const string KUriInt;  /*!< Internal connpoint */
+};
+
+
 
 /** @brief Socket, monolitic.
 */

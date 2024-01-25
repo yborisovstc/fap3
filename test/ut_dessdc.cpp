@@ -16,9 +16,10 @@ class Ut_sdc : public CPPUNIT_NS::TestFixture
 
     //CPPUNIT_TEST(test_Sdc_1);
     //CPPUNIT_TEST(test_Sdc_2);
-    CPPUNIT_TEST(test_Sdc_2_1);
+    //CPPUNIT_TEST(test_Sdc_2_1);
     //CPPUNIT_TEST(test_Sdc_3);
     //CPPUNIT_TEST(test_Sdc_4);
+    CPPUNIT_TEST(test_Sdc_5);
     //CPPUNIT_TEST(test_Sdo_1);
     //CPPUNIT_TEST(test_Sdo_2);
     CPPUNIT_TEST_SUITE_END();
@@ -34,6 +35,7 @@ class Ut_sdc : public CPPUNIT_NS::TestFixture
     void test_Sdc_2_1();
     void test_Sdc_3();
     void test_Sdc_4();
+    void test_Sdc_5();
     void test_Sdo_1();
     void test_Sdo_2();
     private:
@@ -190,6 +192,27 @@ void Ut_sdc::test_Sdc_4()
 
     delete mEnv;
 }
+
+/** @brief SDC test - connecting after target vertexes get created. Ref ISS_018
+ * */
+void Ut_sdc::test_Sdc_5()
+{
+    printf("\n === Test of SDC: connecting after target vertexes get created. Ref ISS_018\n");
+    MNode* root = constructSystem("ut_sdc_5");
+
+    bool res = mEnv->RunSystem(12, 2);
+
+    MNode* v1 = root->getNode("Launcher.Syst1.Comp1");
+    CPPUNIT_ASSERT_MESSAGE("Comp1 hasn't been created", v1 != nullptr);
+    MNode* v2 = root->getNode("Launcher.Syst2.Comp1");
+    CPPUNIT_ASSERT_MESSAGE("Comp1 hasn't been created", v2 != nullptr);
+    MVert* v1v = v1->lIf(v1v);
+    MVert* v2v = v2->lIf(v2v);
+    CPPUNIT_ASSERT_MESSAGE("Comp1 and Comp2 aren't connected", v2v->isConnected(v1v));
+
+    delete mEnv;
+}
+
 
 /** @brief MNode SDO test - existence of component
  * */

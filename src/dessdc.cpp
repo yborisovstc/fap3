@@ -1,7 +1,67 @@
-
 #include "des.h"
 #include "dessdc.h"
 #include "prof_ids.h"
+
+
+ASdc::NodeCreationObserver::NodeCreationObserver(ASdc* aHost):
+    mHost(aHost), mOcp(this)
+{
+}
+
+void ASdc::NodeCreationObserver::startObserving(const GUri& aTargUri)
+{
+    mTargUri = aTargUri;
+    GUri targOwrUri;
+    mTargOwrLevel = mTargUri.size() - 1;
+    MNode* owner = nullptr;
+    do {
+	targOwrUri = mTargUri.head(mTargOwrLevel);
+	owner = mHost->mMag->getNode(targOwrUri);
+	if (!owner) mTargOwrLevel--;
+    } while (!owner);
+    if (owner != mTargOwr) {
+	LOGNN(mHost, EDbg, "Owner [" + targOwrUri.toString() + "] to be observing, level: " + to_string(mTargOwrLevel));
+	if (mTargOwr) {
+	    MObservable* obl = mTargOwr->lIf(obl);
+	    bool res = obl->rmObserver(&mOcp);
+	    if (!res || !obl) {
+		LOGNN(mHost, EErr, "Failed deattaching VertUeOwr from observable");
+	    }
+	}
+	mTargOwr = owner;
+	MObservable* obl = mTargOwr->lIf(obl);
+	bool res = obl ? obl->addObserver(&mOcp) : false;
+	if (!res || !obl) {
+            LOGNN(mHost, EErr, "Cannot attach VertUeOwr to observer");
+	} else {
+            LOGNN(mHost, EDbg, "Owner [" + mTargOwr->getUriS(mHost->mMag) + "] observing, level: " + to_string(mTargOwrLevel));
+	}
+    }
+}
+
+void ASdc::NodeCreationObserver::onObsOwnedAttached(MObservable* aObl, MOwned* aOwned)
+{
+    LOGNN(mHost, EDbg, "onObsOwnedAttached, owned: " + aOwned->Uid());
+    GUri owdUri = mTargUri.head(mTargOwrLevel + 1);
+    auto* targOwrOwd = mHost->mMag->getNode(owdUri);
+    MOwned* targOwd = targOwrOwd ? targOwrOwd->lIf(targOwd) : nullptr;
+    if (targOwd && aOwned == targOwd) {
+        LOGNN(mHost, EDbg, "[" + mTargOwr->getUriS(mHost->mMag) + "] owned [" + targOwrOwd->getUriS(mHost->mMag) + "] attached");
+        LOGNN(mHost, EDbg, "Targ URI: " + mTargUri.toString());
+        // Checking if target got attached
+        MNode* targ = mHost->mMag->getNode(mTargUri);
+        if (targ) {
+            // Yes, attached. Stop observing the attaching
+            LOGNN(mHost, EDbg, "Target [" + targ->getUriS(mHost->mMag) + "] got attached");
+            mHost->setActivated();
+        } else {
+            // Not attached yet, proceed
+            startObserving(mTargUri);
+        }
+    }
+}
+
+
 
 /* SDC base agent */
 
@@ -669,7 +729,7 @@ const string K_CpUri_V1 = "V1";
 const string K_CpUri_V2 = "V2";
 
 ASdcConn::ASdcConn(const string &aType, const string& aName, MEnv* aEnv): ASdc(aType, aName, aEnv),
-    mIapV1("V1", this, K_CpUri_V1), mIapV2("V2", this, K_CpUri_V2)
+    mIapV1("V1", this, K_CpUri_V1), mIapV2("V2", this, K_CpUri_V2), mNco1(this), mNco2(this)
 { }
 
 bool ASdcConn::getState(bool aConf)
@@ -691,6 +751,12 @@ bool ASdcConn::getState(bool aConf)
 		}
 	    } else {
 		LOGN(EDbg, "Cannot find CP [" + (v1n ? v2s.mData : v1s.mData) + "]");
+                if (!v1n) {
+                    mNco1.startObserving(v1s.mData);
+                }
+                if (!v2n) {
+                    mNco2.startObserving(v2s.mData);
+                }
 	    }
 	} else {
 	    LOGN(EDbg, "Vertexes URIs are not valid: " + string(v1s.IsValid() ? "v2" : "v1"));

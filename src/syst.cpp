@@ -168,6 +168,8 @@ const string KContDir_Val_Inp = "Inp";
 const string KContDir_Val_Out = "Out";
 
 
+// Extender, monolitic, multicontent, unit. Redirects request for iface to internal CP of extention.
+
 
 Extd::Extd(const string &aType, const string& aName, MEnv* aEnv): Vertu(aType, aName, aEnv)
 {
@@ -228,6 +230,72 @@ MVert::TDir Extd::getDir() const
     else if (cdir == KContDir_Val_Out) res = EOut;
     return res;
 }
+
+
+// Extender, chromoable, monolitic, multicontent, unit. Redirects request for iface to internal CP of extention.
+
+const string Extde::KUriInt = "Int";  /*!< Internal connpoint */
+
+Extde::Extde(const string &aType, const string& aName, MEnv* aEnv): Vert(aType, aName, aEnv)
+{
+    setContent(KContDir, KContDir_Val_Regular);
+}
+
+void Extde::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+{
+    MIface* ifc = MNode_getLif(aName.c_str());
+    if (ifc) { // Local iface
+	addIfpLeaf(ifc, aReq);
+    } else {
+	// Redirect to internal point or pair depending on the requiestor
+	MVert* intcp = getExtd();
+	MUnit* intcpu = intcp ? intcp->lIf(intcpu) : nullptr;
+	MIfProvOwner* intcpo = intcpu ? intcpu->lIf(intcpo) : nullptr;
+	if (intcpo && aReq->provided()->isRequestor(intcpo)) {
+	    // Redirect to pairs
+	    for (int i = 0; i < pairsCount(); i++) {
+		MVert* pair = getPair(i);
+		MUnit* pairu = pair ? pair->lIf(pairu) : nullptr;  
+		MIfProvOwner* pairo = pairu ? pairu->lIf(pairo) : nullptr;
+		if (pairo && !aReq->provided()->isRequestor(pairo)) {
+		    pairu->resolveIface(aName, aReq);
+		}
+	    }
+	} else {
+	    // Redirect to internal CP
+	    if (intcpu) intcpu->resolveIface(aName, aReq);
+	}
+    }
+}
+
+bool Extde::isCompatible(MVert* aPair, bool aExt)
+{
+    bool res = false;
+    MVert* intcp = getExtd();
+    if (intcp) {
+	res = intcp->isCompatible(aPair, !aExt);
+    }
+    return res;
+}
+
+MVert* Extde::getExtd()
+{
+    MVert* res = nullptr;
+    MNode* extn = getNode(KUriInt);
+    res = extn ? extn->lIf(res) : nullptr;
+    return res;
+}
+
+MVert::TDir Extde::getDir() const
+{
+    TDir res = ERegular;
+    string cdir;
+    getContent(KContDir, cdir);
+    if (cdir == KContDir_Val_Inp) res = EInp;
+    else if (cdir == KContDir_Val_Out) res = EOut;
+    return res;
+}
+
 
 
 //// Socket

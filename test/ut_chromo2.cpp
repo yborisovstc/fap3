@@ -18,9 +18,9 @@ class Ut_chromo2 : public CPPUNIT_NS::TestFixture
 //    CPPUNIT_TEST(test_Chr3);
 //    CPPUNIT_TEST(test_Chr4);
 //    CPPUNIT_TEST(test_Chr5);
-//    CPPUNIT_TEST(test_Chr_Err_1);
+    CPPUNIT_TEST(test_Chr_Err_1);
 //    CPPUNIT_TEST(test_Ddmc);
-    CPPUNIT_TEST(test_Ddmc_Css);
+//    CPPUNIT_TEST(test_Ddmc_Css);
     CPPUNIT_TEST_SUITE_END();
 public:
     virtual void setUp();
@@ -193,11 +193,14 @@ void Ut_chromo2::test_Chr_Err_1()
 {
     cout << endl << "=== Test of Chromo2 error handling" << endl;
     Chromo2 chr;
-   // chr.SetFromFile("ut_chr2_err_1.chs");
     chr.SetFromFile("ut_chr2_err_1.chs");
     if (chr.IsError()) {
 	cout << "Pos: " << chr.Error().mPos << " -- " << chr.Error().mText << endl;
     }
+    Chromo2 ochr;
+    ochr.Convert(chr);
+    ochr.Save("ut_chr2_err_1__converted.chs");
+
     chr.Root().Dump();
 }
 

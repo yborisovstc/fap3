@@ -23,30 +23,54 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 {
     public:
 	using TObserverCp = NCpOmnp<MObserver, MObservable>;
-    public:
 
- 	/** @brief Mag access point base
-	 * */
-	// TODO unused?
-	class SdcMapb: public MDesSyncable {
-	    public:
-		SdcMapb(const string& aName, ASdc* aHost);
-		virtual void onMagUpdated();
-		// From MDesSyncable
-		virtual string MDesSyncable_Uid() const override {return MDesSyncable::Type();} 
-		virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
-		virtual MIface* MDesSyncable_getLif(const char *aType) override { return nullptr; }
+    public:
+        
+        /** @brief Node creation observer
+         * */
+        class NodeCreationObserver : public MObserver {
+            public:
+                using TObserverCp = NCpOmnp<MObserver, MObservable>;
+            public:
+                NodeCreationObserver(ASdc* aHost);
+                void startObserving(const GUri& aTargUri);
+                virtual string MObserver_Uid() const {return MObserver::Type();}
+                virtual MIface* MObserver_getLif(const char *aName) override { return nullptr;}
+                virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override;
+                virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override { }
+                virtual void onObsContentChanged(MObservable* aObl, const MContent* aCont) override { }
+                virtual void onObsChanged(MObservable* aObl) override { }
+            private:
+                ASdc* mHost;
+                GUri mTargUri;
+                MNode* mTargOwr = nullptr;     //<! Target's owner
+                int mTargOwrLevel = -1;
+                TObserverCp mOcp;               /*!< Observer connpoint */
+        };
+
+
+        /** @brief Mag access point base
+         * */
+        // TODO unused?
+        class SdcMapb: public MDesSyncable {
+            public:
+                SdcMapb(const string& aName, ASdc* aHost);
+                virtual void onMagUpdated();
+                // From MDesSyncable
+                virtual string MDesSyncable_Uid() const override {return MDesSyncable::Type();} 
+                virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+                virtual MIface* MDesSyncable_getLif(const char *aType) override { return nullptr; }
 #ifdef DES_LISTS_SWAP
-		virtual void setUpdated() override { mUpdated = true; }
+                virtual void setUpdated() override { mUpdated = true; }
 #else
-		virtual void setUpdated() override { mUpdated = true; mHost->setUpdated();}
+                virtual void setUpdated() override { mUpdated = true; mHost->setUpdated();}
 #endif
-		virtual void setActivated() override { mActivated = true; mHost->setActivated();}
-		virtual int countOfActive(bool aLocal = false) const override { return 1;}
-	    public:
-		ASdc* mHost;
-		string mName;    /*!< Iap name */
-		bool mActivated; /*!< Indication of data is active (to be updated) */
+                virtual void setActivated() override { mActivated = true; mHost->setActivated();}
+                virtual int countOfActive(bool aLocal = false) const override { return 1;}
+            public:
+                ASdc* mHost;
+                string mName;    /*!< Iap name */
+                bool mActivated; /*!< Indication of data is active (to be updated) */
 		bool mUpdated; /*!< Indication of data is updated */
 		bool mChanged; /*!< Indication of data is changed */
 	};
@@ -411,6 +435,8 @@ class ASdcConn : public ASdc
     protected:
 	ASdc::SdcIap<Sdata<string>> mIapV1; /*!< "V1" input access point */
 	ASdc::SdcIap<Sdata<string>> mIapV2; /*!< "V2" input access point */
+        NodeCreationObserver mNco1;
+        NodeCreationObserver mNco2;
 };
 
 /** @brief SDC agent "Disconnect"
