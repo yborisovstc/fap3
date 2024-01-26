@@ -3671,7 +3671,7 @@
 		<simpara>Resolved 20231231</simpara>
 	    </sect3>
 	</sect2>
-	<sect2 id="ds_iss_018"><title>[<glossterm id="iss_018">DS_ISS_018</glossterm>] [Open] 20240125 ASdcConn doesn't observe the existance of connected vertexes.</title>
+	<sect2 id="ds_iss_018"><title>[<glossterm id="iss_018">DS_ISS_018</glossterm>] [Resolved] 20240125 ASdcConn doesn't observe the existance of connected vertexes.</title>
 	    <sect3><title>Description</title>
 		<simpara>Working on support of fap3-vis SystDrp. SystDrp is inherited from VertDrp but SystCrp differs - it creates connpoints representation on life cycle
 		    phase but not directly on creation. This causes the case that EdgeCrp created immediatelly after creation of SystCrp fails connecting to SystCrp connpoint
@@ -3679,6 +3679,11 @@
 		    the vertexes to be connected. Current ASdcConn version just checks if vertexes exists and connect if so (or not connect if not).</simpara>
 		<simpara>It seems similar to <xref linkend="ds_iss_015"/></simpara>
 	    </sect3>
+	    <sect3><title>Status</title>
+		<simpara>Resolved 20240125 in 20bf6ddc2f.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_iss_019"><title>[<glossterm id="iss_019">DS_ISS_019</glossterm>] [Open] 20240126 Mutation "Rename" is not implemented.</title>
 	</sect2>
     </sect1>
 

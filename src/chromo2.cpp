@@ -569,16 +569,16 @@ string Chromo2Mdl::GetAttr(const THandle& aHandle, TNodeAttr aAttr) const
 	res = node->mMut.mQ;
     } else if (aAttr == ENa_Targ || aAttr == ENa_NS) {
 	res = GetContextByAttr(*node, aAttr);
-    } else if (aAttr == ENa_MutAttr) {
-	res = "id";
     } else if (aAttr == ENa_MutNode) {
 	assert(rel == KMS_Add || rel == KMS_Remove || rel == KMS_Cont || rel == KMS_Conn || rel == KMS_Disconn || rel.empty());
 	if (rel == KMS_Add || rel.empty()) {
 	    res = GetContextByAttr(*node, aAttr);
 	} else if (rel == KMS_Cont) {
 	    res = node->mMut.mP;
+            /*
 	} else if (rel == KMS_Remove) {
 	    res = node->mMut.mQ;
+            */
 	} else if (rel == KMS_Conn || rel == KMS_Disconn) {
 	    res = node->mMut.mP;
 	} else {
@@ -607,21 +607,15 @@ bool Chromo2Mdl::AttrExists(const THandle& aHandle, TNodeAttr aAttr) const
     C2MdlNode* node = aHandle.Data(node);
     string rel = node->mMut.mR;
     if (aAttr == ENa_Id) {
-	res = (rel == KMS_Add) || rel == KMS_Cont || (rel == KMS_Import);
+	res = (rel == KMS_Add) || rel == KMS_Cont || (rel == KMS_Import) || (rel == KMS_Remove);
     } else if (aAttr == ENa_Parent) {
 	res = (rel == KMS_Add);
     } else if (aAttr == ENa_Targ || aAttr == ENa_NS) {
 	res = node->ExistsContextByAttr(aAttr);
     } else if (aAttr == ENa_MutVal) {
 	res = (rel == KMS_Cont || rel == KMS_Note || rel == KMS_Rename);
-    } else if (aAttr == ENa_MutAttr) {
-	res = (rel == KMS_Rename);
     } else if (aAttr == ENa_MutNode) {
-	if (rel == KMS_Remove) {
-	    res = !node->mMut.mQ.empty();
-	} else {
-	    res = ((rel == KMS_Add) || (rel == KMS_Cont) || rel.empty()) && node->ExistsContextByAttr(ENa_MutNode);
-	}
+        res = ((rel == KMS_Add) || (rel == KMS_Cont) || rel.empty()) && node->ExistsContextByAttr(ENa_MutNode);
     } else if (aAttr == ENa_P) {
 	    res = ((rel == KMS_Conn || rel == KMS_Disconn) && !node->mMut.mP.empty());
     } else if (aAttr == ENa_Q) {
@@ -708,9 +702,6 @@ void Chromo2Mdl::SetAttr(const THandle& aHandle, TNodeAttr aType, const string& 
 	if (rel.empty()) {
 	    node->mMut.mR = KMS_Add;
 	}
-    } else if (aType == ENa_MutAttr) {
-	assert (rel == KMS_Cont || (rel == KMS_Rename));
-	// Attr for rename is not used, omit
     } else if (aType == ENa_MutVal) {
 	assert (rel == KMS_Cont || rel == KMS_Note || rel == KMS_Rename);
 	if (rel == KMS_Note || rel == KMS_Rename) {

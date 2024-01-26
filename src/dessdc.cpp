@@ -202,7 +202,11 @@ bool ASdc::SdcIapg<T>::updateData()
     template <class T>
 void ASdc::SdcIapg<T>::update()
 {
+    T old_data = mUdt;
     bool res = updateData();
+    if (mUdt != mCdt) {
+	LOGNN(mHost, EDbg, "[" + mName + "] Updated: [" + old_data.ToString() + "] -> [" + mUdt.ToString() + "]");
+    }
     mActivated = false;
     setUpdated();
 }
@@ -218,6 +222,17 @@ void ASdc::SdcIapg<T>::confirm()
     }
     mUpdated = false;
 }
+
+    template <class T>
+T& ASdc::SdcIapg<T>::data(bool aConf)
+{ 
+    if (aConf) return mCdt;
+    else {
+	updateData();
+	return mUdt;
+    }
+}
+
 
     template <class T>
 void ASdc::SdcMap<T>::update()
@@ -668,6 +683,65 @@ void ASdcComp::onObsOwnedDetached(MObservable* aObl, MOwned* aOwned)
     mOapOut.NotifyInpsUpdated();
 }
 
+/* SDC agent "Adding Component into target" */
+
+const string K_CpUri_Target = "Target";
+
+ASdcCompT::ASdcCompT(const string &aType, const string& aName, MEnv* aEnv): ASdc(aType, aName, aEnv),
+    mIapName("Name", this, K_CpUri_Name), mIapParent("Parent", this, K_CpUri_Parent),
+    mIapTarg("Target", this, K_CpUri_Target)
+{ }
+
+bool ASdcCompT::getState(bool aConf)
+{
+    bool res = false;
+    if (mMag) {
+        Sdata<string> name = mIapName.data(aConf);
+        if (name.IsValid()) {
+            DGuri targu = mIapTarg.data(aConf);
+            if (targu.IsValid()) {
+                MNode* targn = mMag->getNode(targu.mData);
+                if (targn == nullptr) {
+                    LOGN(EDbg, "Cannot find target [" + targu.mData.toString() + "]");
+                } else {
+                    res = targn->getComp(name.mData);
+                }
+            }
+        }
+    } else {
+        LOGN(EDbg, "Managed agent is not set");
+    }
+    return res;
+}
+
+bool ASdcCompT::doCtl()
+{
+    bool res = false;
+    TNs ns; MutCtx mutctx(NULL, ns);
+    MChromo* chr = mEnv->provider()->createChromo();
+    if (mIapName.mCdt.IsValid() && mIapParent.mCdt.IsValid() && mIapTarg.mCdt.IsValid()) {
+        TMut mut(ENt_Node, ENa_Targ, mIapTarg.mCdt.mData, ENa_Id, mIapName.mCdt.mData, ENa_Parent, mIapParent.mCdt.mData);
+        chr->Root().AddChild(mut);
+        mMag->mutate(chr->Root(), false, mutctx, true);
+        delete chr;
+        string muts = mut.ToString();
+        LOGN(EInfo, "Managed agent is mutated  [" + muts + "]");
+        res = true;
+    }
+    return res;
+}
+
+void ASdcCompT::onObsOwnedAttached(MObservable* aObl, MOwned* aOwned)
+{
+    mOapOut.NotifyInpsUpdated();
+}
+
+void ASdcCompT::onObsOwnedDetached(MObservable* aObl, MOwned* aOwned)
+{
+    mOapOut.NotifyInpsUpdated();
+}
+
+
 
 /* SDC agent "Rm Component" */
 
@@ -800,6 +874,95 @@ bool ASdcConn::doCtl()
     }
     return res;
 }
+
+/* SDC agent "Connect targeted" */
+
+
+ASdcConnT::ASdcConnT(const string &aType, const string& aName, MEnv* aEnv): ASdc(aType, aName, aEnv),
+    mIapTarg("Target", this, K_CpUri_Target), mIapV1("V1", this, K_CpUri_V1),
+    mIapV2("V2", this, K_CpUri_V2), mNco1(this), mNco2(this)
+{ }
+
+bool ASdcConnT::getState(bool aConf)
+{
+    bool res = false;
+    if (mMag) {
+	DGuri targu = mIapTarg.data(aConf);
+        DGuri v1s = mIapV1.data(aConf);
+        DGuri v2s = mIapV2.data(aConf);
+        if (targu.IsValid()) {
+            if (v1s.IsValid() && v2s.IsValid()) {
+                MNode* targ = mMag->getNode(targu.mData);
+                MNode* v1n = targ->getNode(v1s.mData);
+                MNode* v2n = targ->getNode(v2s.mData);
+                if (v1n && v2n) {
+                    MVert* v1v = v1n->lIf(v1v);
+                    MVert* v2v = v2n->lIf(v2v);
+                    if (v1v && v2v) {
+                        res = v1v->isConnected(v2v);
+                    } else {
+                        LOGN(EDbg, "CP is not connectable [" + (v1v ? v2s.mData.toString() : v1s.mData.toString()) + "]");
+                    }
+                } else {
+                    LOGN(EDbg, "Cannot find CP [" + (v1n ? v2s.mData.toString() : v1s.mData.toString()) + "]");
+                    if (!v1n) {
+                        mNco1.startObserving(v1s.mData);
+                    }
+                    if (!v2n) {
+                        mNco2.startObserving(v2s.mData);
+                    }
+                }
+            } else {
+                LOGN(EDbg, "Vertexes URIs are not valid: " + string(v1s.IsValid() ? "v2" : "v1"));
+            }
+        } else {
+            LOGN(EDbg, "Target URI is not valid: " + targu.mData.toString());
+        }
+    } else {
+        LOGN(EDbg, "Managed agent is not set");
+    }
+    return res;
+}
+
+bool ASdcConnT::doCtl()
+{
+    bool res = false;
+    // Checking the control condition met
+    if (mIapTarg.mCdt.IsValid() && mIapV1.mCdt.IsValid() && mIapV2.mCdt.IsValid()) {
+        MNode* targ = mMag->getNode(mIapTarg.mCdt.mData);
+        if (targ != nullptr) {
+            MNode* v1n = targ->getNode(mIapV1.mCdt.mData);
+            MNode* v2n = targ->getNode(mIapV2.mCdt.mData);
+            if (v1n && v2n) {
+                MVert* v1v = v1n->lIf(v1v);
+                MVert* v2v = v2n->lIf(v2v);
+                if (v1v && v2v) {
+                    if (!v1v->isConnected(v2v)) {
+                        TNs ns; MutCtx mutctx(NULL, ns);
+                        MChromo* chr = mEnv->provider()->createChromo();
+                        TMut mut(ENt_Conn, ENa_Targ, mIapTarg.mCdt.mData, ENa_P, mIapV1.mCdt.mData, ENa_Q, mIapV2.mCdt.mData);
+                        chr->Root().AddChild(mut);
+                        mMag->mutate(chr->Root(), false, mutctx, true);
+                        delete chr;
+                        string muts = mut.ToString();
+                        LOGN(EInfo, "Managed agent is mutated  [" + muts + "]");
+                        res = true;
+                    } else {
+                        LOGN(EInfo, "CPs are already connected: [" + mIapV1.mCdt.mData.toString() + "] and [" + mIapV2.mCdt.mData.toString() + "]");
+                    }
+                } else {
+                    LOGN(EInfo, "CP isn't vertex: [" + (v2v ? mIapV1.mCdt.mData.toString() : mIapV2.mCdt.mData.toString()) + "]");
+                }
+            } else {
+                LOGN(EInfo, "CP doesn't exist: [" + (v2n ? mIapV1.mCdt.mData.toString() : mIapV2.mCdt.mData.toString()) + "]");
+            }
+        } else {
+            LOGN(EInfo, "Target doesn't exist: [" + mIapTarg.mCdt.mData.toString() + "]");
+        }
+    }
+    return res;
+}
+
 
 
 /* SDC agent "Disonnect" */

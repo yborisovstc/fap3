@@ -232,17 +232,21 @@ void Node::updateNs(TNs& aNs, const ChromoNode& aCnode)
 MNode* Node::getNode(const string& aName, const TNs& aNs)
 {
     MNode *res = nullptr;
+    MNode *resns = nullptr;
     GUri uri(aName);
-    // Resolving name in current context/native first
     res = getNode(uri);
-    if (!res/* && uri.isName()*/) {
+    for (auto nsit = aNs.rbegin(); nsit != aNs.rend() && !resns; nsit++) {
+	auto ns = *nsit;
+	if (ns == this) continue;
+	resns = ns->getNode(uri);
+    }
+    // Resolving name in current context/native first
+    if (!res) {
 	// Then in namespaces
 	// Applied namespaces priority approach, ref I_NRC
-	for (auto nsit = aNs.rbegin(); nsit != aNs.rend() && !res; nsit++) {
-	    auto ns = *nsit;
-	    if (ns == this) continue;
-	    res = ns->getNode(uri);
-	}
+	res = resns;
+    } else if (resns && res != this) {
+	Log(EErr, TLog(this) + "Same node [" + uri.toString() + "] is resolved both in current ctx and namespace");
     }
     return res;
 }
@@ -309,16 +313,6 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
 	}
 	if (!targ) {
 	    Logger()->Write(EErr, this, "Cannot find target node [%s]", starg.c_str());
-	    res = false;
-	}
-    }
-    if (res && !aTreatAsChromo && exs_mnode) {
-	// Transform DHC mutation to OSM mutation
-	// Transform ENa_Targ: enlarge to ENa_MutNode
-	smnode = rno.Attr(ENa_MutNode);
-	targ = targ->getNode(smnode, root_ns);
-	if (!targ) {
-	    Logger()->Write(EErr, this, "Cannot find mut node [%s]", smnode.c_str());
 	    res = false;
 	}
     }

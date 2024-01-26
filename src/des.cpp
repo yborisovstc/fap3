@@ -215,7 +215,7 @@ string ExtdStateOutpI::VarGetIfid() const
     MVert* intcp = self->getExtd();
     MUnit* intcpu = intcp ? intcp->lIf(intcpu) : nullptr;
     MDVarGet* inpvg = intcpu ? intcpu->getSif(inpvg) : nullptr;
-    return inpvg ? inpvg->VarGetIfid() : nullptr;
+    return inpvg ? inpvg->VarGetIfid() : string();
 }
 
 void ExtdStateOutpI::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
@@ -1017,7 +1017,11 @@ void Des::update()
 void Des::confirm()
 {
     for (auto comp : *mUpdated) {
-	comp->confirm();
+	try {
+	    comp->confirm();
+	} catch (std::exception e) {
+	    LOGN(EErr, "Error on confirm [" + comp->Uid() + "]");
+	}
     }
     mUpdNotified = false;
 }
@@ -1635,25 +1639,25 @@ bool DesLauncher::Run(int aCount, int aIdleCount)
 	    if (!mUpdated.empty()) {
 		LOGN(EDbg, ">>> Confirm [" + to_string(mCounter) + "]");
 		//outputCounter(cnt); // TODO Is it needed?
-		confirm();
-	    }
+                confirm();
+            }
 #endif
-	    PFL_DUR_STAT_REC(PEvents::EDurStat_LaunchConfirm);
-	    cnt++;
-	    idlecnt = 0;
-	    PFL_DUR_STAT_REC(PEvents::EDurStat_LaunchActive);
-	    PFL_DUR_REC(PEvents::EDurStat_LaunchActive);
-	} else {
-	    if (idlecnt == 0) {
-		LOGN(EInfo, "IDLE");
-	    }
-	    OnIdle();
-	    idlecnt++;
-	}
-    }
-	PFL_DUR_STAT_REC(PEvents::EDurStat_LaunchRun);
-	LOGN(EInfo, "END " + PFL_DUR_STAT_FIELD(PEvents::EDurStat_LaunchRun, PIndFId::EStat_SUM));
-	return res;
+            PFL_DUR_STAT_REC(PEvents::EDurStat_LaunchConfirm);
+            cnt++;
+            idlecnt = 0;
+            PFL_DUR_STAT_REC(PEvents::EDurStat_LaunchActive);
+            PFL_DUR_REC(PEvents::EDurStat_LaunchActive);
+        } else {
+            if (idlecnt == 0) {
+                LOGN(EInfo, "IDLE");
+            }
+            OnIdle();
+            idlecnt++;
+        }
+        }
+        PFL_DUR_STAT_REC(PEvents::EDurStat_LaunchRun);
+        LOGN(EInfo, "END " + PFL_DUR_STAT_FIELD(PEvents::EDurStat_LaunchRun, PIndFId::EStat_SUM));
+        return res;
 }
 
 

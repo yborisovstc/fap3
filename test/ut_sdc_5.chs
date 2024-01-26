@@ -6,6 +6,9 @@ Root : Elem {
         # "Model"
         Syst1 : Des {
             Controllable = "y"
+            Syst1_1 : Des {
+                Syst1_1_1 : Des
+            }
             EnableCreate : State (
                 _@ <  {
                     = "SB false"
@@ -14,6 +17,19 @@ Root : Elem {
             )
             SdcCreate : ASdcComp (
                 _@ < Debug.LogLevel = "Dbg"
+                Name ~ : Const {
+                    = "SS Comp1"
+                }
+                Parent ~ : Const {
+                    = "SS Vert"
+                }
+                Enable ~ EnableCreate
+            )
+            SdcCreateT : ASdcCompT (
+                _@ < Debug.LogLevel = "Dbg"
+                Target ~ : Const {
+                    = "URI Syst1_1.Syst1_1_1"
+                }
                 Name ~ : Const {
                     = "SS Comp1"
                 }

@@ -415,7 +415,7 @@ void TrCmpVar::Init(const string& aIfaceName)
     TrVar::Init(aIfaceName);
     MDVarGet* inp1 = GetInp(Func::EInp1);
     MDVarGet* inp2 = GetInp(Func::EInp2);
-    if (aIfaceName == Sdata<bool>::TypeSig() && inp1 != NULL && inp2 != NULL) {
+    if (/*aIfaceName == Sdata<bool>::TypeSig() && */inp1 != NULL && inp2 != NULL) {
 	string t1 = inp1->VarGetIfid();
 	string t2 = inp2->VarGetIfid();
 	FCmpBase::TFType ftype = GetFType();
@@ -603,12 +603,13 @@ const DtBase* TrAndVar::doVDtGet(const string& aType)
 		} else {
 		    mRes.mData = mRes.mData && arg->mData;
 		}
+		LOGN(EDbg, "Inp [" +dget->Uid() + "]: " + arg->ToString());
 	    } else {
 		mRes.mValid = false; break;
 	    }
 	}
     }
-    LOGN(EDbg, TLog(this) + "Res: " + mRes.ToString(true));
+    LOGN(EDbg, "Res: " + mRes.ToString(true));
     return &mRes;
 }
 

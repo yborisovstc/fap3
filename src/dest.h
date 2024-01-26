@@ -66,7 +66,7 @@ template <class T> inline const T* TrBase::GetInpData(FInp& aInp, const T* aData
 	auto* get = (Ic->size() == 1) ? Ic->at(0) : nullptr;
 	data = get ? get->DtGet(data) : nullptr;
 	if (get && !data) { // There already is the log in GetInps
-	    Log(EDbg, TLog(this) + "Cannot get inputT  [" + aInp.mName + "]");
+	    Log(EDbg, TLog(this) + "Cannot get input [" + aInp.mName + "]");
 	}
     }
     return data;

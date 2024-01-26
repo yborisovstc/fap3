@@ -165,6 +165,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 		virtual void confirm() override;
 		// Local
 		virtual bool updateData();
+		T& data(bool aConf = true);
 	    public:
 		T mUdt;  /*!< Updated data */
 		T mCdt;  /*!< Confirmed data */
@@ -399,6 +400,27 @@ class ASdcComp : public ASdc
 	ASdc::SdcPapc<Sdata<string>> mOapName; /*!< Comps Name parameter point, Name pipelined, ref ds_dcs_sdc_dsgn_idp */
 };
 
+/** @brief SDC agent "Adding Component into target"
+ * */
+class ASdcCompT : public ASdc
+{
+    public:
+	static const char* Type() { return "ASdcCompT";};
+	ASdcCompT(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+    protected:
+	// From ASdc
+	virtual bool getState(bool aConf = false) override;
+	bool doCtl() override;
+	// From MObserver
+	virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override;
+	virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override;
+    protected:
+	ASdc::SdcIapg<DGuri> mIapTarg; /*!< "Target" input access point */
+	ASdc::SdcIap<Sdata<string>> mIapName; /*!< "Name" input access point */
+	ASdc::SdcIap<Sdata<string>> mIapParent; /*!< "Parent" input access point */
+};
+
+
 /** @brief SDC agent "Removing Component"
  * */
 class ASdcRm : public ASdc
@@ -438,6 +460,26 @@ class ASdcConn : public ASdc
         NodeCreationObserver mNco1;
         NodeCreationObserver mNco2;
 };
+
+/** @brief SDC agent "Connect targeted"
+ * */
+class ASdcConnT : public ASdc
+{
+    public:
+	static const char* Type() { return "ASdcConnT";};
+	ASdcConnT(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+    protected:
+	// From ASdc
+	virtual bool getState(bool aConf = false) override;
+	bool doCtl() override;
+    protected:
+	ASdc::SdcIapg<DGuri> mIapTarg; /*!< "Target" input access point */
+	ASdc::SdcIapg<DGuri> mIapV1; /*!< "V1" input access point */
+	ASdc::SdcIapg<DGuri> mIapV2; /*!< "V2" input access point */
+        NodeCreationObserver mNco1;
+        NodeCreationObserver mNco2;
+};
+
 
 /** @brief SDC agent "Disconnect"
  * */

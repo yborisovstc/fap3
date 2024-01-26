@@ -571,6 +571,9 @@ void Syst::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
     bool res = false;
     string sp = aMut.Attr(ENa_P);
     string sq = aMut.Attr(ENa_Q);
+    if (sp == "InpTargUri" /* && sq == "TargUri"*/) {
+	Log(EDbg, TLog(this));
+    }
     MNode* pn = getNode(sp, aCtx.mNs);
     MNode* qn = nullptr;
     if (sq.empty()) {

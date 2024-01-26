@@ -146,6 +146,7 @@ include_HEADERS = \
 		  dest.h \
 		  prof.h \
 		  prof_ids.h \
+		  dessdo.h \
 		  miface.h
 
 

@@ -49,11 +49,19 @@ template <class T> inline const T* Func::GetInpData(int aInpId, const T* aData)
     const T* data = nullptr;
     TInpIc* Ic = mHost.GetInps(aInpId);
     if (Ic) {
-	auto* get = (Ic->size() == 1) ? Ic->at(0) : nullptr;
+	if (Ic->size() == 1) {
+	auto* get = Ic->at(0);
 	data = get ? get->DtGet(data) : nullptr;
 	if (!data) {
 	    mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(aInpId) + "]");
 	}
+	} else {
+	    LOGF(EErr, "More than one input [" + mHost.GetInpUri(aInpId) + "]");
+	    for (auto ic : *Ic) {
+		LOGF(EDbg, "Input [" + ic->Uid() + "]");
+	    }
+	}
+	    
     }
     return data;
 }

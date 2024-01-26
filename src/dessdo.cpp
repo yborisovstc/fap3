@@ -21,6 +21,7 @@ MIface* SdoBase::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
     if (res = checkLif<MDVarGet>(aType));
+    else if (res = checkLif<MDesInpObserver>(aType));
     else res = CpStateOutp::MNode_getLif(aType);
     return res;
 }
@@ -96,13 +97,17 @@ void SdoBase::NotifyInpsUpdated()
     for (auto pair : mPairs) {
 	MUnit* pe = pair->lIf(pe);
 	// Don't add self to if request context to enable routing back to self
-	auto* ifcs = getTIfs<MDesInpObserver>();
+	auto* ifcs = pe->getTIfs<MDesInpObserver>();
 	for (auto* obs : *ifcs) {
 	    obs->onInpUpdated();
 	}
     }
 }
 
+void SdoBase::onInpUpdated()
+{
+    NotifyInpsUpdated();
+}
 
 ///  SDO "Name"
 

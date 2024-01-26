@@ -12,7 +12,10 @@ const MDVarGet* Func::GetInp(Host* aHost, int aInpId)
     if (Ic) {
 	res = (Ic->size() == 1) ? Ic->at(0) : nullptr;
 	if (!res) {
-	    aHost->log(EDbg, "Cannot get input [" + aHost->GetInpUri(aInpId) + "]");
+	    aHost->log(EDbg, "More than one input [" + aHost->GetInpUri(aInpId) + "]");
+	    for (auto ic : *Ic) {
+		aHost->log(EDbg, "Input [" + ic->Uid() + "]");
+	    }
 	}
     }
     return res;
@@ -25,7 +28,11 @@ const MDVarGet* Func::GetInp(int aInpId)
     if (Ic) {
 	res = (Ic->size() == 1) ? Ic->at(0) : nullptr;
 	if (!res) {
-	    LOGF(EDbg, "Cannot get input [" + mHost.GetInpUri(aInpId) + "]");
+	    LOGF(EDbg, "More than one input [" + mHost.GetInpUri(aInpId) + "]");
+	    for (auto ic : *Ic) {
+		LOGF(EDbg, "Input [" + ic->Uid() + "]");
+	    }
+
 	}
     }
     return res;

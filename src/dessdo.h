@@ -8,7 +8,7 @@
 
 /** @brief SDO base
  * */
-class SdoBase : public CpStateOutp, public MDVarGet, public MObserver
+class SdoBase : public CpStateOutp, public MDVarGet, public MObserver, public MDesInpObserver
 {
     public:
 	using TObserverCp = NCpOmnp<MObserver, MObservable>;
@@ -119,6 +119,10 @@ class SdoBase : public CpStateOutp, public MDVarGet, public MObserver
 	virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override;
 	virtual void onObsContentChanged(MObservable* aObl, const MContent* aCont) override;
 	virtual void onObsChanged(MObservable* aObl) override;
+	// From MDesInpObserver
+	virtual string MDesInpObserver_Uid() const {return getUid<MDesInpObserver>();}
+	virtual void MDesInpObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+	virtual void onInpUpdated() override;
     protected:
 	void UpdateMag();
 	void NotifyInpsUpdated();
