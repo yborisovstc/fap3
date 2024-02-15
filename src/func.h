@@ -49,19 +49,21 @@ template <class T> inline const T* Func::GetInpData(int aInpId, const T* aData)
     const T* data = nullptr;
     TInpIc* Ic = mHost.GetInps(aInpId);
     if (Ic) {
-	if (Ic->size() == 1) {
-	auto* get = Ic->at(0);
-	data = get ? get->DtGet(data) : nullptr;
-	if (!data) {
-	    mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(aInpId) + "]");
-	}
-	} else {
-	    LOGF(EErr, "More than one input [" + mHost.GetInpUri(aInpId) + "]");
-	    for (auto ic : *Ic) {
-		LOGF(EDbg, "Input [" + ic->Uid() + "]");
-	    }
-	}
-	    
+        if (Ic->size() == 1) {
+            auto* get = Ic->at(0);
+            data = get ? get->DtGet(data) : nullptr;
+            if (!data) {
+                mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(aInpId) + "]");
+            }
+        } else if (Ic->size() == 0) {
+            LOGF(EErr, "No input at [" + mHost.GetInpUri(aInpId) + "]");
+        } else {
+            LOGF(EErr, "More than one input at [" + mHost.GetInpUri(aInpId) + "]");
+            for (auto ic : *Ic) {
+                LOGF(EDbg, "Input [" + ic->Uid() + "]");
+            }
+        }
+
     }
     return data;
 }
@@ -71,11 +73,11 @@ inline const DtBase* Func::GetInpData(int aInpId)
     const DtBase* data = nullptr;
     TInpIc* Ic = mHost.GetInps(aInpId);
     if (Ic) {
-	auto* get = (Ic->size() == 1) ? Ic->at(0) : nullptr;
-	data = get ? get->VDtGet(string()) : nullptr;
-	if (!data) {
-	    mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(aInpId) + "]");
-	}
+        auto* get = (Ic->size() == 1) ? Ic->at(0) : nullptr;
+        data = get ? get->VDtGet(string()) : nullptr;
+        if (!data) {
+            mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(aInpId) + "]");
+        }
     }
     return data;
 }

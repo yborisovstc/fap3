@@ -1,4 +1,6 @@
 
+#include <list>
+
 #include "node.h"
 #include "chromo.h"
 
@@ -609,10 +611,15 @@ void Node::onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const Mu
 void Node::onOwnedAttached(MOwned* aOwned)
 {
     // Notify the observers
+    // Cache observers first to avoid iterating broked due to observers change
+    list<MObserver*> cache;
     auto* obs = mOcp.firstPair();
     while (obs) {
-	obs->provided()->onObsOwnedAttached(this, aOwned);
-	obs = mOcp.nextPair(obs);
+        cache.push_back(obs->provided());
+        obs = mOcp.nextPair(obs);
+    }
+    for (auto obs : cache) {
+        obs->onObsOwnedAttached(this, aOwned);
     }
 }
 
@@ -620,8 +627,8 @@ void Node::onOwnedDetached(MOwned* aOwned)
 {
     auto* obs = mOcp.firstPair();
     while (obs) {
-	obs->provided()->onObsOwnedDetached(this, aOwned);
-	obs = mOcp.nextPair(obs);
+        obs->provided()->onObsOwnedDetached(this, aOwned);
+        obs = mOcp.nextPair(obs);
     }
 }
 

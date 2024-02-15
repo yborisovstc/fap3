@@ -10,13 +10,17 @@ const MDVarGet* Func::GetInp(Host* aHost, int aInpId)
     const MDVarGet* res = nullptr;
     TInpIc* Ic = aHost->GetInps(aInpId);
     if (Ic) {
-	res = (Ic->size() == 1) ? Ic->at(0) : nullptr;
-	if (!res) {
-	    aHost->log(EDbg, "More than one input [" + aHost->GetInpUri(aInpId) + "]");
-	    for (auto ic : *Ic) {
-		aHost->log(EDbg, "Input [" + ic->Uid() + "]");
-	    }
-	}
+        res = (Ic->size() == 1) ? Ic->at(0) : nullptr;
+        if (!res) {
+            if (Ic->size() > 1) {
+                aHost->log(EDbg, "More than one input at [" + aHost->GetInpUri(aInpId) + "]");
+                for (auto ic : *Ic) {
+                    aHost->log(EDbg, "Input [" + ic->Uid() + "]");
+                }
+            } else {
+                aHost->log(EDbg, "No input at [" + aHost->GetInpUri(aInpId) + "]");
+            }
+        }
     }
     return res;
 }
@@ -26,14 +30,17 @@ const MDVarGet* Func::GetInp(int aInpId)
     const MDVarGet* res = nullptr;
     TInpIc* Ic = mHost.GetInps(aInpId);
     if (Ic) {
-	res = (Ic->size() == 1) ? Ic->at(0) : nullptr;
-	if (!res) {
-	    LOGF(EDbg, "More than one input [" + mHost.GetInpUri(aInpId) + "]");
-	    for (auto ic : *Ic) {
-		LOGF(EDbg, "Input [" + ic->Uid() + "]");
-	    }
-
-	}
+        res = (Ic->size() == 1) ? Ic->at(0) : nullptr;
+        if (!res) {
+            if (Ic->size() > 1) {
+                LOGF(EDbg, "More than one input at [" + mHost.GetInpUri(aInpId) + "]");
+                for (auto ic : *Ic) {
+                    LOGF(EDbg, "Input [" + ic->Uid() + "]");
+                }
+            } else {
+                LOGF(EDbg, "No input at [" + mHost.GetInpUri(aInpId) + "]");
+            }
+        }
     }
     return res;
 }

@@ -1186,7 +1186,8 @@ void Des::MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const
 		item->MDesSyncable_doDump(aLevel, aIdt + 4, aOs);
 	    }
 	}
-    } else {
+    }
+    if (aLevel & Ifu::EDM_Opt2) {
 	Ifu::offset(aIdt, aOs); aOs << "Updated:" << endl;
 #ifdef DES_LISTS_SWAP
 	for (auto item : *mUpdated) {
@@ -1199,10 +1200,26 @@ void Des::MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const
 	    }
 	}
     }
-}
+        if (aLevel & Ifu::EDM_Opt3) {
+            Ifu::offset(aIdt, aOs); aOs << "Syncable:" << endl;
+            auto self = const_cast<Des*>(this);
+            auto owdCp = self->owner()->firstPair();
+            while (owdCp) {
+                MUnit* osu = owdCp->provided()->lIf(osu);
+                MDesSyncable* item = osu ? osu->getSif(item) : nullptr;
+                if (item && item != this) {
+                    Ifu::offset(aIdt, aOs); aOs << item->Uid() << endl;
+                    if (aLevel & Ifu::EDM_Recursive) {
+                        item->MDesSyncable_doDump(Ifu::EDM_Opt3, aIdt + 4, aOs);
+                    }
+                }
+                owdCp = self->owner()->nextPair(owdCp);
+            }
+        }
+    }
 
-void Des::MDesObserver_doDump(int aLevel, int aIdt, ostream& aOs) const
-{
+    void Des::MDesObserver_doDump(int aLevel, int aIdt, ostream& aOs) const
+    {
     MDesSyncable_doDump(aLevel, aIdt, aOs);
     const MDesObserver* obs = Owner()->lIf(obs);
     if (obs && (aLevel & Ifu::EDM_Recursive)) {
@@ -1544,7 +1561,8 @@ void ADes::MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const
 		item->MDesSyncable_doDump(aLevel, aIdt + 4, aOs);
 	    }
 	}
-    } else {
+    }
+    if (aLevel & Ifu::EDM_Opt2) {
 	Ifu::offset(aIdt, aOs); aOs << "Updated:" << endl;
 #ifdef DES_LISTS_SWAP
 	for (auto item : *mUpdated) {
@@ -1557,23 +1575,40 @@ void ADes::MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const
 	    }
 	}
     }
-}
+        if (aLevel & Ifu::EDM_Opt3) {
+            Ifu::offset(aIdt, aOs); aOs << "Syncable:" << endl;
+            auto self = const_cast<ADes*>(this);
+            MNode* host = self->ahostNode();
+            auto owdCp = host->owner()->firstPair();
+            while (owdCp) {
+                MUnit* osu = owdCp->provided()->lIf(osu);
+                MDesSyncable* item = osu ? osu->getSif(item) : nullptr;
+                if (item && item != this) {
+	            Ifu::offset(aIdt, aOs); aOs << item->Uid() << endl;
+	            if (aLevel & Ifu::EDM_Recursive) {
+                        item->MDesSyncable_doDump(Ifu::EDM_Opt3, aIdt + 4, aOs);
+                    }
+                }
+                owdCp = host->owner()->nextPair(owdCp);
+            }
+        }
+    }
 
-MNode* ADes::ahostNode()
-{
-    auto pair = mAgtCp.firstPair();
-    MAhost* ahost = pair ? pair->provided() : nullptr;
-    MNode* hostn = ahost ? ahost->lIf(hostn) : nullptr;
-    return hostn;
-}
+    MNode* ADes::ahostNode()
+    {
+        auto pair = mAgtCp.firstPair();
+        MAhost* ahost = pair ? pair->provided() : nullptr;
+        MNode* hostn = ahost ? ahost->lIf(hostn) : nullptr;
+        return hostn;
+    }
 
-MNode* ADes::ahostGetNode(const GUri& aUri)
-{
-    auto pair = mAgtCp.firstPair();
-    MAhost* ahost = pair ? pair->provided() : nullptr;
-    MNode* hostn = ahost ? ahost->lIf(hostn) : nullptr;
-    MNode* res = hostn ? hostn->getNode(aUri, this) : nullptr;
-    return res;
+    MNode* ADes::ahostGetNode(const GUri& aUri)
+    {
+	auto pair = mAgtCp.firstPair();
+	MAhost* ahost = pair ? pair->provided() : nullptr;
+	MNode* hostn = ahost ? ahost->lIf(hostn) : nullptr;
+	MNode* res = hostn ? hostn->getNode(aUri, this) : nullptr;
+	return res;
 }
 
 void ADes::pauseDes()
@@ -1605,6 +1640,7 @@ DesLauncher::DesLauncher(const string &aType, const string& aName, MEnv* aEnv): 
 {
 }
 
+#if 0
 bool DesLauncher::Run(int aCount, int aIdleCount)
 {
     bool res = true;
@@ -1659,6 +1695,52 @@ bool DesLauncher::Run(int aCount, int aIdleCount)
         LOGN(EInfo, "END " + PFL_DUR_STAT_FIELD(PEvents::EDurStat_LaunchRun, PIndFId::EStat_SUM));
         return res;
 }
+#endif
+
+#ifdef DES_LISTS_SWAP
+bool DesLauncher::Run(int aCount, int aIdleCount)
+{
+    bool res = true;
+    int cnt = 0;
+    int idlecnt = 0;
+    LOGN(EInfo, "START");
+    PFL_DUR_STAT_START(PEvents::EDurStat_LaunchRun);
+    while (!mStop && (aCount == 0 || cnt < aCount) && (aIdleCount == 0 || idlecnt < aIdleCount)) {
+	mCounter++;
+	if (!mActive->empty()) {
+	    //updateCounter(cnt); // TODO Is it needed?
+	    LOGN(EDbg, ">>> Update [" + to_string(mCounter) + "], count: " + to_string(countOfActive()) +
+		    ", dur: " + PFL_DUR_VALUE(PEvents::EDurStat_LaunchActive) +
+		    ", inv: " + PFL_DUR_STAT_CNT(PEvents::EDurStat_UInvldIrm));
+	    PFL_DUR_START(PEvents::EDurStat_LaunchActive);
+	    PFL_DUR_STAT_START(PEvents::EDurStat_LaunchActive);
+	    PFL_DUR_STAT_START(PEvents::EDurStat_LaunchUpdate);
+	    update();
+	    PFL_DUR_STAT_REC(PEvents::EDurStat_LaunchUpdate);
+	    PFL_DUR_STAT_START(PEvents::EDurStat_LaunchConfirm);
+	    if (isLogLevel(EDbg)) {
+		LOGN(EDbg, ">>> Confirm [" + to_string(mCounter) + "]");
+	    }
+	    //outputCounter(cnt); // TODO Is it needed?
+	    confirm();
+	    PFL_DUR_STAT_REC(PEvents::EDurStat_LaunchConfirm);
+	    cnt++;
+	    idlecnt = 0;
+	    PFL_DUR_STAT_REC(PEvents::EDurStat_LaunchActive);
+	    PFL_DUR_REC(PEvents::EDurStat_LaunchActive);
+	} else {
+	    if (idlecnt == 0) {
+		LOGN(EInfo, "IDLE");
+	    }
+	    OnIdle();
+	    idlecnt++;
+	}
+    }
+    PFL_DUR_STAT_REC(PEvents::EDurStat_LaunchRun);
+    LOGN(EInfo, "END " + PFL_DUR_STAT_FIELD(PEvents::EDurStat_LaunchRun, PIndFId::EStat_SUM));
+    return res;
+}
+#endif
 
 
 bool DesLauncher::Stop()

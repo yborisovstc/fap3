@@ -642,7 +642,7 @@ class DesEIbb: public MDesInpObserver, public MDesSyncable
 	virtual MIface* MDesSyncable_getLif(const char *aType) override { return nullptr; }
 	virtual void update() override { mChanged = false;}
 	virtual void setUpdated() override { mUpdated = true; sHost()->setUpdated();}
-	virtual void setActivated() override { mActivated = true; sHost()->setActivated();}
+	virtual void setActivated() override { mActivated = true; auto shost = sHost(); if (shost) shost->setActivated();}
 	virtual int countOfActive(bool aLocal = false) const override { return 1;}
     protected:
 	template <typename S> string toStr(const S& aData) { return to_string(aData); }

@@ -145,11 +145,9 @@ DesUtils : Elem {
                 Inp1 ~ Sw2 : TrSwitchBool (
                     Sel ~ CidxAnd1 : TrAndVar (
                         Inp ~ Cmp_Gt : TrCmpVar (
-                            Inp ~ : TrAddVar (
+                            Inp ~ : TrSub2Var (
                                 Inp ~ InpCnt.Int
-                                InpN ~ : State {
-                                    = "SI 1"
-                                }
+                                Inp2 ~ : SI_1
                             )
                             Inp2 ~ SIdx
                             _@ < Debug.LogLevel = "Err"
@@ -159,23 +157,16 @@ DesUtils : Elem {
                     Inp1 ~ SIdx
                     Inp2 ~ : TrAddVar (
                         Inp ~ SIdx
-                        Inp ~ : State {
-                            = "SI 1"
-                        }
+                        Inp ~ : SI_1
                     )
                 )
-                Inp2 ~ : State {
-                    = "SI 0"
-                }
+                Inp2 ~ : SI_0
                 Sel ~ InpReset.Int
             )
         )
         Outp.Int ~ SIdx
-        OutpDone.Int ~ : TrAndVar (
-            Inp ~ InpDone.Int
-            Inp ~ : TrNegVar (
-                Inp ~ Cmp_Gt
-            )
+        OutpDone.Int ~ : TrNegVar (
+            Inp ~ Cmp_Gt
         )
     }
     IdxItr2 : Des {
@@ -430,9 +421,32 @@ DesUtils : Elem {
             _@ < = "URI"
             Inp ~ Subsys.Outp
         )
+        NotFound : TrAndVar (
+            Inp ~ : TrIsValid (
+                Inp ~ InpMpg.Int
+            )
+            Inp ~ : TrIsValid (
+                Inp ~ InpParents.Int
+            )
+            Inp ~ : TrIsInvalid (
+                Inp ~ Subsys.Outp
+            )
+        )
         Subsys.InpSsParents ~ InpParents.Int
         Subsys.InpMapping ~ InpMpg.Int
-        OutpRes.Int ~ Subsys.Outp
+        _ <  {
+            OutpRes.Int ~ Subsys.Outp
+            OutpRes.Int ~ OutpRes_Int : TrSvldVar (
+                _@ < Debug.LogLevel = "Dbg"
+                Inp1 ~ Subsys.Outp
+                Inp2 ~ InpDefRes.Int
+            )
+        }
+        OutpRes.Int ~ OutpRes_Int : TrSwitchBool (
+            Inp1 ~ Subsys.Outp
+            Inp2 ~ InpDefRes.Int
+            Sel ~ NotFound
+        )
         # ">>> Parent mapping resolver"
     }
 }

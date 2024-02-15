@@ -249,6 +249,25 @@ class TrCmpVar: public TrVar
 	FInp mInp2;
 };
 
+/** @brief Transition "Is equal"
+ * */
+// TODO Not completed. To complete
+class TrEqVar: public TrVar
+{
+    public:
+	static const char* Type() { return "TrEqVar";};
+	TrEqVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	virtual void Init(const string& aIfaceName) override;
+	virtual FInp* GetFinp(int aId) override;
+	virtual int GetInpCpsCount() const override {return 2;}
+    protected:
+	const static string K_InpInp;
+	const static string K_InpInp2;
+	FInp mInp;
+	FInp mInp2;
+};
+
+
 
 /** @brief Agent function "Switcher"
  * */
@@ -750,6 +769,25 @@ class TrIsValid: public TrBase
 	TRes mRes;
 	static const string K_InpInp;
 };
+
+/** @brief Transition "Data is invalid"
+ * */
+class TrIsInvalid: public TrBase
+{
+    public:
+	using TRes = Sdata<bool>;
+    public:
+	static const char* Type() { return "TrIsInvalid";};
+	TrIsInvalid(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From MDVarGet
+	virtual string VarGetIfid() const override { return TRes::TypeSig(); }
+	virtual const DtBase* doVDtGet(const string& aType) override;
+    protected:
+	FInp mInpInp;
+	TRes mRes;
+	static const string K_InpInp;
+};
+
 
 
 /** @brief Transition "Type enforcing"

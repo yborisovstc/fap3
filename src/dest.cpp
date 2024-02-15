@@ -413,6 +413,9 @@ TrCmpVar::TrCmpVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(
 void TrCmpVar::Init(const string& aIfaceName)
 {
     TrVar::Init(aIfaceName);
+    if (mName == "IsOutput_Eq") {
+	    LOGN(EWarn, "");
+    }
     MDVarGet* inp1 = GetInp(Func::EInp1);
     MDVarGet* inp2 = GetInp(Func::EInp2);
     if (/*aIfaceName == Sdata<bool>::TypeSig() && */inp1 != NULL && inp2 != NULL) {
@@ -450,6 +453,38 @@ FCmpBase::TFType TrCmpVar::GetFType()
     }
     return res;
 }
+
+////    TrEqVar
+// TODO Not completed. To complete
+
+const string TrEqVar::K_InpInp = "Inp";
+const string TrEqVar::K_InpInp2 = "Inp2";
+
+TrEqVar::TrEqVar(const string &aType, const string& aName, MEnv* aEnv): TrVar(aType, aName, aEnv),
+    mInp(K_InpInp), mInp2(K_InpInp2)
+{
+    AddInput(K_InpInp);
+    AddInput(K_InpInp2);
+}
+
+void TrEqVar::Init(const string& aIfaceName)
+{
+    TrVar::Init(aIfaceName);
+    MDVarGet* inp1 = GetInp(Func::EInp1);
+    MDVarGet* inp2 = GetInp(Func::EInp2);
+    if (inp1 != NULL && inp2 != NULL) {
+	string t1 = inp1->VarGetIfid();
+	string t2 = inp2->VarGetIfid();
+    }
+}
+
+FInp* TrEqVar::GetFinp(int aId)
+{
+    if (aId == Func::EInp1) return &mInp;
+    else if (aId == Func::EInp2) return &mInp2;
+    else return nullptr;
+}
+
 
 
 ////  TrSwitchBool
@@ -747,14 +782,19 @@ const DtBase* TrSvldVar::doVDtGet(const string& aType)
     if (inp1 && inp2) {
 	if (inp1->IsValid() && inp2->IsValid()) {
 	    res = inp1;
+	    LOGN(EDbg, "Both inputs are valid, res (inp1): " + res->ToString(true));
 	} else if (inp1->IsValid()) {
 	    res = inp1;
+	    LOGN(EDbg, "Inp1 is valid, res (inp1): " + res->ToString(true));
 	} else if (inp2->IsValid()) {
 	    res = inp2;
+	    LOGN(EDbg, "Inp2 is valid, res (inp2): " + res->ToString(true));
 	} else {
 	    res = inp1;
-	    LOGN(EDbg, "Both inputs are invalid");
+	    LOGN(EDbg, "Both inputs are invalid, res (inp1): " + res->ToString(true));
 	}
+    } else {
+	LOGN(EErr, "Null input [" + (inp1 ? mInp2.mName : mInp1.mName) + "]");
     }
     return res;
 }
@@ -1541,6 +1581,32 @@ const DtBase* TrIsValid::doVDtGet(const string& aType)
     LOGN(EDbg, "Inp [" + (inp ? inp->ToString(true) : "nil") + "], res [" + mRes.ToString(true) + "]");
     return &mRes;
 }
+
+
+/// Agent function "Data is invalid"
+
+const string TrIsInvalid::K_InpInp = "Inp";
+
+TrIsInvalid::TrIsInvalid(const string& aType, const string& aName, MEnv* aEnv): TrBase(aType, aName, aEnv),
+    mInpInp(K_InpInp)
+{
+    AddInput(K_InpInp);
+}
+
+const DtBase* TrIsInvalid::doVDtGet(const string& aType)
+{
+    mRes.mValid = false;
+    const DtBase* inp = GetInpData(mInpInp, inp);
+    if (inp) {
+	mRes.mData = !inp->IsValid();
+    } else {
+	mRes.mData = true;
+    }
+    mRes.mValid = true;
+    LOGN(EDbg, "Inp [" + (inp ? inp->ToString(true) : "nil") + "], res [" + mRes.ToString(true) + "]");
+    return &mRes;
+}
+
 
 
 // Transition "Type enforcing"

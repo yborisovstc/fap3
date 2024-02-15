@@ -20,6 +20,8 @@ class Ifu
 	    EDM_Base = 0x02,
 	    EDM_Comps = 0x04,
 	    EDM_Opt1 = 0x10,
+	    EDM_Opt2 = 0x20,
+	    EDM_Opt3 = 0x40,
 	};
     public:
 	Ifu();

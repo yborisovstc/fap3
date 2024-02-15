@@ -666,9 +666,11 @@ bool ASdcComp::doCtl()
 	mMag->mutate(chr->Root(), false, mutctx, true);
 	delete chr;
 	string muts = mut.ToString();
-	LOGN(EInfo, "Managed agent is mutated  [" + muts + "]");
+	LOGN(EInfo, "Managed agent is mutated [" + muts + "]");
 	mOapName.updateData(mIapName.mCdt);
 	res = true;
+    } else {
+	LOGN(EInfo, "Input [" + (mIapName.mCdt.IsValid() ? mIapParent.mName : mIapName.mName) + "] is invalid");
     }
     return res;
 }
