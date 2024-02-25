@@ -2005,7 +2005,7 @@
 			stops controlled system, makes all controlled system re-configuration, performs IRM invalidation and DES inp notification and then resumes the 
 			controlled system again.</simpara>
 		</sect4>
-		<sect4><title>How to "perform IRM invalidation and DES inp notification"?</title>
+		<sect4><title>How to "disable IRM invalidation and DES inp notification"?</title>
 		    <simpara>
 			This insists that we need to disable IRM invalidation and DES inp notification before staring the control of manageable system. But there are no
 			proper mechanism of how to disable them. One solution is to just remove DES inp notification from CPs onIfpInvalidated
@@ -2018,18 +2018,95 @@
 		<sect4 id="ds_dcs_sl_hil_s1"><title>Solution#1 Managed subsystem owned (MSO) by managing subsystem.</title>
 		    <simpara>
 			One approach is to have managed agent adapter, then keep managed subsystem MSS inside so the adapter points to owned MSS and then
-			managing subsystem inside the adapter.
+			keep managing subsystem inside the adapter. The idea is to use native hier means to clearly "isolate" managed subsystem
+			(or "separate" managing and managed subsystems). In that case
+			managing subsystem can simply disable Des sync of managed subsystem till managing gets completed.
 		    </simpara>
 		    <simpara>
 			With this approach we have simple access from managing subsystem to managed one.
 		    </simpara>
+		    <simpara>
+			Actually it is not important if managing subsystem owns the managed one. This important point is that managing subsystem is
+			"isolated" from the managed one. Managing subystem can be placed in totally different point in native hier in that case. The
+			example is fap3-vis AVR: main view container as the managed subsystem is placed in view hierarchy but managing subsystem (controller)
+			place is out of thie hier - it just gets link to managed subsystem.
+		    </simpara>
+		    <simpara>One of the desing would be the following:</simpara>
+		    <itemizedlist>
+			<listitem>
+			    Add MDesAdapter iface support to Des and ADes
+			    <para>So they can analyze property (or state) "Target" and provide access to target MNode.</para>
+			</listitem>
+			<listitem>
+				Each DES shall contain managing subs (SDCs) and managed subsystem (pointed by "Target")
+			    <para>So DES now will contains two layers: controlling and controlled.</para>
+			</listitem>
+			<listitem>
+			    As a design option we can set default "Target" to predefined controlled sybsystem, let's say "Mgd".
+			    <para>In that case we don't need to set "Target" property/state but follow the controlled subsystem default name rule. </para>
+			</listitem>
+		    </itemizedlist>
 		    <simpara>The question is if this approach covers all the use-cases? For instance current fap3-vis agents visial representation
 			(AVR) module uses "remote" controlling - managed agent base if obtained via MNode link. Can AVR module be re-designed to
 			use MSO approach? With current AVR design Edge CRP manages it's owner - DRP that doesn't follow MSO approach. This
 			solution actually based on obvious reasons: Edge CRP is linked to Edge pairs vertex CRPs so posesses the info required to create
 			and layout edges segments. Same time the edges segments are the part of DRP. So, logically, DRP "delegates" managing to
 			its owned Edge CRP.</simpara>
-		    <simpara>Seems MSO approach is suitable for only some limited configuration of the system.</simpara>
+		    <simpara>This shows that in many cases managing subsystem is the part of managed subsystem. Look at fap3-vis container: it has 
+			managing part that adds widget into the container. That managing part manages the container itself but same time is the owned of
+			that container. How to separate managed part with MSO approach?</simpara>
+		    <simpara>
+			First of all container still has to follow widget and container interfaces. What ifaces are they? For widget it is CPs:
+			Cp (WidgetCp) and probably (?) parameters states like FontPath, FontSize etc. Then we need to keep native ifaces in container,
+			particularly MSceneElem. So we need to have special agent that resolve MSceneElem redirecting request to Controlled agent (CntAgent)
+		    </simpara>
+		</sect4>
+		<sect4 id="ds_dcs_sl_hil_s2"><title>Solution#2 Managing subsystem separation via dedicated interface.</title>
+		    <simpara>
+			Current soltuion (when managing subsystem can be inside the managed) works ok. The only problem is
+			that with that solution we cannot disable DES sync of managed subs only - DES sync will be disabled for managing subs also.
+		    </simpara>
+		    <simpara>The idea is to modify DES to have separate sync for managing and managed subs. In that case DES includes both
+			managing and managed subs but DES "virtually" separates them when sync.</simpara>
+		</sect4>
+		<sect4><title>Comparing Solution#1 and Solution#2</title>
+		    <itemizedlist><title>Soution#1 pros</title>
+			<listitem>The relation managing-manageable is seen explicitly from the system structure</listitem>
+			<listitem>
+			    Managed subs is isolated from managing sub, to it is not possible that managin subs can manage itself
+			    <para>Ref <xref linkend="ds_dcs_sl_irdms"/></para>
+			    <simpara>The isolation is performed by the means of native hier (i.e. structurally).</simpara>
+			</listitem>
+		    </itemizedlist>
+		    <itemizedlist><title>Soution#1 cons</title>
+			<listitem>
+			    The solution leads to complicating of the structure
+			    <simpara>This requires to extend Controlled part conn points to the boundary of the whole subsystem.</simpara>
+			</listitem>
+		    </itemizedlist>
+		    <itemizedlist><title>Soution#2 cons</title>
+			<listitem>
+			    The solution allows managing subs to manage itself
+			    <para>Ref <xref linkend="ds_dcs_sl_irdms"/></para>
+			</listitem>
+			<listitem>
+			    The solution affects core agents (Des, ADes) behavior.
+			</listitem>
+		    </itemizedlist>
+
+
+		</sect4>
+	    </sect3>
+	    <sect3 id="ds_dcs_sl_irdms"><title>Is it right design to have systems managed by itself?</title>
+		<sect4><title>Intro</title>
+		    <simpara>
+			<xref linkend="gls_dcs"/> can be designed according to differenct approached. One approach (
+			<xref linkend="gls_lsc"/>) is to have specific managing layer. Ref
+			<xref linkend="ds_dcs_sl_hil_s1"/> for details. It requires system specificly structured to isolate managed and 
+			    managing systems. Another approach (
+			<xref linkend="ds_dcs_sl_hil_s2"/>) (is simpler, currently used) is to enable system be managed by itself and not 
+			    isolate managing and managed systems. But is this approach correct from the principles of creating DES?
+		    </simpara>
 		</sect4>
 	    </sect3>
 	    <sect3 id="ds_dcs_sl_nti"><title>What needs to be improved for applying LSC approach</title>
@@ -2042,7 +2119,7 @@
 		<sect4 id="ds_dcs_sl_nti_sa"><title>Simpify managed agent adapter (DAdp agent)</title>
 		    <simpara>Currently the adapter agent needs to be linked to some owner of managed system. Link agent is used for that linking.
 			It works ok but create some overhead in case if managed subsystem is owned by the adapter itself. This can be simplified:
-			adapter can assume that ower of managed system is adapter itself in case if link is not established.</simpara>
+			adapter can assume that owner of managed system is adapter itself in case if link is not established.</simpara>
 		    <simpara>This approach was tried in ae750283cb but caused problem on fap3-vis ut_avr_vert_drp_2. The root-cause is that simple
 			assuming "owner of managed system is adapter itself in case if link is not established" doesn't work because MAG base input connection
 			can be deferred in the model. In that case MAG base initial set to adapter itself is the mistake.</simpara>
@@ -2141,21 +2218,21 @@
 		<simpara>
 		    There was a number of discussion regarding DES "movement" design. Ref
 		    <xref linkend="ds_dcs_ucs_itr"/>
-		    Normally we use two-phase scheme (update-confirm) for that:
-		    we calculate new values of states on update phase (the transition inputs are freezed) and freeze the values on confirm phase.
-		    There is another approach - to calculate new value on confirm phase.
+			Normally we use two-phase scheme (update-confirm) for that:
+			we calculate new values of states on update phase (the transition inputs are freezed) and freeze the values on confirm phase.
+			There is another approach - to calculate new value on confirm phase.
 		</simpara>
 		<simpara>In case of <xref linkend="gls_dcs"/> the important point is that the update-confirm scheme used for state simple data is
 		    not convenient for controlling where the "data" is the whole controlled system. Obviously it is not possible to keep two instances of
 		    data - confirmed and updated.</simpara>
 		<simpara>Note that currently even simple state update mechanism is optimized, ref <xref linkend="ds_desopt_ums"/> but with this optimization
 		    there are still two data instances.
-		</simpara>
-		<simpara>Why we need two instances"? Actually it is not necessary. What we actually need is to keep freezed current data when we 
-		    calculate new value. In case of <xref linkend="gls_dcs"/> we can freeze not whole current data (i.e. not whole managed system structure)
-			but just parts of it that are required to calculate the change to managed system.
-			This is more simple. In that case we can freeze data on controling system transitions inputs.
-			It is already discussed in <xref linkend="ds_dcs_ucs_cip_ib"/>. So the current note is just highlighting of that solution.
+	    </simpara>
+	    <simpara>Why we need two instances"? Actually it is not necessary. What we actually need is to keep freezed current data when we 
+		calculate new value. In case of <xref linkend="gls_dcs"/> we can freeze not whole current data (i.e. not whole managed system structure)
+		    but just parts of it that are required to calculate the change to managed system.
+		    This is more simple. In that case we can freeze data on controling system transitions inputs.
+		    It is already discussed in <xref linkend="ds_dcs_ucs_cip_ib"/>. So the current note is just highlighting of that solution.
 		</simpara>
 		<simpara>
 		    There were many doubts that the scheme described above (mutating controlled system on confirmation phase) is not complied with 

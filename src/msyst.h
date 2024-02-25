@@ -81,6 +81,7 @@ class MAhost: public MIface
 /** @brief System host agents controller
  * System exposes this iface to agent that the agent can request the attaching
  * */
+// TODO Do we really need it? System can observe owned attach and then do attach/detach agent
 class MActr: public MIface
 {
     public:

@@ -86,10 +86,12 @@ void Elem::mutate(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx&
 {
     bool isChild = aMut.IsChildOf(mChromo->Root());
     if (!aChange && !aTreatAsChromo && !isChild) {
+	//PFL_DUR_STAT_START(PEvents::EDurStat_Tmp);
         ChromoNode mut = mChromo->Root().AddChild(aMut, true, true);
         if (aLocal) {
             mut.RmAttr(ENa_Targ);
         }
+	//PFL_DUR_STAT_REC(PEvents::EDurStat_Tmp);
         Unit::mutate(mut, aChange, aCtx, aTreatAsChromo, aLocal);
     } else {
         Unit::mutate(aMut, aChange, aCtx, aTreatAsChromo, aLocal);

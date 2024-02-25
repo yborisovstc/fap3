@@ -48,80 +48,23 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
                 TObserverCp mOcp;               /*!< Observer connpoint */
         };
 
-
-        /** @brief Mag access point base
-         * */
-        // TODO unused?
-        class SdcMapb: public MDesSyncable {
-            public:
-                SdcMapb(const string& aName, ASdc* aHost);
-                virtual void onMagUpdated();
-                // From MDesSyncable
-                virtual string MDesSyncable_Uid() const override {return MDesSyncable::Type();} 
-                virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
-                virtual MIface* MDesSyncable_getLif(const char *aType) override { return nullptr; }
-#ifdef DES_LISTS_SWAP
-                virtual void setUpdated() override { mUpdated = true; }
-#else
-                virtual void setUpdated() override { mUpdated = true; mHost->setUpdated();}
-#endif
-                virtual void setActivated() override { mActivated = true; mHost->setActivated();}
-                virtual int countOfActive(bool aLocal = false) const override { return 1;}
-            public:
-                ASdc* mHost;
-                string mName;    /*!< Iap name */
-                bool mActivated; /*!< Indication of data is active (to be updated) */
-		bool mUpdated; /*!< Indication of data is updated */
-		bool mChanged; /*!< Indication of data is changed */
-	};
-
-	/** @brief Mag access point
-	 * */
-	// TODO unused?
-	template <typename T> class SdcMap: public SdcMapb {
-	    public:
-		template<typename P> using TGetData = std::function<void (P&)>;
-	    public:
-		SdcMap(const string& aName, ASdc* aHost, TGetData<T> aGetData): SdcMapb(aName, aHost), mGetData(aGetData) {}
-		// From MDesSyncable
-		virtual void update() override;
-		virtual void confirm() override;
-	    public:
-		TGetData<T> mGetData;
-		T mUdt;  /*!< Updated data */
-		T mCdt;  /*!< Confirmed data */
-	};
-
-
-
  	/** @brief Input access point base
 	 * */
-	class SdcIapb: public MDesInpObserver, public MDesSyncable {
+	class SdcIapb: public MDesInpObserver {
 	    public:
 		SdcIapb(const string& aName, ASdc* aHost, const string& aInpUri);
 		string getInpUri() const { return mInpUri;}
 		// From MDesInpObserver
-		virtual void onInpUpdated() override { setActivated(); }
+		virtual void onInpUpdated() override { mHost->setActivated(); }
 		virtual string MDesInpObserver_Uid() const override {return mHost->getUidC<MDesInpObserver>(mName); }
 		virtual void MDesInpObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
-		virtual MIface* MDesSyncable_getLif(const char *aType) override { return nullptr; }
-		// From MDesSyncable
-		virtual string MDesSyncable_Uid() const override {return mHost->getUidC<MDesSyncable>(mName);} 
-		virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
-#ifdef DES_LISTS_SWAP
-		virtual void setUpdated() override { mUpdated = true; }
-#else
-		virtual void setUpdated() override { mUpdated = true; mHost->setUpdated();}
-#endif
-		virtual void setActivated() override { mActivated = true; mHost->setActivated();}
-		virtual int countOfActive(bool aLocal = false) const override { return 1;}
+		// Local
+		virtual bool isDataValid() const = 0;
+		virtual bool updateData() = 0;
 	    public:
 		ASdc* mHost;
 		string mName;    /*!< Iap name */
 		string mInpUri;  /*!< Input URI */
-		bool mActivated; /*!< Indication of data is active (to be updated) */
-		bool mUpdated; /*!< Indication of data is updated */
-		bool mChanged; /*!< Indication of data is changed */
 	};
 
  	/** @brief Input access point operating with Sdata
@@ -131,15 +74,13 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 	class SdcIap: public SdcIapb {
 	    public:
 		SdcIap(const string& aName, ASdc* aHost, const string& aInpUri): SdcIapb(aName, aHost, aInpUri) {}
-		// From MDesSyncable
-		virtual void update() override;
-		virtual void confirm() override;
 		// Local
-		virtual bool updateData();
+		virtual bool updateData() override;
 		T& data(bool aConf = true);
+		bool isDataValid() const override { return mCdt.IsValid();}
 	    public:
 		T mUdt;  /*!< Updated data */
-		T mCdt;  /*!< Confirmed data */
+		T& mCdt = mUdt;  /*!< Confirmed data */
 	};
 
  	/** @brief Input "Enable" access point
@@ -160,15 +101,13 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 	class SdcIapg: public SdcIapb {
 	    public:
 		SdcIapg(const string& aName, ASdc* aHost, const string& aInpUri): SdcIapb(aName, aHost, aInpUri) {}
-		// From MDesSyncable
-		virtual void update() override;
-		virtual void confirm() override;
 		// Local
-		virtual bool updateData();
+		virtual bool updateData() override;
 		T& data(bool aConf = true);
+		bool isDataValid() const override { return mCdt.IsValid();}
 	    public:
 		T mUdt;  /*!< Updated data */
-		T mCdt;  /*!< Confirmed data */
+		T& mCdt = mUdt;  /*!< Confirmed data */
 	};
 
 	/** @brief Parameter access point base
@@ -230,16 +169,16 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 		virtual string MObserver_Uid() const {return MObserver::Type();}
 		virtual MIface* MObserver_getLif(const char *aName) override { return nullptr;}
 		virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override {
-		    mHost->notifyMaps();
+		    //mHost->notifyMaps();
 		}
 		virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override {
-		    mHost->notifyMaps();
+		    //mHost->notifyMaps();
 		}
 		virtual void onObsContentChanged(MObservable* aObl, const MContent* aCont) override {
-		    mHost->notifyMaps();
+		    //mHost->notifyMaps();
 		}
 		virtual void onObsChanged(MObservable* aObl) override {
-		    mHost->notifyMaps();
+		    //mHost->notifyMaps();
 		}
 	    public:
 		TObserverCp mOcp;               /*!< Observer connpoint */
@@ -319,7 +258,6 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
     public:
 	bool registerIap(SdcIapb* aIap);
 	bool registerPap(SdcPapb* aPap);
-	bool registerMap(SdcMapb* aMap);
     protected:
 	bool rifDesIobs(SdcIapb& aIap, MIfReq::TIfReqCp* aReq);
 	bool rifDesPaps(SdcPapb& aPap, MIfReq::TIfReqCp* aReq);
@@ -336,10 +274,10 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 	void notifyMaps();
 	void notifyOutp();
 	void UpdateMag();
+	bool areInpsValid() const;
     protected:
 	vector<SdcIapb*> mIaps; /*!< Input adapters registry */
 	vector<SdcPapb*> mPaps; /*!< Param adapters registry */
-	vector<SdcMapb*> mMaps; /*!< Mag adapters registry */
 	TObserverCp mObrCp;               /*!< Observer connpoint */
 	MNode* mMag; /*!< Managed agent */
 	bool mUpdNotified;  //<! Sign of that State notified observers on Update
@@ -396,8 +334,6 @@ class ASdcComp : public ASdc
     protected:
 	ASdc::SdcIap<Sdata<string>> mIapName; /*!< "Name" input access point */
 	ASdc::SdcIap<Sdata<string>> mIapParent; /*!< "Parent" input access point */
-	// TODO not used
-	ASdc::SdcPapc<Sdata<string>> mOapName; /*!< Comps Name parameter point, Name pipelined, ref ds_dcs_sdc_dsgn_idp */
 };
 
 /** @brief SDC agent "Adding Component into target"
@@ -437,8 +373,6 @@ class ASdcRm : public ASdc
 	virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override;
     protected:
 	ASdc::SdcIap<Sdata<string>> mIapName; /*!< "Name" input access point */
-	// TODO not used
-	ASdc::SdcPapc<Sdata<string>> mOapName; /*!< Comps Name parameter point, Name pipelined, ref ds_dcs_sdc_dsgn_idp */
 };
 
 

@@ -288,18 +288,6 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
     bool exs_targ = rno.AttrExists(ENa_Targ);
     bool exs_mnode = rno.AttrExists(ENa_MutNode);
     string starg, smnode;
-#if 0 //!!
-    // Set namespace to mut node
-    if (aMut.AttrExists(ENa_NS)) {
-	if (!rno.AttrExists(ENa_NS)) {
-	    rno.SetAttr(ENa_NS, aMut.Attr(ENa_NS));
-	} else {
-	    // TODO Support multiple namespaces, ref ds_chr2_ns_insmns 
-	    // Currently the only last namespaces is active
-	    //	assert(false);
-	}
-    }
-#endif
     if (!aTreatAsChromo && exs_targ && !aLocal) {
 	starg = rno.Attr(ENa_Targ);
 	if (starg == K_SpName_Ns) {
@@ -349,18 +337,6 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
 		    } else {
 			targ = mres;
 		    }
-		    /*
-		    for (ChromoNode::Const_Iterator rit = aMut.Begin(); rit != aMut.End() && res; rit++)
-		    {
-			ChromoNode rno = (*rit);
-			MutCtx mctx(this, root_ns);
-			try {
-			    targ->mutate(rno, aUpdOnly, mctx);
-			} catch (std::exception e) {
-			    Logger()->Write(EErr, this, "Unspecified error on mutation");
-			}
-		    }
-		    */
 		    MutCtx mctx(this, root_ns);
 		    if (targ) {
 			targ->mutate(rno, aUpdOnly, mctx, true);
@@ -377,15 +353,13 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
 	    } else if (rnotype == ENt_Rm) {
 		mutRemove(rno, aUpdOnly, mctx);
 	    } else if (rnotype == ENt_Conn) {
+		PFL_DUR_STAT_START(PEvents::EDurStat_MutConn);
 		mutConnect(rno, aUpdOnly, mctx);
+		PFL_DUR_STAT_REC(PEvents::EDurStat_MutConn);
 	    } else if (rnotype == ENt_Disconn) {
 		mutDisconnect(rno, aUpdOnly, mctx);
 	    } else if (rnotype == ENt_Note) {
 		// Comment, just accept
-		/*
-		   iChromo->Root().AddChild(rno);
-		   NotifyNodeMutated(rno, mctx);
-		   */
 	    } else {
 		Logger()->Write(EErr, this, "Unknown mutation [%d]", rnotype);
 	    }
@@ -417,12 +391,14 @@ bool Node::attachOwned(MNode* aOwned)
 
 MNode* Node::createHeir(const string& aName)
 {
+    PFL_DUR_STAT_START(PEvents::EDurStat_MutCrn);
     MNode* uheir = nullptr;
     if (Provider()->isProvided(this)) {
 	uheir = Provider()->createNode(name(), aName, mEnv);
     } else {
 	Log(EInfo, TLog(this) + "The parent of [" + aName + "] is not of provided");
     }
+    PFL_DUR_STAT_REC(PEvents::EDurStat_MutCrn);
     return uheir;
 }
 
@@ -466,9 +442,10 @@ MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
 {
     string sparent = aMut.Attr(ENa_Parent);
     string sname = aMut.Attr(ENa_Id);
+    /*
     TNs ns = aCtx.mNs;
     updateNs(ns, aMut);
-    bool mutadded = false;
+    */
     bool res = false;
     Log(EDbg2, TLog(this, aMut) + "Adding element [" + sname + "]");
 
@@ -480,34 +457,12 @@ MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
     if (!sparent.empty()) {
 	// Check the parent scheme
 	GUri prnturi(sparent);
-	// Resolving parent ref basing on target, ref ds_umt_rtnsu_rbs
-	TNs pns = ns; // Parent namaspace
-	//getModules(pns);
-	//parent = getNode(prnturi, pns);
 	parent = getParent(prnturi);
-	if (!parent) {
-	    // Probably external node not imported yet - ask env for resolving uri
-	    /*!!
-	      GUri pruri(prnturi);
-	      MImportMgr* impmgr = iEnv->ImpsMgr();
-	      parent = impmgr->OnUriNotResolved(node, pruri);
-	      */
-	}
 	if (parent) {
 	    // Create heir from the parent
 	    uelem = parent->createHeir(sname);
 	    if (uelem) {
 		attachOwned(uelem);
-		//notifyNodeMutated(aMut, aCtx);
-		mutadded = true;
-		// Mutate object ignoring run-time option. This is required to keep nodes chromo even for inherited nodes
-		// To avoid this inherited nodes chromo being attached we just don't attach inherited nodes chromo
-		if (aMut.Count() > 0) {
-		    TNs ns(aCtx.mNs);
-		    //ns.push_back(uelem);
-		    MutCtx ctx(aCtx.mNode, ns);
-		    //uelem->mutate(aMut, false, aUpdOnly ? MutCtx(uelem, ns) : ctx, true);
-		}
 		parent->attachHeir(uelem);
 	    } else {
 		Log(EErr, TLog(this) + "Adding node [" + sname + "] failed");
@@ -517,9 +472,6 @@ MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
 	}
     } else {
 	Log(EErr, TLog(this) + "Missing parent name");
-    }
-    if (!aUpdOnly && !mutadded) {
-	//notifyNodeMutated(aMut, aCtx);
     }
     return uelem;
 }
@@ -536,9 +488,6 @@ void Node::mutRemove(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 	if (res) {
 	    owned->deleteOwned();
 	    Log(EInfo, TLog(this) + "Removed node [" + sname + "]");
-	    if (!aUpdOnly) {
-		//notifyNodeMutated(aMut, aCtx);
-	    }
 	} else {
 	    Log(EErr, TLog(this) + "Failed detached owned [" + sname + "]");
 	}
@@ -552,9 +501,6 @@ void Node::mutContent(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
     string snode = aMut.Attr(ENa_MutNode);
     string sdata = aMut.Attr(ENa_MutVal);
     bool res = setContent(snode, sdata);
-    if (!aUpdOnly) {
-	//notifyNodeMutated(aMut, aCtx);
-    }
 }
 
 void Node::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
@@ -562,9 +508,6 @@ void Node::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
     string sp = aMut.Attr(ENa_P);
     string sq = aMut.Attr(ENa_Q);
     Log(EErr, TLog(this) + "Connecting [" + sp + "] to [" + sq + "] - not supported");
-    if (!aUpdOnly) {
-	//notifyNodeMutated(aMut, aCtx);
-    }
 }
 
 void Node::mutDisconnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
@@ -572,9 +515,6 @@ void Node::mutDisconnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aC
     string sp = aMut.Attr(ENa_P);
     string sq = aMut.Attr(ENa_Q);
     Log(EErr, TLog(this) + "Disconnecting [" + sp + "] from [" + sq + "] - not supported");
-    if (!aUpdOnly) {
-	//notifyNodeMutated(aMut, aCtx);
-    }
 }
 
 void Node::mutImport(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
@@ -585,9 +525,6 @@ void Node::mutImport(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
     bool res = impmgr->Import(srcs);
     if (!res) {
 	Log(EErr, TLog(this) + "Importing [" + srcs + "] failed");
-    }
-    if (!aUpdOnly) {
-	//notifyNodeMutated(aMut, aCtx);
     }
 }
 

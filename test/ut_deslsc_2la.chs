@@ -1,78 +1,55 @@
 Root : Elem {
     + DesUtils
-    # "Test of LSC, simple system"
-    Incrementor : Des {
-        Count : State @  {
-            _@ <  {
-                = "SI 0"
-                Debug.LogLevel = "Dbg"
-            }
-            Inp ~ : TrAdd2Var @  {
-                Inp ~ Count
-                Inp2 ~ SI_1
-            }
-        }
-    }
+    # "Test of LSC, simple system with DES agent. MSO design approach"
     ListItem : Syst {
         Next : ExtdStateInp
-        Prev : ExtdStateOutp @  {
+        Prev : ExtdStateOutp (
             Int ~ Next.Int
             Int ~ : SI_1
-        }
+        )
     }
     Launcher : DesLauncher {
         Debug.LogLevel = "Dbg"
-        Controller : Des {
-            # "Controller"
-            Manageable : Syst {
+        System : Syst {
+            Agt : ADes
+            # "System, including controlled subs"
+            Controlled : Des {
                 # "Managed system"
-                DesAgt : ADes
                 Outp : ExtdStateOutp
-                Add : TrAddVar @  {
+                Add : TrAddVar (
                     Inp ~ Outp
-                }
-                AddRes : State @  {
+                )
+                AddRes : State (
                     _@ < Debug.LogLevel = "Dbg"
                     _@ < = "SI 0"
                     Inp ~ Add
-                }
+                )
             }
-            MgbLink : Link {
-                MntpOutp : CpStateMnodeOutp
-            }
-            MgbLink ~ Manageable
-            MgbAdp : DAdp @  {
-                # "Adapter to manageable"
-                InpMagBase ~ MgbLink.MntpOutp
-                InpMagUri ~ : Const {
-                    = "URI _$"
-                }
-            }
-            MgbAdp <  {
+            {
                 ItemParentName : Const {
                     = "SS ListItem"
                 }
-                SdcPause : ASdcPause @  {
+                SdcPause : ASdcPause (
                     _@ < Debug.LogLevel = "Dbg"
                     Enable ~ : SB_True
-                }
-                CreateBeg : ASdcComp @  {
+                )
+                CreateBeg : ASdcComp (
                     _@ < Debug.LogLevel = "Dbg"
                     Enable ~ SdcPause.Outp
                     Name ~ : Const {
                         = "SS Beg"
                     }
                     Parent ~ ItemParentName
-                }
-                CreateEnd : ASdcComp @  {
+                )
+                CreateEnd : ASdcComp (
                     _@ < Debug.LogLevel = "Dbg"
                     Enable ~ CreateBeg.Outp
                     Name ~ : Const {
                         = "SS End"
                     }
                     Parent ~ ItemParentName
-                }
-                ConnBegToEnd : ASdcConn @  {
+                )
+                ConnBegToEnd : ASdcConn (
                     _@ < Debug.LogLevel = "Dbg"
                     Enable ~ CreateEnd.Outp
                     V1 ~ : Const {
@@ -81,8 +58,8 @@ Root : Elem {
                     V2 ~ : Const {
                         = "SS Beg.Prev"
                     }
-                }
-                ConnToOutp : ASdcConn @  {
+                )
+                ConnToOutp : ASdcConn (
                     _@ < Debug.LogLevel = "Dbg"
                     Enable ~ ConnBegToEnd.Outp
                     V1 ~ : Const {
@@ -91,30 +68,30 @@ Root : Elem {
                     V2 ~ : Const {
                         = "SS Outp.Int"
                     }
-                }
+                )
                 # "Items Iterator"
-                ItemsIter : DesUtils.IdxItr @  {
+                ItemsIter : DesUtils.IdxItr (
                     InpCnt ~ : Const {
                         = "SI 500"
                     }
                     InpReset ~ : SB_False
-                }
+                )
                 # "Create Item"
-                CreateItem : ASdcComp @  {
+                CreateItem : ASdcComp (
                     _@ < Debug.LogLevel = "Dbg"
                     Enable ~ ConnToOutp.Outp
-                    Name ~ ItemName : TrApndVar @  {
+                    Name ~ ItemName : TrApndVar (
                         Inp1 ~ : Const {
                             = "SS Item_"
                         }
-                        Inp2 ~ : TrTostrVar @  {
+                        Inp2 ~ : TrTostrVar (
                             Inp ~ ItemsIter.Outp
-                        }
-                    }
+                        )
+                    )
                     Parent ~ ItemParentName
-                }
+                )
                 # "Insert Item"
-                InsertItem : ASdcInsert2 @  {
+                InsertItem : ASdcInsert2 (
                     _@ < Debug.LogLevel = "Dbg"
                     Enable ~ CreateItem.Outp
                     Enable ~ CreateEnd.Outp
@@ -128,12 +105,12 @@ Root : Elem {
                     Next ~ : Const {
                         = "SS Next"
                     }
-                }
+                )
                 ItemsIter.InpDone ~ InsertItem.Outp
-                SdcResume : ASdcResume @  {
+                SdcResume : ASdcResume (
                     _@ < Debug.LogLevel = "Dbg"
                     Enable ~ ItemsIter.OutpDone
-                }
+                )
             }
         }
     }

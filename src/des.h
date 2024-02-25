@@ -6,6 +6,7 @@
 #include "mdata.h"
 #include "mdes.h"
 #include "mlauncher.h"
+#include "mdadp.h"
 
 #include "nconn.h"
 #include "unit.h"
@@ -395,7 +396,7 @@ class Const: public Vertu, public MConnPoint, public MDVarGet, public Cnt::Host
 
 /** @brief DES system
 * */
-class Des: public Syst, public MDesSyncable, public MDesObserver
+class Des: public Syst, public MDesSyncable, public MDesObserver, public MDesAdapter, public MDesManageable
 {
     public:
     using TScblReg = list<MDesSyncable*>;
@@ -425,8 +426,19 @@ class Des: public Syst, public MDesSyncable, public MDesObserver
 	virtual void onUpdated(MDesSyncable* aComp) override;
 	// From Unit.MIfProvOwner
 	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	// From MDesManageable
+	virtual string MDesManageable_Uid() const override {return getUid<MDesManageable>();}
+	virtual void pauseDes() override;
+	virtual void resumeDes() override;
+	virtual bool isPaused() const;
+        // From MDesAdapter
+        virtual string MDesAdapter_Uid() const override { return getUid<MDesAdapter>(); }
+        virtual void MDesAdapter_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+        virtual MNode* getMag() override;
     protected:
 	static void RmSyncable(TScblReg& aReg, MDesSyncable* aScbl);
+    public:
+	static const GUri KControlledUri;
     protected:
 #ifdef DES_LISTS_SWAP
 	TScblReg mSP;     /*!< Active compoments */
@@ -440,6 +452,7 @@ class Des: public Syst, public MDesSyncable, public MDesObserver
 	bool mUpdNotified;  //<! Sign of that State notified observers on Update
 	bool mActNotified;  //<! Sign of that State notified observers on Activation
 	bool mUpd = false;
+	bool mPaused;       //<! Status of pause of DES evolving
 };
 
 /** @brief DES agent
@@ -448,7 +461,7 @@ class Des: public Syst, public MDesSyncable, public MDesObserver
  * (it needs owner to be MDesObserver or resolve this iface). Consider to remove.
 * */
 class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver, public MObserver,
-      public MDesManageable
+      public MDesManageable, public MDesAdapter
 {
     public:
 	using TAgtCp = NCpOnp<MAgent, MAhost>;  /*!< Agent conn point */
@@ -493,7 +506,11 @@ class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver
 	virtual string MDesManageable_Uid() const override {return getUid<MDesManageable>();}
 	virtual void pauseDes() override;
 	virtual void resumeDes() override;
-	virtual bool isPaused() const override;
+	virtual bool isPaused() const;
+        // From MDesAdapter
+        virtual string MDesAdapter_Uid() const override { return getUid<MDesAdapter>(); }
+        virtual void MDesAdapter_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
+        virtual MNode* getMag() override;
     protected:
 	MNode* ahostGetNode(const GUri& aUri);
 	MNode* ahostNode();

@@ -56,7 +56,7 @@ template <class T> inline const T* Func::GetInpData(int aInpId, const T* aData)
                 mHost.log(EDbg, "Cannot get input [" + mHost.GetInpUri(aInpId) + "]");
             }
         } else if (Ic->size() == 0) {
-            LOGF(EErr, "No input at [" + mHost.GetInpUri(aInpId) + "]");
+            LOGF(EDbg, "No input at [" + mHost.GetInpUri(aInpId) + "]");
         } else {
             LOGF(EErr, "More than one input at [" + mHost.GetInpUri(aInpId) + "]");
             for (auto ic : *Ic) {

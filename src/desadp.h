@@ -273,7 +273,7 @@ class AMelemAdp : public AAdp
  * Dadp components.
  * */
 // TODO To intro Dese - DES with embedded elems, base DAdp on it
-class DAdp : public Des, public IDesEmbHost, public MDesAdapter
+class DAdp : public Des, public IDesEmbHost
 {
     public:
 	// TODO intro "hard link" instead of MLink (w/o conn, disconn)

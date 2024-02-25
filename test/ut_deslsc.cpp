@@ -14,8 +14,9 @@ class Ut_deslsc : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_deslsc);
 
-    CPPUNIT_TEST(test_DesLsc_1);
-    //CPPUNIT_TEST(test_DesLsc_2);
+    //CPPUNIT_TEST(test_DesLsc_1);
+    CPPUNIT_TEST(test_DesLsc_2);
+    //CPPUNIT_TEST(test_DesLsc_2a);
     CPPUNIT_TEST_SUITE_END();
     public:
     virtual void setUp();
@@ -26,6 +27,7 @@ class Ut_deslsc : public CPPUNIT_NS::TestFixture
     private:
     void test_DesLsc_1();
     void test_DesLsc_2();
+    void test_DesLsc_2a();
     private:
     Env* mEnv;
 };
@@ -87,10 +89,42 @@ void Ut_deslsc::test_DesLsc_1()
  * */
 void Ut_deslsc::test_DesLsc_2()
 {
-    printf("\n === Test of DES LSC: increasing the performance\n");
-    MNode* root = constructSystem("ut_deslsc_2");
-    bool res = mEnv->RunSystem(1120, 2);
+    printf("\n\n === Test of DES LSC: increasing the performance\n");
+    printf("\n === Check/compare profiler metrics in profiler data files\n\n");
+    printf("\n Running DES with LSC\n");
+    MNode* root = constructSystem("ut_deslsc_2l");
+    bool res = mEnv->RunSystem(8000, 2);
+    printf("\n Run completed, deleting system\n");
     mEnv->profiler()->saveMetrics();
+
+    printf("\n Running DES without LSC\n");
+    root = constructSystem("ut_deslsc_2lo");
+    res = mEnv->RunSystem(8000, 2);
+    printf("\n Run completed, deleting system\n");
+    mEnv->profiler()->saveMetrics();
+
+    delete mEnv;
+}
+
+/** @brief DES LSC test 2
+ * */
+void Ut_deslsc::test_DesLsc_2a()
+{
+    printf("\n\n === Test of DES LSC with DES agt: increasing the performance\n");
+    printf("\n === Check/compare profiler metrics in profiler data files\n\n");
+    printf("\n Running DES with LSC\n");
+    MNode* root = constructSystem("ut_deslsc_2la");
+    bool res = mEnv->RunSystem(8000, 2);
+    printf("\n Run completed, deleting system\n");
+    mEnv->profiler()->saveMetrics();
+
+    /*
+    printf("\n Running DES without LSC\n");
+    root = constructSystem("ut_deslsc_2lo");
+    res = mEnv->RunSystem(8000, 2);
+    printf("\n Run completed, deleting system\n");
+    mEnv->profiler()->saveMetrics();
+    */
 
     delete mEnv;
 }

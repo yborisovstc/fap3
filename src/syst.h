@@ -133,6 +133,7 @@ class Syst : public Elem, public MAhost, public MActr, public MSyst
 	virtual MIface* MOwner_getLif(const char *aType) override;
 	// From MActr
 	virtual string MActr_Uid() const override {return getUid<MActr>();}
+	// TODO Do we really need it? System can observe owned attach and then do attach/detach agent
 	virtual bool attachAgent(MAgent::TCp* aAgt) override;
 	virtual bool detachAgent(MAgent::TCp* aAgt) override;
 	// From MAhost
@@ -172,8 +173,28 @@ class CpMnodeOutp: public ConnPointu
 	CpMnodeOutp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 };
 
-
-
-
+/** @brief Agent base
+ * */
+class AgtBase: public Unit, public MAgent
+{
+    public:
+	using TAgtCp = NCpOnp<MAgent, MAhost>;  /*!< Agent conn point */
+	using TObserverCp = NCpOmnp<MObserver, MObservable>;
+    public:
+	static const char* Type() { return "AgtBase";};
+	AgtBase(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	virtual ~AgtBase();
+	// From Base
+	virtual MIface* MNode_getLif(const char *aName) override;
+	// From MAgent
+	virtual string MAgent_Uid() const override {return getUid<MAgent>();}
+	virtual MIface* MAgent_getLif(const char *aName) override;
+	// From Node.MOwned
+	virtual void onOwnerAttached() override;
+    protected:
+	MNode* ahostNode();
+    protected:
+	TAgtCp mAgtCp;                   /*!< Agent connpoint */
+};
 
 #endif

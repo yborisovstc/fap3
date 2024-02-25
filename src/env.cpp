@@ -19,7 +19,8 @@ static const string KModulesName = "Modules";
 const PindCluster<PindDur>::Idata KPindDurIdata = {
     "dur",
     {
-	{PEvents::EDurStat_LaunchActive, "IFC_LNCH_ACTIVE"},
+	{PEvents::EDur_LaunchActive, "IFC_LNCH_ACTIVE"},
+	{PEvents::EDur_Construct, "IFC_CONSTRUCT"},
     }
 };
 
@@ -38,6 +39,12 @@ const PindCluster<PindDurStat>::Idata KPindDurStatIdata = {
 	{PEvents::EDurStat_DAdpConfirm, "IFC_DADP_CONF", 80000, false},
 	{PEvents::EDurStat_DAdpDes, "IFC_DADP_DES", 80000, false},
 	{PEvents::EDurStat_ASdcConfirm, "IFC_ASDC_CONF", 80000, false},
+	{PEvents::EDurStat_ASdcConfState, "IFC_ASDC_CONFST", 80000, false},
+	{PEvents::EDurStat_ASdcConfCtl, "IFC_ASDC_CONFCL", 80000, false},
+	{PEvents::EDurStat_ASdcCtlCmp, "IFC_ASDC_CTLCMP", 80000, false},
+	{PEvents::EDurStat_Tmp, "IFC_DST_TMP", 80000, false},
+	{PEvents::EDurStat_MutCrn, "IFC_MUT_CRN", 80000, false},
+	{PEvents::EDurStat_MutConn, "IFC_MUT_CONN", 80000, false},
     }
 };
 
@@ -275,13 +282,8 @@ void Env::constructSystem()
 	    /**/
 	    MElem* eroot = mRoot ? mRoot->lIf(eroot) : nullptr;
 	    if (eroot != NULL) {
+		PROF_DUR_START(mProf, PROF_DUR, PEvents::EDur_Construct);
 		//Pclock(PEvents::Env_Root_Created, mRoot);
-		stringstream ss;
-		struct timeval tp;
-		/*
-		gettimeofday(&tp, NULL);
-		long int beg_us = tp.tv_sec * 1000000 + tp.tv_usec;
-		*/
 		Logger()->Write(EInfo, mRoot, "Started of creating system, spec [%s]", mSpecFile.c_str());
 		//MutCtx mc(mRoot, mRoot);
 		MutCtx mc(mRoot);
@@ -291,7 +293,6 @@ void Env::constructSystem()
 		mRoot->mutate(chr->Root(), true, mc);
 		//mRoot->mutate(root, false, mc, false);
 		mRoot->mutate(root, false, mc, true);
-		Logger()->Write(EInfo, mRoot, "Completed of creating system");
 		// Set launcher
 		mLauncher = mRoot->lIf(mLauncher);
 		if (!mLauncher) for (int i = 0; i < mRoot->owner()->pcount(); i++) {
@@ -301,6 +302,8 @@ void Env::constructSystem()
 			mLauncher = desl; break;
 		    }
 		}
+		PROF_DUR_REC(mProf, PROF_DUR, PEvents::EDur_Construct);
+		Logger()->Write(EInfo, mRoot, "Completed of creating system: %s", PROF_FIELD(mProf, PROF_DUR, PEvents::EDur_Construct, PIndFId::EInd_VAL).c_str());
 	    } else {
 		Logger()->WriteFormat("Env: cannot create root elem");
 	    }

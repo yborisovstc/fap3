@@ -571,14 +571,12 @@ void Syst::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
     bool res = false;
     string sp = aMut.Attr(ENa_P);
     string sq = aMut.Attr(ENa_Q);
-    if (sp == "InpTargUri" /* && sq == "TargUri"*/) {
-	Log(EDbg, TLog(this));
-    }
     MNode* pn = getNode(sp, aCtx.mNs);
     MNode* qn = nullptr;
     if (sq.empty()) {
 	if (aMut.Count() == 1) {
 	    // Q-dependency
+	    PFL_DUR_STAT_START(PEvents::EDurStat_Tmp);
 	    ChromoNode qdep = *aMut.Begin();
 	    mutate(qdep, aUpdOnly, aCtx);
 	    if (qdep.Type() == ENt_Node) {
@@ -591,6 +589,7 @@ void Syst::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 		}
 	    }
 	    qn = getNode(sq, aCtx.mNs);
+	    PFL_DUR_STAT_REC(PEvents::EDurStat_Tmp);
 	}
     } else {
 	qn = getNode(sq, aCtx.mNs);
@@ -625,9 +624,6 @@ void Syst::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 	}
     } else {
 	LOGN(EErr, "Connecting [" + sp + "] to [" + sq + "] - cannot find [" + (pn ? sq : sp) + "]");
-    }
-    if (!aUpdOnly) {
-	//notifyNodeMutated(aMut, aCtx);
     }
 }
 
@@ -743,4 +739,46 @@ CpMnodeOutp::CpMnodeOutp(const string &aType, const string& aName, MEnv* aEnv): 
     bool res = setContent("Provided", "MLink");
     res &= setContent("Required", "");
     assert(res);
+}
+
+// AgtBase
+
+AgtBase::AgtBase(const string &aType, const string& aName, MEnv* aEnv): Unit(aType, aName, aEnv), mAgtCp(this)
+{
+}
+
+AgtBase::~AgtBase()
+{
+}
+
+MIface* AgtBase::MAgent_getLif(const char *aType)
+{
+    return checkLif<MUnit>(aType); // To allow client to request IFR
+}
+
+MIface* AgtBase::MNode_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif<MAgent>(aType));
+    else res = Unit::MNode_getLif(aType);
+    return res;
+}
+
+void AgtBase::onOwnerAttached()
+{
+    bool res = false;
+    // Registering in agent host
+    MActr* ac = Owner()->lIf(ac);
+    res = ac->attachAgent(&mAgtCp);
+    if (!res) {
+	LOGN(EErr, "Cannot attach to host");
+    }
+}
+
+MNode* AgtBase::ahostNode()
+{
+    auto pair = mAgtCp.firstPair();
+    MAhost* ahost = pair ? pair->provided() : nullptr;
+    MNode* hostn = ahost ? ahost->lIf(hostn) : nullptr;
+    return hostn;
 }

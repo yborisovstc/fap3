@@ -12,7 +12,6 @@
 const string KCont_Provided = "Provided";
 const string KCont_Required = "Required";
 
-#define STATE2_DATA_SWAP
 
 CpState::CpState(const string &aType, const string& aName, MEnv* aEnv): ConnPointu(aType, aName, aEnv)
 {
@@ -495,14 +494,10 @@ void State::confirm()
 	if (mInpValid) {
 	    if (mPdata) {
 		if (*mCdata != *mPdata) {
-#ifdef STATE2_DATA_SWAP
 		    // Swap the data
 		    auto ptr = mCdata;
 		    mCdata = mPdata;
 		    mPdata = ptr;
-#else
-		    *mCdata = *mPdata;
-#endif
 		    NotifyInpsUpdated();
 		    changed = true;
 		}
@@ -921,7 +916,10 @@ DtBase* Const::VDtGet(const string& aType)
 
 /// DES
 
-Des::Des(const string &aType, const string &aName, MEnv* aEnv): Syst(aType, aName, aEnv), mUpdNotified(false), mActNotified(false)
+const GUri Des::KControlledUri = "Controlled";
+
+Des::Des(const string &aType, const string &aName, MEnv* aEnv): Syst(aType, aName, aEnv), mUpdNotified(false), mActNotified(false),
+mPaused(false)
 {
 }
 
@@ -930,6 +928,8 @@ MIface* Des::MNode_getLif(const char *aType)
     MIface* res = nullptr;
     if (res = checkLif<MDesSyncable>(aType));
     else if (res = checkLif<MDesObserver>(aType));
+    else if (res = checkLif<MDesAdapter>(aType));
+    else if (res = checkLif<MDesManageable>(aType));
     else res = Syst::MNode_getLif(aType);
     return res;
 }
@@ -982,18 +982,20 @@ void Des::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 void Des::update()
 {
     mUpd = true;
-    for (auto comp : *mActive) {
-	try {
-	    comp->update();
-	} catch (std::exception e) {
-	    LOGN(EErr, "Error on update [" + comp->Uid() + "]");
-	}
+    if (!mPaused) {
+        for (auto comp : *mActive) {
+            try {
+                comp->update();
+            } catch (std::exception e) {
+                LOGN(EErr, "Error on update [" + comp->Uid() + "]");
+            }
+        }
+        // Swapping the lists
+        auto upd = mUpdated;
+        mUpdated = mActive;
+        mActive = upd;
+        mActive->clear();
     }
-    // Swapping the lists
-    auto upd = mUpdated;
-    mUpdated = mActive;
-    mActive = upd;
-    mActive->clear();
     mActNotified = false;
     mUpd = false;
 }
@@ -1168,6 +1170,7 @@ MIface* Des::MOwner_getLif(const char *aType)
 {
     MIface* res = NULL;
     if (res = checkLif<MDesObserver>(aType)); // Notifying from owned 
+    else if (res = checkLif<MDesAdapter>(aType));
     else res = Syst::MOwner_getLif(aType);
     return res;
 }
@@ -1229,8 +1232,32 @@ void Des::MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const
     }
 }
 
+void Des::pauseDes()
+{
+    mPaused = true;
+}
+
+void Des::resumeDes()
+{
+    mPaused = false;
+    setActivated();
+}
+
+bool Des::isPaused() const
+{
+    return mPaused;
+}
+
+
+MNode* Des::getMag()
+{
+    return getNode(Des::KControlledUri);
+}
+
 
 ///// ADES
+
+
 
 ADes::ADes(const string &aType, const string &aName, MEnv* aEnv): Unit(aType, aName, aEnv), mOrCp(this), mAgtCp(this), mUpdNotified(false), mActNotified(false),
     mPaused(false)
@@ -1241,7 +1268,6 @@ ADes::~ADes()
 {
 }
 
-
 MIface* ADes::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
@@ -1249,6 +1275,7 @@ MIface* ADes::MNode_getLif(const char *aType)
     else if (res = checkLif<MAgent>(aType));
     else if (res = checkLif<MDesObserver>(aType));
     else if (res = checkLif<MDesManageable>(aType));
+    else if (res = checkLif<MDesAdapter>(aType));
     else res = Unit::MNode_getLif(aType);
     return res;
 }
@@ -1260,6 +1287,7 @@ MIface* ADes::MAgent_getLif(const char *aType)
     else if (res = checkLif<MUnit>(aType)); // To allow client to request IFR
     else if (res = checkLif<MDesObserver>(aType));
     else if (res = checkLif<MDesManageable>(aType));
+    else if (res = checkLif<MDesAdapter>(aType));
     return res;
 }
 
@@ -1627,6 +1655,12 @@ bool ADes::isPaused() const
     return mPaused;
 }
 
+MNode* ADes::getMag()
+{
+    auto host = ahostNode();
+    return host ? host->getNode(Des::KControlledUri) : nullptr;
+}
+
 
 //// DesLauncher
 
@@ -1710,9 +1744,9 @@ bool DesLauncher::Run(int aCount, int aIdleCount)
 	if (!mActive->empty()) {
 	    //updateCounter(cnt); // TODO Is it needed?
 	    LOGN(EDbg, ">>> Update [" + to_string(mCounter) + "], count: " + to_string(countOfActive()) +
-		    ", dur: " + PFL_DUR_VALUE(PEvents::EDurStat_LaunchActive) +
+		    ", dur: " + PFL_DUR_VALUE(PEvents::EDur_LaunchActive) +
 		    ", inv: " + PFL_DUR_STAT_CNT(PEvents::EDurStat_UInvldIrm));
-	    PFL_DUR_START(PEvents::EDurStat_LaunchActive);
+	    PFL_DUR_START(PEvents::EDur_LaunchActive);
 	    PFL_DUR_STAT_START(PEvents::EDurStat_LaunchActive);
 	    PFL_DUR_STAT_START(PEvents::EDurStat_LaunchUpdate);
 	    update();
@@ -1727,7 +1761,7 @@ bool DesLauncher::Run(int aCount, int aIdleCount)
 	    cnt++;
 	    idlecnt = 0;
 	    PFL_DUR_STAT_REC(PEvents::EDurStat_LaunchActive);
-	    PFL_DUR_REC(PEvents::EDurStat_LaunchActive);
+	    PFL_DUR_REC(PEvents::EDur_LaunchActive);
 	} else {
 	    if (idlecnt == 0) {
 		LOGN(EInfo, "IDLE");

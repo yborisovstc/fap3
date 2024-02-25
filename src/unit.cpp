@@ -203,7 +203,8 @@ void Unit::onOwnedAttached(MOwned* aOwned)
 {
     Node::onOwnedAttached(aOwned);
     // Invalidate IRM
-    invalidateIrm();
+    // TODO !! Attempt of optimization. To check all use-cases
+    //!! invalidateIrm();
 }
 
 bool Unit::isRequestor(MIfReq::TIfReqCp* aReq, MNode* aOwner) const
