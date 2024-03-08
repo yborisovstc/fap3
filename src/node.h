@@ -10,6 +10,9 @@
 #include <cstring>
 #include "prof.h"
 
+// Attempt to avoid dynacast when getting local iface
+// Actually doesn't affect benchmarks
+//#define ENABLE_IFC
 
 using namespace std;
 
@@ -104,6 +107,16 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	inline void Log(int aLevel, const TLog& aRec) const;
     protected:
 	template<class T> MIface* checkLif(const char* aType) { return (strcmp(aType, T::Type()) == 0) ? dynamic_cast<T*>(this) : nullptr;}
+#ifdef ENABLE_IFC
+	template<class T> MIface* checkLif2(const char* aType, T*& aPtr) {
+	    if (strcmp(aType, T::Type()) == 0) {
+		if (!aPtr) {
+		    aPtr = dynamic_cast<T*>(this);
+		}
+		return aPtr;
+	    } else return nullptr;
+	}
+#endif
 	MOwner* Owner();
 	const MOwner* Owner() const;
 	template<class T> string getUid() const {return getUriS() + Ifu::KUidSep + T::Type();}
@@ -147,6 +160,13 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	static int K_Oll_Shift;
 	static int K_SOll_Shift;
 	static int K_Ll_Shift;
+#ifdef ENABLE_IFC
+	MNode* mMNodePtr = nullptr;
+	MContentOwner* mMContentOwnerPtr = nullptr;
+	MOwner* mMOwnerPtr = nullptr;
+	MOwned* mMOwnedPtr = nullptr;
+	MObservable* mMObservablePtr = nullptr;
+#endif
 };
 
 inline bool Node::isLogLevel(int aLevel) const {

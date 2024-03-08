@@ -86,11 +86,17 @@ Func::TInpIc* TrBase::GetInps(FInp& aInp)
 {
     MIfProv::TIfaces* res = nullptr;  
     if (!aInp.mIfp) {
+	PFL_DUR_STAT_START(PEvents::EDurStat_Tmp2);
 	MNode* inp = getNode(aInp.mName);
 	MUnit* inpu = inp ? inp->lIf(inpu) : nullptr;
 	aInp.mIfp = inpu ? inpu->defaultIfProv(MDVarGet::Type()) : nullptr;
+	res = aInp.mIfp ? aInp.mIfp->ifaces() : nullptr;
+	PFL_DUR_STAT_REC(PEvents::EDurStat_Tmp2);
+    } else {
+	PFL_DUR_STAT_START(PEvents::EDurStat_Tmp);
+	res = aInp.mIfp ? aInp.mIfp->ifaces() : nullptr;
+	PFL_DUR_STAT_REC(PEvents::EDurStat_Tmp);
     }
-    res = aInp.mIfp ? aInp.mIfp->ifaces() : nullptr;
     if (!res || res->size() == 0) {
 	LOGN(EDbg, "Cannot get input [" + aInp.mName + "]");
     }

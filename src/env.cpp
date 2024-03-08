@@ -21,6 +21,8 @@ const PindCluster<PindDur>::Idata KPindDurIdata = {
     {
 	{PEvents::EDur_LaunchActive, "IFC_LNCH_ACTIVE"},
 	{PEvents::EDur_Construct, "IFC_CONSTRUCT"},
+	{PEvents::EDur_Tst1, "IFC_TEST1"},
+	{PEvents::EDur_EnvSetChromo, "IFC_ENV_SCHR"},
     }
 };
 
@@ -31,20 +33,27 @@ const PindCluster<PindDurStat>::Idata KPindDurStatIdata = {
 	{PEvents::EDurStat_Trans, "IFC_TRANS", 80000, false},
 	{PEvents::EDurStat_UInvldIrm, "IFC_U_INV", 80000, false},
 	{PEvents::EDurStat_LaunchRun, "IFC_LNCH_RUN", 80000, false},
-	{PEvents::EDurStat_LaunchActive, "IFC_LNCH_ACTIVE", 80000, false},
 	{PEvents::EDurStat_LaunchUpdate, "IFC_LNCH_UPD", 80000, false},
 	{PEvents::EDurStat_LaunchConfirm, "IFC_LNCH_CONF", 80000, false},
 	{PEvents::EDurStat_DesAsUpd, "IFC_DESAS_UPD", 80000, false},
 	{PEvents::EDurStat_StConfirm, "IFC_ST_CONF", 80000, false},
-	{PEvents::EDurStat_DAdpConfirm, "IFC_DADP_CONF", 80000, false},
-	{PEvents::EDurStat_DAdpDes, "IFC_DADP_DES", 80000, false},
 	{PEvents::EDurStat_ASdcConfirm, "IFC_ASDC_CONF", 80000, false},
 	{PEvents::EDurStat_ASdcConfState, "IFC_ASDC_CONFST", 80000, false},
 	{PEvents::EDurStat_ASdcConfCtl, "IFC_ASDC_CONFCL", 80000, false},
 	{PEvents::EDurStat_ASdcCtlCmp, "IFC_ASDC_CTLCMP", 80000, false},
-	{PEvents::EDurStat_Tmp, "IFC_DST_TMP", 80000, false},
+	{PEvents::EDurStat_Clbr, "IFC_DST_CLBR", 8000000, false},
+	{PEvents::EDurStat_Tmp, "IFC_DST_TMP", 800000, false},
+	{PEvents::EDurStat_Tmp2, "IFC_DST_TMP2", 80000, false},
+	{PEvents::EDurStat_Tmp3, "IFC_DST_TMP3", 800000, false},
 	{PEvents::EDurStat_MutCrn, "IFC_MUT_CRN", 80000, false},
 	{PEvents::EDurStat_MutConn, "IFC_MUT_CONN", 80000, false},
+	{PEvents::EDurStat_MutDsc, "IFC_MUT_DISC", 80000, false},
+	{PEvents::EDurStat_MutCont, "IFC_MUT_CONT", 80000, false},
+	{PEvents::EDurStat_MutRm, "IFC_MUT_RMV", 80000, false},
+	{PEvents::EDurStat_MutAtt, "IFC_MUT_ATT", 80000, false},
+	{PEvents::EDurStat_MutNtf, "IFC_MUT_NTF", 80000, false},
+	{PEvents::EDurStat_MutCad, "IFC_MUT_CAD", 80000, false},
+	{PEvents::EDurStat_Tst1, "IFC_TST_1", 80000, false},
     }
 };
 
@@ -194,36 +203,7 @@ Env::Env(const string& aSpecFile, const string& aLogFileName): mRoot(NULL), mSpe
     mProf->addPind<PindCluster<PindDur>>(KPindDurIdata);
     mProf->addPind<PindCluster<PindDurStat>>(KPindDurStatIdata);
 #endif
-    /*
-    srand(time(NULL));
-    iChMgr = new ChromoMgr(*this);
-    string chromo_fext = iSpecFile.substr(iSpecFile.find_last_of(".") + 1);
-    iChMgr->SetChromoRslArgs(chromo_fext);
-    mIfResolver = new IfcResolver(*this);    
-    */
 }
-
-#if 0
-Env::Env(const string& aSpec, const string& aLogFileName, bool aOpt): mRoot(NULL), mLogger(nullptr),
-    mChromo(NULL), mProf(nullptr)/*, mEnPerfTrace(false), mEnIfTrace(false), mExtIfProv(NULL), mIfResolver(NULL)*/
-{
-    /*
-    mLogger = new GLogRec(aLogFileName.empty() ? KLogFileName : aLogFileName);
-    //mLogger = new GLogRec("Logger", aName + ".log");
-    iProvider = new GFactory(string(), this);
-    iProvider->LoadPlugins();
-    iSpec= aSpec;
-    srand(time(NULL));
-    iChMgr = new ChromoMgr(*this);
-    string chromo_fext = iSpecFile.substr(iSpecFile.find_last_of(".") + 1);
-    iChMgr->SetChromoRslArgs(chromo_fext);
-    iImpMgr = new ImportsMgr(*this);
-    mIfResolver = new IfcResolver(*this);    
-    mProf = new GProfiler(this, KPInitData);
-    */
-}
-#endif
-
 
 Env::~Env()
 {
@@ -251,11 +231,13 @@ void Env::constructSystem()
 	// TODO to add provider method createRoot. Env shouldn't know of model types.
 	mRoot = mProvider->createNode(Elem::Type(), "Root", this);
     } else {
+	PROF_DUR_START(mProf, PROF_DUR, PEvents::EDur_EnvSetChromo);
 	if (!mSpecFile.empty()) {
 	    mChromo->SetFromFile(mSpecFile);
 	} else {
 	    mChromo->SetFromSpec(mSpec);
 	}
+	PROF_DUR_REC(mProf, PROF_DUR, PEvents::EDur_EnvSetChromo);
 	if (mChromo->IsError()) {
 	    const CError& cerr = mChromo->Error();
 	    if (!mSpecFile.empty()) {
@@ -282,16 +264,13 @@ void Env::constructSystem()
 	    /**/
 	    MElem* eroot = mRoot ? mRoot->lIf(eroot) : nullptr;
 	    if (eroot != NULL) {
+		Logger()->Write(EInfo, mRoot, "Started of creating system, spec [%s], loaded: %s", mSpecFile.c_str(), PROF_FIELD(mProf, PROF_DUR, PEvents::EDur_EnvSetChromo, PIndFId::EInd_VAL).c_str());
 		PROF_DUR_START(mProf, PROF_DUR, PEvents::EDur_Construct);
-		//Pclock(PEvents::Env_Root_Created, mRoot);
-		Logger()->Write(EInfo, mRoot, "Started of creating system, spec [%s]", mSpecFile.c_str());
-		//MutCtx mc(mRoot, mRoot);
 		MutCtx mc(mRoot);
 		// Adding Modules node for imports
 		MChromo* chr = mProvider->createChromo();
 		bool res1 = chr->SetFromSpec("Modules : Import");
 		mRoot->mutate(chr->Root(), true, mc);
-		//mRoot->mutate(root, false, mc, false);
 		mRoot->mutate(root, false, mc, true);
 		// Set launcher
 		mLauncher = mRoot->lIf(mLauncher);

@@ -107,6 +107,9 @@ class CpStateOutp: public CpState
     public:
 	static const char* Type() { return "CpStateOutp";};
 	CpStateOutp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From Vertu
+	virtual void onConnected() override;
+	virtual void onDisconnected() override;
 };
 #endif // DES_CPS_IFC
 

@@ -156,6 +156,19 @@ void ConnPointu::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
     }
 }
 
+void ConnPointu::onConnected()
+{
+    // Invalidate only required ifr
+    invalidateIrm(reqName());
+    notifyChanged();
+}
+
+void ConnPointu::onDisconnected()
+{
+    // Invalidate only required ifr
+    invalidateIrm(reqName());
+    notifyChanged();
+}
 
 
 // Extender agent, monolitic, multicontent, unit
@@ -576,7 +589,6 @@ void Syst::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
     if (sq.empty()) {
 	if (aMut.Count() == 1) {
 	    // Q-dependency
-	    PFL_DUR_STAT_START(PEvents::EDurStat_Tmp);
 	    ChromoNode qdep = *aMut.Begin();
 	    mutate(qdep, aUpdOnly, aCtx);
 	    if (qdep.Type() == ENt_Node) {
@@ -589,12 +601,12 @@ void Syst::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 		}
 	    }
 	    qn = getNode(sq, aCtx.mNs);
-	    PFL_DUR_STAT_REC(PEvents::EDurStat_Tmp);
 	}
     } else {
 	qn = getNode(sq, aCtx.mNs);
     }
     if (pn && qn) {
+	PFL_DUR_STAT_START(PEvents::EDurStat_MutConn);
 	MVert* pv = pn->lIf(pv);
 	MVert* qv = qn->lIf(pv);
 	if (pv && qv) {
@@ -622,6 +634,7 @@ void Syst::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 		LOGN(EErr, "Connecting [" + sp + "] to [" + sq + "] -  [" + (pv ? sq : sp) + "] isn't connectable");
 	    }
 	}
+	PFL_DUR_STAT_REC(PEvents::EDurStat_MutConn);
     } else {
 	LOGN(EErr, "Connecting [" + sp + "] to [" + sq + "] - cannot find [" + (pn ? sq : sp) + "]");
     }

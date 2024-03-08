@@ -3,6 +3,7 @@
 
 #include <unordered_map>
 #include <map>
+#include <unordered_map>
 
 #include "mprov.h"
 
@@ -48,7 +49,7 @@ class ProvBase: public Provider
 	/** Native agent factory function */
 	using TFact = MNode* (const string &aName, MEnv* aEnv);
 	/** Registry of native agents factory function */
-	using TFReg = map<string, TFact*>;
+	using TFReg = unordered_map<string, TFact*>;
 	/** Data factory function */
 	using TDtFact = DtBase* ();
 	/** Registry of data factory function */

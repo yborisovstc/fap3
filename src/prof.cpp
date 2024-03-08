@@ -33,8 +33,10 @@ bool PindBase::GetClock(MPind::TClock &aRes) {
     s = pthread_getcpuclockid(pthread_self(), &cid);
     if (s == 0) {
         //LOG(EInfo, "Pind: %d, ClockId: %d", getId(), mClockId);
+        //cout << "Pind: " << getId() << ", ClockId: " << mClockId << endl;
     } else {
         //LOG(LogLevel::Error) << "getpuclockid failed: " << s;
+	//cout << "getpuclockid failed" << endl;
     }
     if (s == 0 && cid != -1) {
         s = clock_gettime(cid, &aRes);
@@ -116,6 +118,7 @@ string PindDur::toTime(PindDur::TDur aNs) {
 
 void PindDur::Start() {
     mErr = !GetClock(mIvStart);
+    mDur = 0;
 }
 
 void PindDur::Rec(TRecParam /* aPar */) {
@@ -124,6 +127,7 @@ void PindDur::Rec(TRecParam /* aPar */) {
 	mErr = !GetClock(cur);
 	if (!mErr) {
 	    mDur = (cur.tv_sec - mIvStart.tv_sec) * 1000000000 + (cur.tv_nsec - mIvStart.tv_nsec);
+	    //cout << mId << ": " << cur.tv_nsec << " - " << mIvStart.tv_nsec << " = " << mDur << endl;
 	    if (mDur <= 10) {
 		// TODO Handle error
 		mErr = true;
@@ -166,7 +170,6 @@ const PindCluster<PindDurStat>::Idata KPindDurStatIdata = {
     "durstat",
     {
 	{PEvents::EDurStat_IFR_IFaces, "IFR_IFACES", 500000, false},
-	{PEvents::EDurStat_Ev2, "C_Ev2", 80000, false},
     }
 };
 

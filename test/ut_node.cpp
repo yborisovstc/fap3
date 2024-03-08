@@ -17,9 +17,9 @@
 class Ut_node : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_node);
-//    CPPUNIT_TEST(test_nav_1);
+    CPPUNIT_TEST(test_nav_1);
 //    CPPUNIT_TEST(test_cont_1);
-    CPPUNIT_TEST(test_cre_1);
+//    CPPUNIT_TEST(test_cre_1);
 //    CPPUNIT_TEST(test_node_aul_1);
     CPPUNIT_TEST_SUITE_END();
 public:
@@ -84,6 +84,16 @@ void Ut_node::test_nav_1()
     nag->getUri(naguri);
     cout << "NOde URI: "<< naguri.toString() << endl;
     */
+
+    mEnv = new Env(string());
+    // Measuring getNode op-time
+    static const int K_GnmLen = 1000000;
+    PROF_DUR_START(mEnv->profiler(), PROF_DUR, PEvents::EDur_Tst1);
+    for (int i = 0; i < K_GnmLen; i++) {
+	MNode* res1 = owner->getNode(uri1);
+    }
+    PROF_DUR_REC(mEnv->profiler(), PROF_DUR, PEvents::EDur_Tst1);
+    cout << "getNode iter op-time: " << PROF_FIELD(mEnv->profiler(), PROF_DUR, PEvents::EDur_Tst1, PIndFId::EInd_VAL) << endl;
 
     delete owner;
 }

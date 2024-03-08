@@ -1984,6 +1984,20 @@
 		    but statically, as existed structure. There shall be the transitions that can manipulate with such definitions, for instance delete one 
 		    branch in sytem hierarchy etc.</simpara>
 	    </sect3>
+	    <sect3 id="ds_dcs_sl_st"><title>Status</title>
+		<sect4 id="ds_dcs_sl_st_0307"><title>20240307 Implemented and tested MSO approach.</title>
+		    <simpara>
+			Ref
+			<xref linkend="ds_dcs_sl_hil_s1"/> for the approach details. Tested to see if performance increases with this aproach.
+			    Ref test Ut_cntr::testDCntr4(). In this test MSO used model ut_dcntr_4_mso is compared with current model ut_dcntr_4_mso.
+			    MSO base model just paused root container sync before adding all widgets is completed. Profiler metrics shows that there is
+			    no improvement of performance. This is because with MSO approach the steps of layouting are not vanished but postponed
+			    (with MSO we even have bigger number of steps). So the idea of improve the performance using LSC, ref
+			<xref linkend="ds_dcs_sl_lsc"/> seems to be not correct. Or it is not universal at least. But LSC (and particularly MSO) approach
+			    can be used to make system structuring more strong.
+		    </simpara>
+		</sect4>
+	    </sect3>
 	    <sect3><title>This is just another form of the current solution</title>
 		<simpara>At the first look this seems same as <xref linkend="ds_dcs_itr_cs"/> but different form. With special layer the controlling subsystem
 		    update is DES standard: the data (controlled system definition) is modified in the proper transition that the controlled system "apply" this
@@ -2004,6 +2018,9 @@
 			Controlling system shall be on "upper" layer in term that it can manage controlled system via SDCs. So controlling system
 			stops controlled system, makes all controlled system re-configuration, performs IRM invalidation and DES inp notification and then resumes the 
 			controlled system again.</simpara>
+		</sect4>
+		<sect4><title>Status</title>
+		    <simpara>20240307 Ref <xref linkend="ds_dcs_sl_st_0307"/>: The idea of performance improvement with LSC seems not correct.</simpara>
 		</sect4>
 		<sect4><title>How to "disable IRM invalidation and DES inp notification"?</title>
 		    <simpara>
@@ -2093,8 +2110,6 @@
 			    The solution affects core agents (Des, ADes) behavior.
 			</listitem>
 		    </itemizedlist>
-
-
 		</sect4>
 	    </sect3>
 	    <sect3 id="ds_dcs_sl_irdms"><title>Is it right design to have systems managed by itself?</title>

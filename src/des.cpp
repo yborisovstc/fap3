@@ -19,6 +19,7 @@ CpState::CpState(const string &aType, const string& aName, MEnv* aEnv): ConnPoin
 
 void CpState::notifyInpsUpdated()
 {
+    //LOGN(EErr, "notifyInpsUpdated");
     auto* ifcs = getTIfs<MDesInpObserver>();
     for (auto* obs : *ifcs) {
 	obs->onInpUpdated();
@@ -28,13 +29,14 @@ void CpState::notifyInpsUpdated()
 void CpState::onConnected()
 {
     ConnPointu::onConnected();
-    notifyInpsUpdated();
+    // We don't need to notify inps. It is done in onIfpInvalidated
+    //notifyInpsUpdated();
 }
 
 void CpState::onDisconnected()
 {
     ConnPointu::onDisconnected();
-    notifyInpsUpdated();
+    //notifyInpsUpdated();
 }
 
 void CpState::onIfpInvalidated(MIfProv* aProv)
@@ -59,10 +61,9 @@ CpStateInp::CpStateInp(const string &aType, const string& aName, MEnv* aEnv): Cp
 
 void CpStateInp::onInpUpdated()
 {
-    auto* ifcs = mIop.mIfr.ifaces();
+    auto* ifcs = reinterpret_cast<MIfProv::TTIfaces<MDesInpObserver>*>(mIop.mIfr.ifaces());
     for (auto* ifc : *ifcs) {
-	assert (ifc != dynamic_cast<MDesInpObserver*>(this));
-	reinterpret_cast<MDesInpObserver*>(ifc)->onInpUpdated();
+	ifc->onInpUpdated();
     }
 }
 
@@ -130,6 +131,17 @@ CpStateOutp::CpStateOutp(const string &aType, const string& aName, MEnv* aEnv): 
     res = setContent("Required", "MDesInpObserver");
     assert(res);
 }
+
+void CpStateOutp::onConnected()
+{
+    ConnPointu::onConnected();
+}
+
+void CpStateOutp::onDisconnected()
+{
+    ConnPointu::onDisconnected();
+}
+
 
 /* Connection point - input of state */
 
@@ -472,6 +484,7 @@ void State::update()
 
 void State::NotifyInpsUpdated()
 {
+    //LOGN(EErr, "NotifyInpsUpdated");
     for (auto pair : mPairs) {
 	MUnit* pe = pair->lIf(pe);
 	auto ifcs = pe->getTIfs<MDesInpObserver>();
@@ -609,14 +622,18 @@ DtBase* State::CreateData(const string& aType)
 
 void State::onConnected()
 {
-    Vertu::onConnected();
-    NotifyInpsUpdated();
+    invalidateIrm(MDesInpObserver::Type());
+    notifyChanged();
+    //Vertu::onConnected();
+    //NotifyInpsUpdated();
 }
 
 void State::onDisconnected()
 {
-    Vertu::onDisconnected();
-    NotifyInpsUpdated();
+    invalidateIrm(MDesInpObserver::Type());
+    notifyChanged();
+    //Vertu::onDisconnected();
+    //NotifyInpsUpdated();
 }
 
 void State::onIfpInvalidated(MIfProv* aProv)
@@ -853,19 +870,23 @@ DtBase* Const::CreateData(const string& aType)
 
 void Const::onConnected()
 {
-    Vertu::onConnected();
-    NotifyInpsUpdated();
+    invalidateIrm(MDesInpObserver::Type());
+    //Vertu::onConnected();
+    //NotifyInpsUpdated();
 }
 
 void Const::onDisconnected()
 {
-    Vertu::onDisconnected();
-    NotifyInpsUpdated();
+    invalidateIrm(MDesInpObserver::Type());
+    notifyChanged();
+    //Vertu::onDisconnected();
+    //NotifyInpsUpdated();
 }
 
 void Const::onIfpInvalidated(MIfProv* aProv)
 {
     Vertu::onIfpInvalidated(aProv);
+    notifyChanged();
     //NotifyInpsUpdated();
 }
 
@@ -1674,62 +1695,6 @@ DesLauncher::DesLauncher(const string &aType, const string& aName, MEnv* aEnv): 
 {
 }
 
-#if 0
-bool DesLauncher::Run(int aCount, int aIdleCount)
-{
-    bool res = true;
-    int cnt = 0;
-    int idlecnt = 0;
-    LOGN(EInfo, "START");
-    PFL_DUR_STAT_START(PEvents::EDurStat_LaunchRun);
-    while (!mStop && (aCount == 0 || cnt < aCount) && (aIdleCount == 0 || idlecnt < aIdleCount)) {
-        mCounter++;
-#ifdef DES_LISTS_SWAP
-	if (!mActive->empty()) {
-#else
-	if (!mActive.empty()) {
-#endif
-	    //updateCounter(cnt); // TODO Is it needed?
-	    LOGN(EDbg, ">>> Update [" + to_string(mCounter) + "], count: " + to_string(countOfActive()) +
-		    ", dur: " + PFL_DUR_VALUE(PEvents::EDurStat_LaunchActive) +
-		    ", inv: " + PFL_DUR_STAT_CNT(PEvents::EDurStat_UInvldIrm));
-	    PFL_DUR_START(PEvents::EDurStat_LaunchActive);
-	    PFL_DUR_STAT_START(PEvents::EDurStat_LaunchActive);
-	    PFL_DUR_STAT_START(PEvents::EDurStat_LaunchUpdate);
-	    update();
-	    PFL_DUR_STAT_REC(PEvents::EDurStat_LaunchUpdate);
-	    PFL_DUR_STAT_START(PEvents::EDurStat_LaunchConfirm);
-#ifdef DES_LISTS_SWAP
-	    if (isLogLevel(EDbg)) {
-		LOGN(EDbg, ">>> Confirm [" + to_string(mCounter) + "]");
-	    }
-	    //outputCounter(cnt); // TODO Is it needed?
-	    confirm();
-#else
-	    if (!mUpdated.empty()) {
-		LOGN(EDbg, ">>> Confirm [" + to_string(mCounter) + "]");
-		//outputCounter(cnt); // TODO Is it needed?
-                confirm();
-            }
-#endif
-            PFL_DUR_STAT_REC(PEvents::EDurStat_LaunchConfirm);
-            cnt++;
-            idlecnt = 0;
-            PFL_DUR_STAT_REC(PEvents::EDurStat_LaunchActive);
-            PFL_DUR_REC(PEvents::EDurStat_LaunchActive);
-        } else {
-            if (idlecnt == 0) {
-                LOGN(EInfo, "IDLE");
-            }
-            OnIdle();
-            idlecnt++;
-        }
-        }
-        PFL_DUR_STAT_REC(PEvents::EDurStat_LaunchRun);
-        LOGN(EInfo, "END " + PFL_DUR_STAT_FIELD(PEvents::EDurStat_LaunchRun, PIndFId::EStat_SUM));
-        return res;
-}
-#endif
 
 #ifdef DES_LISTS_SWAP
 bool DesLauncher::Run(int aCount, int aIdleCount)
@@ -1747,7 +1712,6 @@ bool DesLauncher::Run(int aCount, int aIdleCount)
 		    ", dur: " + PFL_DUR_VALUE(PEvents::EDur_LaunchActive) +
 		    ", inv: " + PFL_DUR_STAT_CNT(PEvents::EDurStat_UInvldIrm));
 	    PFL_DUR_START(PEvents::EDur_LaunchActive);
-	    PFL_DUR_STAT_START(PEvents::EDurStat_LaunchActive);
 	    PFL_DUR_STAT_START(PEvents::EDurStat_LaunchUpdate);
 	    update();
 	    PFL_DUR_STAT_REC(PEvents::EDurStat_LaunchUpdate);
@@ -1760,7 +1724,6 @@ bool DesLauncher::Run(int aCount, int aIdleCount)
 	    PFL_DUR_STAT_REC(PEvents::EDurStat_LaunchConfirm);
 	    cnt++;
 	    idlecnt = 0;
-	    PFL_DUR_STAT_REC(PEvents::EDurStat_LaunchActive);
 	    PFL_DUR_REC(PEvents::EDur_LaunchActive);
 	} else {
 	    if (idlecnt == 0) {
@@ -1773,6 +1736,47 @@ bool DesLauncher::Run(int aCount, int aIdleCount)
     PFL_DUR_STAT_REC(PEvents::EDurStat_LaunchRun);
     LOGN(EInfo, "END " + PFL_DUR_STAT_FIELD(PEvents::EDurStat_LaunchRun, PIndFId::EStat_SUM));
     return res;
+}
+#else
+bool DesLauncher::Run(int aCount, int aIdleCount)
+{
+    bool res = true;
+    int cnt = 0;
+    int idlecnt = 0;
+    LOGN(EInfo, "START");
+    PFL_DUR_STAT_START(PEvents::EDurStat_LaunchRun);
+    while (!mStop && (aCount == 0 || cnt < aCount) && (aIdleCount == 0 || idlecnt < aIdleCount)) {
+        mCounter++;
+	if (!mActive.empty()) {
+	    //updateCounter(cnt); // TODO Is it needed?
+	    LOGN(EDbg, ">>> Update [" + to_string(mCounter) + "], count: " + to_string(countOfActive()) +
+		    ", dur: " + PFL_DUR_VALUE(PEvents::EDur_LaunchActive) +
+		    ", inv: " + PFL_DUR_STAT_CNT(PEvents::EDurStat_UInvldIrm));
+	    PFL_DUR_START(PEvents::EDur_LaunchActive);
+	    PFL_DUR_STAT_START(PEvents::EDurStat_LaunchUpdate);
+	    update();
+	    PFL_DUR_STAT_REC(PEvents::EDurStat_LaunchUpdate);
+	    PFL_DUR_STAT_START(PEvents::EDurStat_LaunchConfirm);
+	    if (!mUpdated.empty()) {
+		LOGN(EDbg, ">>> Confirm [" + to_string(mCounter) + "]");
+		//outputCounter(cnt); // TODO Is it needed?
+                confirm();
+            }
+            PFL_DUR_STAT_REC(PEvents::EDurStat_LaunchConfirm);
+            cnt++;
+            idlecnt = 0;
+            PFL_DUR_REC(PEvents::EDur_LaunchActive);
+        } else {
+            if (idlecnt == 0) {
+                LOGN(EInfo, "IDLE");
+            }
+            OnIdle();
+            idlecnt++;
+        }
+        }
+        PFL_DUR_STAT_REC(PEvents::EDurStat_LaunchRun);
+        LOGN(EInfo, "END " + PFL_DUR_STAT_FIELD(PEvents::EDurStat_LaunchRun, PIndFId::EStat_SUM));
+        return res;
 }
 #endif
 

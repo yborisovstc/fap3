@@ -5,6 +5,7 @@
 #include "chromo.h"
 
 
+
 static const string K_Cont_Debug_LogLevel = "Debug.LogLevel";
 static const string K_Cont_LogLevel = "LogLevel";
 static const string K_Cont_OwdLogLevel = "OwdLogLevel";
@@ -52,6 +53,18 @@ Node::~Node()
     mOcp.disconnectAll();
 }
 
+#ifdef ENABLE_IFC
+MIface* Node::MNode_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif2<MNode>(aType, mMNodePtr));
+    else if (res = checkLif2<MOwned>(aType, mMOwnedPtr));
+    else if (res = checkLif2<MOwner>(aType, mMOwnerPtr));
+    else if (res = checkLif2<MContentOwner>(aType, mMContentOwnerPtr));
+    else if (res = checkLif2<MObservable>(aType, mMObservablePtr));
+    return res;
+}
+#else
 MIface* Node::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
@@ -62,6 +75,8 @@ MIface* Node::MNode_getLif(const char *aType)
     else if (res = checkLif<MObservable>(aType));
     return res;
 }
+#endif
+
 
 MIface* Node::MObservable_getLif(const char *aType)
 {
@@ -268,7 +283,6 @@ void Node::mutSegment(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 	    mutate(rno, aUpdOnly, mctx);
 	} catch (std::exception e) {
 	    Logger()->Write(EErr, this, "Unspecified error on mutation");
-	    mutate(rno, aUpdOnly, mctx); //!!
 	}
     }
 }
@@ -283,7 +297,9 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
     ChromoNode rno = aMut;
     Logger()->SetContextMutId(rno.LineId());
     // Get target node by analysis of mut-target and mut-node, ref ds_chr2_cctx_tn_umt
+    PFL_DUR_STAT_START(PEvents::EDurStat_MutNtf);
     notifyNodeMutated(aMut, aCtx);
+    PFL_DUR_STAT_REC(PEvents::EDurStat_MutNtf);
     MNode* targ = this;
     bool exs_targ = rno.AttrExists(ENa_Targ);
     bool exs_mnode = rno.AttrExists(ENa_MutNode);
@@ -345,19 +361,25 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
 	    } else if (rnotype == ENt_Change) {
 		//ChangeAttr(rno, aRunTime, aCheckSafety, aTrialMode, mctx);
 	    } else if (rnotype == ENt_Cont) {
+		PFL_DUR_STAT_START(PEvents::EDurStat_MutCont);
 		mutContent(rno, aUpdOnly, mctx);
+		PFL_DUR_STAT_REC(PEvents::EDurStat_MutCont);
 	    } else if (rnotype == ENt_Move) {
 		//MoveNode(rno, aRunTime, aTrialMode, mctx);
 	    } else if (rnotype == ENt_Import) {
 		mutImport(rno, aUpdOnly, mctx);
 	    } else if (rnotype == ENt_Rm) {
+		//PFL_DUR_STAT_START(PEvents::EDurStat_MutRm);
 		mutRemove(rno, aUpdOnly, mctx);
+		//PFL_DUR_STAT_REC(PEvents::EDurStat_MutRm);
 	    } else if (rnotype == ENt_Conn) {
 		PFL_DUR_STAT_START(PEvents::EDurStat_MutConn);
 		mutConnect(rno, aUpdOnly, mctx);
 		PFL_DUR_STAT_REC(PEvents::EDurStat_MutConn);
 	    } else if (rnotype == ENt_Disconn) {
+		//PFL_DUR_STAT_START(PEvents::EDurStat_MutDsc);
 		mutDisconnect(rno, aUpdOnly, mctx);
+		//PFL_DUR_STAT_REC(PEvents::EDurStat_MutDsc);
 	    } else if (rnotype == ENt_Note) {
 		// Comment, just accept
 	    } else {
@@ -447,7 +469,7 @@ MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
     updateNs(ns, aMut);
     */
     bool res = false;
-    Log(EDbg2, TLog(this, aMut) + "Adding element [" + sname + "]");
+    //Log(EDbg2, TLog(this, aMut) + "Adding element [" + sname + "]");
 
     assert(!sname.empty());
     MNode* uelem = NULL;
@@ -462,8 +484,10 @@ MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
 	    // Create heir from the parent
 	    uelem = parent->createHeir(sname);
 	    if (uelem) {
+		PFL_DUR_STAT_START(PEvents::EDurStat_MutAtt);
 		attachOwned(uelem);
 		parent->attachHeir(uelem);
+		PFL_DUR_STAT_REC(PEvents::EDurStat_MutAtt);
 	    } else {
 		Log(EErr, TLog(this) + "Adding node [" + sname + "] failed");
 	    }
@@ -569,13 +593,23 @@ void Node::onOwnedDetached(MOwned* aOwned)
     }
 }
 
-
+#ifdef ENABLE_IFC
+MIface* Node::MContentOwner_getLif(const char *aType) 
+{
+    MIface* res = nullptr;
+    if (res = checkLif2<MContentOwner>(aType, mMContentOwnerPtr));
+    return res;
+}
+#else
 MIface* Node::MContentOwner_getLif(const char *aType) 
 {
     MIface* res = nullptr;
     if (res = checkLif<MContentOwner>(aType));
     return res;
 }
+#endif
+
+
 
 void Node::MContentOwner_doDump(int aLevel, int aIdt, ostream& aOs) const 
 {
@@ -686,6 +720,14 @@ const MContent* Node::getCont(const GUri& aUri) const
     return res;
 }
 
+#ifdef ENABLE_IFC
+MIface* Node::MOwned_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    if (res = checkLif2<MNode>(aType, mMNodePtr));
+    return res;
+}
+#else
 MIface* Node::MOwned_getLif(const char *aType)
 {
     MIface* res = nullptr;
@@ -693,6 +735,9 @@ MIface* Node::MOwned_getLif(const char *aType)
     else if (res = checkLif<MContent>(aType));
     return res;
 }
+#endif
+
+
 
 bool Node::isOwner(const MOwner* mOwned) const
 {
@@ -762,6 +807,19 @@ bool Node::isOwned(const MOwned* mOwned) const
     return res;
 }
 
+#ifdef ENABLE_IFC
+MIface* Node::MOwner_getLif(const char *aType)
+{
+    MIface* res = nullptr;
+    // TODO Vulnerabilty, consider to configure the access
+    if (res = checkLif2<MObservable>(aType, mMObservablePtr));
+    // TODO to introduce specific iface for explorable, ref ds_dcs_aes_acp
+    else if (res = mExplorable ? checkLif2<MNode>(aType, mMNodePtr) : nullptr);
+    else if (res = mControllable ? checkLif2<MNode>(aType, mMNodePtr) : nullptr);
+    else if (res = checkLif2<MContentOwner>(aType, mMContentOwnerPtr));
+    return res;
+}
+#else
 MIface* Node::MOwner_getLif(const char *aType)
 {
     MIface* res = nullptr;
@@ -773,6 +831,8 @@ MIface* Node::MOwner_getLif(const char *aType)
     else if (res = checkLif<MContentOwner>(aType));
     return res;
 }
+#endif
+
 
 bool Node::isNodeOwned(const MNode* aNode) const
 {

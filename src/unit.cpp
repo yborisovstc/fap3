@@ -5,6 +5,9 @@
 #include "ifr.h"
 #include "prof_ids.h"
 
+// Enable debugging IFR tree quantity when invalidating
+//#define DBG_INV_IFR_QNT
+#define DBG_INV_IFR_QNT_LIM (200)
 
 Unit::Unit(const string &aType, const string &aName, MEnv* aEnv): Node(aType, aName, aEnv)
 {
@@ -133,6 +136,16 @@ void Unit::invalidateIrm()
 {
     if (!mIrns.empty()) {
 	PFL_DUR_STAT_START(PEvents::EDurStat_UInvldIrm);
+	// Debugging. Use pcount to set breakpoint with the given limit.
+#ifdef DBG_INV_IFR_QNT
+	int pcount = 0;
+	for (auto node : mIrns) {
+	    pcount += node->pcount(true);
+	}
+	if (pcount > DBG_INV_IFR_QNT_LIM) {
+	    LOGN(EErr, "Large IFR tree invalidated: " + to_string(pcount));
+	}
+#endif
 	// We need to invalidate all first and then to update.
 	// This is because there can be deps one iface from another
 	// example is dep of some iface on MAgent
@@ -149,6 +162,25 @@ void Unit::invalidateIrm()
 	}
 	PFL_DUR_STAT_REC(PEvents::EDurStat_UInvldIrm);
     }
+}
+
+void Unit::invalidateIrm(const string& aIfcName)
+{
+    PFL_DUR_STAT_START(PEvents::EDurStat_UInvldIrm);
+    for (auto node : mIrns) {
+	if (node->isValid() && node->name() == aIfcName) {
+	    node->setValid(false);
+	    node->ifaces();
+	}
+    }
+    /*
+    for (auto node : mIrns) {
+	if (node->name() == aIfcName && !node->isValid()) {
+	    node->ifaces();
+	}
+    }
+    */
+    PFL_DUR_STAT_REC(PEvents::EDurStat_UInvldIrm);
 }
 
 void Unit::onIfpDisconnected(MIfProv* aProv)

@@ -75,7 +75,7 @@ class Env: public MEnv
 	string mSpec;
 	MChromo* mChromo;
 	Factory* mProvider;
-	Logrec* mLogger;
+	MLogRec* mLogger;
 	MLauncher* mLauncher = nullptr; /*!< Model's launcher */
 	ImportsMgr* mImpMgr;
 	map<string, string> mEVars;

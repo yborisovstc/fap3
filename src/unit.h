@@ -40,6 +40,7 @@ class Unit : public Node, public MUnit, public MIfProvOwner
     protected:
 	virtual IfrNode* createIfProv(const string& aName, MIfReq::TIfReqCp* aReq) const;
 	void invalidateIrm();
+	void invalidateIrm(const string& aIfcName);
 	void addIfpLeaf(MIface* aIfc, MIfReq::TIfReqCp* aReq);
 	void addIfpLeafs(MIfProv::TIfaces* aIfcs, MIfReq::TIfReqCp* aReq);
 	// From Node.MOwner

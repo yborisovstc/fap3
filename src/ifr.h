@@ -93,6 +93,7 @@ class IfrNodeRoot : public IfrNode
 	virtual string name() const override { return mName;}
 	virtual void setValid(bool aValid) override;
 	virtual TIfaces* ifaces() override;
+	virtual void MIfProv_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	// From MIfReq
 	virtual void onProvInvalidated() override;
     protected:

@@ -19,15 +19,19 @@ class Ut_elem : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST_SUITE(Ut_elem);
     //CPPUNIT_TEST(test_elem_inh_1);
     //CPPUNIT_TEST(test_elem_imp_1);
-    CPPUNIT_TEST(test_elem_dmc_1);
+    //CPPUNIT_TEST(test_elem_dmc_1);
+    CPPUNIT_TEST(test_elem_mutperf_1);
     CPPUNIT_TEST_SUITE_END();
 public:
     virtual void setUp();
     virtual void tearDown();
 private:
+    MNode* constructSystem(const string& aFname);
+private:
     void test_elem_inh_1();
     void test_elem_imp_1();
     void test_elem_dmc_1();
+    void test_elem_mutperf_1();
 private:
     Env* mEnv;
 };
@@ -35,6 +39,23 @@ private:
 CPPUNIT_TEST_SUITE_REGISTRATION( Ut_elem );
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(Ut_elem, "Ut_elem");
 
+
+MNode* Ut_elem::constructSystem(const string& aSpecn)
+{
+    string ext = "chs";
+    string spec = aSpecn + string(".") + "chs";
+    string log = aSpecn + "_" + ext + ".log";
+    mEnv = new Env(spec, log);
+    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv != 0);
+    mEnv->ImpsMgr()->ResetImportsPaths();
+    mEnv->ImpsMgr()->AddImportsPaths("../modules");
+    mEnv->ImpsMgr()->AddImportsPaths("../../fap3/modules");
+    mEnv->constructSystem();
+    MNode* root = mEnv->Root();
+    MElem* eroot = root ? root->lIf(eroot) : nullptr;
+    CPPUNIT_ASSERT_MESSAGE("Fail to get root", root && eroot);
+    return root;
+}
 
 void Ut_elem::setUp()
 {
@@ -203,6 +224,31 @@ void Ut_elem::test_elem_dmc_1()
     root->dump(Ifu::EDM_Base | Ifu::EDM_Comps | Ifu::EDM_Recursive,0);
     // Save root chromo
     eroot->Chromos().Save(specn + "_saved." + ext);
+
+    delete mEnv;
+}
+  
+/** @brief Test of node mut propagation
+ * */
+void Ut_elem::test_elem_mutperf_1()
+{
+    cout << endl << "=== Test of elem mut performance ===" << endl;
+
+    string ssname = "ut_elem_mutperf_1";
+    MNode* root = constructSystem(ssname);
+    CPPUNIT_ASSERT_MESSAGE("Fail to construct system", root);
+    cout << "Construct duration: " << PROF_FIELD(mEnv->profiler(), PROF_DUR, PEvents::EDur_Construct, PIndFId::EInd_VAL) << endl;
+    mEnv->profiler()->saveMetrics();
+
+    // Profiler calibration
+    PROF_DUR_START(mEnv->profiler(), PROF_DUR, PEvents::EDur_Tst1);
+    for (int i = 0; i < 1000000; i++) {
+	PFL_DUR_STAT_START(PEvents::EDurStat_Clbr);
+	PFL_DUR_STAT_REC(PEvents::EDurStat_Clbr);
+    }
+    PROF_DUR_REC(mEnv->profiler(), PROF_DUR, PEvents::EDur_Tst1);
+    cout << "Profiler calibration (1000000 durstate cycles): " << PROF_FIELD(mEnv->profiler(), PROF_DUR, PEvents::EDur_Tst1, PIndFId::EInd_VAL) << ", "
+        << PROF_FIELD(mEnv->profiler(), PROF_DUR_STAT, PEvents::EDurStat_Clbr, PIndFId::EStat_SUM) << endl;
 
     delete mEnv;
 }

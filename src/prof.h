@@ -243,6 +243,8 @@ string PindStat<TInd, Id>::toString() const {
 template <typename TInd, int Id>
 string PindStat<TInd, Id>::fieldToString(TPItemFId aFId) const {
     switch(aFId) {
+	case PIndFId::EInd_VAL:
+	    return mPrmInd.fieldToString(aFId);
 	case PIndFId::EStat_CNT:
 	    return to_string(mCount - 1);
 	case PIndFId::EStat_MIN:

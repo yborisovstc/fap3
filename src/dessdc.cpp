@@ -127,6 +127,7 @@ bool ASdc::SdcIap<T>::updateData()
     return res;
 }
 
+/*
 bool ASdc::SdcIapEnb::updateData()
 {
     bool res = false;
@@ -161,11 +162,56 @@ bool ASdc::SdcIapEnb::updateData()
     }
     return res;
 }
+*/
+
+bool ASdc::SdcIapEnb::updateData()
+{
+    bool res = false;
+    MNode* inp = mHost->getNode(mInpUri);
+    MVert* inpv = inp ? inp->lIf(inpv) : nullptr;
+    MUnit* vgetu = inp->lIf(vgetu);
+    auto ifaces = vgetu->getIfs<MDVarGet>();
+    // We need to interpret not-connecting "enable" in favor of "disable"
+    // So using workaround here
+    Sdata<bool> old_data = mUdt;
+    if (ifaces && ifaces->size() >= inpv->pairsCount()) {
+	bool first = true;
+	if (ifaces) for (auto ifc : *ifaces) {
+	    MDVarGet* vget = reinterpret_cast<MDVarGet*>(ifc);
+	    const Sdata<bool>* st = vget->DtGet(st);
+	    if (st) {
+		if (first) mUdt = *st;
+		else {
+		    mUdt.mData &= st->mData;
+		    mUdt.mValid &= st->mValid;
+		}
+		first = false;
+		res = true;
+		if (!st->IsValid()) {
+		    break;
+		}
+	    }
+	}
+    } else {
+	// Disconnected "enable"
+	mUdt.mData = false;
+	mUdt.mValid = true;
+    }
+    if (mUdt != old_data) {
+	LOGNN(mHost, EDbg, "[" + mName + "] Updated: [" + toStr(old_data.mData) + "] -> [" + toStr(mUdt.mData) + "]");
+    }
+    return res;
+}
 
     template <class T>
 bool ASdc::SdcIapg<T>::updateData()
 {
-    return mHost->GetInpData<T>(mInpUri, mUdt);
+    T old_data = mUdt;
+    bool res = mHost->GetInpData<T>(mInpUri, mUdt);
+    if (mUdt != old_data) {
+	LOGNN(mHost, EDbg, "[" + mName + "] Updated: [" + old_data.ToString() + "] -> [" + mUdt.ToString() + "]");
+    }
+    return res;
 }
 
     template <class T>
@@ -525,7 +571,7 @@ const string K_CpUri_Targ = "Target";
 const string K_CpUri_Mut = "Mut";
 
 ASdcMut::ASdcMut(const string &aType, const string& aName, MEnv* aEnv): ASdc(aType, aName, aEnv),
-    mIapTarg("Targ", this, K_CpUri_Targ), mIapMut("Mut", this, K_CpUri_Mut)
+    mIapTarg("Targ", this, K_CpUri_Targ), mIapMut("Mut", this, K_CpUri_Mut), mMutApplied(false)
 {
 }
 

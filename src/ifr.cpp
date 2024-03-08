@@ -5,6 +5,12 @@
 #include "prof_ids.h"
 #include "prof.h"
 
+
+// Enable debugging IFR tree quantity when getting ifaces
+//#define DBG_IFR_IFC_QNT
+#define DBG_IFR_IFC_QNT_LIM (80)
+
+
 string IfrNode::name() const
 {
     if (mPair) {
@@ -298,6 +304,13 @@ MIfProv::TIfaces* IfrNodeRoot::ifaces()
     } else {
 	res = &mIcache;
     }
+    // Debugging. Use it to set breakpoint with the given limit.
+#ifdef DBG_IFR_IFC_QNT
+    int pcnt = pcount(true);
+    if (pcnt > DBG_IFR_IFC_QNT_LIM) {
+	pcnt = pcnt + 1;
+    }
+#endif
     return res;
 }
 
@@ -334,4 +347,16 @@ void IfrNodeRoot::onProvInvalidated()
 {
     mIcacheValid = false;
     IfrNode::onProvInvalidated();
+}
+
+void IfrNodeRoot::MIfProv_doDump(int aLevel, int aIdt, ostream& aOs) const
+{
+    Ifu::offset(aIdt, aOs);
+    aOs  << "[" << name() << "], " << mOwner->Uid() << ", Valid: " << mValid << endl;
+    aOs << "Ifaces cache:" << endl;
+    for (auto* iface : mIcache) {
+	aOs << iface->Uid() << endl;
+    }
+    aOs << endl << endl;
+    IfrNode::MIfProv_doDump(aLevel, aIdt, aOs);
 }

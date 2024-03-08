@@ -28,11 +28,12 @@ class Ut_des : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(test_des_asr_1);
     */
     //CPPUNIT_TEST(test_des_asr_2);
-    CPPUNIT_TEST(test_des_utl_1);
+    //CPPUNIT_TEST(test_des_utl_1);
     /*
     CPPUNIT_TEST(test_des_utl_2);
     CPPUNIT_TEST(test_des_sp_1);
     */
+    CPPUNIT_TEST(test_des_intf);
     CPPUNIT_TEST_SUITE_END();
     public:
     virtual void setUp();
@@ -56,6 +57,7 @@ class Ut_des : public CPPUNIT_NS::TestFixture
     void test_des_utl_1();
     void test_des_utl_2();
     void test_des_sp_1();
+    void test_des_intf();
     private:
     Env* mEnv;
 };
@@ -604,5 +606,15 @@ void Ut_des::test_des_sp_1()
 
     delete mEnv;
 }
+
+void Ut_des::test_des_intf()
+{
+    cout << endl << "=== Test of DES inputs notification ===" << endl;
+    MNode* root = constructSystem("ut_des_intf");
+    bool res = mEnv->RunSystem(15, 2);
+    CPPUNIT_ASSERT_MESSAGE("Failed running system", res);
+    delete mEnv;
+}
+
 
 

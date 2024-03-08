@@ -86,12 +86,13 @@ void Elem::mutate(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx&
 {
     bool isChild = aMut.IsChildOf(mChromo->Root());
     if (!aChange && !aTreatAsChromo && !isChild) {
-	//PFL_DUR_STAT_START(PEvents::EDurStat_Tmp);
+	// TODO OPT bad perf on mut adding to target chromo (ref ut_elem_mutperf_1 UT)"
+	PFL_DUR_STAT_START(PEvents::EDurStat_MutCad);
         ChromoNode mut = mChromo->Root().AddChild(aMut, true, true);
         if (aLocal) {
             mut.RmAttr(ENa_Targ);
         }
-	//PFL_DUR_STAT_REC(PEvents::EDurStat_Tmp);
+	PFL_DUR_STAT_REC(PEvents::EDurStat_MutCad);
         Unit::mutate(mut, aChange, aCtx, aTreatAsChromo, aLocal);
     } else {
         Unit::mutate(aMut, aChange, aCtx, aTreatAsChromo, aLocal);
@@ -140,7 +141,9 @@ MNode* Elem::createHeir(const string& aName)
 {
     MNode* heir = nullptr;
     if (Provider()->isProvided(this)) {
+	PFL_DUR_STAT_START(PEvents::EDurStat_MutCrn);
 	heir = Provider()->createNode(name(), aName, mEnv);
+	PFL_DUR_STAT_REC(PEvents::EDurStat_MutCrn);
     } else {
 	assert(parent());
 	heir = parent()->createHeirPrnt(aName);

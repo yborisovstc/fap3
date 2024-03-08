@@ -43,8 +43,8 @@ class ConnPointu: public Vertu, public MConnPoint, public Cnt::Host
 	// From Unit.MIfProvOwner
 	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
 	// From Vertu
-	//virtual void onConnected() override;
-	//virtual void onDisconnected() override;
+	virtual void onConnected() override;
+	virtual void onDisconnected() override;
 
     protected:
 	Cnt mReq = Cnt(*this, KReqName);
