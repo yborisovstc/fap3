@@ -80,22 +80,4 @@ class MCtIface : public MIface
 	virtual bool isConnected(MCIface* aPair) const = 0;
 };
 
-
-template <typename TProv, typename TReq> class MNcp;
-
-/** @brief Connection (2-ways relation) interface, ver. 2
- * iface exposes native connection point for binding
- * @tparam  TProv  provided iface (self)
- * @tparam  TReq   required iface (pair)
- * */
-template <typename TProv, typename TReq>
-class MCIface2 : public MIface
-{
-    public:
-	/** @brief Gets connection point */
-	virtual MNcp<TProv, TReq>* cp() const = 0;
-};
-
-
-
 #endif // __FAP3_MIFACE_H
