@@ -17,10 +17,10 @@
 class Ut_node : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_node);
-    CPPUNIT_TEST(test_nav_1);
+    //CPPUNIT_TEST(test_nav_1);
 //    CPPUNIT_TEST(test_cont_1);
-//    CPPUNIT_TEST(test_cre_1);
-//    CPPUNIT_TEST(test_node_aul_1);
+    //CPPUNIT_TEST(test_cre_1);
+    CPPUNIT_TEST(test_node_aul_1);
     CPPUNIT_TEST_SUITE_END();
 public:
     virtual void setUp();

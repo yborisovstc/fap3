@@ -155,9 +155,9 @@ DesUtils : Elem {
                         Inp ~ InpDone.Int
                     )
                     Inp1 ~ SIdx
-                    Inp2 ~ : TrAddVar (
+                    Inp2 ~ Incr : TrAdd2Var (
                         Inp ~ SIdx
-                        Inp ~ : SI_1
+                        Inp2 ~ : SI_1
                     )
                 )
                 Inp2 ~ : SI_0

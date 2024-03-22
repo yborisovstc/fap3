@@ -963,6 +963,7 @@ void Des::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	MIfReq* ireq = aReq->provided()->tail(); // Initial requestor
 	if (ireq) {
 	    bool redirectedToSpl = false;
+	    /*
 	    auto owdCp = owner()->firstPair();
 	    while (owdCp) {
 		MDesCtxSpl* spl = owdCp->provided()->lIf(spl);
@@ -980,6 +981,24 @@ void Des::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 		    }
 		}
 		owdCp = owner()->nextPair(owdCp);
+	    }
+	    */
+	    for (auto pitr = owner()->pairsBegin(); pitr != owner()->pairsEnd(); pitr++) {
+		auto owdCp = *pitr;
+		MDesCtxSpl* spl = owdCp->provided()->lIf(spl);
+		if (spl) {
+		    MUnit* splu = spl->lIf(splu);
+		    MIfProvOwner* splPo = splu ? splu->lIf(splPo) : nullptr;
+		    bool isReq = splPo && aReq->provided()->isRequestor(splPo);
+		    if (!isReq) {
+			addIfpLeaf(spl, aReq);
+			MUnit* splu = spl->lIf(splu);
+			if (splu) {
+			    splu->resolveIface(aName, aReq);
+			    redirectedToSpl = true;
+			}
+		    }
+		}
 	    }
 	    if (!redirectedToSpl) {
 		// Propagate request to owner
@@ -1327,6 +1346,7 @@ void ADes::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	bool isRqLocal = ireqn == ahostNode();
 	if (ireqn && !isRqLocal) {
 	    bool redirectedToSpl = false;
+	    /*
 	    auto owdCp = ahostNode()->owner()->firstPair();
 	    while (owdCp) {
 		MDesCtxSpl* spl = owdCp->provided()->lIf(spl);
@@ -1344,6 +1364,25 @@ void ADes::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 		    }
 		}
 		owdCp = ahostNode()->owner()->nextPair(owdCp);
+	    }
+	    */
+	    auto* howner = ahostNode()->owner();
+	    for (auto pitr = howner->pairsBegin(); pitr != howner->pairsEnd(); pitr++) {
+		auto* owdCp = *pitr;
+		MDesCtxSpl* spl = owdCp->provided()->lIf(spl);
+		if (spl) {
+		    MUnit* splu = spl->lIf(splu);
+		    MIfProvOwner* splPo = splu ? splu->lIf(splPo) : nullptr;
+		    bool isReq = splPo && aReq->provided()->isRequestor(splPo);
+		    if (!isReq) {
+			addIfpLeaf(spl, aReq);
+			MUnit* splu = spl->lIf(splu);
+			if (splu) {
+			    splu->resolveIface(aName, aReq);
+			    redirectedToSpl = true;
+			}
+		    }
+		}
 	    }
 	    if (!redirectedToSpl) {
 		// Propagate request to owner
@@ -1585,6 +1624,7 @@ void ADes::onOwnerAttached()
     }
     // Activate all existing syncable components
     MNode* host = ahostNode();
+    /*
     auto owdCp = host->owner()->firstPair();
     while (owdCp) {
 	MUnit* osu = owdCp->provided()->lIf(osu);
@@ -1593,6 +1633,16 @@ void ADes::onOwnerAttached()
 	    os->setActivated();
 	}
 	owdCp = host->owner()->nextPair(owdCp);
+    }
+    */
+    auto* howner = host->owner();
+    for (auto pitr = howner->pairsBegin(); pitr != howner->pairsEnd(); pitr++) {
+	auto* owdCp = *pitr;
+	MUnit* osu = owdCp->provided()->lIf(osu);
+	MDesSyncable* os = osu ? osu->getSif(os) : nullptr;
+	if (os && os != this) {
+	    os->setActivated();
+	}
     }
 }
 

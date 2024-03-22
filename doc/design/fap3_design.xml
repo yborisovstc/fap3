@@ -520,6 +520,7 @@
 	    <sect3><title>Intro</title>
 		<simpara>Current implementation of native net is quite complicated and not convenient in use. How can we simplify it. Look for instance
 		    at firstLeafB().</simpara>
+		<simpara> Rer also <xref linkend="ds_nn_tp"/> for native net simlification </simpara>
 	    </sect3>
 	</sect2>
 	<sect2 id="ds_nn_efcoop"><title>Native hier efficiency comparing to OOP</title>
@@ -582,6 +583,80 @@
 		    Without inp cache: 8.333 (sec) = 05:56:12.454 - 05:56:04.121
 		    With    inp cache: 8.227 (sec) = 06:04:32.867 - 06:04:24.640
 		</programlisting>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_nn_tp"><title>Native CPs optimization: pairs and leafs traversal performance</title>
+	    <sect3><title>Intro</title>
+		<simpara>
+		    To cover all types of native nets (owner-owned, oberver-observable etc) we need different types of CPs:
+		    one-to-many ID, one-to many no ID, one-to-one ... This means that the generic native net has to be heterogeneous, i.e.
+		    can incude different types of CPs.
+		</simpara>
+		<simpara>
+		    Currently (20240317) native CPs 
+		    Also the MNCpp iface is defined that exposes the APIs for pairs and leafs traversal:
+		    <programlisting>
+			TPair* firstPair();
+			TPair* nextPair(TPair* aPair);
+			TPair* firstLeaf();
+			TSelf* firstLeafB();
+			TPair* nextLeaf(TPair* aLeaf);
+		    </programlisting>
+			These methods provides us with polymorphic APIs and also allows heterogeneous net CPs (many CPs types: NCpOmip one-to-many, ID, NCpOmnp one-to many, no ID,
+			NCpOnp one-to-one, no ID, oher can be introcuded).
+			This heterogeneous approach allows creating of complex nets. This feature is one of pros, but the problem is that the methods assumes that 
+			next item (pair or leaf) gets obtained from given item. This causes the performance dectease because each traversal step
+			requires "find" operation of the CP backend pairs container (map currently).
+		</simpara>
+		<simpara>
+		    Two approaches needs to be considered here for increasing the performance.
+		</simpara>
+		<itemizedlist>
+		    <itemizedlist>
+			#1 Keep using polymorphic approach (MNCpp iface) nature but use pairs/leafs iterator for traversal
+		    </itemizedlist>
+		    <itemizedlist>
+			#2 Get rid of polymorphic approach and use parametrized CPs (one type CP for all nodes).
+		    </itemizedlist>
+		</itemizedlist>
+	    </sect3>
+	    <sect3 id="ds_nn_tp_uit"><title>Approach#1 Keep using polymorphic approach (MNCpp iface) nature but use pairs/leafs iterator for traversal</title>
+		<sect4><title>Intro</title>
+		    <simpara>
+			This can be done via using of CP backend pairs container iterator (that keeps container position context) for traversal. The problem here that
+			C++ std lib doesn't provide polymorphic iterator classes so we need to use some tricks to embed polymorphic iterating mechanism to CP iface.
+		    </simpara>
+		</sect4>
+	    </sect3>
+	    <sect3 id="ds_nn_tp_npi"><title>Approach#2 Get rid of polymorphic approach and use parametrized CPs (one type CP for all nodes).</title>
+		<sect4><title>Intro</title>
+		    <simpara>
+			With this option we refuse using polymorphic approach and use particular types of connpoints for particular native net. This approach was used in fap4
+			(ref pconn2.h PCpnp). In that case we explicitly use the CP's backend pairs container iterator.
+			How shall it work? We just need to state exact types for each sub-net. To simplify the solution we would need to minimize the types of CPs.
+			There is an option that help that minimization, ref
+			<xref linkend="ds_nn_tp_uit_aui"/>
+		    </simpara>
+		</sect4>
+		<sect4 id="ds_nn_tp_npi_aupi"><title>Option: avoid using native CP with pairs identification.</title>
+		    <simpara>
+			Currently the MNcpp method [TPair* pairAt(const string aId)] is used solely in node to get owned and conn2 (not used yet).
+			So ID supported CP seems not to be really useful in native net. Thus ID binding can be done separately in node.
+			Getting rid of ID support will allow us to simplify native net - we will need only two types of CPs: one-to-many and one-to-one.
+			This will allow us to effectively apply approach#2 and have just one type of CP parametrized by number of pairs (one vs many).
+			With that we will not need polymorphic CP at all.
+		    </simpara>
+		</sect4>
+	    </sect3>
+	    <sect3 id="ds_nn_tp_lth"><title>How to support leafs traversal "hook" (currently provided by firstLeafB)</title>
+		<sect4><title>Intro</title>
+		    <simpara>
+			Currently native CP iface MNcpp includes firstLeafB. Ref
+			<xref linkend="ds_irm_ut_inv_cno"/> for more details.
+			    This implements hook mechanism so node inherited from native CP can adjust behavior on attempt of traversal thru the node. 
+			    Currently IFR node uses this hook to resolve ifaces in case if it was not done (kind of layzy resolution).
+		    </simpara>
+		</sect4>
 	    </sect3>
 	</sect2>
     </sect1>
@@ -676,6 +751,7 @@
 			<simpara>With this approach we don't need to check existence of node in each resolving procedure, ref <xref linkend="ds_irm_ut_inv"/>
 			    We just need to modify the leafs three-walk to check if the node is invalid so refresh resolution.
 			</simpara>
+			<simpara>20240318 Note: currently this modification is done by  introducing the method</simpara>
 		    </sect4>
 		</sect3>
 		<sect3 id="ds_irm_ut_inv_own"><title>Providers owner iface, notification of provider updated</title>
@@ -722,181 +798,181 @@
 			#1 How to pass the context data to the point where it can be used to resolve iface.
 			<para>
 			    The example can be seen from <xref linkend="ds_ssp_dip_sss"/>: Client A (client name is the context) requests the MDVarGet from CP,
-			    CP shall pass the context to its MDVarGet call to SSS so this context needs to be propagated to SSS inputs and then back to CP.
-			    Ref <xref linkend="ds_irm_ctx_pcd"/> for details.
-			</para>
-		    </listitem>
-		    <listitem>
-			#2 IFR request should be extended to get context as the argument. Also default iface provider (ref Unit::defaultIfProv()) shall be parametrized
-			with the context. Or should there be the number of default provs for specific context. 
-		    </listitem>
-		</itemizedlist>
-	    </sect3>
-	    <sect3 id="ds_irm_ctx_pcd"><title>Passing context data</title>
-		<simpara>
-		    The question is how to pass context to the point where the context is using to resolve interface. For instance if we would like to
-		    pass the context from transitions root to transitions leafs (from state to transition inputs) we simply need to pass the context data in MDVarGet method.
-		    This can be done via extending base MIface by the method setContext(ctx_data). However this seems weird at the first glance.
-		</simpara>
-	    </sect3>
-	    <sect3><title>"Service point" use-case. Passing context data: ifaces mux.</title>
-		<simpara>This is one approach of how to pass the context. The idea is to have specific native agent "Mux" instead of "Service point" socket output
-		    (we assume atm that single output is used). This Mux implements MDVarGet iface but contains the array of ifaces (pins), one for each client. Each iface
-		    keeps client's context data - it is obtaiened during IFR request from Client to mux. When the client calls MDVarGet method via mux pin, the pin notifies
-		    service point of active context. Service point uses this context when to "switch" its other muxes.</simpara>
-	    </sect3>
-	</sect2>
-	<sect2 id="ds_irm_wprc"><title>IFR as the weak point if the system is re-configurable</title>
-	    <sect3><title>Intro</title>
-		<simpara>Ref <xref linkend="ds_desopt_est"/> for the use-case. This use-case shows that IFR is 
-		    not effective when system is re-configurable, the example is VertDRP.</simpara>
-	    </sect3>
-	    <sect3 id="ds_irm_wprc_uic"><title>Solution: Use IRM only in case of implicit connections.</title>
-		<simpara>Tried this approach (ref CpStateInp with DES_CPS_IFC macro) but couldnt fix all the problems. Postponed.</simpara>
-	    </sect3>
-	    <sect3 id="ds_irm_wprc_blc"><title>Solution: Use DES extenders breaking long IRM chans</title>
-		<simpara>
-		    It is noticed when debugging that some IRM chains too long and complex. This causes long invalidation.  Ref
-		    <xref linkend="ds_desopt_est"/> for the metrics - max invalidation time is ~72ms that is too long. 
-			We can reduce the chains useng special extenders, ref ExtdStateOutpI.
-		</simpara>
-		<simpara>Tried this solution for ut_avr_vert_drp_2 - it reduces the invalidation time from 2.93s to 1.2s, max invalidation time is reduced to 7.5ms.
-		    But this solution is not persistent and depends on the model topology.</simpara>
-	    </sect3>
-	    <sect3 id="ds_irm_wprc_lsc"><title>Solution: Layered system DES control (<xref linkend="gls_sdc"/>)</title>
-		<sect4><title>Intro</title>
-		    <simpara>This idea is to avoid running the system under re-configuration (controlled system). If controlled system is not run
-			then we don't need to notify DES inputs immediately. This notification can be done only on controlling is completed.</simpara>
-		    <simpara>Ref <xref linkend="ds_dcs_sl"/> for layered control design details.</simpara>
-		</sect4>
-	    </sect3>
-	</sect2>
-    </sect1>
+				CP shall pass the context to its MDVarGet call to SSS so this context needs to be propagated to SSS inputs and then back to CP.
+				Ref <xref linkend="ds_irm_ctx_pcd"/> for details.
+			    </para>
+			</listitem>
+			<listitem>
+			    #2 IFR request should be extended to get context as the argument. Also default iface provider (ref Unit::defaultIfProv()) shall be parametrized
+			    with the context. Or should there be the number of default provs for specific context. 
+			</listitem>
+		    </itemizedlist>
+		</sect3>
+		<sect3 id="ds_irm_ctx_pcd"><title>Passing context data</title>
+		    <simpara>
+			The question is how to pass context to the point where the context is using to resolve interface. For instance if we would like to
+			pass the context from transitions root to transitions leafs (from state to transition inputs) we simply need to pass the context data in MDVarGet method.
+			This can be done via extending base MIface by the method setContext(ctx_data). However this seems weird at the first glance.
+		    </simpara>
+		</sect3>
+		<sect3><title>"Service point" use-case. Passing context data: ifaces mux.</title>
+		    <simpara>This is one approach of how to pass the context. The idea is to have specific native agent "Mux" instead of "Service point" socket output
+			(we assume atm that single output is used). This Mux implements MDVarGet iface but contains the array of ifaces (pins), one for each client. Each iface
+			keeps client's context data - it is obtaiened during IFR request from Client to mux. When the client calls MDVarGet method via mux pin, the pin notifies
+			service point of active context. Service point uses this context when to "switch" its other muxes.</simpara>
+		</sect3>
+	    </sect2>
+	    <sect2 id="ds_irm_wprc"><title>IFR as the weak point if the system is re-configurable</title>
+		<sect3><title>Intro</title>
+		    <simpara>Ref <xref linkend="ds_desopt_est"/> for the use-case. This use-case shows that IFR is 
+			not effective when system is re-configurable, the example is VertDRP.</simpara>
+		</sect3>
+		<sect3 id="ds_irm_wprc_uic"><title>Solution: Use IRM only in case of implicit connections.</title>
+		    <simpara>Tried this approach (ref CpStateInp with DES_CPS_IFC macro) but couldnt fix all the problems. Postponed.</simpara>
+		</sect3>
+		<sect3 id="ds_irm_wprc_blc"><title>Solution: Use DES extenders breaking long IRM chans</title>
+		    <simpara>
+			It is noticed when debugging that some IRM chains too long and complex. This causes long invalidation.  Ref
+			<xref linkend="ds_desopt_est"/> for the metrics - max invalidation time is ~72ms that is too long. 
+			    We can reduce the chains useng special extenders, ref ExtdStateOutpI.
+		    </simpara>
+		    <simpara>Tried this solution for ut_avr_vert_drp_2 - it reduces the invalidation time from 2.93s to 1.2s, max invalidation time is reduced to 7.5ms.
+			But this solution is not persistent and depends on the model topology.</simpara>
+		</sect3>
+		<sect3 id="ds_irm_wprc_lsc"><title>Solution: Layered system DES control (<xref linkend="gls_sdc"/>)</title>
+		    <sect4><title>Intro</title>
+			<simpara>This idea is to avoid running the system under re-configuration (controlled system). If controlled system is not run
+			    then we don't need to notify DES inputs immediately. This notification can be done only on controlling is completed.</simpara>
+			<simpara>Ref <xref linkend="ds_dcs_sl"/> for layered control design details.</simpara>
+		    </sect4>
+		</sect3>
+	    </sect2>
+	</sect1>
 
-    <sect1 id="ds_sn"><title>System navigation improvement. Access restrictions</title>
-	<sect2><title>Intro</title>
-	    <simpara>There is the gap in FAP2 desing: the access to system nodes is not restricted. So any node can access to any node. This can cause the models
-		unreliability.</simpara>
-	</sect2>
-	<sect2><title>GUri improvement: avoid upward navigation</title>
-	    <sect3><title>Intro</title>
-		<simpara>In FAP2 GUri can specify upward navigation, for instance navigation thru owner to root, direct access root etc. This needs to
-		be disabled. So we don't need such navigation at all. Instead we can have "special nodes" that can be accessed via GUri. Special nodes need
-		to have named specifically, prefix '_' can be used for instance. Owner can be such special node also.
-		    such special node.</simpara>
-	    </sect3>
-	    <sect3><title>Usecase: agents accesses neighbours in owning container.</title>
-		<simpara>This is very common case when agent is placed in system so it needs access to other components of this system, e.g to system coppnoints.
-		The agents acs in this case as system's confidant so it is reasonable it has the access to system's internals. How this use-case can be
-		    supported? </simpara>
-		<simpara>The solution can be as: the agent uses URI with special node "owner", so the navigation goes thru the owner, the client acces the owner
-		via MOwner iface, passing self as the argument. Thus the owner can handle this request specifically - it can check if the requestor is 
-		    an agent and event verify if such agent has rights for access to owner's components.</simpara>
-	    </sect3>
-	    <sect3><title>Use-case: fap2-vis VrController - unit adapter gets path to managed agent upward.</title>
-		<simpara>So agent needs access upward its owner.</simpara>
-	    </sect3>
-	    <sect3><title>Use-case: creating node from parent located in arbitrary layer of hier.</title>
-	    </sect3>
-	    <sect3><title>Approach#1: node reference in owner.</title>
-		<simpara>The idea is that sub-system needs to ask its owner to get required node - owner is the only sub-system "window to the world". The owner
-		prepares the reference to the node for it's components. What is the reference? This is the node that proxies some ifaces, MUnit in case of
-		    ref to parent.</simpara>
-		<simpara>It some "deep" located node requires access to much upper layer than all the owners have to create such references.</simpara>
-		<simpara>With this approach the owners responsibility is to create "environment" for its compoments.</simpara>
-	    </sect3>
-	</sect2>
-	<sect2><title>Namespaces support</title>
-	    <sect3><title>Use-case: native units</title>
-		<simpara>Native units is specific units category, they cannot be accessed via navigation thru native hier. Specific rule is used in FAP2 to
-		    distinguish native units in URI: native units are identified by single name.</simpara>
-	    </sect3>
-	</sect2>
-	<sect2 id="ds_sn_aul"><title>[DS_SN_AUL] Access for upper layer. Parents, modules etc.</title>
-	    <sect3><title>Intro</title>
-		<simpara>Even the generic rule of access restriction is to not allow access to upper layer of native hier, sometimes such access is
-		required. The example is creating "library" of systems and then use them to create heir in lower layer. Another example is 
-		the modules. Also the example is <xref linkend="gls_adp"/> where adapter has to has the access to "adapted" (or monitired) agent that
-		    is not in the scope of adapters node.</simpara>
-	    </sect3>
-	    <sect3><title>Approach#1: special nodes</title>
-		<sect4><title>Intro</title>
-		    <simpara>Special names (predefined?) are introduced, started let's say with underscore, _Import for instance. This names are handled by environment
-			when getting access to the nodes named that names.</simpara>
-		</sect4>
-		<sect4><title>Criticism</title>
-		    <simpara>It is unconvenient to use special name in case if we just have some system defined that needs to be used to create heir in
-			lower layer.</simpara>
-		</sect4>
-	    </sect3>
-	    <sect3><title>Using implicit namespace for getting parent</title>
-		<sect4><title>Intro</title>
-		    <simpara>For getting the parent specific version of getNode() is used. This version gets implicit namespaces. We can utilize
-		    implicit namespace like "all owners" plus _Imports plus all owners _Modules etc. "All owners" namespace should be for name only whereas
-			special names can resolve uri also.</simpara>
-		</sect4>
-	    </sect3>
-	    <sect3 id="ds_sn_aul_lnk"><title>Using links</title>
-		<sect4 id="ds_sn_aul_lnk_itr"><title>Intro</title>
-		    <simpara>Let's consider the problem with <xref linkend="gls_adp"/>
-		    : adapter agent needs the access to managed agent, the access can be defined with having content "Managed agent URI" but this works only
-		    if the managed agent takes place within adapter tree.
-		    </simpara>
-		    <simpara>
-			The idea is to introduce "Link" agent that implements "MLink" interface and has content "Managed agent URI". The MLink interface
-			gets pointer to given interface (MNode for instance) of Managed agent. Link agent also has connection point provided MLink interface.
-			Upper node connects Link agent connection point to the corresponding connection point of adapter.
-		    </simpara>
-		    <simpara>
-			Hmm, we again faicing same problem - to specify this "subject of link" we need to use content "Subject of link URI", so with navigation 
-			restrictions the "Subject of link" shall be in the tree of link that makes almost same inconvenience. Ref
-			<xref linkend="ds_sn_aul_lnk_conn"/>
-			for discussing this issue.
-		    </simpara>
-		</sect4>
-		<sect4 id="ds_sn_aul_lnk_conn"><title>Using Link specific "Connect" mutation</title>
-		    <simpara>
-			This problem restricted access with content "Subject of link URI" can be solved by introducing Link specific "Connection" mutation.
-			Or we can introduce another mutation - "Association". In that case the system thit mutation is applied to checks if Link and node
-			with proper interface (MNode for instance) are "connecting" and invokes proper "connect" API of Link.
-		    </simpara>
-		    <simpara>
-			This solution requires some redesign of fap3. Currently MVert iface is "connectable" (is inherited to base iface MCIface) but it assumes
-			the connection is of "two-ways" - it also connects to MCIface. But in our case the connection is "asymmetric" - just one side is connectable.
-		    </simpara>
-		</sect4>
-		<sect4 id="ds_sn_aul_lnk_sma"><title>[DS_SN_AUL_LNK_SMA] Inconvenience when using links for specify managed agent for <xref linkend="gls_adp"/></title>
-		    <simpara>
-			Using link doesn't allow the adapter to simply swithching to another managed agent. Currently we can use simple switching utilizing adapter
-			input InpMagUri - transitions can change managed agent URI quite simply.
-		    </simpara>
-		    <simpara>
-			Actually this problem can be solved if we have the link to managed agents owner but not managed agent itself. In that case the content MagUri and
-			input InpMagUri shall specify the managed agent URI from owning node specified by the link.
-		    </simpara>
-		</sect4>
-		<sect4 id="ds_sn_aul_lnk_cohl"><title>Link another inconvenience: "connection" over hier levels</title>
-		    <simpara>
-			It's very often case where the link needs to be linked from one hier branch to another. The example is "modnav" application.
-			In "modnav" Model detail representation view (that is located in Launcher.Window.Scene..ModelDrp) shall contain the link to the model but the model 
-			is located in Launcher.Controller.ModelMnt. So we need to mutate Launcher to "connect" the link and the "connection" is established
-			directly between different branch nodes crossing hier levels. This is bad system design.
-		    </simpara>
-		</sect4>
-	    </sect3>
-	    <sect3 id="ds_sn_aul_avcp"><title>Using Accessor agent giving access to manager agent via conn point.</title>
-		<sect4><title>Intro</title>
-		    <simpara>Using Link approach often leads to bad system desing, ref <xref linkend="ds_sn_aul_lnk_cohl"/>. Alternative solution can be using the 
-			standard connections via connpoint. In that case the connection can be structured to keep subsystem isolation.</simpara>
-		    <simpara>Indeed, the standard connection point mechanism can provide access to any interface including MNode for instance. What we need is 
-		    to introduce "managing" agent that includes the connpoint provideing the required iface (MNode for instance) and redirecting IFR request
-		    to managed agent. The desing can be simplified event more - we can just embed the connpoint into the managed agent, connpoint will
-			redirect IFR request to the agent directly.</simpara>
-		</sect4>
-		<sect4><title>Criticism:</title>
-		</sect4>
-	    </sect3>
-	</sect2>
+	<sect1 id="ds_sn"><title>System navigation improvement. Access restrictions</title>
+	    <sect2><title>Intro</title>
+		<simpara>There is the gap in FAP2 desing: the access to system nodes is not restricted. So any node can access to any node. This can cause the models
+		    unreliability.</simpara>
+	    </sect2>
+	    <sect2><title>GUri improvement: avoid upward navigation</title>
+		<sect3><title>Intro</title>
+		    <simpara>In FAP2 GUri can specify upward navigation, for instance navigation thru owner to root, direct access root etc. This needs to
+			be disabled. So we don't need such navigation at all. Instead we can have "special nodes" that can be accessed via GUri. Special nodes need
+			to have named specifically, prefix '_' can be used for instance. Owner can be such special node also.
+			such special node.</simpara>
+		</sect3>
+		<sect3><title>Usecase: agents accesses neighbours in owning container.</title>
+		    <simpara>This is very common case when agent is placed in system so it needs access to other components of this system, e.g to system coppnoints.
+			The agents acs in this case as system's confidant so it is reasonable it has the access to system's internals. How this use-case can be
+			supported? </simpara>
+		    <simpara>The solution can be as: the agent uses URI with special node "owner", so the navigation goes thru the owner, the client acces the owner
+			via MOwner iface, passing self as the argument. Thus the owner can handle this request specifically - it can check if the requestor is 
+			an agent and event verify if such agent has rights for access to owner's components.</simpara>
+		</sect3>
+		<sect3><title>Use-case: fap2-vis VrController - unit adapter gets path to managed agent upward.</title>
+		    <simpara>So agent needs access upward its owner.</simpara>
+		</sect3>
+		<sect3><title>Use-case: creating node from parent located in arbitrary layer of hier.</title>
+		</sect3>
+		<sect3><title>Approach#1: node reference in owner.</title>
+		    <simpara>The idea is that sub-system needs to ask its owner to get required node - owner is the only sub-system "window to the world". The owner
+			prepares the reference to the node for it's components. What is the reference? This is the node that proxies some ifaces, MUnit in case of
+			ref to parent.</simpara>
+		    <simpara>It some "deep" located node requires access to much upper layer than all the owners have to create such references.</simpara>
+		    <simpara>With this approach the owners responsibility is to create "environment" for its compoments.</simpara>
+		</sect3>
+	    </sect2>
+	    <sect2><title>Namespaces support</title>
+		<sect3><title>Use-case: native units</title>
+		    <simpara>Native units is specific units category, they cannot be accessed via navigation thru native hier. Specific rule is used in FAP2 to
+			distinguish native units in URI: native units are identified by single name.</simpara>
+		</sect3>
+	    </sect2>
+	    <sect2 id="ds_sn_aul"><title>[DS_SN_AUL] Access for upper layer. Parents, modules etc.</title>
+		<sect3><title>Intro</title>
+		    <simpara>Even the generic rule of access restriction is to not allow access to upper layer of native hier, sometimes such access is
+			required. The example is creating "library" of systems and then use them to create heir in lower layer. Another example is 
+			the modules. Also the example is <xref linkend="gls_adp"/> where adapter has to has the access to "adapted" (or monitired) agent that
+			    is not in the scope of adapters node.</simpara>
+		    </sect3>
+		    <sect3><title>Approach#1: special nodes</title>
+			<sect4><title>Intro</title>
+			    <simpara>Special names (predefined?) are introduced, started let's say with underscore, _Import for instance. This names are handled by environment
+				when getting access to the nodes named that names.</simpara>
+			</sect4>
+			<sect4><title>Criticism</title>
+			    <simpara>It is unconvenient to use special name in case if we just have some system defined that needs to be used to create heir in
+				lower layer.</simpara>
+			</sect4>
+		    </sect3>
+		    <sect3><title>Using implicit namespace for getting parent</title>
+			<sect4><title>Intro</title>
+			    <simpara>For getting the parent specific version of getNode() is used. This version gets implicit namespaces. We can utilize
+				implicit namespace like "all owners" plus _Imports plus all owners _Modules etc. "All owners" namespace should be for name only whereas
+				special names can resolve uri also.</simpara>
+			</sect4>
+		    </sect3>
+		    <sect3 id="ds_sn_aul_lnk"><title>Using links</title>
+			<sect4 id="ds_sn_aul_lnk_itr"><title>Intro</title>
+			    <simpara>Let's consider the problem with <xref linkend="gls_adp"/>
+				: adapter agent needs the access to managed agent, the access can be defined with having content "Managed agent URI" but this works only
+				if the managed agent takes place within adapter tree.
+			    </simpara>
+			    <simpara>
+				The idea is to introduce "Link" agent that implements "MLink" interface and has content "Managed agent URI". The MLink interface
+				gets pointer to given interface (MNode for instance) of Managed agent. Link agent also has connection point provided MLink interface.
+				Upper node connects Link agent connection point to the corresponding connection point of adapter.
+			    </simpara>
+			    <simpara>
+				Hmm, we again faicing same problem - to specify this "subject of link" we need to use content "Subject of link URI", so with navigation 
+				restrictions the "Subject of link" shall be in the tree of link that makes almost same inconvenience. Ref
+				<xref linkend="ds_sn_aul_lnk_conn"/>
+				    for discussing this issue.
+			    </simpara>
+			</sect4>
+			<sect4 id="ds_sn_aul_lnk_conn"><title>Using Link specific "Connect" mutation</title>
+			    <simpara>
+				This problem restricted access with content "Subject of link URI" can be solved by introducing Link specific "Connection" mutation.
+				Or we can introduce another mutation - "Association". In that case the system thit mutation is applied to checks if Link and node
+				with proper interface (MNode for instance) are "connecting" and invokes proper "connect" API of Link.
+			    </simpara>
+			    <simpara>
+				This solution requires some redesign of fap3. Currently MVert iface is "connectable" (is inherited to base iface MCIface) but it assumes
+				the connection is of "two-ways" - it also connects to MCIface. But in our case the connection is "asymmetric" - just one side is connectable.
+			    </simpara>
+			</sect4>
+			<sect4 id="ds_sn_aul_lnk_sma"><title>[DS_SN_AUL_LNK_SMA] Inconvenience when using links for specify managed agent for <xref linkend="gls_adp"/></title>
+			    <simpara>
+				Using link doesn't allow the adapter to simply swithching to another managed agent. Currently we can use simple switching utilizing adapter
+				input InpMagUri - transitions can change managed agent URI quite simply.
+			    </simpara>
+			    <simpara>
+				Actually this problem can be solved if we have the link to managed agents owner but not managed agent itself. In that case the content MagUri and
+				input InpMagUri shall specify the managed agent URI from owning node specified by the link.
+			    </simpara>
+			</sect4>
+			<sect4 id="ds_sn_aul_lnk_cohl"><title>Link another inconvenience: "connection" over hier levels</title>
+			    <simpara>
+				It's very often case where the link needs to be linked from one hier branch to another. The example is "modnav" application.
+				In "modnav" Model detail representation view (that is located in Launcher.Window.Scene..ModelDrp) shall contain the link to the model but the model 
+				is located in Launcher.Controller.ModelMnt. So we need to mutate Launcher to "connect" the link and the "connection" is established
+				directly between different branch nodes crossing hier levels. This is bad system design.
+			    </simpara>
+			</sect4>
+		    </sect3>
+		    <sect3 id="ds_sn_aul_avcp"><title>Using Accessor agent giving access to manager agent via conn point.</title>
+			<sect4><title>Intro</title>
+			    <simpara>Using Link approach often leads to bad system desing, ref <xref linkend="ds_sn_aul_lnk_cohl"/>. Alternative solution can be using the 
+				standard connections via connpoint. In that case the connection can be structured to keep subsystem isolation.</simpara>
+			    <simpara>Indeed, the standard connection point mechanism can provide access to any interface including MNode for instance. What we need is 
+				to introduce "managing" agent that includes the connpoint provideing the required iface (MNode for instance) and redirecting IFR request
+				to managed agent. The desing can be simplified event more - we can just embed the connpoint into the managed agent, connpoint will
+				redirect IFR request to the agent directly.</simpara>
+			</sect4>
+			<sect4><title>Criticism:</title>
+			</sect4>
+		    </sect3>
+		</sect2>
     </sect1>
 
     <sect1 id="ds_cli"><title>Chromo language improvement</title>

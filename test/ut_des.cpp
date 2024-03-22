@@ -21,16 +21,16 @@ class Ut_des : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(test_des_dmc_1);
     CPPUNIT_TEST(test_des_ifr_inval_1);
     CPPUNIT_TEST(test_des_ifr_inval_2);
+    CPPUNIT_TEST(test_des_tr_1);
     */
-    //CPPUNIT_TEST(test_des_tr_1);
     /*
     CPPUNIT_TEST(test_des_tr_tres_1);
     CPPUNIT_TEST(test_des_asr_1);
     */
     //CPPUNIT_TEST(test_des_asr_2);
-    //CPPUNIT_TEST(test_des_utl_1);
-    /*
+    CPPUNIT_TEST(test_des_utl_1);
     CPPUNIT_TEST(test_des_utl_2);
+    /*
     CPPUNIT_TEST(test_des_sp_1);
     */
     CPPUNIT_TEST(test_des_intf);

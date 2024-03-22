@@ -43,11 +43,20 @@ Node::Node(const string &aType, const string &aName, MEnv* aEnv): mName(aName.em
 Node::~Node()
 {
     // Removing the owneds
+    /*
     auto owdCp = owner()->firstPair();
     while (owdCp) {
 	owner()->disconnect(owdCp);
 	owdCp->provided()->deleteOwned();
 	owdCp = owner()->firstPair();
+    }
+    */
+    auto bg = owner()->pairsBegin();
+    while (bg != owner()->pairsEnd()) {
+	auto* owdCp = *bg;
+	owner()->disconnect(owdCp);
+	owdCp->provided()->deleteOwned();
+	bg = owner()->pairsBegin();
     }
     // Disconnect all observers
     mOcp.disconnectAll();
@@ -493,6 +502,7 @@ MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
 	    }
 	} else {
 	    Logger()->Write(EErr, this, "Creating [%s] - parent [%s] not found", sname.c_str(), sparent.c_str());
+	    parent = getParent(prnturi);
 	}
     } else {
 	Log(EErr, TLog(this) + "Missing parent name");
@@ -574,10 +584,16 @@ void Node::onOwnedAttached(MOwned* aOwned)
     // Notify the observers
     // Cache observers first to avoid iterating broked due to observers change
     list<MObserver*> cache;
+    /*
     auto* obs = mOcp.firstPair();
     while (obs) {
         cache.push_back(obs->provided());
         obs = mOcp.nextPair(obs);
+    }
+    */
+    for (auto it = mOcp.pairsBegin(); it != mOcp.pairsEnd(); it++) {
+	auto* pair = *it;
+        cache.push_back(pair->provided());
     }
     for (auto obs : cache) {
         obs->onObsOwnedAttached(this, aOwned);
@@ -586,10 +602,15 @@ void Node::onOwnedAttached(MOwned* aOwned)
 
 void Node::onOwnedDetached(MOwned* aOwned)
 {
+    /*
     auto* obs = mOcp.firstPair();
     while (obs) {
         obs->provided()->onObsOwnedDetached(this, aOwned);
         obs = mOcp.nextPair(obs);
+    }
+    */
+    for (auto it = mOcp.pairsBegin(); it != mOcp.pairsEnd(); it++) {
+        (*it)->provided()->onObsOwnedDetached(this, aOwned);
     }
 }
 
@@ -848,10 +869,15 @@ bool Node::isNodeOwned(const MNode* aNode) const
 void Node::notifyChanged()
 {
     // Notify observers
+    /*
     auto* obs = mOcp.firstPair();
     while (obs) {
 	obs->provided()->onObsChanged(this);
 	obs = mOcp.nextPair(obs);
+    }
+    */
+    for (auto it = mOcp.pairsBegin(); it != mOcp.pairsEnd(); it++) {
+	(*it)->provided()->onObsChanged(this);
     }
 }
 
@@ -942,10 +968,15 @@ void Node::onContentChanged(const MContent* aCont)
     }
 
     // Notify observers
+    /*
     auto* obs = mOcp.firstPair();
     while (obs) {
 	obs->provided()->onObsContentChanged(this, aCont);
 	obs = mOcp.nextPair(obs);
+    }
+    */
+    for (auto it = mOcp.pairsBegin(); it != mOcp.pairsEnd(); it++) {
+        (*it)->provided()->onObsContentChanged(this, aCont);
     }
 }
 

@@ -147,44 +147,26 @@ MIfProv* IfrNode::findIface(const MIface* aIface)
     return res;
 }
 
-MIfProv* IfrNode::findOwner(const MIfProvOwner* aOwner)
-{
-    MIfProv* res = nullptr;
-    auto pair = binded()->firstPair();
-    while (pair) {
-	auto prov = pair->provided();
-	if (prov->owner() == aOwner) {
-	    res = prov; break;
-	}
-	pair = binded()->nextPair(pair);
-    }
-    return res;
-}
-
-void IfrNode::eraseInvalid()
-{
-    auto pair = binded()->firstPair();
-    while (pair) {
-	auto prov = pair->provided();
-	if (!prov->isValid()) {
-	    binded()->disconnect(pair);
-	    // pairs container in binded is updated, starts from the firs
-	    pair = binded()->firstPair();
-	} else {
-	    pair = binded()->nextPair(pair);
-	}
-    }
-}
-
 void IfrNode::erase()
 {
     // IfrNode doesn't own sub-nodes, so no deletion here, just disconnect
+    /*
     auto pair = binded()->firstPair();
     while (pair) {
 	auto prov = pair->provided();
 	binded()->disconnect(pair);
 	pair = binded()->firstPair(); // pairs container in binded is updated, starts from the firs
     }
+    */
+    /*
+    auto beg = binded()->pairsBegin();
+    while (beg != binded()->pairsEnd()) {
+	auto* pair = *beg;
+	binded()->disconnect(pair);
+	beg = binded()->pairsBegin();
+    }
+    */
+    binded()->disconnectAll();
 }
 
 bool IfrNode::isRequestor(MIfProvOwner* aOwner, int aPos) const
@@ -222,6 +204,15 @@ IfrNode::TPair* IfrNode::nextLeaf(TPair* aLeaf)
 	TBase::nextLeaf(aLeaf);
     }
     return res;
+}
+
+IfrNode::TBase::LeafsIterator IfrNode::leafsBegin()
+{
+    if (!mValid) {
+	string nm = name();
+	resolve(nm);
+    }
+    return TBase::leafsBegin();
 }
 
 bool IfrNode::isResolved()
@@ -331,6 +322,7 @@ void IfrNodeRoot::cleanIcache()
     mIcacheValid = false;
 }
 
+/*
 void IfrNodeRoot::updateIcache()
 {
     mIcache.clear();
@@ -342,6 +334,21 @@ void IfrNodeRoot::updateIcache()
     }
     mIcacheValid = true;
 }
+*/
+
+void IfrNodeRoot::updateIcache()
+{
+    mIcache.clear();
+    for (auto it = binded()->leafsBegin(); it != binded()->leafsEnd(); it++) {
+	auto* cp = *it;
+	auto* prov = cp->provided();
+	if (prov->iface()) {
+	    mIcache.push_back(prov->iface());
+	}
+    }
+    mIcacheValid = true;
+}
+
 
 void IfrNodeRoot::onProvInvalidated()
 {
@@ -355,8 +362,12 @@ void IfrNodeRoot::MIfProv_doDump(int aLevel, int aIdt, ostream& aOs) const
     aOs  << "[" << name() << "], " << mOwner->Uid() << ", Valid: " << mValid << endl;
     aOs << "Ifaces cache:" << endl;
     for (auto* iface : mIcache) {
-	aOs << iface->Uid() << endl;
+	if (iface) {
+	    aOs << iface->Uid() << endl;
+	} else {
+	    aOs << "null" << endl;
+	}
     }
-    aOs << endl << endl;
+    aOs << endl;
     IfrNode::MIfProv_doDump(aLevel, aIdt, aOs);
 }

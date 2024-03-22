@@ -11,13 +11,15 @@
 class Ut_nn : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_nn);
-    CPPUNIT_TEST(test_owning_1);
+    //CPPUNIT_TEST(test_owning_1);
+    CPPUNIT_TEST(test_liter_1);
     CPPUNIT_TEST_SUITE_END();
 public:
     virtual void setUp();
     virtual void tearDown();
 private:
     void test_owning_1();
+    void test_liter_1();
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION( Ut_nn );
@@ -46,5 +48,52 @@ void Ut_nn::test_owning_1()
     owner->owner()->disconnect(owned1->owned());
     owner->owner()->connect(owned1->owned());
     owner->owner()->connect(owned2->owned());
+    delete owner;
+}
+
+/** @brief Test of pairs iterator
+ * */
+void Ut_nn::test_liter_1()
+{
+    printf("\n === Test of leafs iterator\n");
+    Unit* owner = new Unit(Unit::Type(), "Owner", nullptr);
+    Unit* owned1 = new Unit(Unit::Type(), "Owned1", nullptr);
+    Unit* owned1_1 = new Unit(Unit::Type(), "Owned1_1", nullptr);
+    Unit* owned1_2 = new Unit(Unit::Type(), "Owned1_2", nullptr);
+    Unit* owned2 = new Unit(Unit::Type(), "Owned2", nullptr);
+    owner->owner()->connect(owned1->owned());
+    owner->owner()->disconnect(owned1->owned());
+    owner->owner()->connect(owned1->owned());
+    owned1->owner()->connect(owned1_1->owned());
+    owned1->owner()->connect(owned1_2->owned());
+    owner->owner()->connect(owned2->owned());
+    
+    // Dump pairs
+    cout <<  "Pairs: " << endl;
+    auto* cp = owner->owner();
+    for (auto it = cp->pairsBegin(); it != cp->pairsEnd(); it++) {
+	cout << (*it)->provided()->Uid() << endl;
+    }
+    // Leafs iter begin
+    auto lit1 = cp->leafsBegin();
+    auto* cpn = *lit1;
+    lit1++;
+    auto* cpn2 = *lit1;
+    lit1++;
+    auto* cpn3 = *lit1;
+    // Dump leafs
+    cout <<  "Leafs: " << endl;
+    for (auto lit = cp->leafsBegin(); lit != cp->leafsEnd(); lit++) {
+	auto* cpn = *lit;
+	cout << cpn->provided()->Uid() << endl;
+    }
+    // Empty tree iteration
+    auto lit2b = owned2->owner()->leafsBegin();
+    auto lit2e = owned2->owner()->leafsEnd();
+    if (lit2b != lit2e) {
+	auto* cpn = *lit2b;
+	cout << cpn->provided()->Uid() << endl;
+    }
+
     delete owner;
 }

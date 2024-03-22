@@ -82,7 +82,7 @@ void Content::onContentChanged(const MContent* aCont)
 
 void Content::notifyContentChanged(const MContent* aCont)
 {
-    MContentOwner* cowner = Owner()->lIf(cowner);
+    MContentOwner* cowner = Owner() ? Owner()->lIf(cowner) : nullptr;
     if (cowner) {
 	cowner->onContentChanged(aCont);
     }

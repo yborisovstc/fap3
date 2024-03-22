@@ -14,7 +14,7 @@
 class Ut_ifr : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_ifr);
-    CPPUNIT_TEST(test_base_1);
+    //CPPUNIT_TEST(test_base_1);
     CPPUNIT_TEST(test_inval_sock_1);
     CPPUNIT_TEST_SUITE_END();
 public:

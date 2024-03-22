@@ -212,7 +212,7 @@ inline int Node::getLocLogLevel() const
 
 
 // Profiler's routines
-#define PFLE() mEnv->profiler()
+#define PFLE() (mEnv ? mEnv->profiler() : nullptr)
 #define PFL_SAVE() PROF_SAVE(PFLE())
 #define PFL_DUR_STAT_START(ID) PROF_DUR_START(PFLE(), PROF_DUR_STAT, ID)
 #define PFL_DUR_STAT_REC(ID) PROF_DUR_REC(PFLE(), PROF_DUR_STAT, ID)

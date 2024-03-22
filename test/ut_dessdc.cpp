@@ -20,8 +20,8 @@ class Ut_sdc : public CPPUNIT_NS::TestFixture
     //CPPUNIT_TEST(test_Sdc_3);
     //CPPUNIT_TEST(test_Sdc_4);
     CPPUNIT_TEST(test_Sdc_5);
-    //CPPUNIT_TEST(test_Sdo_1);
-    //CPPUNIT_TEST(test_Sdo_2);
+    CPPUNIT_TEST(test_Sdo_1);
+    CPPUNIT_TEST(test_Sdo_2);
     CPPUNIT_TEST_SUITE_END();
     public:
     virtual void setUp();

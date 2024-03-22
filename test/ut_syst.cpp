@@ -69,7 +69,8 @@ class TstAgt: public Unit, public MAgent
 	MIface* MNode_getLif(const char *aType) override {
 	    MIface* res = nullptr;
 	    if (res = checkLif<MAgent>(aType));
-	    else res = checkLif<MNode>(aType);
+	    else if (res = checkLif<MNode>(aType));
+	    else res = Unit::MNode_getLif(aType);
 	    return res;
 	}
 	MIface* MAgent_getLif(const char *aType) override {
@@ -125,16 +126,16 @@ class Ut_syst : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST_SUITE(Ut_syst);
     //    CPPUNIT_TEST(test_vert_1);
     //    CPPUNIT_TEST(test_cp_1);
-    ///CPPUNIT_TEST(test_syst_1);
-    ///CPPUNIT_TEST(test_syst_link);
+    //CPPUNIT_TEST(test_syst_1);
+    //CPPUNIT_TEST(test_syst_link);
     //CPPUNIT_TEST(test_cp_2);
     //CPPUNIT_TEST(test_syst_cp_3);
-    CPPUNIT_TEST(test_syst_sock_1);
-    ///CPPUNIT_TEST(test_syst_sock_2);
+    //CPPUNIT_TEST(test_syst_sock_1);
+    CPPUNIT_TEST(test_syst_sock_2);
     CPPUNIT_TEST(test_syst_sock_3);
-    ///CPPUNIT_TEST(test_syst_sock_4);
-    //CPPUNIT_TEST(test_syst_cpe_1);
-    //!CPPUNIT_TEST(test_syst_dn);
+    CPPUNIT_TEST(test_syst_sock_4);
+    CPPUNIT_TEST(test_syst_cpe_1);
+    //CPPUNIT_TEST(test_syst_dn); // Not completed
     CPPUNIT_TEST_SUITE_END();
     public:
     virtual void setUp();
@@ -171,6 +172,10 @@ MNode* Ut_syst::constructSystem(const string& aSpecn)
     CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv != 0);
     mEnv->ImpsMgr()->ResetImportsPaths();
     mEnv->ImpsMgr()->AddImportsPaths("../modules");
+    mProv = new TstProv("TestProv", mEnv);
+    bool res = mEnv->addProvider(mProv);
+    CPPUNIT_ASSERT_MESSAGE("Fail to add provider", res);
+    //mEnv->ImpsMgr()->ResetImportsPaths();
     mEnv->constructSystem();
     MNode* root = mEnv->Root();
     MElem* eroot = root ? root->lIf(eroot) : nullptr;
@@ -700,6 +705,7 @@ void Ut_syst::test_syst_dn()
     MVert* v1v = v1n ? v1n->lIf(v1v) : nullptr;
     CPPUNIT_ASSERT_MESSAGE("Fail to get v1v", v1v);
     MNode* v2n = root->getNode("S1.Vert_211");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get v2n", v2n);
     MVert* v2v = v2n ? v2n->lIf(v2v) : nullptr;
     CPPUNIT_ASSERT_MESSAGE("Fail to get v2v", v2v);
     CPPUNIT_ASSERT_MESSAGE("v1v isn't connected to v2v", v2v->isPair(v1v));

@@ -47,9 +47,8 @@ class IfrNode : public NTnnp<MIfProv, MIfReq>, public MIfProv, protected MIfReq
 	virtual TSelf* firstLeafB() override;
 	virtual TPair* nextLeaf(TPair* aLeaf) override;
 	virtual bool detach(TPair* aPair) override;
+	virtual LeafsIterator leafsBegin() override;
     public:
-	MIfProv* findOwner(const MIfProvOwner* aOwner);
-	void eraseInvalid();
 	void erase();
     protected:
 	bool mValid;
