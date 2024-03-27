@@ -41,7 +41,8 @@ void DesSpe::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
     } else {
 	// Get the initial requestor
 	//auto* reqRoot = aReq->provided()->tail();
-	auto* req = aReq->binded()->firstPair();
+	//auto* req = aReq->binded()->firstPair();
+	auto* req = *aReq->binded()->pairsBegin();
 	const MIfProvOwner* reqo  = req ? req->provided()->rqOwner() : nullptr;
 	if (reqo) {
 	    // Separate request from Int atm
@@ -51,7 +52,8 @@ void DesSpe::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	    if (reqo == exto) {
 		// Request from Int
 		// Obtain MDesSpc from next requestor to get the client identification
-		auto* req2 = req->binded()->firstPair();
+		//auto* req2 = req->binded()->firstPair();
+		auto* req2 = *req->binded()->pairsBegin();
 		const MIfProvOwner* req2o  = req2 ? req2->provided()->rqOwner() : nullptr;
 		const MUnit* req2uc = req2o->lIf(req2uc); 
 		MUnit* req2u = const_cast<MUnit*>(req2uc);
@@ -108,7 +110,8 @@ void DesSp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	addIfpLeaf(ifc, aReq);
     } else {
 	// Get the direct requestor
-	auto* req = aReq->binded()->firstPair();
+	//auto* req = aReq->binded()->firstPair();
+	auto* req = *aReq->binded()->pairsBegin();
 	const MIfProvOwner* reqo  = req ? req->provided()->rqOwner() : nullptr;
 	if (reqo) {
 	    const MUnit* requc = reqo->lIf(requc); 
@@ -116,7 +119,8 @@ void DesSp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	    if (requc == ownu) {
 		// Direct requestor is the owner
 		// Obtain MDesSpc from next requestor to get the client identification
-		auto* req2 = req->binded()->firstPair();
+		//auto* req2 = req->binded()->firstPair();
+		auto* req2 = *req->binded()->pairsBegin();
 		const MIfProvOwner* req2o  = req2 ? req2->provided()->rqOwner() : nullptr;
 		const MUnit* req2uc = req2o->lIf(req2uc); 
 		MUnit* req2u = const_cast<MUnit*>(req2uc);
@@ -195,7 +199,8 @@ void ADesSpc::onOwnerAttached()
 
 string ADesSpc::getId() const
 {
-    auto pair = const_cast<ADesSpc*>(this)->mAgtCp.firstPair();
+    //auto pair = const_cast<ADesSpc*>(this)->mAgtCp.firstPair();
+    auto* pair = *const_cast<ADesSpc*>(this)->mAgtCp.pairsBegin();
     MAhost* ahost = pair ? pair->provided() : nullptr;
     MNode* hostn = ahost ? ahost->lIf(hostn) : nullptr;
     return hostn ? hostn->name() : string();

@@ -31,11 +31,20 @@ class MNcpp
 		virtual ~MIter() {}
 		virtual MIter* clone() { return nullptr;}
 		virtual MIter& operator++() { return *this;}
-		//virtual MIter operator++(int) { return MIter();}
 		virtual bool operator==(const MIter& aIt) const { return false;}
 		virtual bool operator!=(const MIter& aIt) const { return false;}
 		virtual TPair* operator*() { return nullptr;}
 	};
+	class MCIter : std::iterator<input_iterator_tag, const TPair*> {
+	    public:
+		virtual ~MCIter() {}
+		virtual MCIter* clone() { return nullptr;}
+		virtual MCIter& operator++() { return *this;}
+		virtual bool operator==(const MCIter& aIt) const { return false;}
+		virtual bool operator!=(const MCIter& aIt) const { return false;}
+		virtual const TPair* operator*() { return nullptr;}
+	};
+
 	/** @brief Pairs Iterator, ref ds_nn_tp_uit for design
 	 * */
 	class PairsIter :  std::iterator<input_iterator_tag, TPair*> {
@@ -70,7 +79,7 @@ class MNcpp
 		PairsConstIter(const PairsConstIter& aItr) {
 		    mItr = aItr.mItr->clone();
 		}
-		PairsConstIter(MIter* aItr): mItr(aItr) {}
+		PairsConstIter(MCIter* aItr): mItr(aItr) {}
 		virtual ~PairsConstIter() {
 		    delete mItr;
 		    mItr = nullptr;
@@ -90,16 +99,17 @@ class MNcpp
 		}
 		const TPair* operator*() { return const_cast<const TPair*>(*(*mItr));}
 	    protected:
-		MIter* mItr = nullptr;
+		MCIter* mItr = nullptr;
 	};
 	/** @brief Leafs Iterator
 	 * This variant considers any nodes w/o binded or zero pairs binded as the leaf
 	 * It seems less effective that "true" leafs (w/o binded) 
 	 * */
 	struct LeafsIterator {
-	    LeafsIterator(const PairsIter& aRootEnd): mRootEnd(aRootEnd) {}
-	    LeafsIterator(const PairsIter& aPi, const PairsIter &aRootEnd): LeafsIterator(aRootEnd) { mPi.push_front(aPi); }
-	    TPair* operator*() {
+	    LeafsIterator(): mRootEnd(nullptr) {}
+	    LeafsIterator(const typename TPair::PairsIter& aRootEnd): mRootEnd(aRootEnd) {}
+	    LeafsIterator(const typename TPair::PairsIter& aPi, const typename TPair::PairsIter &aRootEnd): LeafsIterator(aRootEnd) { mPi.push_front(aPi); }
+	    TSelf* operator*() {
 		return *(mPi.front());
 	    }
 	    LeafsIterator operator++(int) {
@@ -112,8 +122,8 @@ class MNcpp
 		    auto plit = mPi.begin();
 		    plit++;
 		    if (plit != mPi.end()) {
-			PairsIter plpit = *plit;
-			TSelf* pl = (*plpit)->binded();
+			typename TPair::PairsIter plpit = *plit;
+			auto* pl = (*plpit)->binded();
 			front++;
 			if (front == pl->pairsEnd()) {
 			    // Current node is over, go to next one, and set to it's leaf begin
@@ -134,25 +144,14 @@ class MNcpp
 
 		if (!end) {
 		    auto& front = mPi.front();
-		    TSelf* pbnd = (*front)->binded();
-		    if (pbnd) {
-			auto pli = pbnd->leafsBegin();
-			if (pli != pbnd->leafsEnd()) {
+		    auto* node = *front;
+		    if (node) {
+			auto pli = node->leafsBegin();
+			if (pli != node->leafsEnd()) {
 			    mPi.splice_after(mPi.before_begin(), pli.mPi);
 			}
 		    }
 		}
-		/*
-		if (!end) {
-		    auto& front = mPi.front();
-		    auto* cnode = *front;
-		    assert(cnode);
-			auto pli = cnode->leafsBegin();
-			if (pli != cnode->leafsEnd()) {
-			    mPi.splice_after(mPi.before_begin(), pli.mPi);
-			}
-		}
-		*/
 		return res;
 	    }
 	    bool operator==(const LeafsIterator& aB) {
@@ -167,78 +166,9 @@ class MNcpp
 		    std::cout << std::hex << ptr << std::endl;
 		}
 	    }
-	    std::forward_list<PairsIter> mPi;
-	    PairsIter mRootEnd;
+	    std::forward_list<typename TPair::PairsIter> mPi;
+	    typename TPair::PairsIter mRootEnd;
 	};
-#if 0
-	/** @brief Leafs Iterator
-	 * This variant considers only nodes w/o binded as leafs
-	 * */
-	struct LeafsIterator {
-	    LeafsIterator(const PairsIter& aRootEnd): mRootEnd(aRootEnd) {}
-	    LeafsIterator(const PairsIter& aPi, const PairsIter &aRootEnd): LeafsIterator(aRootEnd) { mPi.push_front(aPi); }
-	    TPair* operator*() {
-		return *(mPi.front());
-	    }
-	    LeafsIterator operator++(int) {
-		auto res = *this;
-		bool stop = false;
-		bool end = false;
-		do {
-		    // Find nearest uncompleted node
-		    auto& front = mPi.front();
-		    auto plit = mPi.begin();
-		    plit++;
-		    if (plit != mPi.end()) {
-			PairsIter plpit = *plit;
-			TSelf* pl = (*plpit)->binded();
-			front++;
-			if (front == pl->pairsEnd()) {
-			    // Current node is over, go to next one, and set to it's leaf begin
-			    mPi.pop_front();
-			} else {
-			    // Uncompleted node found
-			    stop = true;
-			}
-		    } else {
-			// Root node reached
-			front++;
-			stop = true;
-			if (front == mRootEnd) {
-			    end = true;
-			}
-		    }
-		} while (!stop);
-
-		if (!end) {
-		    auto& front = mPi.front();
-		    TSelf* pbnd = (*front)->binded();
-		    if (pbnd) {
-			auto pli = pbnd->leafsBegin();
-			if (pli != pbnd->leafsEnd()) {
-			    mPi.splice_after(mPi.before_begin(), pli.mPi);
-			}
-		    }
-		}
-
-		return res;
-	    }
-	    bool operator==(const LeafsIterator& aB) {
-		return  (mPi == aB.mPi);
-	    }
-	    bool operator!=(const LeafsIterator& aB) {
-		return  (mPi != aB.mPi);
-	    }
-	    void __attribute__ ((noinline)) dump() {
-		for (auto it = mPi.begin(); it != mPi.end(); it++) {
-		    TPair* ptr = **it;
-		    std::cout << std::hex << ptr << std::endl;
-		}
-	    }
-	    std::forward_list<PairsIter> mPi;
-	    PairsIter mRootEnd;
-	};
-#endif
 
     public:
 	virtual ~MNcpp() {}
@@ -255,47 +185,44 @@ class MNcpp
 	/** @brief Gets binded connpoint, in tree node for instance, ref ds_nn_tree_bc */
 	virtual TPair* binded() = 0;
 	const TPair* binded() const { const_cast<const TPair*>(const_cast<TSelf*>(this)->binded());}
-	virtual TPair* firstPair() = 0;
-	virtual TPair* nextPair(TPair* aPair) = 0;
 	/** @brief Gets pairs count */
 	virtual int pcount(bool aRcr = false) const = 0;
+	/** @brief Pair by index, for debugging purpore mostly */
 	virtual TPair* pairAt(int aInd) = 0;
 	virtual const TPair* pairAt(int aInd) const = 0;
+	/** @brief Pair by ID */
 	virtual TPair* pairAt(const string aId) = 0;
 	virtual const TPair* pairAt(const string aId) const = 0;
-	/** @brief gets first leaf */
-	virtual TPair* firstLeaf() = 0;
-	/** @brief gets first leaf of binded
-	 * Allows to override leafs tree-travarsal behavour in treish topology
-	 * Is required for IRM invalidation solution#3, ref ds_irm_ut_inv_cno
-	 * */
-	virtual TSelf* firstLeafB() = 0;
-	virtual TPair* nextLeaf(TPair* aLeaf) = 0;
-	/** @brief Gets next leaf from the leaf */
-	virtual TSelf* nextLeaf() = 0;
 	// Traversal
 	virtual PairsIter pairsBegin() = 0;
 	virtual PairsIter pairsEnd() = 0;
-	//virtual LeafsIterator leafsBegin() { return LeafsIterator(pairsBegin(), pairsEnd());}
+	virtual PairsConstIter pairsCBegin() const = 0;
+	virtual PairsConstIter pairsCEnd() const = 0;
 	virtual LeafsIterator leafsBegin() {
-	    std::cout << "leafsBegin" << std::endl;
-	    auto pit = pairsBegin();
-	    LeafsIterator it(pit, pairsEnd());
-	    if (pit != pairsEnd()) {
-		TSelf* pbnd = (*pit)->binded();
-		if (pbnd) {
+	    if (!binded()) {
+		return LeafsIterator();
+	    }
+	    auto pit = binded()->pairsBegin();
+	    LeafsIterator it(pit, binded()->pairsEnd());
+	    if (pit != binded()->pairsEnd()) {
+		auto* bpair = *pit; // Binded pair
+		if (bpair) {
 		    // Node, proceed to leafs
-		    auto pli = pbnd->leafsBegin();
-		    if (pli != pbnd->leafsEnd()) {
+		    auto pli = bpair->leafsBegin();
+		    if (pli != bpair->leafsEnd()) {
 			it.mPi.splice_after(it.mPi.before_begin(), pli.mPi);
 		    }
 		}
 	    }
 	    return it;
 	}
-	virtual LeafsIterator leafsEnd() { return LeafsIterator(pairsEnd(), pairsEnd());}
-	//PairsConstIterator pairsCbegin() const { return mPairs.cbegin(); }
-	//PairsConstIterator pairsCend() const { return mPairs.cend(); }
+	virtual LeafsIterator leafsEnd() {
+	    if (binded()) {
+		return LeafsIterator(binded()->pairsEnd(), binded()->pairsEnd());
+	    } else {
+		return LeafsIterator();
+	    }
+	}
 };
 
 
@@ -333,7 +260,25 @@ class NCpOmip : public MNcpp<TPif, TRif>
 		TPair* operator*() override { return mItr->second;}
 	    protected:
 		TPairsIterator mItr;
-
+	};
+	class PCIter : public TSelf::MCIter {
+	    public:
+		PCIter(const TPairsConstIterator& aItr): mItr(aItr) {}
+		PCIter(const PCIter& aItr): mItr(aItr.mItr) {}
+		typename TSelf::MCIter* clone() override { return new PCIter(*this);}
+		PCIter& operator=(const PCIter& aIt) { this->mItr = aIt.mItr; return *this; }
+		PCIter& operator++() override { mItr++; return *this; }
+		bool operator==(const typename TSelf::MCIter& aIt) const override {
+		    auto ait = reinterpret_cast<const TThis::PCIter&>(aIt);
+		    return (mItr == ait.mItr);
+		}
+		bool operator!=(const typename TSelf::MCIter& aIt) const override {
+		    auto ait = reinterpret_cast<const TThis::PCIter&>(aIt);
+		    return !(mItr == ait.mItr);
+		}
+		const TPair* operator*() override { return mItr->second;}
+	    protected:
+		TPairsConstIterator mItr;
 	};
     public:
 	NCpOmip(TPif* aPx): mPx(aPx) {}
@@ -345,25 +290,13 @@ class NCpOmip : public MNcpp<TPif, TRif>
 	virtual bool detach(TPair* aPair) override;
 	virtual bool connect(TPair* aPair) override;
 	virtual bool disconnect(TPair* aPair) override;
-	/*
-	virtual bool disconnectAll() override {
-	    bool res = true;
-	    TPair* pair = firstPair();
-	    while (pair) {
-		res = disconnect(pair);
-		assert(res);
-		pair = firstPair();
-	    }
-	    return res;
-	}
-	*/
 	virtual bool disconnectAll() override {
 	    bool res = true;
 	    auto pi = mPairs.begin();
 	    while (pi != mPairs.end()) {
 		res = disconnect(pi->second);
 		assert(res);
-		pi++;
+		auto pi = mPairs.begin();
 	    }
 	    return res;
 	}
@@ -375,41 +308,38 @@ class NCpOmip : public MNcpp<TPif, TRif>
 	    }
 	}
 	virtual TPair* binded() override { return nullptr;}
-	virtual TPair* firstPair() { return mPairs.size() > 0 ? mPairs.begin()->second : nullptr;}
-	virtual TPair* nextPair(TPair* aPair) {
-	    TPair* res = nullptr;
-	    string pid;
-	    bool ires = aPair->getId(pid);
-	    if (ires) {
-		auto it = mPairs.find(pid); it++;
-		res = (it != mPairs.end()) ? it->second : nullptr; 
-	    }
-	    return res;
-	}
-	virtual TPair* firstLeaf() override { return nullptr;}
-	virtual TSelf* firstLeafB() override { return nullptr;}
-	virtual TPair* nextLeaf(TPair* aLeaf) override { return nullptr;}
-	virtual TSelf* nextLeaf() override { return nullptr;}
 	virtual int pcount(bool aRcr = false) const override { return mPairs.size(); }
-	virtual const TPair* pairAt(int aInd) const override { for (auto it = mPairs.begin(); it != mPairs.end(); it++) if (aInd-- == 0) return it->second; return nullptr; }
-	virtual TPair* pairAt(int aInd) override { for (auto it = mPairs.begin(); it != mPairs.end(); it++) if (aInd-- == 0) return it->second; return nullptr; }
-	virtual TPair* pairAt(const string aId) { return mPairs.count(aId) > 0 ? mPairs.at(aId) : nullptr;}
-	virtual const TPair* pairAt(const string aId) const { return const_cast<const TPair*>(const_cast<TThis*>(this)->pairAt(aId));}
+	virtual const TPair* pairAt(int aInd) const override {
+	    for (auto it = mPairs.begin(); it != mPairs.end(); it++) {
+		if (aInd-- == 0) return it->second;
+	    }
+	    return nullptr;
+	}
+	virtual TPair* pairAt(int aInd) override {
+	    for (auto it = mPairs.begin(); it != mPairs.end(); it++) {
+		if (aInd-- == 0) return it->second;
+	    }
+    	    return nullptr;
+	}
+	virtual TPair* pairAt(const string aId) {
+	    return mPairs.count(aId) > 0 ? mPairs.at(aId) : nullptr;
+	}
+	virtual const TPair* pairAt(const string aId) const {
+	    return const_cast<const TPair*>(const_cast<TThis*>(this)->pairAt(aId));
+	}
 	// Traversal
-	virtual typename TSelf::PairsIter pairsBegin() {
+	virtual typename TSelf::PairsIter pairsBegin() override {
 	    return typename TSelf::PairsIter(new PIter(mPairs.begin()));
 	}
-	virtual typename TSelf::PairsIter pairsEnd()  {
+	virtual typename TSelf::PairsIter pairsEnd() override {
 	    return typename TSelf::PairsIter(new PIter(mPairs.end()));
 	}
-    protected:
-	// Local. Traversal.
-	/*
-	TPairsIterator pairsBegin() { return mPairs.begin(); }
-	TPairsIterator pairsEnd() { return mPairs.end(); }
-	TPairsConstIterator pairsCbegin() const { return mPairs.cbegin(); }
-	TPairsConstIterator pairsCend() const { return mPairs.cend(); }
-	*/
+	virtual typename TSelf::PairsConstIter pairsCBegin() const  override {
+	    return typename TSelf::PairsConstIter(new PCIter(mPairs.cbegin()));
+	}
+	virtual typename TSelf::PairsConstIter pairsCEnd() const override {
+	    return typename TSelf::PairsConstIter(new PCIter(mPairs.cend()));
+	}
     protected:
 	TPairs mPairs;
 	TPif* mPx;
@@ -501,6 +431,26 @@ class NCpOmnp : public MNcpp<TPif, TRif>
 	    protected:
 		TPairsIterator mItr;
 	};
+	class PCIter : public TSelf::MCIter {
+	    public:
+		PCIter(const TPairsConstIterator& aItr): mItr(aItr) {}
+		PCIter(const PCIter& aItr): mItr(aItr.mItr) {}
+		typename TSelf::MCIter* clone() override { return new PCIter(*this);}
+		PCIter& operator=(const PCIter& aIt) { this->mItr = aIt.mItr; return *this; }
+		PCIter& operator++() override { mItr++; return *this; }
+		bool operator==(const typename TSelf::MCIter& aIt) const override {
+		    auto ait = reinterpret_cast<const TThis::PCIter&>(aIt);
+		    return (mItr == ait.mItr);
+		}
+		bool operator!=(const typename TSelf::MCIter& aIt) const override {
+		    auto ait = reinterpret_cast<const TThis::PCIter&>(aIt);
+		    return (mItr != ait.mItr);
+		}
+		const TPair* operator*() override { return *mItr;}
+	    protected:
+		TPairsConstIterator mItr;
+	};
+
     public:
 	NCpOmnp(TPif* aPx): mPx(aPx) {}
 	virtual ~NCpOmnp() { disconnectAll(); }
@@ -510,11 +460,11 @@ class NCpOmnp : public MNcpp<TPif, TRif>
 	virtual bool disconnect(TPair* aPair) override;
 	virtual bool disconnectAll() override {
 	    bool res = true;
-	    TPair* pair = firstPair();
-	    while (pair) {
-		res = res && disconnect(pair);
+	    auto pi = mPairs.begin();
+	    while (pi != mPairs.end()) {
+		res = disconnect(*pi);
 		assert(res);
-		pair = firstPair();
+		pi = mPairs.begin();
 	    }
 	    return res;
 	}
@@ -523,36 +473,6 @@ class NCpOmnp : public MNcpp<TPif, TRif>
 	virtual bool isConnected(TPair* aPair) const override;
 	virtual bool getId(string& aId) const override { return false;}
 	virtual TPair* binded() override { return nullptr;}
-	virtual TPair* firstPair() { return mPairs.size() > 0 ? *mPairs.begin() : nullptr;}
-	virtual TPair* nextPair(TPair* aPair) {
-	    auto it = mPairs.find(aPair); it++;
-	    auto res = (it != mPairs.end()) ? *it : nullptr; 
-	    return res;
-	}
-	virtual TPair* firstLeaf() override {
-	    TPair* res = nullptr;
-	    auto pair = firstPair();
-	    while (pair) {
-		if (res = pair->binded() ? pair->firstLeafB() : pair) break;
-		pair = nextPair(pair);
-	    }
-	    return res;
-	}
-	virtual TSelf* firstLeafB() override { return nullptr;}
-	virtual TPair* nextLeaf(TPair* aLeaf) override {
-	    TPair* res = nullptr;
-	    auto np = nextPair(aLeaf);
-	    while (np) {
-		res = np->binded() ? np->firstLeafB() : np;
-		if (res) break;
-		np = nextPair(np);
-	    }
-	    if (!res && binded()) {
-		res = binded()->nextLeaf();
-	    }
-	    return res;
-	}
-	virtual TSelf* nextLeaf() override { return nullptr;}
 	virtual int pcount(bool aRcr = false) const override {
 	    int res = mPairs.size();
 	    if (aRcr) {
@@ -569,12 +489,19 @@ class NCpOmnp : public MNcpp<TPif, TRif>
 	virtual const TPair* pairAt(const string aId) const { return nullptr;}
 	// Traversal
 	virtual typename TSelf::PairsIter pairsBegin() {
-	    //return typename TSelf::PairsIter(new PIter(mPairs.begin()));
 	    auto pb = mPairs.begin();
 	    auto* pi = new PIter(pb);
 	    return typename TSelf::PairsIter(pi);
 	}
-	virtual typename TSelf::PairsIter pairsEnd()  { return typename TSelf::PairsIter(new PIter(mPairs.end()));}
+	virtual typename TSelf::PairsIter pairsEnd() {
+	    return typename TSelf::PairsIter(new PIter(mPairs.end()));
+	}
+	virtual typename TSelf::PairsConstIter pairsCBegin() const override {
+	    return typename TSelf::PairsConstIter(new PCIter(mPairs.cbegin()));
+	}
+	virtual typename TSelf::PairsConstIter pairsCEnd() const override {
+	    return typename TSelf::PairsConstIter(new PCIter(mPairs.cend()));
+	}
     protected:
 	TPairs mPairs;
 	TPif* mPx;
@@ -640,6 +567,7 @@ class NCpOnp : public MNcpp<TPif, TRif>
 	using TThis= NCpOnp<TPif, TRif>;
 	using TPair= typename MNcpp<TPif, TRif>::TPair;
 	using TPairsIterator = TPair*;
+	using TPairsConstIterator = const TPair*;
     public:
 	class PIter : public TSelf::MIter {
 	    public:
@@ -652,6 +580,24 @@ class NCpOnp : public MNcpp<TPif, TRif>
 		TPair* operator*() override { return mItr;}
 	    protected:
 		TPair* mItr;
+	};
+	class PCIter : public TSelf::MCIter {
+	    public:
+		PCIter(const TPairsConstIterator& aItr): mItr(aItr) {}
+		PCIter& operator=(const PCIter& aIt) { this->mItr = aIt.mItr; return *this; }
+		PCIter& operator++() override { mItr++; return *this; }
+		//PIter operator++(int) override { PIter tmp(*this); operator++(); return tmp; }
+		bool operator==(const typename TSelf::MCIter& aIt) const override {
+		    auto ait = reinterpret_cast<const TThis::PCIter&>(aIt);
+		    return (mItr == ait.mItr);
+		}
+		bool operator!=(const typename TSelf::MCIter& aIt) const override {
+		    auto ait = reinterpret_cast<const TThis::PCIter&>(aIt);
+		    return !(mItr == ait.mItr);
+		}
+		const TPair* operator*() override { return mItr;}
+	    protected:
+		const TPair* mItr;
 	};
     public:
 	NCpOnp(TPif* aPx): mPair(nullptr), mPx(aPx) {}
@@ -670,14 +616,6 @@ class NCpOnp : public MNcpp<TPif, TRif>
 	virtual bool isConnected(TPair* aPair) const override;
 	virtual bool getId(string& aId) const override { return false;}
 	virtual TPair* binded() override { return nullptr;}
-	virtual TPair* firstPair() { return  mPair;}
-	virtual TPair* nextPair(TPair* aPair) { return nullptr;}
-	virtual TPair* firstLeaf() override { return nullptr;}
-	virtual TSelf* firstLeafB() override { return binded() ? binded()->firstLeaf() : nullptr;}
-	virtual TPair* nextLeaf(TPair* aLeaf) override { return nullptr;}
-	virtual TSelf* nextLeaf() override {
-	    return mPair ? mPair->nextLeaf(this) : nullptr;
-	}
 	virtual int pcount(bool aRcr = false) const override {return mPair ? 1 : 0;}
 	virtual const TPair* pairAt(int aInd) const override { return (aInd < pcount()) ? mPair : nullptr; }
 	virtual TPair* pairAt(int aInd) override { return (aInd < pcount()) ? mPair : nullptr; }
@@ -688,7 +626,16 @@ class NCpOnp : public MNcpp<TPif, TRif>
 	    auto it = typename TSelf::PairsIter(new PIter(mPair));
 	    return it;
 	}
-	virtual typename TSelf::PairsIter pairsEnd()  { return typename TSelf::PairsIter(new PIter(nullptr));}
+	virtual typename TSelf::PairsIter pairsEnd() override {
+	    return typename TSelf::PairsIter(new PIter(nullptr));
+	}
+	virtual typename TSelf::PairsConstIter pairsCBegin() const override {
+	    return typename TSelf::PairsConstIter(new PCIter(mPair));
+	}
+	virtual typename TSelf::PairsConstIter pairsCEnd() const override {
+	    return typename TSelf::PairsConstIter(new PCIter(nullptr));
+	}
+
 	// Local
 	void resetPx() {mPx = nullptr;}
 	bool disconnect() { return  mPair ? disconnect(mPair) : false; }
@@ -811,139 +758,5 @@ class NTnnp : public NCpOnp<TProv, TReq>
     protected:
 	Cnode mCnode;
 };
-
-#if 0
-
-/** @brief Native connection point, one-to-many, no Id, proxy
- * ver 2 - parametrized pair
- * @tparam TPif  type of provided interface
- * @tparam TPair type of pair
- * @tparam THost type of host
- * @tparam TPx type of provided iface proxy
- * */
-template <class TPif, class TRif, template <class Pa, class Pb> class PPair>
-class NCpOmnp2 : public MNcpp<TPif, TRif>
-{
-    public:
-	using TThis = typename NCpOmnp2<TPif, TRif, PPair>::TSelf;
-	using TSelf = typename MNcpp<TPif, TRif>::TSelf;
-	using TPair = PPair<TRif, TPif>;
-	using TPairs = set<TPair*>;
-    public:
-	NCpOmnp2(TPif* aPx): mPx(aPx) {}
-	virtual ~NCpOmnp2() { disconnectAll(); }
-	virtual TPif* provided() override { return mPx;}
-	virtual const TPif* provided() const override { return mPx;}
-	virtual bool connect(TPair* aPair) override ;
-	virtual bool disconnect(TPair* aPair) override;
-	virtual bool disconnectAll() override {
-	    bool res = true;
-	    TPair* pair = firstPair();
-	    while (pair) {
-		res = res && disconnect(pair);
-		assert(res);
-		pair = firstPair();
-	    }
-	    return res;
-	}
-	virtual bool attach(TPair* aPair) override;
-	virtual bool detach(TPair* aPair) override;
-	virtual bool isConnected(TPair* aPair) const override;
-	virtual bool getId(string& aId) const override { return false;}
-	virtual TPair* binded() override { return nullptr;}
-	virtual TPair* firstPair() { return mPairs.size() > 0 ? *mPairs.begin() : nullptr;}
-	virtual TPair* nextPair(TPair* aPair) {
-	    auto it = mPairs.find(aPair); it++;
-	    auto res = (it != mPairs.end()) ? *it : nullptr; 
-	    return res;
-	}
-	virtual TPair* firstLeaf() override {
-	    TPair* res = nullptr;
-	    auto pair = firstPair();
-	    while (pair) {
-		if (res = pair->binded() ? pair->firstLeafB() : pair) break;
-		pair = nextPair(pair);
-	    }
-	    return res;
-	}
-	virtual TSelf* firstLeafB() override { return nullptr;}
-	virtual TPair* nextLeaf(TPair* aLeaf) override {
-	    TPair* res = nullptr;
-	    auto np = nextPair(aLeaf);
-	    while (np) {
-		res = np->binded() ? np->firstLeafB() : np;
-		if (res) break;
-		np = nextPair(np);
-	    }
-	    if (!res && binded()) {
-		res = binded()->nextLeaf();
-	    }
-	    return res;
-	}
-	virtual TSelf* nextLeaf() override { return nullptr;}
-	virtual int pcount(bool aRcr = false) const override {
-	    int res = mPairs.size();
-	    if (aRcr) {
-		for (auto it = mPairs.begin(); it != mPairs.end(); it++) {
-		    auto pair = *it;
-		    res += pair->pcount(aRcr);
-		}
-	    }
-	    return res;
-	}
-	virtual const TPair* pairAt(int aInd) const override { for (auto it = mPairs.begin(); it != mPairs.end(); it++) if (aInd-- == 0) return *it; return nullptr; }
-	virtual TPair* pairAt(int aInd) override { for (auto it = mPairs.begin(); it != mPairs.end(); it++) if (aInd-- == 0) return *it; return nullptr; }
-	virtual TPair* pairAt(const string aId) { return nullptr;}
-	virtual const TPair* pairAt(const string aId) const { return nullptr;}
-    protected:
-	TPairs mPairs;
-	TPif* mPx;
-};
-
-template <class TPif, class TRif, template <class Pa, class Pb> class PPair>
-bool NCpOmnp2<TPif, TRif, PPair>::attach(TPair* aPair)
-{
-    assert(aPair && !isConnected(aPair));
-    mPairs.insert(aPair);
-    return true;
-}
-
-template <class TPif, class TRif, template <class Pa, class Pb> class PPair>
-bool NCpOmnp2<TPif, TRif, PPair>::detach(TPair* aPair)
-{
-    assert(aPair && isConnected(aPair));
-    mPairs.erase(aPair);
-    return true;
-}
-
-template <class TPif, class TRif, template <class Pa, class Pb> class PPair>
-bool NCpOmnp2<TPif, TRif, PPair>::connect(TPair* aPair)
-{
-    assert(aPair && !aPair->isConnected(this) && !isConnected(aPair));
-    bool res = aPair->attach(this);
-    if (res) {
-	res = attach(aPair);
-    }
-    return res;
-}
-
-template <class TPif, class TRif, template <class Pa, class Pb> class PPair>
-bool NCpOmnp2<TPif, TRif, PPair>::disconnect(TPair* aPair)
-{
-    assert(aPair && aPair->isConnected(this) && isConnected(aPair));
-    bool res = aPair->detach(this);
-    if (res) {
-	res = detach(aPair);
-    }
-    assert(res);
-    return res;
-}
-
-template <class TPif, class TRif, template <class Pa, class Pb> class PPair>
-bool NCpOmnp2<TPif, TRif, PPair>::isConnected(TPair* aPair) const
-{
-    return mPairs.count(aPair) == 1;
-}
-#endif
 
 #endif //  __FAP3_NCONN_H

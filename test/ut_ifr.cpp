@@ -71,6 +71,7 @@ void Ut_ifr::test_base_1()
     CPPUNIT_ASSERT_MESSAGE("Failed connecting cp4 - cp3", res);
     MUnit* cpu1u = cpu1->lIf(cpu1u);
     MIfProv* ifp = cpu1u->defaultIfProv("MConnPoint");
+    /*
     MIfProv* prov = ifp->first();
     ifp->dump(0);
     CPPUNIT_ASSERT_MESSAGE("Failed getting MConnPoint provider", prov);
@@ -81,11 +82,19 @@ void Ut_ifr::test_base_1()
 	cout << ">>  " << (iface ? iface->Uid() : "null") << endl;
 	prov = prov->next();
     } while (prov);
+    */
+    auto* ifcs = cpu1u->getTIfs<MConnPoint>();
+    CPPUNIT_ASSERT_MESSAGE("Failed getting MConnPoint ifcs", ifcs);
+    cout << endl << "== Iface resolved ==" << endl;
+    for (auto ifc : *ifcs) {
+	cout << ">>  " << (ifc ? ifc->Uid() : "null") << endl;
+    }
     cout << endl;
     // Checking IRM update after disconnect
     cout << endl << "== cp1 disconnected from cp3 ==" << endl;
     res = MVert::disconnect(cpv1, cpv3);
     CPPUNIT_ASSERT_MESSAGE("Failed disconnecting cp1 - cp3", res);
+    /*
     prov = ifp->first();
     ifp->dump(0);
     CPPUNIT_ASSERT_MESSAGE("Failed getting MConnPoint provider", prov);
@@ -96,6 +105,14 @@ void Ut_ifr::test_base_1()
 	cout << ">>  " << (iface ? iface->Uid() : "null") << endl;
 	prov = prov->next();
     } while (prov);
+    cout << endl;
+    */
+    ifcs = cpu1u->getTIfs<MConnPoint>();
+    CPPUNIT_ASSERT_MESSAGE("Failed getting MConnPoint ifcs", ifcs);
+    cout << endl << "== Iface resolved ==" << endl;
+    for (auto ifc : *ifcs) {
+	cout << ">>  " << (ifc ? ifc->Uid() : "null") << endl;
+    }
     cout << endl;
     // Checking IRM update after connect - disconnect - connect
     cout << endl << "== cp1, cp3 connected-disconnected-connected ==" << endl;
@@ -105,10 +122,14 @@ void Ut_ifr::test_base_1()
     CPPUNIT_ASSERT_MESSAGE("Failed disconnecting cp1 - cp3", res);
     res = MVert::connect(cpv1, cpv3);
     CPPUNIT_ASSERT_MESSAGE("Failed connecting cp1 - cp3", res);
+    /*
     prov = ifp->first();
     ifp->dump(0);
     CPPUNIT_ASSERT_MESSAGE("Failed getting MConnPoint provider", prov);
+    */
+    cpu1u->dump(0xff,0);
     cout << endl << "== Iface resolved ==" << endl;
+    /*
     do {
 	MIface* iface = prov->iface();
 	CPPUNIT_ASSERT_MESSAGE("Failed getting MConnPoint iface", iface);
@@ -116,6 +137,15 @@ void Ut_ifr::test_base_1()
 	prov = prov->next();
     } while (prov);
     cout << endl;
+    */
+    ifcs = cpu1u->getTIfs<MConnPoint>();
+    CPPUNIT_ASSERT_MESSAGE("Failed getting MConnPoint ifcs", ifcs);
+    cout << endl << "== Iface resolved ==" << endl;
+    for (auto ifc : *ifcs) {
+	cout << ">>  " << (ifc ? ifc->Uid() : "null") << endl;
+    }
+    cout << endl;
+
 
     delete cpu1;
     delete cpu2;

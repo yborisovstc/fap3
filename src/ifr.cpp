@@ -21,32 +21,6 @@ string IfrNode::name() const
     }
 }
 
-MIfProv* IfrNode::first() const
-{
-    MIfProv* res = nullptr;
-    string nm = name();
-    IfrNode* self = const_cast<IfrNode*>(this);
-    if (!mValid) {
-	self->resolve(nm);
-    }
-    if (mValid) {
-	auto fl = self->firstLeafB();
-	res =  fl ? fl->provided() : nullptr;
-    }
-    return res;
-}
-
-MIfProv* IfrNode::next() const
-{
-    MIfProv* res = nullptr;
-    auto self = const_cast<IfrNode*>(this);
-    res = mPair->provided()->next(self);
-    if (!res->iface()) {
-	res = res->next();
-    }
-    return res;
-}
-
 /* Default implementation just redirects the request to the owner
  * Another solutionis is to use specific node that does resolution in 
  * behalf of the owner.
@@ -57,15 +31,11 @@ void IfrNode::resolve(const string& aName)
     setValid(true);
 }
 
-MIfProv* IfrNode::next(MIfProv::TCp* aProvCp) const
-{
-    return nullptr;
-}
-
 MIfReq* IfrNode::prev()
 {
     MIfReq* res = nullptr;
-    auto prevCp = firstPair();
+    //auto prevCp = firstPair();
+    auto* prevCp = *pairsBegin();
     res = prevCp ? prevCp->provided() : nullptr;
     return res;
 }
@@ -86,11 +56,10 @@ void IfrNode::MIfProv_doDump(int aLevel, int aIdt, ostream& aOs) const
     Ifu::offset(aIdt, aOs);
     aOs  << "[" << name() << "], " << mOwner->Uid() << ", Valid: " << mValid << endl;
     auto self = const_cast<IfrNode*>(this);
-    auto pair = self->binded()->firstPair();
     aIdt += 2;
-    while (pair) {
+    for (auto it = self->binded()->pairsBegin(); it != self->binded()->pairsEnd(); it++) {
+	auto* pair = *it;
 	pair->provided()->doDump(aLevel, aIdt, aOs);
-	pair = self->binded()->nextPair(pair);
     }
 }
 
@@ -118,7 +87,8 @@ void IfrNode::setValid(bool aValid)
 	    mOwner->onIfpInvalidated(this);
 	}
 	// Propagate to requestors
-	auto owr = firstPair();
+	//auto owr = firstPair();
+	auto* owr = *pairsBegin();
 	MIfReq* owrr = owr ? owr->provided() : nullptr;
 	if (owrr) {
 	    owrr->onProvInvalidated();
@@ -136,13 +106,12 @@ bool IfrNode::detach(TPair* aPair)
 MIfProv* IfrNode::findIface(const MIface* aIface)
 {
     MIfProv* res = nullptr;
-    auto pair = binded()->firstPair();
-    while (pair) {
+    for (auto it = binded()->pairsBegin(); it != binded()->pairsEnd(); it++) {
+	auto* pair = *it;
 	auto prov = pair->provided();
 	if (prov->iface() == aIface) {
 	    res = prov; break;
 	}
-	pair = binded()->nextPair(pair);
     }
     return res;
 }
@@ -150,22 +119,6 @@ MIfProv* IfrNode::findIface(const MIface* aIface)
 void IfrNode::erase()
 {
     // IfrNode doesn't own sub-nodes, so no deletion here, just disconnect
-    /*
-    auto pair = binded()->firstPair();
-    while (pair) {
-	auto prov = pair->provided();
-	binded()->disconnect(pair);
-	pair = binded()->firstPair(); // pairs container in binded is updated, starts from the firs
-    }
-    */
-    /*
-    auto beg = binded()->pairsBegin();
-    while (beg != binded()->pairsEnd()) {
-	auto* pair = *beg;
-	binded()->disconnect(pair);
-	beg = binded()->pairsBegin();
-    }
-    */
     binded()->disconnectAll();
 }
 
@@ -174,34 +127,6 @@ bool IfrNode::isRequestor(MIfProvOwner* aOwner, int aPos) const
     bool res = aOwner == mOwner;
     if (aPos-- && !res && mPair) {
 	res = mPair->provided()->isRequestor(aOwner, aPos);
-    }
-    return res;
-}
-
-
-// Override firstLeaf, nextLeaf to resolve invalidated node
-IfrNode::TSelf* IfrNode::firstLeafB()
-{
-    TSelf* res = nullptr;
-    if (!mValid) {
-	string nm = name();
-	resolve(nm);
-    }
-    if (mValid) {
-	res = TBase::firstLeafB();
-    }
-    return res;
-}
-
-IfrNode::TPair* IfrNode::nextLeaf(TPair* aLeaf)
-{
-    TPair* res = nullptr;
-    if (!mValid) {
-	string nm = name();
-	resolve(nm);
-    }
-    if (mValid) {
-	TBase::nextLeaf(aLeaf);
     }
     return res;
 }
@@ -217,7 +142,17 @@ IfrNode::TBase::LeafsIterator IfrNode::leafsBegin()
 
 bool IfrNode::isResolved()
 {
-    return TBase::firstLeafB();
+    // TODO we consider node with binded() zero count or zero binded as leaf
+    // So we need to find here if there is "true" leaf (zero binded)
+    // Consider moving to zero binded leaf (can be done via customizing IfrNode::leafsBegin()?)
+    bool res = false;
+    if (mValid)
+	for (auto it = leafsBegin(); it != leafsEnd() && !res; it++) {
+	    auto* cp = *it;
+	    auto* prov = dynamic_cast<IfrLeaf*>(cp);
+	    res = prov && prov->iface();
+	}
+    return res;
 }
 
 void IfrNode::onProvInvalidated()
@@ -228,7 +163,8 @@ void IfrNode::onProvInvalidated()
 	mOwner->onIfpInvalidated(this);
     }
     // Propagate upward
-    auto owr = firstPair();
+    //auto owr = firstPair();
+    auto* owr = *pairsBegin();
     MIfReq* owrr = owr ? owr->provided() : nullptr;
     if (owrr) {
 	owrr->onProvInvalidated();
@@ -248,13 +184,6 @@ string IfrLeaf::name() const
     }
 }
 
-MIfProv* IfrLeaf::next() const
-{
-    IfrLeaf* self = const_cast<IfrLeaf*>(this);
-    auto next = self->nextLeaf();
-    return next ? next->provided() : nullptr;
-}
-
 void IfrLeaf::MIfProv_doDump(int aLevel, int aIdt, ostream& aOs) const
 {
     Ifu::offset(aIdt, aOs);
@@ -266,7 +195,8 @@ void IfrLeaf::setValid(bool aValid)
     mValid = aValid;
     if (!aValid) {
 	// Propagate upward
-	auto owr = firstPair();
+	//auto owr = firstPair();
+	auto* owr = *pairsBegin();
 	MIfReq* owrr = owr ? owr->provided() : nullptr;
 	if (owrr) {
 	    owrr->onProvInvalidated();
@@ -322,33 +252,18 @@ void IfrNodeRoot::cleanIcache()
     mIcacheValid = false;
 }
 
-/*
 void IfrNodeRoot::updateIcache()
 {
     mIcache.clear();
-    MIfProv* maprov = first();
-    while (maprov) {
-	auto res = maprov->iface();
-	mIcache.push_back(res);
-	maprov = maprov->next();
-    }
-    mIcacheValid = true;
-}
-*/
-
-void IfrNodeRoot::updateIcache()
-{
-    mIcache.clear();
-    for (auto it = binded()->leafsBegin(); it != binded()->leafsEnd(); it++) {
+    for (auto it = leafsBegin(); it != leafsEnd(); it++) {
 	auto* cp = *it;
-	auto* prov = cp->provided();
-	if (prov->iface()) {
+	auto* prov = dynamic_cast<IfrLeaf*>(cp);
+	if (prov && prov->iface()) {
 	    mIcache.push_back(prov->iface());
 	}
     }
     mIcacheValid = true;
 }
-
 
 void IfrNodeRoot::onProvInvalidated()
 {

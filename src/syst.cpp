@@ -333,7 +333,8 @@ void Socket::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
     if (ifc) { // Local iface
 	addIfpLeaf(ifc, aReq);
     } else {
-	MIfReq::TIfReqCp* req = aReq->binded()->firstPair();
+	//MIfReq::TIfReqCp* req = aReq->binded()->firstPair();
+	MIfReq::TIfReqCp* req = *(aReq->binded()->pairsBegin());
 	if (req) {
 	    // There is the context
 	    const MIfProvOwner* reqo = req ? req->provided()->rqOwner() : nullptr;
@@ -388,7 +389,8 @@ void Socket::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 				    apair = reqn;
 				    if (extdn) {
 					// DS_ISS_012 Set assosiatad pair to extender only in case if extender is next requestor
-					auto* req_tmp = req->binded()->firstPair();
+					//auto* req_tmp = req->binded()->firstPair();
+					auto* req_tmp = *(req->binded()->pairsBegin());
 					auto* req_tmpo = req_tmp ? req_tmp->provided()->rqOwner() : nullptr;
 					MNode* req_tmpn = const_cast<MNode*>(req_tmpo ? req_tmpo->lIf(req_tmpn) : nullptr);
 					if (extdn == req_tmpn) {
@@ -410,7 +412,8 @@ void Socket::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 				}
 			    }
 			}
-			req = req->binded()->firstPair();
+			//req = req->binded()->firstPair();
+			req = *(req->binded()->pairsBegin());
 			reqo = req ? req->provided()->rqOwner() : nullptr;
 			reqn = const_cast<MNode*>(reqo ? reqo->lIf(reqn) : nullptr);
 		    }
@@ -439,27 +442,14 @@ void Socket::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	} else {
 	    // There is no the context - the request is "anonymous"
 	    // Redirect to pins first.
-	    auto compcp = owner()->firstPair();
-	    while (compcp) {
+	    for (auto it = owner()->pairsBegin(); it != owner()->pairsEnd(); it++) {
+		auto* compcp = *it;
 		MOwned* compo = compcp ? compcp->provided() : nullptr;
 		MUnit* compu = compo->lIf(compu);
 		if (compu) {
 		    compu->resolveIface(aName, aReq);
 		}
-		compcp = owner()->nextPair(compcp);
 	    }
-#if 0 // ds_iss_010. Disabled redirection to pair to avoid resolving iface not provided by pins
-	    // Using priority logic: if pins resolve then stop
-	    if (!aReq->provided()->isResolved()) {
-		// Then redirect to pair
-		for (MVert* pair : mPairs) {
-		    MUnit* pairu = pair->lIf(pairu);
-		    if (pairu) {
-			pairu->resolveIface(aName, aReq);
-		    }
-		}
-	    }
-#endif
 	}
     }
 }
@@ -479,8 +469,8 @@ bool Socket::isCompatible(MVert* aPair, bool aExt)
     if (cp) {
 	// TODO MNode shall not be resolved thru MVert. This is MVert resolution issue
 	MNode* cpn = cp->lIf(cpn);
-	for (int ci = 0; ci < owner()->pcount() && res; ci++) {
-	    auto comp = owner()->pairAt(ci)->provided();
+	for (auto it = owner()->pairsBegin(); it != owner()->pairsEnd() && res; it++) {
+	    auto comp = (*it)->provided();
 	    MNode* compn = comp->lIf(compn);
 	    MVert* compv = compn ? compn->lIf(compv) : nullptr;
 	    if (compv) {
@@ -517,8 +507,8 @@ MVert::TDir Socket::getDir() const
 int Socket::PinsCount() const
 {
     int res = 0;
-    for (int i = 0; i < owner()->pcount(); i++) {
-	const MOwned* comp = owner()->pairAt(i)->provided();
+    for (auto it = owner()->pairsCBegin(); it != owner()->pairsCEnd(); it++) {
+	const MOwned* comp = (*it)->provided();
 	const MVert* compv = comp->lIf(compv);
 	if (compv) res++;
     }
@@ -534,7 +524,8 @@ MNode* Socket::GetPin(int aInd)
 MNode* Socket::GetPin(MIfReq::TIfReqCp* aReq)
 {
     MNode* res = nullptr;
-    MIfReq::TIfReqCp* req = aReq->binded()->firstPair();
+    //MIfReq::TIfReqCp* req = aReq->binded()->firstPair();
+    MIfReq::TIfReqCp* req = *aReq->binded()->pairsBegin();
     const MIfProvOwner* reqo = req ? req->provided()->rqOwner() : nullptr;
     const MNode* reqn = reqo ? reqo->lIf(reqn) : nullptr; // Current requestor as node
     if (isNodeOwned(reqn)) {
@@ -688,8 +679,8 @@ void Syst::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
     } else {
 	// Stop resolving if local iface matches
 	if (aName == MAgent::Type()) {
-	    for (int i = 0; i < owner()->pcount(); i++) {
-		MOwned* comp = owner()->pairAt(i)->provided();
+	    for (auto it = owner()->pairsBegin(); it != owner()->pairsEnd(); it++) {
+		MOwned* comp = (*it)->provided();
 		MNode* compn = comp->lIf(compn);
 		MAgent* compa = compn ? compn->lIf(compa) : nullptr;
 		if (compa) {
@@ -790,7 +781,8 @@ void AgtBase::onOwnerAttached()
 
 MNode* AgtBase::ahostNode()
 {
-    auto pair = mAgtCp.firstPair();
+    //auto pair = mAgtCp.firstPair();
+    auto* pair = *mAgtCp.pairsBegin();
     MAhost* ahost = pair ? pair->provided() : nullptr;
     MNode* hostn = ahost ? ahost->lIf(hostn) : nullptr;
     return hostn;

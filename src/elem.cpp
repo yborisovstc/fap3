@@ -20,10 +20,9 @@ Elem::~Elem()
 	parent()->onChildDeleting(this);
     }
     // Notify childs and disconnect
-    auto cn = mInode.binded()->firstPair();
-    while (cn) {
+    for (auto it = mInode.binded()->pairsBegin(); it != mInode.binded()->pairsEnd(); it++) {
+	auto cn = *it;
 	cn->provided()->onParentDeleting(this);
-	cn = mInode.binded()->nextPair(cn);
     }
     mInode.binded()->disconnectAll();
 }
@@ -178,14 +177,13 @@ void Elem::MParent_doDump(int aLevel, int aIdt, ostream& aOs) const
 	Ifu::offset(aIdt, aOs); aOs << "Name: " << name() << endl;
     }
     if (aLevel & Ifu::EDM_Comps) {
-	auto pair = self->mInode.binded()->firstPair();
-	while (pair) {
+	for (auto it = self->mInode.binded()->pairsBegin(); it != self->mInode.binded()->pairsEnd(); it++) {
+	    auto* pair = *it;
 	    const MChild* child = pair->provided();
 	    Ifu::offset(aIdt, aOs); aOs << "- " << child->Uid() << endl;
 	    if (aLevel & Ifu::EDM_Recursive) {
 		child->doDump(Ifu::EDM_Comps | Ifu::EDM_Recursive, aIdt + Ifu::KDumpIndent, aOs);
 	    }
-	    pair = self->mInode.binded()->nextPair(pair);
 	}
     }
 }
@@ -214,14 +212,13 @@ void Elem::MChild_doDump(int aLevel, int aIdt, ostream& aOs) const
 	Ifu::offset(aIdt, aOs); aOs << "Name: " << name() << endl;
     }
     if (aLevel & Ifu::EDM_Comps) {
-	auto pair = self->mInode.binded()->firstPair();
-	while (pair) {
+	for (auto it = self->mInode.binded()->pairsBegin(); it != self->mInode.binded()->pairsEnd(); it++) {
+	    auto* pair = *it;
 	    const MChild* child = pair->provided();
 	    Ifu::offset(aIdt, aOs); aOs << "- " << child->Uid() << endl;
 	    if (aLevel & Ifu::EDM_Recursive) {
 		child->doDump(Ifu::EDM_Comps | Ifu::EDM_Recursive, aIdt + Ifu::KDumpIndent, aOs);
 	    }
-	    pair = self->mInode.binded()->nextPair(pair);
 	}
     }
 }
@@ -237,13 +234,15 @@ MNode* Elem::createHeirPrnt(const string& aName)
 
 MParent* Elem::parent()
 {
-    auto fp = mInode.firstPair();
+    //auto fp = mInode.firstPair();
+    auto* fp = *mInode.pairsBegin();
     return fp ? fp->provided() : nullptr;
 }
 
 const MParent* Elem::parent() const
 {
-    auto fp = const_cast<TInhTreeNode&>(mInode).firstPair();
+    //auto fp = const_cast<TInhTreeNode&>(mInode).firstPair();
+    auto* fp = *const_cast<TInhTreeNode&>(mInode).pairsBegin();
     return fp ? fp->provided() : nullptr;
 }
 

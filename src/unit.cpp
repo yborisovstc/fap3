@@ -75,7 +75,9 @@ void Unit::MUnit_doDump(int aLevel, int aIdt, std::ostream& aOs) const
 	for (auto item : mIrns) {
 	    Ifu::offset(aIdt, aOs); aOs << "Iface: " << item->name() << endl;
 	    item->MIfProv_doDump(aLevel, aIdt + 1, aOs);
-	    auto req = item->firstPair() ? item->firstPair()->provided() : nullptr;
+	    //auto req = item->firstPair() ? item->firstPair()->provided() : nullptr;
+	    auto* fpair = *item->pairsBegin();
+	    auto req = fpair ? fpair->provided() : nullptr;
 	    if (req) {
 		Ifu::offset(aIdt, aOs); aOs << "Req chain: " << endl;
 		req->doDump(aLevel, aIdt + 1, aOs);

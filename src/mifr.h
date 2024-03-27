@@ -23,8 +23,6 @@ class MIfProv: public MIface
 	virtual string Uid() const override { return MIfProv_Uid();}
 	virtual string MIfProv_Uid() const = 0;
 	virtual string name() const = 0;
-	virtual MIfProv* first() const = 0;
-	virtual MIfProv* next() const = 0;
 	virtual void resolve(const string& aName) = 0;
 	virtual MIface* iface() = 0;
 	virtual TIfaces* ifaces() = 0;
@@ -50,7 +48,6 @@ class MIfReq: public MIface
 	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { MIfReq_doDump(aLevel, aIdt, aOs);}
 	virtual void MIfReq_doDump(int aLevel, int aIdt, ostream& aOs) const =0;
 	//virtual const MIfProv* owner() const = 0;
-	virtual MIfProv* next(MIfProv::TCp* aProvCp) const = 0;
 	/** @brief Indicates if giver owner is in back requestors chain on aPos position
 	 * @parem aPos  the position checked, -1 means all positions
 	 * */

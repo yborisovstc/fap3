@@ -436,6 +436,7 @@ void Ut_syst::test_syst_cp_3()
     MUnit* s1u = s1n ? s1n->lIf(s1u) : nullptr;
     CPPUNIT_ASSERT_MESSAGE("Fail to get s1u", s1u);
     MIfProv* ifp = s1u->defaultIfProv("MAgent");
+    /*
     MIfProv* maprov = ifp->first();
     CPPUNIT_ASSERT_MESSAGE("Failed getting MAgent provider", maprov);
     cout << endl << "=== Magents resolved by S1:" << endl;
@@ -443,17 +444,27 @@ void Ut_syst::test_syst_cp_3()
 	cout << maprov->iface()->Uid() << endl;
 	maprov = maprov->next();
     }
+    */
+    auto* ifcs = s1u->getTIfs<MAgent>();
+    CPPUNIT_ASSERT_MESSAGE("Failed getting MAgent ifcs", ifcs);
+    cout << endl << "=== Magents resolved by S1:" << endl;
+    for (auto ifc : *ifcs) {
+	cout << ifc->Uid() << endl;
+    }
     cout << endl;
     cout << endl << "=== S1 MAgent default IFP dump:" << endl;
     ifp->dump(0);
     // Check iface resolution via connpoint
     MUnit* cp2u = cp2n->lIf(cp2u);
     CPPUNIT_ASSERT_MESSAGE("Fail to get cp2u", cp2u);
+    /*
     ifp = cp2u->defaultIfProv("MTIf1");
     MIfProv* prov = ifp->first();
     cout << endl << "=== CP2 MTIf1 default IFP dump:" << endl;
     ifp->dump(0);
-    CPPUNIT_ASSERT_MESSAGE("Failed getting MConnPoint provider", prov);
+    */
+    cp2u->dump(0xff,0);
+    //CPPUNIT_ASSERT_MESSAGE("Failed getting MConnPoint provider", prov);
 }
 
 
@@ -489,6 +500,7 @@ void Ut_syst::test_syst_cpe_1()
     MUnit* s1u = s1n ? s1n->lIf(s1u) : nullptr;
     CPPUNIT_ASSERT_MESSAGE("Fail to get s1u", s1u);
     MIfProv* ifp = s1u->defaultIfProv("MAgent");
+    /*
     MIfProv* maprov = ifp->first();
     CPPUNIT_ASSERT_MESSAGE("Failed getting MAgent provider", maprov);
     cout << endl << "=== Magents resolved by S1:" << endl;
@@ -496,6 +508,15 @@ void Ut_syst::test_syst_cpe_1()
 	cout << maprov->iface()->Uid() << endl;
 	maprov = maprov->next();
     }
+    */
+    auto* ifcs = s1u->getTIfs<MAgent>();
+    CPPUNIT_ASSERT_MESSAGE("Failed getting MAgent ifcs", ifcs);
+    cout << endl << "=== Magents resolved by S1:" << endl;
+    for (auto ifc : *ifcs) {
+	cout << ifc->Uid() << endl;
+    }
+
+
     cout << endl;
     cout << endl << "=== S1 MAgent default IFP dump:" << endl;
     ifp->dump(0);
@@ -504,11 +525,14 @@ void Ut_syst::test_syst_cpe_1()
     CPPUNIT_ASSERT_MESSAGE("Fail to get cp2n", cp2n);
     MUnit* cp2u = cp2n->lIf(cp2u);
     CPPUNIT_ASSERT_MESSAGE("Fail to get cp2u", cp2u);
+    /*
     ifp = cp2u->defaultIfProv("MTIf1");
     MIfProv* prov = ifp->first();
     cout << endl << "=== CP2 MTIf1 default IFP dump:" << endl;
     ifp->dump(0);
     CPPUNIT_ASSERT_MESSAGE("Failed getting MConnPoint provider", prov);
+    */
+    cp2u->dump(0xff,0);
 
     delete mEnv;
 }

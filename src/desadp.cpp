@@ -181,7 +181,8 @@ void AAdp::confirm()
 // TODO Dup of ADes method, consider to inherit from ADes
 MNode* AAdp::ahostNode()
 {
-    MAhost* ahost = mAgtCp.firstPair()->provided();
+    //MAhost* ahost = mAgtCp.firstPair()->provided();
+    MAhost* ahost = (*mAgtCp.pairsBegin())->provided();
     MNode* hostn = ahost ? ahost->lIf(hostn) : nullptr;
     return hostn;
 }
@@ -409,7 +410,8 @@ MNode* AAdp::ahostGetNode(const GUri& aUri)
 MAhost* AAdp::aHost()
 {
     MAhost* ahost = nullptr;
-    auto ahostCp = mAgtCp.firstPair();
+    //auto ahostCp = mAgtCp.firstPair();
+    auto* ahostCp = *mAgtCp.pairsBegin();
     ahost = ahostCp ? ahostCp->provided() : nullptr;
     return ahost;
 }
@@ -559,11 +561,10 @@ void AMnodeAdp::confirm() {
 	if (mCompNamesUpdated) {
 	    // Comps names
 	    mCompNames.mData.clear();
-	    auto owdCp = mMag->owner()->firstPair();
-	    while (owdCp) {
+	    for (auto it = mMag->owner()->pairsBegin(); it != mMag->owner()->pairsEnd(); it++) {
+		auto owdCp = *it;
 		MNode* osn = owdCp->provided()->lIf(osn);
 		mCompNames.mData.push_back(osn->name());
-		owdCp = mMag->owner()->nextPair(owdCp);
 	    }
 	    mCompNames.mValid = true;
 	    mCompNamesUpdated = false;

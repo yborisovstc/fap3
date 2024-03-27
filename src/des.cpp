@@ -527,7 +527,9 @@ void State::confirm()
 	    // State is not changed. No need to notify connected inps.
 	    // But we still need to make IFR paths to inps actual. Ref ds_asr.
 	    // TODO PERF
+	    PFL_DUR_STAT_START(PEvents::EDurStat_DesRfInpObs);
 	    refreshInpObsIfr();
+	    PFL_DUR_STAT_REC(PEvents::EDurStat_DesRfInpObs);
 	}
     } else {
 	if (mPdata) {
@@ -648,7 +650,8 @@ void State::refreshInpObsIfr()
 	MUnit* pe = pair->lIf(pe);
 	// Don't add self to if request context to enable routing back to self
 	MIfProv* ifp = pe->defaultIfProv(MDesInpObserver::Type());
-	MIfProv* prov = ifp->first();
+	//MIfProv* prov = ifp->first();
+	ifp->ifaces();
     }
 }
 
@@ -896,7 +899,8 @@ void Const::refreshInpObsIfr()
 	MUnit* pe = pair->lIf(pe);
 	// Don't add self to if request context to enable routing back to self
 	MIfProv* ifp = pe->defaultIfProv(MDesInpObserver::Type());
-	MIfProv* prov = ifp->first();
+	//MIfProv* prov = ifp->first();
+	ifp->ifaces();
     }
 }
 
@@ -963,26 +967,6 @@ void Des::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	MIfReq* ireq = aReq->provided()->tail(); // Initial requestor
 	if (ireq) {
 	    bool redirectedToSpl = false;
-	    /*
-	    auto owdCp = owner()->firstPair();
-	    while (owdCp) {
-		MDesCtxSpl* spl = owdCp->provided()->lIf(spl);
-		if (spl) {
-		    MUnit* splu = spl->lIf(splu);
-		    MIfProvOwner* splPo = splu ? splu->lIf(splPo) : nullptr;
-		    bool isReq = splPo && aReq->provided()->isRequestor(splPo);
-		    if (!isReq) {
-			addIfpLeaf(spl, aReq);
-			MUnit* splu = spl->lIf(splu);
-			if (splu) {
-			    splu->resolveIface(aName, aReq);
-			    redirectedToSpl = true;
-			}
-		    }
-		}
-		owdCp = owner()->nextPair(owdCp);
-	    }
-	    */
 	    for (auto pitr = owner()->pairsBegin(); pitr != owner()->pairsEnd(); pitr++) {
 		auto owdCp = *pitr;
 		MDesCtxSpl* spl = owdCp->provided()->lIf(spl);
@@ -1246,8 +1230,8 @@ void Des::MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const
         if (aLevel & Ifu::EDM_Opt3) {
             Ifu::offset(aIdt, aOs); aOs << "Syncable:" << endl;
             auto self = const_cast<Des*>(this);
-            auto owdCp = self->owner()->firstPair();
-            while (owdCp) {
+	    for (auto it = self->owner()->pairsBegin(); it != self->owner()->pairsEnd(); it++) {
+		auto* owdCp = *it;
                 MUnit* osu = owdCp->provided()->lIf(osu);
                 MDesSyncable* item = osu ? osu->getSif(item) : nullptr;
                 if (item && item != this) {
@@ -1256,8 +1240,7 @@ void Des::MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const
                         item->MDesSyncable_doDump(Ifu::EDM_Opt3, aIdt + 4, aOs);
                     }
                 }
-                owdCp = self->owner()->nextPair(owdCp);
-            }
+	    }
         }
     }
 
@@ -1346,26 +1329,6 @@ void ADes::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	bool isRqLocal = ireqn == ahostNode();
 	if (ireqn && !isRqLocal) {
 	    bool redirectedToSpl = false;
-	    /*
-	    auto owdCp = ahostNode()->owner()->firstPair();
-	    while (owdCp) {
-		MDesCtxSpl* spl = owdCp->provided()->lIf(spl);
-		if (spl) {
-		    MUnit* splu = spl->lIf(splu);
-		    MIfProvOwner* splPo = splu ? splu->lIf(splPo) : nullptr;
-		    bool isReq = splPo && aReq->provided()->isRequestor(splPo);
-		    if (!isReq) {
-			addIfpLeaf(spl, aReq);
-			MUnit* splu = spl->lIf(splu);
-			if (splu) {
-			    splu->resolveIface(aName, aReq);
-			    redirectedToSpl = true;
-			}
-		    }
-		}
-		owdCp = ahostNode()->owner()->nextPair(owdCp);
-	    }
-	    */
 	    auto* howner = ahostNode()->owner();
 	    for (auto pitr = howner->pairsBegin(); pitr != howner->pairsEnd(); pitr++) {
 		auto* owdCp = *pitr;
@@ -1624,17 +1587,6 @@ void ADes::onOwnerAttached()
     }
     // Activate all existing syncable components
     MNode* host = ahostNode();
-    /*
-    auto owdCp = host->owner()->firstPair();
-    while (owdCp) {
-	MUnit* osu = owdCp->provided()->lIf(osu);
-	MDesSyncable* os = osu ? osu->getSif(os) : nullptr;
-	if (os && os != this) {
-	    os->setActivated();
-	}
-	owdCp = host->owner()->nextPair(owdCp);
-    }
-    */
     auto* howner = host->owner();
     for (auto pitr = howner->pairsBegin(); pitr != howner->pairsEnd(); pitr++) {
 	auto* owdCp = *pitr;
@@ -1678,8 +1630,8 @@ void ADes::MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const
             Ifu::offset(aIdt, aOs); aOs << "Syncable:" << endl;
             auto self = const_cast<ADes*>(this);
             MNode* host = self->ahostNode();
-            auto owdCp = host->owner()->firstPair();
-            while (owdCp) {
+	    for (auto it = host->owner()->pairsBegin(); it != host->owner()->pairsEnd(); it++) {
+		auto owdCp = *it;
                 MUnit* osu = owdCp->provided()->lIf(osu);
                 MDesSyncable* item = osu ? osu->getSif(item) : nullptr;
                 if (item && item != this) {
@@ -1688,14 +1640,14 @@ void ADes::MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const
                         item->MDesSyncable_doDump(Ifu::EDM_Opt3, aIdt + 4, aOs);
                     }
                 }
-                owdCp = host->owner()->nextPair(owdCp);
-            }
+	    }
         }
     }
 
     MNode* ADes::ahostNode()
     {
-        auto pair = mAgtCp.firstPair();
+        //auto pair = mAgtCp.firstPair();
+        auto* pair = *mAgtCp.pairsBegin();
         MAhost* ahost = pair ? pair->provided() : nullptr;
         MNode* hostn = ahost ? ahost->lIf(hostn) : nullptr;
         return hostn;
@@ -1703,7 +1655,8 @@ void ADes::MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const
 
     MNode* ADes::ahostGetNode(const GUri& aUri)
     {
-	auto pair = mAgtCp.firstPair();
+	//auto pair = mAgtCp.firstPair();
+        auto* pair = *mAgtCp.pairsBegin();
 	MAhost* ahost = pair ? pair->provided() : nullptr;
 	MNode* hostn = ahost ? ahost->lIf(hostn) : nullptr;
 	MNode* res = hostn ? hostn->getNode(aUri, this) : nullptr;
@@ -1894,29 +1847,6 @@ bool DesAs::Run(int aCount, int aIdleCount)
     int cnt = 0;
     int idlecnt = 0;
     do {
-        /*
-           MNode* ss = nullptr;
-           auto owdCp = owner()->firstPair();
-           while (owdCp) {
-           MNode* compn = owdCp->provided()->lIf(compn);
-           MDesSyncable* comps = compn ? compn->lIf(comps) : nullptr;
-           if (comps) {
-           if (ss == nullptr) {
-           ss = compn;
-           } else {
-        // TODO Is this limination really needed?
-        LOGN(EErr, "Subsystems number > 1");
-        }
-        }
-        owdCp = owner()->nextPair(owdCp);
-        }
-        if (ss == nullptr) {
-        LOGN(EErr, "No subsystems found");
-        break;
-        }
-        // Initiate subsystem, ref ds_desas_sis_iph
-        //MNode* ss = owner()->firstPair()->provided()->lIf(ss);
-        */
         MNode* ss = getNode(K_SsUri);
         if (ss == nullptr) {
             LOGN(EErr, "No subsystem [" + K_SsUri + "] found");
@@ -2262,7 +2192,8 @@ bool DesCtxCsm::init()
 
 bool DesCtxCsm::registerSpl(MDesCtxSpl::TCp* aSpl)
 {
-    assert(!mCsmCp.firstPair());
+    //assert(!mCsmCp.firstPair());
+    assert(mCsmCp.pairsBegin() == mCsmCp.pairsEnd());
     bool res = mCsmCp.connect(aSpl);
     return res;
 }
@@ -2270,18 +2201,17 @@ bool DesCtxCsm::registerSpl(MDesCtxSpl::TCp* aSpl)
 bool DesCtxCsm::bindCtxs()
 {
     bool res = false;
-    auto owdCp = owner()->firstPair();
-    while (owdCp) {
+    for (auto it = owner()->pairsBegin(); it != owner()->pairsEnd(); it++) {
+	auto owdCp = *it;
         MNode* compn = owdCp->provided()->lIf(compn);
         MVert* compv = compn ? compn->lIf(compv) : nullptr;
         if (compv) {
             MVert* extd = compv->getExtd();
             if (extd) {
-                res = mCsmCp.firstPair()->provided()->bindCtx(compn->name(), extd);
+                res = (*mCsmCp.pairsBegin())->provided()->bindCtx(compn->name(), extd);
                 if (!res) break;
             }
         }
-        owdCp = owner()->nextPair(owdCp);
     }
     return res;
 }

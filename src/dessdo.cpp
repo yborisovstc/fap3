@@ -181,7 +181,8 @@ const DtBase* SdoParents::VDtGet(const string& aType)
 	} else {
 	    MElem* suee = mSue->lIf(suee);
 	    if (suee) {
-		auto* cn = suee->asChild()->cP()->firstPair();
+		//auto* cn = suee->asChild()->cP()->firstPair();
+		auto* cn = *suee->asChild()->cP()->pairsBegin();
 		// TODO this solution exploits the access to upper inheritance tree
 		// that allowed thru MChild::cP() and creates vulnarability. Consider redesign. 
 		while (cn) {
@@ -189,7 +190,8 @@ const DtBase* SdoParents::VDtGet(const string& aType)
 		    GUri uri;
 		    prnt->getUriPrnt(uri);
 		    mRes.mData.push_back(DGuri(uri));
-		    cn = cn->binded()->firstPair();
+		    //cn = cn->binded()->firstPair();
+		    cn = *cn->binded()->pairsBegin();
 		}
 	    } else {
 		// Explorable isn't elem - take just parent's name
@@ -245,13 +247,7 @@ const DtBase* SdoCompsCount::VDtGet(const string& aType)
 	if (!mSue)  {
 	    LOGN(EWarn, "Owner is not explorable");
 	} else {
-	    int count = 0;
-	    auto owdCp = mSue->owner()->firstPair();
-	    while (owdCp) {
-		MNode* osn = owdCp->provided()->lIf(osn);
-		count++;
-		owdCp = mSue->owner()->nextPair(owdCp);
-	    }
+	    int count = mSue->owner()->pcount();
 	    mRes.mData = count;
 	    mRes.mValid = true;
 	}
@@ -283,11 +279,10 @@ const DtBase* SdoCompsNames::VDtGet(const string& aType)
 	    LOGN(EWarn, "Owner is not explorable");
 	} else {
 	    Stype cnames;
-	    auto owdCp = mSue->owner()->firstPair();
-	    while (owdCp) {
+	    for (auto it = mSue->owner()->pairsBegin(); it != mSue->owner()->pairsEnd(); it++) {
+		auto owdCp = *it;
 		MNode* osn = owdCp->provided()->lIf(osn);
 		cnames.mData.push_back(osn->name());
-		owdCp = mSue->owner()->nextPair(owdCp);
 	    }
 	    mRes.mData = cnames.mData;
 	    mRes.mValid = true;
@@ -320,12 +315,11 @@ const DtBase* SdoCompsUri::VDtGet(const string& aType)
 	    LOGN(EWarn, "Owner is not explorable");
 	} else {
 	    Stype cnames;
-	    auto owdCp = mSue->owner()->firstPair();
-	    while (owdCp) {
+	    for (auto it = mSue->owner()->pairsBegin(); it != mSue->owner()->pairsEnd(); it++) {
+		auto* owdCp = *it;
 		MNode* osn = owdCp->provided()->lIf(osn);
 		DGuri curi(osn->name());
 		cnames.mData.push_back(curi);
-		owdCp = mSue->owner()->nextPair(owdCp);
 	    }
 	    mRes.mData = cnames.mData;
 	    mRes.mValid = true;

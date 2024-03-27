@@ -101,41 +101,13 @@ void Node::MObservable_doDump(int aLevel, int aIdt, ostream& aOs) const
     }
     if (aLevel & Ifu::EDM_Comps) {
 	Ifu::offset(aIdt, cout); cout << "Observers: " << endl;
-	auto* obs = self->mOcp.firstPair();
-	while (obs) {
+	for (auto it = self->owner()->pairsBegin(); it != self->owner()->pairsEnd(); it++) {
+	    auto* obs = *it;
 	    Ifu::offset(aIdt, cout); cout << "- " << obs->provided()->Uid() << endl;
-	    obs = self->mOcp.nextPair(obs);
 	}
     }
 }
 
-#if 0
-void Node::MNode_doDump(int aLevel, int aIdt, ostream& aOs) const
-{
-    if (aLevel & Ifu::EDM_Base) {
-	Ifu::offset(aIdt, aOs); aOs << "Name: " << mName << endl;
-    }
-    if (aLevel & Ifu::EDM_Comps) {
-	for (int i = 0; i < owner()->pcount(); i++) {
-	    if (owner()->pairAt(i)) {
-		const MOwned* comp = owner()->pairAt(i)->provided();
-		const MNode* compn = comp->lIf(compn);
-		if (compn) {
-		    Ifu::offset(aIdt, aOs);
-		    aOs << "- "  << compn->name() << endl;
-		    if (aLevel & Ifu::EDM_Recursive) {
-			compn->doDump(Ifu::EDM_Comps | Ifu::EDM_Recursive, aIdt + Ifu::KDumpIndent, aOs);
-		    }
-		} else {
-		    aOs << "=== ERROR on getting component [" << i << "] MNode" << endl;
-		}
-	    } else {
-		aOs << "=== ERROR on getting comp [" << i << "]" << endl;
-	    }
-	}
-    }
-}
-#else
 void Node::MNode_doDump(int aLevel, int aIdt, ostream& aOs) const
 {
     if (aLevel & Ifu::EDM_Base) {
@@ -161,7 +133,6 @@ void Node::MNode_doDump(int aLevel, int aIdt, ostream& aOs) const
 	}
     }
 }
-#endif
 
 const MNode* Node::getComp(const string& aId) const
 {
@@ -229,12 +200,13 @@ void Node::getUri(GUri& aUri, MNode* aBase) const
 
 MOwner* Node::Owner()
 {
-    return mOnode.pcount() > 0 ? mOnode.pairAt(0)->provided() : nullptr;
+    return (mOnode.pcount() > 0) ? (*mOnode.pairsBegin())->provided() : nullptr;
 }
 
 const MOwner* Node::Owner() const
 {
-    return mOnode.pcount() > 0 ? mOnode.pairAt(0)->provided() : nullptr;
+    auto onode = const_cast<TOwtNode*>(&mOnode);
+    return (mOnode.pcount() > 0) ? (*onode->pairsBegin())->provided() : nullptr;
 }
 
 void Node::updateNs(TNs& aNs, const ChromoNode& aCnode)
@@ -406,6 +378,7 @@ bool Node::attachOwned(MNode* aOwned)
 	aOwned->owned()->provided()->onOwnerAttached();
 	onOwnedAttached(aOwned->owned()->provided());
 	// Set owned log level
+	/*
 	MOwned* owd = aOwned->lIf(owd);
 	assert(owd);
 	auto oll = getOwdLogLevel();
@@ -414,6 +387,7 @@ bool Node::attachOwned(MNode* aOwned)
 	if (ll != ELcUndef) {
 	    owd->setLogLevel(ll);
 	}
+	*/
     } else {
 	Log(EErr, TLog(this) + "Attaching owned: already exists [" + aOwned->name() + "]");
     }
@@ -584,13 +558,6 @@ void Node::onOwnedAttached(MOwned* aOwned)
     // Notify the observers
     // Cache observers first to avoid iterating broked due to observers change
     list<MObserver*> cache;
-    /*
-    auto* obs = mOcp.firstPair();
-    while (obs) {
-        cache.push_back(obs->provided());
-        obs = mOcp.nextPair(obs);
-    }
-    */
     for (auto it = mOcp.pairsBegin(); it != mOcp.pairsEnd(); it++) {
 	auto* pair = *it;
         cache.push_back(pair->provided());
@@ -602,13 +569,6 @@ void Node::onOwnedAttached(MOwned* aOwned)
 
 void Node::onOwnedDetached(MOwned* aOwned)
 {
-    /*
-    auto* obs = mOcp.firstPair();
-    while (obs) {
-        obs->provided()->onObsOwnedDetached(this, aOwned);
-        obs = mOcp.nextPair(obs);
-    }
-    */
     for (auto it = mOcp.pairsBegin(); it != mOcp.pairsEnd(); it++) {
         (*it)->provided()->onObsOwnedDetached(this, aOwned);
     }
@@ -651,9 +611,8 @@ void Node::MContentOwner_doDump(int aLevel, int aIdt, ostream& aOs) const
 int Node::contCount() const 
 {
     int res = 0;
-    int cnt = owner()->pcount();
-    for (int i = 0; i < cnt; i++) {
-	const MOwned* owned = owner()->pairAt(i)->provided();
+    for (auto it = owner()->pairsCBegin(); it != owner()->pairsCEnd(); it++) {
+	const MOwned* owned = (*it)->provided();
 	const MContent* cont = owned->lIf(cont);
 	if (cont) res++;
     }
@@ -858,10 +817,10 @@ MIface* Node::MOwner_getLif(const char *aType)
 bool Node::isNodeOwned(const MNode* aNode) const
 {
     bool res = false;
-    for (int i = 0; i < owner()->pcount() && !res; i++) {
-	const MOwned* comp = owner()->pairAt(i)->provided();
+    for (auto it = owner()->pairsCBegin(); it != owner()->pairsCEnd() && !res; it++) {
+	auto* comp = (*it)->provided();
 	const MNode* compn = comp->lIf(compn);
-	res = aNode == compn;
+	res = (aNode == compn);
     }
     return res;
 }
@@ -869,13 +828,6 @@ bool Node::isNodeOwned(const MNode* aNode) const
 void Node::notifyChanged()
 {
     // Notify observers
-    /*
-    auto* obs = mOcp.firstPair();
-    while (obs) {
-	obs->provided()->onObsChanged(this);
-	obs = mOcp.nextPair(obs);
-    }
-    */
     for (auto it = mOcp.pairsBegin(); it != mOcp.pairsEnd(); it++) {
 	(*it)->provided()->onObsChanged(this);
     }
@@ -910,32 +862,6 @@ int Node::parseLogLevel(const string& aData)
     return res;
 }
 
-#if 0
-void Node::onContentChanged(const MContent* aCont)
-{
-    // Cache logging level
-    string level;
-    bool res = getContent(K_Cont_Debug_LogLevel, level);
-    if (res) {
-	mLogLevel = parseLogLevel(level);
-    } else {
-	string exbl;
-	if (getContent(K_Cont_Explorable, exbl)) {
-	    mExplorable = (exbl == K_Cont_Val_Yes);
-	} else if (getContent(K_Cont_Controllable, exbl)) {
-	    mControllable = (exbl == K_Cont_Val_Yes);
-	}
-    }
-
-    // Notify observers
-    auto* obs = mOcp.firstPair();
-    while (obs) {
-	obs->provided()->onObsContentChanged(this, aCont);
-	obs = mOcp.nextPair(obs);
-    }
-}
-#endif
-
 void Node::onContentChanged(const MContent* aCont)
 {
     bool res = true;
@@ -968,13 +894,6 @@ void Node::onContentChanged(const MContent* aCont)
     }
 
     // Notify observers
-    /*
-    auto* obs = mOcp.firstPair();
-    while (obs) {
-	obs->provided()->onObsContentChanged(this, aCont);
-	obs = mOcp.nextPair(obs);
-    }
-    */
     for (auto it = mOcp.pairsBegin(); it != mOcp.pairsEnd(); it++) {
         (*it)->provided()->onObsContentChanged(this, aCont);
     }

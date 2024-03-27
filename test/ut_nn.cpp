@@ -70,12 +70,13 @@ void Ut_nn::test_liter_1()
     
     // Dump pairs
     cout <<  "Pairs: " << endl;
-    auto* cp = owner->owner();
-    for (auto it = cp->pairsBegin(); it != cp->pairsEnd(); it++) {
+    auto* oor = owner->owner();
+    for (auto it = oor->pairsBegin(); it != oor->pairsEnd(); it++) {
 	cout << (*it)->provided()->Uid() << endl;
     }
     // Leafs iter begin
-    auto lit1 = cp->leafsBegin();
+    auto* ood = owner->owned();
+    auto lit1 = ood->leafsBegin();
     auto* cpn = *lit1;
     lit1++;
     auto* cpn2 = *lit1;
@@ -83,13 +84,13 @@ void Ut_nn::test_liter_1()
     auto* cpn3 = *lit1;
     // Dump leafs
     cout <<  "Leafs: " << endl;
-    for (auto lit = cp->leafsBegin(); lit != cp->leafsEnd(); lit++) {
+    for (auto lit = ood->leafsBegin(); lit != ood->leafsEnd(); lit++) {
 	auto* cpn = *lit;
 	cout << cpn->provided()->Uid() << endl;
     }
     // Empty tree iteration
-    auto lit2b = owned2->owner()->leafsBegin();
-    auto lit2e = owned2->owner()->leafsEnd();
+    auto lit2b = owned2->owned()->leafsBegin();
+    auto lit2e = owned2->owned()->leafsEnd();
     if (lit2b != lit2e) {
 	auto* cpn = *lit2b;
 	cout << cpn->provided()->Uid() << endl;

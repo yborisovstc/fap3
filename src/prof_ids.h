@@ -18,7 +18,7 @@ namespace PEvents {
 	EDurStat_LaunchRun = 1001,
 	EDurStat_LaunchUpdate = 1004,
 	EDurStat_LaunchConfirm = 1005,
-	EDurStat_DesIfsCount = 2001,
+	EDurStat_DesRfInpObs = 2001,       // Refresh input observers
 	EDurStat_DesAsUpd = 2002,
 	EDurStat_StConfirm = 3001,
 	EDurStat_AMNAdpConfirm = 3002,

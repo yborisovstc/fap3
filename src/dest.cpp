@@ -50,7 +50,8 @@ void TrBase::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	// Enable MDesInpObserver resolution for inputs only
 	// We cannot resolve inputs atm (it requires inputs registry)
 	// So checking components instead of inputs
-	MIfReq::TIfReqCp* req = aReq->binded()->firstPair();
+	//MIfReq::TIfReqCp* req = aReq->binded()->firstPair();
+	MIfReq::TIfReqCp* req = *aReq->binded()->pairsBegin();
 	if (req) {
 	    const MIfProvOwner* reqo = req->provided()->rqOwner();
 	    MNode* reqn = const_cast<MNode*>(reqo ? reqo->lIf(reqn) : nullptr); // Current requestor as node
@@ -593,7 +594,8 @@ void TrSwitchBool2::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	// Enable MDesInpObserver resolution for inputs only
 	// We cannot resolve inputs atm (it requires inputs registry)
 	// So checking components instead of inputs
-	MIfReq::TIfReqCp* req = aReq->binded()->firstPair();
+	//MIfReq::TIfReqCp* req = aReq->binded()->firstPair();
+	MIfReq::TIfReqCp* req = *aReq->binded()->pairsBegin();
 	if (req) {
 	    const MIfProvOwner* reqo = req->provided()->rqOwner();
 	    MNode* reqn = const_cast<MNode*>(reqo ? reqo->lIf(reqn) : nullptr); // Current requestor as node
@@ -1128,8 +1130,8 @@ const DtBase* TrTuple::doVDtGet(const string& aType)
     const NTuple* arg = GetInpData(mInpInp, arg);
     if (arg) {
 	mRes = *arg;
-	auto compo = owner()->firstPair();
-	while (compo) {
+	for (auto it = owner()->pairsBegin(); it != owner()->pairsEnd(); it++) {
+	    auto compo = *it;
 	    MNode* compn = compo->provided()->lIf(compn);
 	    assert(compn);
 	    if (compn->name() != K_InpInp) {
@@ -1153,7 +1155,6 @@ const DtBase* TrTuple::doVDtGet(const string& aType)
 		    LOGN(EErr, "No such component [" + compn->name() + "] of tuple");
 		}
 	    }
-	    compo = owner()->nextPair(compo);
 	}
     } else {
 	mRes.mValid = false;
