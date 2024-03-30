@@ -81,7 +81,7 @@ class SdoBase : public CpStateOutp, public MDVarGet, public MObserver, public MD
 		EagObs(SdoBase* aHost): mHost(aHost), mOcp(this) {}
 		virtual ~EagObs() { }
 		// From MObserver
-		virtual string MObserver_Uid() const {return MObserver::Type();}
+		virtual string MObserver_Uid() const {return mHost->getUidC<MObserver>("EagObs");}
 		virtual MIface* MObserver_getLif(const char *aName) override { return nullptr;}
 		virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override {
 		    mHost->onEagOwnedAttached(aOwned);

@@ -34,7 +34,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
             public:
                 NodeCreationObserver(ASdc* aHost);
                 void startObserving(const GUri& aTargUri);
-                virtual string MObserver_Uid() const {return MObserver::Type();}
+                virtual string MObserver_Uid() const {return mHost->getUidC<MObserver>("NodeCreationObserver");}
                 virtual MIface* MObserver_getLif(const char *aName) override { return nullptr;}
                 virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override;
                 virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override { }
@@ -166,7 +166,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 		MagObs(ASdc* aHost): mHost(aHost), mOcp(this) {}
 		virtual ~MagObs() { }
 		// From MObserver
-		virtual string MObserver_Uid() const {return MObserver::Type();}
+		virtual string MObserver_Uid() const { return mHost->getUidC<MObserver>("MagObs");}
 		virtual MIface* MObserver_getLif(const char *aName) override { return nullptr;}
 		virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override {
 		    //mHost->notifyMaps();
@@ -203,7 +203,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 		virtual ~MagDobs() { }
 		void updateNuo(MNode* aNuo);
 		// From MObserver
-		virtual string MObserver_Uid() const {return mNuo->name() + "%" + MObserver::Type();}
+		virtual string MObserver_Uid() const {return mHost->getUidC<MObserver>(mNuo->name());}
 		virtual MIface* MObserver_getLif(const char *aName) override { return nullptr;}
 		virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override {
 		    if (mMask & EO_ATCH) mHost->notifyOutp();

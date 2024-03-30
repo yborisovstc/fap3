@@ -297,7 +297,7 @@ class DAdp : public Des, public IDesEmbHost
 	    public:
 		MagObs(DAdp* aHost): mHost(aHost), mOcp(this) {}
 		// From MObserver
-		virtual string MObserver_Uid() const {return MObserver::Type();}
+		virtual string MObserver_Uid() const {return mHost->getUidC<MObserver>("MagObs");}
 		virtual MIface* MObserver_getLif(const char *aName) override { return nullptr;}
 		virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override { }
 		virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override { }

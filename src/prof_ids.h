@@ -13,6 +13,7 @@ namespace PEvents {
 	EDur_Tst1 = 3,
 	EDur_EnvSetChromo = 4,
 	EDurStat_Trans = 100,
+	EDurStat_PvdCNode = 101,         // Provider creates node
 	EDurStat_UInvldIrm = 102,
 	EDurStat_IFR_IFaces= 104,
 	EDurStat_LaunchRun = 1001,

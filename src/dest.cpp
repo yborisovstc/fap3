@@ -69,16 +69,12 @@ void TrBase::onInpUpdated()
 {
     // Invalidate data cache
     mCInv = true;
-    // Rederect to call to pairs
+    // Redirect to call to pairs
     for (auto pair : mPairs) {
 	MUnit* pe = pair->lIf(pe);
-	auto ifcs = pe ? pe->getIfs<MDesInpObserver>() : nullptr;
+	auto ifcs = pe ? pe->getTIfs<MDesInpObserver>() : nullptr;
 	if (ifcs) for (auto ifc : *ifcs) {
-	    MDesInpObserver* obs = reinterpret_cast<MDesInpObserver*>(ifc);
-	    // assert(obs);
-	    if (obs) {
-		obs->onInpUpdated();
-	    }
+	    ifc->onInpUpdated();
 	}
     }
 }

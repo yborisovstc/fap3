@@ -82,6 +82,7 @@ ProvBase::~ProvBase()
 
 MNode* ProvBase::createNode(const string& aType, const string& aName, MEnv* aEnv)
 {
+    PFL_DUR_STAT_START(PEvents::EDurStat_PvdCNode);
     MNode* res = NULL;
     res = CreateAgent(aType, aName, mEnv);
     if (res) {
@@ -93,6 +94,7 @@ MNode* ProvBase::createNode(const string& aType, const string& aName, MEnv* aEnv
 	    }
 	}
     }
+    PFL_DUR_STAT_REC(PEvents::EDurStat_PvdCNode);
     return res;
 }
 

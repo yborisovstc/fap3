@@ -31,6 +31,7 @@ const PindCluster<PindDurStat>::Idata KPindDurStatIdata = {
     "durstat",
     {
 	{PEvents::EDurStat_Trans, "IFC_TRANS", 80000, false},
+	{PEvents::EDurStat_PvdCNode, "IFC_PVD_CRNODE", 80000, false},
 	{PEvents::EDurStat_UInvldIrm, "IFC_U_INV", 80000, false},
 	{PEvents::EDurStat_LaunchRun, "IFC_LNCH_RUN", 80000, false},
 	{PEvents::EDurStat_LaunchUpdate, "IFC_LNCH_UPD", 80000, false},

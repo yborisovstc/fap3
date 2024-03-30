@@ -1002,7 +1002,6 @@ void Des::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
     }
 }
 
-#ifdef DES_LISTS_SWAP
 void Des::update()
 {
     mUpd = true;
@@ -1023,23 +1022,7 @@ void Des::update()
     mActNotified = false;
     mUpd = false;
 }
-#else
-void Des::update()
-{
-    while (!mActive.empty()) {
-	auto comp = mActive.front();
-	try {
-	    comp->update();
-	} catch (std::exception e) {
-	    LOGN(EErr, "Error on update [" + comp->Uid() + "]");
-	}
-	mActive.pop_front();
-    }
-    mActNotified = false;
-}
-#endif
 
-#ifdef DES_LISTS_SWAP
 void Des::confirm()
 {
     for (auto comp : *mUpdated) {
@@ -1051,17 +1034,6 @@ void Des::confirm()
     }
     mUpdNotified = false;
 }
-#else
-void Des::confirm()
-{
-    while (!mUpdated.empty()) {
-	auto comp = mUpdated.front();
-	comp->confirm();
-	mUpdated.pop_front();
-    }
-    mUpdNotified = false;
-}
-#endif
 
 void Des::setUpdated()
 {
@@ -1699,7 +1671,6 @@ DesLauncher::DesLauncher(const string &aType, const string& aName, MEnv* aEnv): 
 }
 
 
-#ifdef DES_LISTS_SWAP
 bool DesLauncher::Run(int aCount, int aIdleCount)
 {
     bool res = true;
@@ -1732,6 +1703,7 @@ bool DesLauncher::Run(int aCount, int aIdleCount)
 	    if (idlecnt == 0) {
 		LOGN(EInfo, "IDLE");
 	    }
+            LOGN(EInfo, "Idle [" + to_string(idlecnt) + "]");
 	    OnIdle();
 	    idlecnt++;
 	}
@@ -1740,49 +1712,6 @@ bool DesLauncher::Run(int aCount, int aIdleCount)
     LOGN(EInfo, "END " + PFL_DUR_STAT_FIELD(PEvents::EDurStat_LaunchRun, PIndFId::EStat_SUM));
     return res;
 }
-#else
-bool DesLauncher::Run(int aCount, int aIdleCount)
-{
-    bool res = true;
-    int cnt = 0;
-    int idlecnt = 0;
-    LOGN(EInfo, "START");
-    PFL_DUR_STAT_START(PEvents::EDurStat_LaunchRun);
-    while (!mStop && (aCount == 0 || cnt < aCount) && (aIdleCount == 0 || idlecnt < aIdleCount)) {
-        mCounter++;
-	if (!mActive.empty()) {
-	    //updateCounter(cnt); // TODO Is it needed?
-	    LOGN(EDbg, ">>> Update [" + to_string(mCounter) + "], count: " + to_string(countOfActive()) +
-		    ", dur: " + PFL_DUR_VALUE(PEvents::EDur_LaunchActive) +
-		    ", inv: " + PFL_DUR_STAT_CNT(PEvents::EDurStat_UInvldIrm));
-	    PFL_DUR_START(PEvents::EDur_LaunchActive);
-	    PFL_DUR_STAT_START(PEvents::EDurStat_LaunchUpdate);
-	    update();
-	    PFL_DUR_STAT_REC(PEvents::EDurStat_LaunchUpdate);
-	    PFL_DUR_STAT_START(PEvents::EDurStat_LaunchConfirm);
-	    if (!mUpdated.empty()) {
-		LOGN(EDbg, ">>> Confirm [" + to_string(mCounter) + "]");
-		//outputCounter(cnt); // TODO Is it needed?
-                confirm();
-            }
-            PFL_DUR_STAT_REC(PEvents::EDurStat_LaunchConfirm);
-            cnt++;
-            idlecnt = 0;
-            PFL_DUR_REC(PEvents::EDur_LaunchActive);
-        } else {
-            if (idlecnt == 0) {
-                LOGN(EInfo, "IDLE");
-            }
-            OnIdle();
-            idlecnt++;
-        }
-        }
-        PFL_DUR_STAT_REC(PEvents::EDurStat_LaunchRun);
-        LOGN(EInfo, "END " + PFL_DUR_STAT_FIELD(PEvents::EDurStat_LaunchRun, PIndFId::EStat_SUM));
-        return res;
-}
-#endif
-
 
 bool DesLauncher::Stop()
 {
@@ -1863,7 +1792,6 @@ bool DesAs::Run(int aCount, int aIdleCount)
             res = false; break;
         }
         cntInit->setContent("", "SB true");
-#ifdef DES_LISTS_SWAP
         if (!mActive->empty()) {
             LOGN(EInfo, ">>> Init update");
             Des::update();
@@ -1872,58 +1800,26 @@ bool DesAs::Run(int aCount, int aIdleCount)
                 Des::confirm();
             }
         }
-#else
-        if (!mActive.empty()) {
-            LOGN(EInfo, ">>> Init update");
-            Des::update();
-            if (!mUpdated.empty()) {
-                LOGN(EInfo, ">>> Init confirm");
-                Des::confirm();
-            }
-        }
-#endif
         cntInit->setContent("", "SB false");
         // Run subsystem
-        while (!mStop && (aCount == 0 || cnt < aCount) && (aIdleCount == 0 || idlecnt < aIdleCount)) {
-#ifdef DES_LISTS_SWAP
-            if (!mActive->empty()) {
-                updateCounter(cnt);
-                LOGN(EInfo, ">>> Update [" + to_string(cnt) + "]");
-                Des::update();
-                if (!mUpdated->empty()) {
-                    LOGN(EInfo, ">>> Confirm [" + to_string(cnt) + "]");
-                    outputCounter(cnt);
-                    Des::confirm();
-                }
-                cnt++;
-            } else {
-                OnIdle();
-                idlecnt++;
+        //while (!mStop && (aCount == 0 || cnt < aCount) && (aIdleCount == 0 || idlecnt < aIdleCount)) {
+        while (!mStop && (aCount == 0 || cnt < aCount) && !mActive->empty()) {
+            //updateCounter(cnt);
+            LOGN(EInfo, ">>> Update [" + to_string(cnt) + "]");
+            Des::update();
+            if (!mUpdated->empty()) {
+                LOGN(EInfo, ">>> Confirm [" + to_string(cnt) + "]");
+                outputCounter(cnt);
+                Des::confirm();
             }
-
-#else
-            if (!mActive.empty()) {
-                updateCounter(cnt);
-                LOGN(EInfo, ">>> Update [" + to_string(cnt) + "]");
-                Des::update();
-                if (!mUpdated.empty()) {
-                    LOGN(EInfo, ">>> Confirm [" + to_string(cnt) + "]");
-                    outputCounter(cnt);
-                    Des::confirm();
-                }
-                cnt++;
-            } else {
-                OnIdle();
-                idlecnt++;
-            }
-#endif
+            cnt++;
         }
     } while (false);
-    return res;
-}
+        return res;
+    }
 
-void DesAs::update()
-{
+    void DesAs::update()
+    {
     PFL_DUR_STAT_START(PEvents::EDurStat_DesAsUpd);
     mRunning = true;
     bool res = Run(0, 1);
