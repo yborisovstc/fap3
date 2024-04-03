@@ -119,15 +119,19 @@ T& ASdc::SdcIap<T>::data(bool aConf)
     template <class T>
 bool ASdc::SdcIap<T>::updateData()
 {
-    T old_data = mUdt;
+    T old_data;
+    if (mHost->isLogLevel(EDbg)) {
+        old_data = mUdt;
+    }
     bool res = mHost->GetInpData<T>(mInpUri, mUdt);
-    if (mUdt != old_data) {
-	LOGNN(mHost, EDbg, "[" + mName + "] Updated: [" + toStr(old_data.mData) + "] -> [" + toStr(mUdt.mData) + "]");
+    if (mHost->isLogLevel(EDbg)) {
+        if (mUdt != old_data) {
+            LOGNN(mHost, EDbg, "[" + mName + "] Updated: [" + toStr(old_data.mData) + "] -> [" + toStr(mUdt.mData) + "]");
+        }
     }
     return res;
 }
 
-/*
 bool ASdc::SdcIapEnb::updateData()
 {
     bool res = false;
@@ -137,6 +141,10 @@ bool ASdc::SdcIapEnb::updateData()
     auto ifaces = vgetu->getIfs<MDVarGet>();
     // We need to interpret not-connecting "enable" in favor of "disable"
     // So using workaround here
+    Sdata<bool> old_data;
+    if (mHost->isLogLevel(EDbg)) {
+        old_data = mUdt;
+    }
     if (ifaces && ifaces->size() >= inpv->pairsCount()) {
 	bool first = true;
 	if (ifaces) for (auto ifc : *ifaces) {
@@ -160,45 +168,10 @@ bool ASdc::SdcIapEnb::updateData()
 	mUdt.mData = false;
 	mUdt.mValid = true;
     }
-    return res;
-}
-*/
-
-bool ASdc::SdcIapEnb::updateData()
-{
-    bool res = false;
-    MNode* inp = mHost->getNode(mInpUri);
-    MVert* inpv = inp ? inp->lIf(inpv) : nullptr;
-    MUnit* vgetu = inp->lIf(vgetu);
-    auto ifaces = vgetu->getIfs<MDVarGet>();
-    // We need to interpret not-connecting "enable" in favor of "disable"
-    // So using workaround here
-    Sdata<bool> old_data = mUdt;
-    if (ifaces && ifaces->size() >= inpv->pairsCount()) {
-	bool first = true;
-	if (ifaces) for (auto ifc : *ifaces) {
-	    MDVarGet* vget = reinterpret_cast<MDVarGet*>(ifc);
-	    const Sdata<bool>* st = vget->DtGet(st);
-	    if (st) {
-		if (first) mUdt = *st;
-		else {
-		    mUdt.mData &= st->mData;
-		    mUdt.mValid &= st->mValid;
-		}
-		first = false;
-		res = true;
-		if (!st->IsValid()) {
-		    break;
-		}
-	    }
-	}
-    } else {
-	// Disconnected "enable"
-	mUdt.mData = false;
-	mUdt.mValid = true;
-    }
-    if (mUdt != old_data) {
-	LOGNN(mHost, EDbg, "[" + mName + "] Updated: [" + toStr(old_data.mData) + "] -> [" + toStr(mUdt.mData) + "]");
+    if (mHost->isLogLevel(EDbg)) {
+        if (mUdt != old_data) {
+            LOGNN(mHost, EDbg, "[" + mName + "] Updated: [" + toStr(old_data.mData) + "] -> [" + toStr(mUdt.mData) + "]");
+        }
     }
     return res;
 }
@@ -209,7 +182,7 @@ bool ASdc::SdcIapg<T>::updateData()
     T old_data = mUdt;
     bool res = mHost->GetInpData<T>(mInpUri, mUdt);
     if (mUdt != old_data) {
-	LOGNN(mHost, EDbg, "[" + mName + "] Updated: [" + old_data.ToString() + "] -> [" + mUdt.ToString() + "]");
+        LOGNN(mHost, EDbg, "[" + mName + "] Updated: [" + old_data.ToString() + "] -> [" + mUdt.ToString() + "]");
     }
     return res;
 }
@@ -337,29 +310,21 @@ bool ASdc::areInpsValid() const
 void ASdc::confirm()
 {
     PFL_DUR_STAT_START(PEvents::EDurStat_ASdcConfirm);
-    /*
-       for (auto iap : mIaps) {
-       if (iap->mUpdated) {
-       iap->confirm();
-       }
-       }
-       */
-    //if (mMag && mIapEnb.data(true).IsValid() && mIapEnb.data(true).mData) { // Ref ds_dcs_sdc_dsgn_oin Solution#1
     if (mMag && areInpsValid() && mIapEnb.data(true).mData) { // Ref ds_dcs_sdc_dsgn_oin Solution#1
-	PFL_DUR_STAT_START(PEvents::EDurStat_ASdcConfState);
-	bool state = getState(true);
-	PFL_DUR_STAT_REC(PEvents::EDurStat_ASdcConfState);
-	if (!state) { // Ref ds_dcs_sdc_dsgn_cc Solution#2
-	    PFL_DUR_STAT_START(PEvents::EDurStat_ASdcConfCtl);
-	    bool res = doCtl();
-	    PFL_DUR_STAT_REC(PEvents::EDurStat_ASdcConfCtl);
-	    if (!res) {
-		LOGN(EErr, "Failed controlling managed agent");
-	    } else {
-		mCdone = true;
-		notifyOutp();
-	    }
-	}
+        PFL_DUR_STAT_START(PEvents::EDurStat_ASdcConfState);
+        bool state = getState(true);
+        PFL_DUR_STAT_REC(PEvents::EDurStat_ASdcConfState);
+        if (!state) { // Ref ds_dcs_sdc_dsgn_cc Solution#2
+            PFL_DUR_STAT_START(PEvents::EDurStat_ASdcConfCtl);
+            bool res = doCtl();
+            PFL_DUR_STAT_REC(PEvents::EDurStat_ASdcConfCtl);
+            if (!res) {
+                LOGN(EErr, "Failed controlling managed agent");
+            } else {
+                mCdone = true;
+                notifyOutp();
+            }
+        }
     }
     mUpdNotified = false;
     PFL_DUR_STAT_REC(PEvents::EDurStat_ASdcConfirm);
@@ -614,7 +579,7 @@ bool ASdcComp::getState(bool aConf)
 {
     bool res = false;
     if (mMag) {
-	Sdata<string> name = mIapName.data(aConf);
+	Sdata<string>& name = mIapName.data(aConf);
 	if (name.IsValid()) {
 	    res = mMag->getComp(name.mData);
 	}
@@ -666,9 +631,9 @@ bool ASdcCompT::getState(bool aConf)
 {
     bool res = false;
     if (mMag) {
-        Sdata<string> name = mIapName.data(aConf);
+        Sdata<string>& name = mIapName.data(aConf);
         if (name.IsValid()) {
-            DGuri targu = mIapTarg.data(aConf);
+            DGuri& targu = mIapTarg.data(aConf);
             if (targu.IsValid()) {
                 MNode* targn = mMag->getNode(targu.mData);
                 if (targn == nullptr) {
@@ -724,7 +689,7 @@ bool ASdcRm::getState(bool aConf)
 {
     bool res = false;
     if (mMag) {
-	Sdata<string> name = mIapName.data(aConf);
+	Sdata<string>& name = mIapName.data(aConf);
 	if (name.IsValid()) {
 	    res = !mMag->getComp(name.mData);
 	}
@@ -775,8 +740,8 @@ bool ASdcConn::getState(bool aConf)
 {
     bool res = false;
     if (mMag) {
-	Sdata<string> v1s = mIapV1.data(aConf);
-	Sdata<string> v2s = mIapV2.data(aConf);
+	Sdata<string>& v1s = mIapV1.data(aConf);
+	Sdata<string>& v2s = mIapV2.data(aConf);
 	if (v1s.IsValid() && v2s.IsValid()) {
 	    MNode* v1n = mMag->getNode(v1s.mData);
 	    MNode* v2n = mMag->getNode(v2s.mData);
@@ -849,9 +814,9 @@ bool ASdcConnT::getState(bool aConf)
 {
     bool res = false;
     if (mMag) {
-	DGuri targu = mIapTarg.data(aConf);
-        DGuri v1s = mIapV1.data(aConf);
-        DGuri v2s = mIapV2.data(aConf);
+	DGuri& targu = mIapTarg.data(aConf);
+        DGuri& v1s = mIapV1.data(aConf);
+        DGuri& v2s = mIapV2.data(aConf);
         if (targu.IsValid()) {
             if (v1s.IsValid() && v2s.IsValid()) {
                 MNode* targ = mMag->getNode(targu.mData);
@@ -934,8 +899,8 @@ bool ASdcDisconn::getState(bool aConf)
 {
     bool res = false;
     if (mMag) {
-	Sdata<string> v1s = mIapV1.data(aConf);
-	Sdata<string> v2s = mIapV2.data(aConf);
+	Sdata<string>& v1s = mIapV1.data(aConf);
+	Sdata<string>& v2s = mIapV2.data(aConf);
 	if (v1s.IsValid() && v2s.IsValid()) {
 	    MNode* v1n = mMag->getNode(v1s.mData);
 	    MNode* v2n = mMag->getNode(v2s.mData);

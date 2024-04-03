@@ -6,7 +6,8 @@
 #include "data.h"
 #include "prof_ids.h"
 
-#define DES_RGS_VERIFY
+// Enable verification of DES active registry. !Affect system performance
+//#define DES_RGS_VERIFY
 
 
 const string KCont_Provided = "Provided";
@@ -477,9 +478,6 @@ void State::update()
     } else {
 	mInpValid = false;
     }
-#ifndef DES_LISTS_SWAP
-    setUpdated();
-#endif
 }
 
 void State::NotifyInpsUpdated()
@@ -1071,7 +1069,6 @@ int Des::countOfActive(bool aLocal) const
     return res;
 }
 
-#ifdef DES_LISTS_SWAP
 void Des::onActivated(MDesSyncable* aComp)
 {
     assert(!mUpd);
@@ -1085,40 +1082,11 @@ void Des::onActivated(MDesSyncable* aComp)
 	mActive->push_back(aComp);
     }
 }
-#else
-void Des::onActivated(MDesSyncable* aComp)
-{
-    setActivated();
-    if (aComp) {
-#ifdef DES_RGS_VERIFY
-	for (auto it = mActive.begin(); it !=  mActive.end(); it++) {
-	    assert(aComp != *it);
-	}
-#endif
-	mActive.push_back(aComp);
-    }
-}
-#endif
 
-#ifdef DES_LISTS_SWAP
 void Des::onUpdated(MDesSyncable* aComp)
 {
 //    setUpdated();
 }
-#else
-void Des::onUpdated(MDesSyncable* aComp)
-{
-    setUpdated();
-    if (aComp) {
-#ifdef DES_RGS_VERIFY
-	for (auto it = mUpdated.begin(); it !=  mUpdated.end(); it++) {
-	    assert(aComp != *it);
-	}
-#endif
-	mUpdated.push_back(aComp);
-    }
-}
-#endif
 
 void Des::RmSyncable(TScblReg& aReg, MDesSyncable* aScbl)
 {
@@ -1132,9 +1100,6 @@ void Des::onOwnedAttached(MOwned* aOwned)
     MDesSyncable* os = osu ? osu->getSif(os) : nullptr;
     if (os) {
 	os->setActivated();
-#ifndef DES_LISTS_SWAP
-	os->setUpdated();
-#endif
     }
 }
 
@@ -1144,13 +1109,8 @@ void Des::onOwnedDetached(MOwned* aOwned)
     MUnit* osu = aOwned->lIf(osu);
     MDesSyncable* os = osu ? osu->getSif(os) : nullptr;
     if (os) {
-#ifdef DES_LISTS_SWAP
 	RmSyncable(*mActive, os);
 	RmSyncable(*mUpdated, os);
-#else
-	RmSyncable(mActive, os);
-	RmSyncable(mUpdated, os);
-#endif
     }
 }
 
@@ -1175,11 +1135,7 @@ void Des::MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const
 {
     if (aLevel & Ifu::EDM_Opt1) {
 	Ifu::offset(aIdt, aOs); aOs << "Active:" << endl;
-#ifdef DES_LISTS_SWAP
 	for (auto item : *mActive) {
-#else
-	for (auto item : mActive) {
-#endif
 	    Ifu::offset(aIdt, aOs); aOs << item->Uid() << endl;
 	    if (aLevel & Ifu::EDM_Recursive) {
 		item->MDesSyncable_doDump(aLevel, aIdt + 4, aOs);
@@ -1188,11 +1144,7 @@ void Des::MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const
     }
     if (aLevel & Ifu::EDM_Opt2) {
 	Ifu::offset(aIdt, aOs); aOs << "Updated:" << endl;
-#ifdef DES_LISTS_SWAP
 	for (auto item : *mUpdated) {
-#else
-	for (auto item : mUpdated) {
-#endif
 	    Ifu::offset(aIdt, aOs); aOs << item->Uid() << endl;
 	    if (aLevel & Ifu::EDM_Recursive) {
 		item->MDesSyncable_doDump(aLevel, aIdt + 4, aOs);
@@ -1337,7 +1289,6 @@ void ADes::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
     }
 }
 
-#ifdef DES_LISTS_SWAP
 void ADes::update()
 {
     mUpd = true;
@@ -1359,23 +1310,7 @@ void ADes::update()
     mActNotified = false;
     mUpd = false;
 }
-#else
-void ADes::update()
-{
-    while (!mActive.empty()) {
-	auto comp = mActive.front();
-	try {
-	    comp->update();
-	} catch (std::exception e) {
-	    LOGN(EErr, "Error on update [" + comp->Uid() + "]");
-	}
-	mActive.pop_front();
-    }
-    mActNotified = false;
-}
-#endif
 
-#ifdef DES_LISTS_SWAP
 void ADes::confirm()
 {
     if (!mPaused) {
@@ -1385,17 +1320,6 @@ void ADes::confirm()
     }
     mUpdNotified = false;
 }
-#else
-void ADes::confirm()
-{
-    while (!mUpdated.empty()) {
-	auto comp = mUpdated.front();
-	comp->confirm();
-	mUpdated.pop_front();
-    }
-    mUpdNotified = false;
-}
-#endif
 
 MDesObserver* ADes::getDesObs()
 {
@@ -1439,7 +1363,6 @@ void ADes::setActivated()
     }
 }
 
-#ifdef DES_LISTS_SWAP
 void ADes::onActivated(MDesSyncable* aComp)
 {
     assert(!mUpd);
@@ -1453,35 +1376,11 @@ void ADes::onActivated(MDesSyncable* aComp)
 	mActive->push_back(aComp);
     }
 }
-#else
-void ADes::onActivated(MDesSyncable* aComp)
-{
-    setActivated();
-    if (aComp) {
-#ifdef DES_RGS_VERIFY
-	for (auto comp : mActive) {
-	    assert(aComp != comp);
-	}
-#endif
-	mActive.push_back(aComp);
-    }
-}
-#endif
 
-#ifdef DES_LISTS_SWAP
 void ADes::onUpdated(MDesSyncable* aComp)
 {
 //    setUpdated();
 }
-#else
-void ADes::onUpdated(MDesSyncable* aComp)
-{
-    setUpdated();
-    if (aComp) {
-	mUpdated.push_back(aComp);
-    }
-}
-#endif
 
 int ADes::countOfActive(bool aLocal) const
 {
@@ -1514,9 +1413,6 @@ void ADes::onObsOwnedAttached(MObservable* aObl, MOwned* aOwned)
     MDesSyncable* ss = MNode::lIf(ss); // self
     if (os && os != ss) {
 	os->setActivated();
-#ifndef DES_LISTS_SWAP
-	os->setUpdated();
-#endif
     }
 }
 
@@ -1531,13 +1427,8 @@ void ADes::onObsOwnedDetached(MObservable* aObl, MOwned* aOwned)
     MDesSyncable* os = osu ? osu->getSif(os) : nullptr;
     MDesSyncable* ss = MNode::lIf(ss); // self
     if (os && os != ss) {
-#ifdef DES_LISTS_SWAP
 	RmSyncable(*mActive, os);
 	RmSyncable(*mUpdated, os);
-#else
-	RmSyncable(mActive, os);
-	RmSyncable(mUpdated, os);
-#endif
     }
 }
 
@@ -1574,11 +1465,7 @@ void ADes::MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const
 {
     if (aLevel & Ifu::EDM_Opt1) {
 	Ifu::offset(aIdt, aOs); aOs << "Active:" << endl;
-#ifdef DES_LISTS_SWAP
 	for (auto item : *mActive) {
-#else
-	for (auto item : mActive) {
-#endif
 	    Ifu::offset(aIdt, aOs); aOs << item->Uid() << endl;
 	    if (aLevel & Ifu::EDM_Recursive) {
 		item->MDesSyncable_doDump(aLevel, aIdt + 4, aOs);
@@ -1587,11 +1474,7 @@ void ADes::MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const
     }
     if (aLevel & Ifu::EDM_Opt2) {
 	Ifu::offset(aIdt, aOs); aOs << "Updated:" << endl;
-#ifdef DES_LISTS_SWAP
 	for (auto item : *mUpdated) {
-#else
-	for (auto item : mUpdated) {
-#endif
 	    Ifu::offset(aIdt, aOs); aOs << item->Uid() << endl;
 	    if (aLevel & Ifu::EDM_Recursive) {
 		item->MDesSyncable_doDump(aLevel, aIdt + 4, aOs);
@@ -2024,21 +1907,11 @@ void DesCtxCsm::update()
 {
     Des::update();
     // TODO init can cause des activation but it is prohibited on update phase, move to confirm
-#ifndef DES_LISTS_SWAP
-    if (!mInitialized) {
-        mInitFailed = !init();
-        if (mInitFailed) {
-            LOGN(EErr, "Init failed");
-        }
-        mInitialized = true;
-    }
-#endif
 }
 
 void DesCtxCsm::confirm()
 {
     Des::confirm();
-#ifdef DES_LISTS_SWAP
     if (!mInitialized) {
         mInitFailed = !init();
         if (mInitFailed) {
@@ -2046,7 +1919,6 @@ void DesCtxCsm::confirm()
         }
         mInitialized = true;
     }
-#endif
 }
 
 

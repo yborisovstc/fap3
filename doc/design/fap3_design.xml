@@ -2097,6 +2097,7 @@
 		</sect4>
 		<sect4><title>Status</title>
 		    <simpara>20240307 Ref <xref linkend="ds_dcs_sl_st_0307"/>: The idea of performance improvement with LSC seems not correct.</simpara>
+		    <simpara>20240403 Kept LSC related changes (not much) and postponed investing into LSC approach atm.</simpara>
 		</sect4>
 		<sect4><title>How to "disable IRM invalidation and DES inp notification"?</title>
 		    <simpara>
@@ -3214,6 +3215,16 @@
 	    </sect3>
 	    <sect3><title>Status</title>
 		<simpara>20230501 Ref <xref linkend="ds_asr_cbscpd"/> for the problem analysis. Implemented interim soluiton <xref linkend="ds_asr_cbscpd_ahoi"/>.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_desopt_ds"><title>Caching of MDesSyncable and MDesObserver to optimize DES sync</title>
+	    <sect3><title>Intro</title>
+		<simpara>
+		    Tried to estimate DES sync overhead - updated and run test Ut_des::test_des_1() "Benchmarking" part.
+		    Testing shows that system ut_des_1_2.chs containing 10 Des layers spends IFC_ST_CONF 5.289839  while system ut_des_1_2r.chs of 1 layer spends 
+		    just IFC_ST_CONF 1.614116. This overhead is caused mostly DES sync. It can be optimized for instance by caching of MDesSyncable and MDesObserver.
+		    Such approach was already use to optimize transitions, ref class FInp "MIfProv* mIfp;"
+		</simpara>
 	    </sect3>
 	</sect2>
     </sect1>

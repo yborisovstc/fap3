@@ -15,8 +15,8 @@ class Ut_des : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_des);
     //CPPUNIT_TEST(test_des_data);
-    /*
     CPPUNIT_TEST(test_des_1);
+    /*
     CPPUNIT_TEST(test_des_ades_1);
     CPPUNIT_TEST(test_des_dmc_1);
     CPPUNIT_TEST(test_des_ifr_inval_1);
@@ -28,12 +28,12 @@ class Ut_des : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(test_des_asr_1);
     */
     //CPPUNIT_TEST(test_des_asr_2);
-    CPPUNIT_TEST(test_des_utl_1);
-    CPPUNIT_TEST(test_des_utl_2);
+    //CPPUNIT_TEST(test_des_utl_1);
+    //CPPUNIT_TEST(test_des_utl_2);
     /*
     CPPUNIT_TEST(test_des_sp_1);
     */
-    CPPUNIT_TEST(test_des_intf);
+    //CPPUNIT_TEST(test_des_intf);
     CPPUNIT_TEST_SUITE_END();
     public:
     virtual void setUp();
@@ -486,11 +486,18 @@ void Ut_des::test_des_1()
     cout << endl << "=== Test of simple DES ===" << endl;
 
 
-#if 0
     // Benchmarking
+    cout << endl << "Benchmarking ut_des_1_2 - many DES layers" << endl;
     constructSystem("ut_des_1_2");
-    mEnv->RunSystem(10000, 2);
+    mEnv->RunSystem(500000, 2);
+    mEnv->profiler()->saveMetrics();
     delete mEnv;
+    cout << endl << "Benchmarking ut_des_1_2r - single DES layer" << endl;
+    constructSystem("ut_des_1_2r");
+    mEnv->RunSystem(500000, 2);
+    mEnv->profiler()->saveMetrics();
+    delete mEnv;
+#if 0
     constructSystem("ut_des_1_3");
     mEnv->RunSystem(10000, 2);
     delete mEnv;

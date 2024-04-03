@@ -15,8 +15,6 @@
 #include "content.h"
 #include "rdatauri.h"
 
-// Experimental oprimization of DES cycle, ref ds_mdc_sw
-#define DES_LISTS_SWAP
 
 // Experimantal. Cp connpoints with ifaces impl. IRM prb solution ds_irm_wprc_uic. Not completed, errors happen.
 //#define DES_CPS_IFC
@@ -443,15 +441,10 @@ class Des: public Syst, public MDesSyncable, public MDesObserver, public MDesAda
     public:
 	static const GUri KControlledUri;
     protected:
-#ifdef DES_LISTS_SWAP
 	TScblReg mSP;     /*!< Active compoments */
 	TScblReg mSQ;    /*!< Updated compoments */
 	TScblReg* mActive = &mSP;
 	TScblReg* mUpdated = &mSQ;
-#else
-	TScblReg mActive;     /*!< Active compoments */
-	TScblReg mUpdated;    /*!< Updated compoments */
-#endif
 	bool mUpdNotified;  //<! Sign of that State notified observers on Update
 	bool mActNotified;  //<! Sign of that State notified observers on Activation
 	bool mUpd = false;
@@ -519,15 +512,10 @@ class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver
 	MNode* ahostNode();
 	MDesObserver* getDesObs();
     protected:
-#ifdef DES_LISTS_SWAP
 	list<MDesSyncable*> mSP;     /*!< Active compoments */
 	list<MDesSyncable*> mSQ;    /*!< Updated compoments */
 	list<MDesSyncable*>* mActive = &mSP;
 	list<MDesSyncable*>* mUpdated = &mSQ;
-#else
-	list<MDesSyncable*> mActive;     /*!< Active compoments */
-	list<MDesSyncable*> mUpdated;    /*!< Updated compoments */
-#endif
 	TObserverCp mOrCp;               /*!< Observer connpoint */ 
 	TAgtCp mAgtCp;                   /*!< Agent connpoint */ 
 	bool mUpdNotified;               //<! Sign of that State notified observers on Update
