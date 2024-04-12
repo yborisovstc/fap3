@@ -1,7 +1,8 @@
 MyRoot : Elem {
     Launcher : DesLauncher {
         Debug.LogLevel = "Info"
-        Ds1 : Des {
+        Ds1 : Syst {
+            Agt : ADes
             Ds1_2 : Des {
                 Ds1_3 : Des {
                     Ds1_4 : Des {
@@ -17,7 +18,7 @@ MyRoot : Elem {
                                                 }
                                                 Inp ~ Tradd : TrAdd2Var (
                                                     Inp ~ St1
-                                                    Inp2 ~ SI_1
+                                                    Inp2 ~ : SI_1
                                                 )
                                             )
                                         }

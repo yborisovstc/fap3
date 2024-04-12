@@ -29,6 +29,7 @@ class Link : public Unit, public MLink, public MObserver
 	// From MObserver
 	virtual string MObserver_Uid() const override { return getUid<MObserver>();}
 	virtual MIface* MObserver_getLif(const char *aType) override { return nullptr;}
+        virtual void onObsOwnerAttached(MObservable* aObl) override {}
 	virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override {}
 	virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override {}
 	virtual void onObsContentChanged(MObservable* aObl, const MContent* aCont) override {}

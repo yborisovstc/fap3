@@ -99,7 +99,7 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	virtual MIface* MOwned_getLif(const char *aType) override;
 	virtual string ownedId() const override { return name();}
 	virtual void deleteOwned() override { delete this;}
-	virtual void onOwnerAttached() override {}
+	virtual void onOwnerAttached() override;
 	virtual void onOwnerDetached() override {}
 	virtual bool isOwner(const MOwner* mOwner) const override;
 	virtual bool setLogLevel(int aLevel) override;
@@ -126,6 +126,8 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	inline MProvider* Provider() const {return mEnv ? mEnv->provider(): nullptr; }
 	void updateNs(TNs& aNs, const ChromoNode& aCnode);
 	bool isNodeOwned(const MNode* aComp) const;
+	/** @brief Gets indicator of node owned indirectly */
+	//bool isNodeOwnedInd(const MNode* aComp) const;
 	MNode* addComp(const string& aType, const string& aName);
 	void notifyChanged();
 	inline bool isLogLevel(int aLevel) const;

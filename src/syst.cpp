@@ -524,7 +524,6 @@ MNode* Socket::GetPin(int aInd)
 MNode* Socket::GetPin(MIfReq::TIfReqCp* aReq)
 {
     MNode* res = nullptr;
-    //MIfReq::TIfReqCp* req = aReq->binded()->firstPair();
     MIfReq::TIfReqCp* req = *aReq->binded()->pairsBegin();
     const MIfProvOwner* reqo = req ? req->provided()->rqOwner() : nullptr;
     const MNode* reqn = reqo ? reqo->lIf(reqn) : nullptr; // Current requestor as node

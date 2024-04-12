@@ -19,6 +19,10 @@
 // Experimantal. Cp connpoints with ifaces impl. IRM prb solution ds_irm_wprc_uic. Not completed, errors happen.
 //#define DES_CPS_IFC
 
+// Experimental: enable using IFR for MDesObserver
+#define DES_IFR_DESOBS
+
+
 /** @brief State Connection point
  * */
 class CpState: public ConnPointu
@@ -301,6 +305,7 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 	bool mInpValid;
 	bool mStDead;     //<! Sign of Stated destructed, needs to avoid callbacks initialted by bases */
 	MNode* mInp;      //<! Input cached
+	MIfProv* mDobsIfProv = nullptr;
 };
 
 
@@ -400,7 +405,8 @@ class Const: public Vertu, public MConnPoint, public MDVarGet, public Cnt::Host
 class Des: public Syst, public MDesSyncable, public MDesObserver, public MDesAdapter, public MDesManageable
 {
     public:
-    using TScblReg = list<MDesSyncable*>;
+    //using TScblReg = list<MDesSyncable*>;
+    using TScblReg = vector<MDesSyncable*>;
     public:
 	static const char* Type() { return "Des";};
 	Des(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
@@ -436,6 +442,8 @@ class Des: public Syst, public MDesSyncable, public MDesObserver, public MDesAda
         virtual string MDesAdapter_Uid() const override { return getUid<MDesAdapter>(); }
         virtual void MDesAdapter_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
         virtual MNode* getMag() override;
+	// From MOwned
+	virtual void onOwnerAttached() override;
     protected:
 	static void RmSyncable(TScblReg& aReg, MDesSyncable* aScbl);
     public:
@@ -449,6 +457,7 @@ class Des: public Syst, public MDesSyncable, public MDesObserver, public MDesAda
 	bool mActNotified;  //<! Sign of that State notified observers on Activation
 	bool mUpd = false;
 	bool mPaused;       //<! Status of pause of DES evolving
+	MIfProv* mDobsIfProv = nullptr;
 };
 
 /** @brief DES agent
@@ -460,6 +469,8 @@ class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver
       public MDesManageable, public MDesAdapter
 {
     public:
+        //using TScblReg = list<MDesSyncable*>;
+        using TScblReg = vector<MDesSyncable*>;
 	using TAgtCp = NCpOnp<MAgent, MAhost>;  /*!< Agent conn point */
 	using TObserverCp = NCpOnp<MObserver, MObservable>;
     public:
@@ -492,6 +503,7 @@ class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver
 	// From MObserver
 	virtual string MObserver_Uid() const  override {return getUid<MObserver>();}
 	virtual MIface* MObserver_getLif(const char *aType) override;
+	virtual void onObsOwnerAttached(MObservable* aObl);
 	virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override;
 	virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override;
 	virtual void onObsContentChanged(MObservable* aObl, const MContent* aCont) override {}
@@ -511,17 +523,19 @@ class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver
 	MNode* ahostGetNode(const GUri& aUri);
 	MNode* ahostNode();
 	MDesObserver* getDesObs();
+	static void RmSyncable(TScblReg& aReg, MDesSyncable* aScbl);
     protected:
-	list<MDesSyncable*> mSP;     /*!< Active compoments */
-	list<MDesSyncable*> mSQ;    /*!< Updated compoments */
-	list<MDesSyncable*>* mActive = &mSP;
-	list<MDesSyncable*>* mUpdated = &mSQ;
+	TScblReg mSP;     /*!< Active compoments */
+	TScblReg mSQ;    /*!< Updated compoments */
+	TScblReg* mActive = &mSP;
+	TScblReg* mUpdated = &mSQ;
 	TObserverCp mOrCp;               /*!< Observer connpoint */ 
 	TAgtCp mAgtCp;                   /*!< Agent connpoint */ 
 	bool mUpdNotified;               //<! Sign of that State notified observers on Update
 	bool mActNotified;               //<! Sign of that State notified observers on Activation
 	bool mUpd = false;
 	bool mPaused;                    //<! Status of pause of DES evolving
+	MIfProv* mDobsIfProv = nullptr;
 };
 
 

@@ -3226,6 +3226,34 @@
 		    Such approach was already use to optimize transitions, ref class FInp "MIfProv* mIfp;"
 		</simpara>
 	    </sect3>
+	    <sect3 id="ds_desopt_ds_picnu"><title>Problem: iface cache is not updated on ADes host attached to its owner.</title>
+		<simpara>
+		    The case is: there is some system with ADes (Widget for instance) that added (created and attached) to some owning system (let's call it OSYS).
+		    Initially (on creation phase) ADes doesn't have MDesObserver resolved because host is not attached yet. But when host gets attached ADes
+		    doesn't update the cache because no IRM invalidation happens.
+		</simpara>
+		<simpara>
+		    How can we invalidate IRM on host attached? Currently there is no such mechanism because natively agent (MAgent) doesn't have methods that 
+		    host can called to notify of host attached. We know that ADes actually is observer of host. But MObserver doesn't have notification of observer owner attached.
+		    Ref
+		    <xref linkend="ds_iss_020"/> for the issue.
+		</simpara>
+	    </sect3>
+	    <sect3><title>Implemented, tested</title>
+		<simpara>Tested on Ut_des::test_des_1() - it shows performance improvement for caching solutin:  </simpara>
+		<programlisting>
+		    Reduced model:                 IFC_ST_CONF    1.706256
+		    Long model w/o solution:       IFC_ST_CONF    5.563124
+		    Long model with solution:      IFC_ST_CONF    3.619542
+		</programlisting>
+		<simpara>But on fap3-vis test ut_avr_syst_drp_1 the solution shows performace degradation</simpara>
+		<programlisting>
+		    | w/o solution:       IFC_ST_CONF    0.251319
+		    |                     IFC_LNCH_RUN   3.978982
+		    | with solution:      IFC_ST_CONF    0.308852
+		    |                     IFC_LNCH_RUN   4.519964
+		</programlisting>
+	    </sect3>
 	</sect2>
     </sect1>
 
@@ -3864,6 +3892,24 @@
 	</sect2>
 	<sect2 id="ds_iss_019"><title>[<glossterm id="iss_019">DS_ISS_019</glossterm>] [Open] 20240126 Mutation "Rename" is not implemented.</title>
 	</sect2>
+	<sect2 id="ds_iss_020"><title>[<glossterm id="iss_020">DS_ISS_020</glossterm>] [Resolved] 20240407 Syst agent architelture gap: agent doesn't receive host owner attached notification.</title>
+	    <sect3><title>Description</title>
+		<simpara>
+		    The main idea of system agent architecure that agent can perform kind of substitution of host in some aspects - implement new ifaces etc. This required that 
+		    host be accessed to agent, so agent can react on the event happened on host. The problem is that currently agent doesn't get all needed notifiaction of host events.
+		    One missing notification is host owner attached event. Ref
+		    <xref linkend="ds_desopt_ds_picnu"/> for one use-case.
+		</simpara>
+	    </sect3>
+	    <sect3><title>Solution</title>
+		<simpara>Added onObsOwnerAttached() method to MObserver iface. This allows agent to catch event of host owner attached to host. </simpara>
+	    </sect3>
+	    <sect3><title>Status</title>
+		<simpara>Opened 20240407</simpara>
+		<simpara>Resolved 20240409</simpara>
+	    </sect3>
+	</sect2>
+
     </sect1>
 
     <sect1><title>Tools</title>

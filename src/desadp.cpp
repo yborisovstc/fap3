@@ -836,9 +836,11 @@ void DAdp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	for (auto iap : mIbs) {
 	    rifDesIobs(*iap, aReq);
 	}
+	/*
     } else if (aName == MDesObserver::Type()) {
 	MIface* iface = MNode_getLif(MDesObserver::Type());
 	addIfpLeaf(iface, aReq);
+	*/
     } else if (aName == MDVarGet::Type()) {
 	for (auto item : mOsts) {
 	    rifDesOsts(*item, aReq);

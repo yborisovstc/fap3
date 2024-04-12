@@ -252,9 +252,33 @@ void ASdc::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	for (auto iap : mIaps) {
 	    rifDesIobs(*iap, aReq);
 	}
+#ifndef DES_IFR_DESOBS
     } else if (aName == MDesObserver::Type()) {
 	MIface* iface = MNode_getLif(MDesObserver::Type());
 	addIfpLeaf(iface, aReq);
+#else
+    } else if (aName == MDesObserver::Type()) {
+        // For owned - self, for self - owning
+        bool bndHasPairs = (aReq->binded()->pairsBegin() != aReq->binded()->pairsEnd());
+        MIfReq::TIfReqCp* req = bndHasPairs ? *aReq->binded()->pairsBegin() : nullptr;
+        const MIfProvOwner* reqo = req ? req->provided()->rqOwner() : nullptr;
+        const MNode* reqn = reqo ? reqo->lIf(reqn) : nullptr; // Current requestor as node
+        const MOwned* reqowd = reqn ? reqn->lIf(reqowd) : nullptr; // Requestor as owned
+        //if (reqn && isNodeOwnedInd(reqn)) {
+        if (reqowd && isOwned(reqowd)) {
+            // Requestor from owned - resolve as self
+            auto* ifc = MNode_getLif(aName.c_str());
+            if (ifc) {
+                addIfpLeaf(ifc, aReq);
+            }
+        } else {
+            // Self requestor or no requestor - redirect to owning
+            MUnit* owru = Owner() ? Owner()->lIf(owru) : nullptr;
+            if (owru) {
+		owru->resolveIface(aName, aReq);
+            }
+        }
+#endif
     } else if (aName == MDVarGet::Type()) {
 	for (auto pap : mPaps) {
 	    rifDesPaps(*pap, aReq);
@@ -333,6 +357,7 @@ void ASdc::confirm()
 void ASdc::setActivated()
 {
     if (!mActNotified) {
+#ifndef DES_IFR_DESOBS
 	MUnit* ownu = Owner()->lIf(ownu);
 	MDesObserver* obs = ownu ? ownu->getSif(obs) : nullptr;
 	if (obs) {
@@ -343,6 +368,23 @@ void ASdc::setActivated()
 	// Status transition potentially depends on any inputs so we need to
 	// propagate notification to output
 	notifyOutp();
+#else
+        if (!mDobsIfProv) {
+            mDobsIfProv = defaultIfProv(MDesObserver::Type());
+        }
+        auto* ifcs = mDobsIfProv->ifaces();
+        auto* obs = ifcs->size() ? reinterpret_cast<MDesObserver*>(ifcs->at(0)) : nullptr;
+	if (obs) {
+	    obs->onActivated(this);
+	    mActNotified = true;
+            // System is activated, this means some inputs are notified of change
+            // Status transition potentially depends on any inputs so we need to
+            // propagate notification to output
+            notifyOutp();
+	} else {
+	    LOGN(EInfo, "setActivated, observer not found");
+        }
+#endif
     }
 }
 

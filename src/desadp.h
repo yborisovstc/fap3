@@ -90,6 +90,7 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 		    // From MObserver
 		    virtual string MObserver_Uid() const {return MObserver::Type();}
 		    virtual MIface* MObserver_getLif(const char *aName) override { return nullptr;}
+                    virtual void onObsOwnerAttached(MObservable* aObl) override {}
 		    virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override {
 			mHost->onMagOwnedAttached(aObl, aOwned);
 		    }
@@ -141,6 +142,7 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 	virtual void onInpUpdated() override;
 	// From MObserver
 	virtual string MObserver_Uid() const {return getUid<MObserver>();}
+        virtual void onObsOwnerAttached(MObservable* aObl) override {}
 	virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override;
 	virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override;
 	virtual void onObsContentChanged(MObservable* aObl, const MContent* aCont) override;
@@ -299,6 +301,7 @@ class DAdp : public Des, public IDesEmbHost
 		// From MObserver
 		virtual string MObserver_Uid() const {return mHost->getUidC<MObserver>("MagObs");}
 		virtual MIface* MObserver_getLif(const char *aName) override { return nullptr;}
+                virtual void onObsOwnerAttached(MObservable* aObl) override {}
 		virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override { }
 		virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override { }
 		virtual void onObsContentChanged(MObservable* aObl, const MContent* aCont) override { }

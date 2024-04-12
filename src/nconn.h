@@ -184,7 +184,7 @@ class MNcpp
 	virtual void dump(int aIdt) const {}
 	/** @brief Gets binded connpoint, in tree node for instance, ref ds_nn_tree_bc */
 	virtual TPair* binded() = 0;
-	const TPair* binded() const { const_cast<const TPair*>(const_cast<TSelf*>(this)->binded());}
+	const TPair* binded() const { return const_cast<const TPair*>(const_cast<TSelf*>(this)->binded());}
 	/** @brief Gets pairs count */
 	virtual int pcount(bool aRcr = false) const = 0;
 	/** @brief Pair by index, for debugging purpore mostly */
@@ -708,7 +708,7 @@ class NTnip : public NCpOnp<TProv, TReq>
 		NTnip* mHost;
 	};
     public:
-	NTnip(TProv* aProvPx, TReq* aReqPx): NCpOnp<TProv, TReq>(aProvPx), mCnode(aReqPx) {}
+	NTnip(TProv* aProvPx, TReq* aReqPx): NCpOnp<TProv, TReq>(aProvPx), mCnode(aReqPx,this) {}
 	// From MNcpp
 	virtual typename TScp::TPair* binded() override { return &mCnode;}
 	virtual bool disconnectAll() override {
@@ -719,7 +719,7 @@ class NTnip : public NCpOnp<TProv, TReq>
 	// Local
 	virtual typename TCnode::TPair* cnodeBinded() { return this;}
     protected:
-	TCnode mCnode;
+	Cnode mCnode;
 };
 
 
@@ -752,6 +752,7 @@ class NTnnp : public NCpOnp<TProv, TReq>
 	    res = res && mCnode.disconnectAll();
 	    return res;
 	}
+	// TODO is it correct solution? why its redirected to binded?
 	virtual int pcount(bool aRcr = false) const override {
 	    return mCnode.pcount(aRcr);
 	}

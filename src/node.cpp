@@ -573,6 +573,21 @@ void Node::onOwnedDetached(MOwned* aOwned)
     }
 }
 
+void Node::onOwnerAttached()
+{
+    // Notify the observers
+    // Cache observers first to avoid iterating broked due to observers change
+    list<MObserver*> cache;
+    for (auto it = mOcp.pairsBegin(); it != mOcp.pairsEnd(); it++) {
+	auto* pair = *it;
+        cache.push_back(pair->provided());
+    }
+    for (auto obs : cache) {
+        obs->onObsOwnerAttached(this);
+    }
+}
+
+
 #ifdef ENABLE_IFC
 MIface* Node::MContentOwner_getLif(const char *aType) 
 {
@@ -778,11 +793,18 @@ MNode* Node::getParent(const GUri& aUri)
     return res;
 }
 
-bool Node::isOwned(const MOwned* mOwned) const
+bool Node::isOwned(const MOwned* aOwned) const
 {
     bool res = false;
-    const MNode*  owndn = mOwned->lIf(owndn);
+    const MNode*  owndn = aOwned->lIf(owndn);
     res = owner()->isConnected(const_cast<MNode*>(owndn)->owned());
+    if (!res) {
+	// Not local owned, try the tree
+	for (auto it = owner()->pairsCBegin(); it != owner()->pairsCEnd() && !res; it++) {
+	    const MOwner* owr = (*it)->binded()->provided();
+	    res = owr->isOwned(aOwned);
+	}
+    }
     return res;
 }
 
@@ -823,6 +845,24 @@ bool Node::isNodeOwned(const MNode* aNode) const
     }
     return res;
 }
+
+// TODO not working because of access owd to owr is prohibited in owning tree. Remove?
+/*
+bool Node::isNodeOwnedInd(const MNode* aNode) const
+{
+    bool res = false;
+    const auto* selfor = const_cast<Node*>(this)->MNode_getLif(MOwner::Type());
+    const MOwned* nodeowd = aNode->lIf(nodeowd);
+    auto* ocp = aNode->owned();
+    auto ocppb = ocp->pairsCBegin();
+    while (!res && ocppb != ocp->pairsCEnd()) {
+	ocp = (*ocppb)->binded();
+	res = (ocp->provided() == selfor);
+	ocppb = ocp->pairsCBegin();
+    }
+    return res;
+}
+*/
 
 void Node::notifyChanged()
 {

@@ -36,6 +36,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
                 void startObserving(const GUri& aTargUri);
                 virtual string MObserver_Uid() const {return mHost->getUidC<MObserver>("NodeCreationObserver");}
                 virtual MIface* MObserver_getLif(const char *aName) override { return nullptr;}
+                virtual void onObsOwnerAttached(MObservable* aObl) override {}
                 virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override;
                 virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override { }
                 virtual void onObsContentChanged(MObservable* aObl, const MContent* aCont) override { }
@@ -168,6 +169,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 		// From MObserver
 		virtual string MObserver_Uid() const { return mHost->getUidC<MObserver>("MagObs");}
 		virtual MIface* MObserver_getLif(const char *aName) override { return nullptr;}
+                virtual void onObsOwnerAttached(MObservable* aObl) override {}
 		virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override {
 		    //mHost->notifyMaps();
 		}
@@ -205,6 +207,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 		// From MObserver
 		virtual string MObserver_Uid() const {return mHost->getUidC<MObserver>(mNuo->name());}
 		virtual MIface* MObserver_getLif(const char *aName) override { return nullptr;}
+                virtual void onObsOwnerAttached(MObservable* aObl) override {}
 		virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override {
 		    if (mMask & EO_ATCH) mHost->notifyOutp();
 		}
@@ -249,6 +252,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 	// From MObserver
 	virtual string MObserver_Uid() const {return getUid<MObserver>();}
 	virtual MIface* MObserver_getLif(const char *aType) override;
+        virtual void onObsOwnerAttached(MObservable* aObl) override {}
 	virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override;
 	virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override;
 	virtual void onObsContentChanged(MObservable* aObl, const MContent* aCont) override;
@@ -287,6 +291,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 	MagObs mMagObs;             /*!< MAG observer */
 	bool mCdone;               /*!<  Sign that controlling was completed, ref ds_dcs_sdc_dsgn_cc */
 	bool mOutCInv = true;      //!< Sign of output data cache invalidated
+	MIfProv* mDobsIfProv = nullptr;
 };
 
 template <typename T>

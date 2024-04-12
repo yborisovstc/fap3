@@ -9,7 +9,6 @@
 // Enable verification of DES active registry. !Affect system performance
 //#define DES_RGS_VERIFY
 
-
 const string KCont_Provided = "Provided";
 const string KCont_Required = "Required";
 
@@ -348,12 +347,20 @@ MIface* State::MOwned_getLif(const char *aType)
 void State::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 {
     if (aName == provName()) {
-	MIface* ifr = MNode_getLif(aName.c_str());
-	if (ifr && !aReq->binded()->provided()->findIface(ifr)) {
-	    addIfpLeaf(ifr, aReq);
-	}
+        MIface* ifr = MNode_getLif(aName.c_str());
+        if (ifr && !aReq->binded()->provided()->findIface(ifr)) {
+            addIfpLeaf(ifr, aReq);
+        }
+#ifdef DES_IFR_DESOBS
+    } else if (aName == MDesObserver::Type()) {
+        // Redirect to owning
+        MUnit* owru = Owner()->lIf(owru);
+        if (owru) {
+            owru->resolveIface(aName, aReq);
+        }
+#endif
     } else {
-	Vertu::resolveIfc(aName, aReq);
+        Vertu::resolveIfc(aName, aReq);
     }
 }
 
@@ -442,12 +449,24 @@ void State::setActivated()
 {
     if (!mActNotified) {
 	// Propagate activation to owner
+#ifndef DES_IFR_DESOBS
 	MUnit* ownu = Owner()->lIf(ownu);
 	MDesObserver* obs = ownu ? ownu->getSif(obs) : nullptr;
 	if (obs) {
 	    obs->onActivated(this);
 	    mActNotified = true;
 	}
+#else
+        if (!mDobsIfProv) {
+            mDobsIfProv = defaultIfProv(MDesObserver::Type());
+        }
+        auto* ifcs = mDobsIfProv->ifaces();
+        auto* obs = ifcs->size() ? reinterpret_cast<MDesObserver*>(ifcs->at(0)) : nullptr;
+	if (obs) {
+	    obs->onActivated(this);
+	    mActNotified = true;
+	}
+#endif
     }
 }
 
@@ -995,8 +1014,31 @@ void Des::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 		ownu->resolveIface(aName, aReq);
 	    }
 	}
+#ifdef DES_IFR_DESOBS
+    } else if (aName == MDesObserver::Type()) {
+        // For owned - self, for self - owning
+        bool bndHasPairs = (aReq->binded()->pairsBegin() != aReq->binded()->pairsEnd());
+        MIfReq::TIfReqCp* req = bndHasPairs ? *aReq->binded()->pairsBegin() : nullptr;
+        const MIfProvOwner* reqo = req ? req->provided()->rqOwner() : nullptr;
+        const MNode* reqn = reqo ? reqo->lIf(reqn) : nullptr; // Current requestor as node
+        const MOwned* reqowd = reqn ? reqn->lIf(reqowd) : nullptr; // Requestor as owned
+        //if (reqn && isNodeOwnedInd(reqn)) {
+        if (reqowd && isOwned(reqowd)) {
+            // Requestor from owned - resolve as self
+            auto* ifc = MNode_getLif(aName.c_str());
+            if (ifc) {
+                addIfpLeaf(ifc, aReq);
+            }
+        } else {
+            // Self requestor or no requestor - redirect to owning
+            MUnit* owru = Owner() ? Owner()->lIf(owru) : nullptr;
+            if (owru) {
+		owru->resolveIface(aName, aReq);
+            }
+        }
+#endif
     } else {
-	Syst::resolveIfc(aName, aReq);
+        Syst::resolveIfc(aName, aReq);
     }
 }
 
@@ -1049,12 +1091,27 @@ void Des::setActivated()
 {
     if (!mActNotified) {
 	// Propagate activation to owner
+#ifndef DES_IFR_DESOBS
 	MUnit* ownu = Owner() ? Owner()->lIf(ownu) : nullptr;
 	MDesObserver* obs = ownu ? ownu->getSif(obs) : nullptr;
 	if (obs) {
 	    obs->onActivated(this);
 	    mActNotified = true;
 	}
+#else
+        if (!mDobsIfProv) {
+            mDobsIfProv = defaultIfProv(MDesObserver::Type());
+        }
+        auto* ifcs = mDobsIfProv->ifaces();
+        auto* obs = ifcs->size() ? reinterpret_cast<MDesObserver*>(ifcs->at(0)) : nullptr;
+        if (obs == this) {
+            LOGN(EDbg, "setActivated, self observer");
+        }
+	if (obs) {
+	    obs->onActivated(this);
+	    mActNotified = true;
+	}
+#endif
     }
 }
 
@@ -1090,7 +1147,15 @@ void Des::onUpdated(MDesSyncable* aComp)
 
 void Des::RmSyncable(TScblReg& aReg, MDesSyncable* aScbl)
 {
+    /*
     aReg.remove(aScbl);
+    */
+    for (auto it = aReg.begin(); it != aReg.end(); it++) {
+	if (*it == aScbl) {
+	    aReg.erase(it);
+	    break;
+	}
+    }
 }
 
 void Des::onOwnedAttached(MOwned* aOwned)
@@ -1201,6 +1266,10 @@ MNode* Des::getMag()
     return getNode(Des::KControlledUri);
 }
 
+void Des::onOwnerAttached()
+{
+    invalidateIrm(MDesObserver::Type());
+}
 
 ///// ADES
 
@@ -1284,6 +1353,31 @@ void ADes::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 		ownu->resolveIface(aName, aReq);
 	    }
 	}
+#ifdef DES_IFR_DESOBS
+    } else if (aName == MDesObserver::Type()) {
+        // For owned - self, for self - owning
+	MIfReq* req = aReq->provided()->tail(); // Initial requestor
+        const MIfProvOwner* reqo = req ? req->rqOwner() : nullptr;
+        const MNode* reqn = reqo ? reqo->lIf(reqn) : nullptr; // Current requestor as node
+	bool isRqLocal = (reqn == ahostNode());
+	if (reqn && !isRqLocal) {
+            // Requestor from owned - resolve as self
+            auto* ifc = MNode_getLif(aName.c_str());
+            if (ifc) {
+                addIfpLeaf(ifc, aReq);
+            }
+        } else {
+            // Self requestor or no requestor - redirect to owning
+            MNode* ahn = ahostNode();
+            if (ahn) {
+                MOwner* ahno = ahn->owned()->pairAt(0) ? (*ahn->owned()->pairsBegin())->provided() : nullptr;
+                MUnit* ahnou = ahno ? ahno->lIf(ahnou) : nullptr;
+                if (ahnou) {
+                    ahnou->resolveIface(aName, aReq);
+                }
+            }
+        }
+#endif
     } else {
 	Unit::resolveIfc(aName, aReq);
     }
@@ -1352,6 +1446,7 @@ void ADes::setUpdated()
 void ADes::setActivated()
 {
     if (!mActNotified) { // Notify owner
+#ifndef DES_IFR_DESOBS
 	MDesObserver* obs = getDesObs();
 	if (obs) {
 	    obs->onActivated(this);
@@ -1360,6 +1455,22 @@ void ADes::setActivated()
 	    //LOGN(EInfo, "setActivated, observer not found");
 	    //obs = getDesObs();
 	}
+#else
+        if (getUriS() == ".testroot.Test.Window.Scene.Drp.CntAgent") {
+	    LOGN(EInfo, "YB1");
+        }
+        if (!mDobsIfProv) {
+            mDobsIfProv = defaultIfProv(MDesObserver::Type());
+        }
+        auto* ifcs = mDobsIfProv->ifaces();
+        auto* obs = ifcs->size() ? reinterpret_cast<MDesObserver*>(ifcs->at(0)) : nullptr;
+	if (obs) {
+	    obs->onActivated(this);
+	    mActNotified = true;
+	} else {
+	    LOGN(EInfo, "setActivated, observer not found");
+        }
+#endif
     }
 }
 
@@ -1416,9 +1527,24 @@ void ADes::onObsOwnedAttached(MObservable* aObl, MOwned* aOwned)
     }
 }
 
-static void RmSyncable(list<MDesSyncable*>& aReg, MDesSyncable* aScbl)
+void ADes::onObsOwnerAttached(MObservable* aObl)
 {
+    invalidateIrm(MDesObserver::Type());
+}
+
+
+void ADes::RmSyncable(TScblReg& aReg, MDesSyncable* aScbl)
+{
+    /*
     aReg.remove(aScbl);
+    */
+    for (auto it = aReg.begin(); it != aReg.end(); it++) {
+	if (*it == aScbl) {
+	    aReg.erase(it);
+	    break;
+	}
+    }
+
 }
 
 void ADes::onObsOwnedDetached(MObservable* aObl, MOwned* aOwned)

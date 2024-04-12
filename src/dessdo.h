@@ -83,6 +83,7 @@ class SdoBase : public CpStateOutp, public MDVarGet, public MObserver, public MD
 		// From MObserver
 		virtual string MObserver_Uid() const {return mHost->getUidC<MObserver>("EagObs");}
 		virtual MIface* MObserver_getLif(const char *aName) override { return nullptr;}
+		virtual void onObsOwnerAttached(MObservable* aObl) override {}
 		virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override {
 		    mHost->onEagOwnedAttached(aOwned);
 		}
@@ -115,6 +116,7 @@ class SdoBase : public CpStateOutp, public MDVarGet, public MObserver, public MD
 	// From MObserver
 	virtual string MObserver_Uid() const {return getUid<MObserver>();}
 	virtual MIface* MObserver_getLif(const char *aType) override {return nullptr;}
+	virtual void onObsOwnerAttached(MObservable* aObl) override {}
 	virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override;
 	virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override;
 	virtual void onObsContentChanged(MObservable* aObl, const MContent* aCont) override;
