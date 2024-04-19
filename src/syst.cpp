@@ -703,6 +703,8 @@ bool Syst::attachAgent(MAgent::TCp* aAgt)
 {
     bool res = false;
     res = mAgtCp.connect(aAgt);
+    // Invalidate MAgent irm nodes first to handle ifaces deps on MAgent
+    invalidateIrm(MAgent::Type());
     invalidateIrm();
     return res;
 }
@@ -711,6 +713,8 @@ bool Syst::detachAgent(MAgent::TCp* aAgt)
 {
     bool res = false;
     res = mAgtCp.disconnect(aAgt);
+    // Invalidate MAgent irm nodes first to handle ifaces deps on MAgent
+    invalidateIrm(MAgent::Type());
     invalidateIrm();
     return res;
 }

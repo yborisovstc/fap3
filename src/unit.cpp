@@ -15,11 +15,35 @@ Unit::Unit(const string &aType, const string &aName, MEnv* aEnv): Node(aType, aN
 
 Unit::~Unit()
 {
+    // We need quite complicated process of removing IFR nodes
+    // The cause is that removing some node can initiate handling by node owner that can in turn
+    // cause other iface resolution. Example: MDesInpObserver causes MDesObserver resolution
+    // TODO: consider avoiding such ifaces deps
+    vector<IfrNode::TPair*> owrs;
+    for (auto item : mIrns) {
+	auto* owr = *(item->pairsBegin());
+        if (owr) {
+            owrs.push_back(owr);
+            // Regular node, set valid and disconnect from owned to keep make node as stub
+            // This will prevent propagating ifaces resolution ahead the node
+            item->binded()->disconnectAll();
+            if (!item->isValid()) {
+                item->setValid(true);
+            }
+        }
+    }
+    // Now invlidate the requestors to clean ifaces caches
+    for (auto owr : owrs) {
+	MIfReq* owrr = owr ? owr->provided() : nullptr;
+	if (owrr) {
+	    owrr->onProvInvalidated();
+	}
+    }
+    // And finally we can remove all IFR nodes
     while (!mIrns.empty()) {
 	auto item = mIrns.back();
-	mIrns.pop_back();
-	item-> disconnectAll();
-	delete item;
+        mIrns.pop_back();
+        delete item;
     }
 }
 
@@ -148,18 +172,10 @@ void Unit::invalidateIrm()
 	    LOGN(EErr, "Large IFR tree invalidated: " + to_string(pcount));
 	}
 #endif
-	// We need to invalidate all first and then to update.
-	// This is because there can be deps one iface from another
-	// example is dep of some iface on MAgent
+        // Assuming that ifaces are independent! All deps need to be handled in heir
 	for (auto node : mIrns) {
 	    if (node->isValid()) {
 		node->setValid(false);
-	    }
-	}
-	// Keep ifaces actual, ref ds_desopt_uic
-	for (auto node : mIrns) {
-	    if (!node->isValid()) {
-		node->ifaces();
 	    }
 	}
 	PFL_DUR_STAT_REC(PEvents::EDurStat_UInvldIrm);
@@ -172,29 +188,24 @@ void Unit::invalidateIrm(const string& aIfcName)
     for (auto node : mIrns) {
 	if (node->isValid() && node->name() == aIfcName) {
 	    node->setValid(false);
-	    node->ifaces();
 	}
     }
-    /*
-    for (auto node : mIrns) {
-	if (node->name() == aIfcName && !node->isValid()) {
-	    node->ifaces();
-	}
-    }
-    */
     PFL_DUR_STAT_REC(PEvents::EDurStat_UInvldIrm);
 }
 
 void Unit::onIfpDisconnected(MIfProv* aProv)
 {
+    bool found = false;
     for (auto it = mIrns.begin(); it != mIrns.end(); it++) {
 	if ((*it)->provided() == aProv) {
 	    auto cmp = *it;
 	    mIrns.erase(it);
+            found = true;
 	    delete cmp;
 	    break;
 	}
     }
+    assert(found);
     //delete aProv;
 }
 

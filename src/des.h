@@ -21,6 +21,8 @@
 
 // Experimental: enable using IFR for MDesObserver
 #define DES_IFR_DESOBS
+// Experimental: enable using IFR for MDesInpObserver
+#define DES_IFR_INPOBS
 
 
 /** @brief State Connection point
@@ -306,6 +308,7 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 	bool mStDead;     //<! Sign of Stated destructed, needs to avoid callbacks initialted by bases */
 	MNode* mInp;      //<! Input cached
 	MIfProv* mDobsIfProv = nullptr;
+	MIfProv* mInpobsIfProv = nullptr;
 };
 
 

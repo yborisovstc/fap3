@@ -7,7 +7,7 @@
 #include "prof_ids.h"
 
 // Enable verification of DES active registry. !Affect system performance
-//#define DES_RGS_VERIFY
+#define DES_RGS_VERIFY
 
 const string KCont_Provided = "Provided";
 const string KCont_Required = "Required";
@@ -359,8 +359,30 @@ void State::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
             owru->resolveIface(aName, aReq);
         }
 #endif
+#ifdef DES_IFR_INPOBS
+    } else if (aName == MDesInpObserver::Type()) {
+        // For owned - self, for self - owning
+        bool bndHasPairs = (aReq->binded()->pairsBegin() != aReq->binded()->pairsEnd());
+        MIfReq::TIfReqCp* req = bndHasPairs ? *aReq->binded()->pairsBegin() : nullptr;
+        const MIfProvOwner* reqo = req ? req->provided()->rqOwner() : nullptr;
+        const MNode* reqn = reqo ? reqo->lIf(reqn) : nullptr; // Current requestor as node
+        const MOwned* reqowd = reqn ? reqn->lIf(reqowd) : nullptr; // Requestor as owned
+        if (reqowd && isOwned(reqowd)) {
+            // Requestor from owned - resolve as self
+            auto* ifc = MNode_getLif(aName.c_str());
+            if (ifc) {
+                addIfpLeaf(ifc, aReq);
+            }
+	} else {
+	    // Self requestor or no requestor - redirect to pairs
+	    for (auto pair : mPairs) {
+		MUnit* pe = pair->lIf(pe);
+		pe->resolveIface(aName, aReq);
+	    }
+	}
+#endif
     } else {
-        Vertu::resolveIfc(aName, aReq);
+	Vertu::resolveIfc(aName, aReq);
     }
 }
 
@@ -502,6 +524,16 @@ void State::update()
 void State::NotifyInpsUpdated()
 {
     //LOGN(EErr, "NotifyInpsUpdated");
+#ifdef DES_IFR_INPOBS
+    if (!mInpobsIfProv) {
+	mInpobsIfProv = defaultIfProv(MDesInpObserver::Type());
+    }
+    auto* ifcs = mInpobsIfProv->ifaces();
+    for (auto ifc : *ifcs) {
+	auto* obs = reinterpret_cast<MDesInpObserver*>(ifc);
+	obs->onInpUpdated();
+    }
+#else
     for (auto pair : mPairs) {
 	MUnit* pe = pair->lIf(pe);
 	auto ifcs = pe->getTIfs<MDesInpObserver>();
@@ -509,6 +541,7 @@ void State::NotifyInpsUpdated()
 	    obs->onInpUpdated();
 	}
     }
+#endif
 }
 
 void State::confirm()
@@ -1468,7 +1501,7 @@ void ADes::setActivated()
 	    obs->onActivated(this);
 	    mActNotified = true;
 	} else {
-	    LOGN(EInfo, "setActivated, observer not found");
+	    //LOGN(EInfo, "setActivated, observer not found");
         }
 #endif
     }
@@ -1553,6 +1586,7 @@ void ADes::onObsOwnedDetached(MObservable* aObl, MOwned* aOwned)
     MDesSyncable* os = osu ? osu->getSif(os) : nullptr;
     MDesSyncable* ss = MNode::lIf(ss); // self
     if (os && os != ss) {
+	LOGN(EInfo, "Removed syncable " + os->Uid());
 	RmSyncable(*mActive, os);
 	RmSyncable(*mUpdated, os);
     }
