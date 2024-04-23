@@ -4,6 +4,8 @@
 #include "data.h"
 #include "prof_ids.h"
 
+// Experimental: enable using IFR for MDesInpObserver
+#define DEST_IFR_INPOBS
 
 TrBase::TrBase(const string &aType, const string& aName, MEnv* aEnv): CpStateOutp(aType, aName, aEnv), mCInv(true)
 {
@@ -50,7 +52,6 @@ void TrBase::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	// Enable MDesInpObserver resolution for inputs only
 	// We cannot resolve inputs atm (it requires inputs registry)
 	// So checking components instead of inputs
-	//MIfReq::TIfReqCp* req = aReq->binded()->firstPair();
 	MIfReq::TIfReqCp* req = *aReq->binded()->pairsBegin();
 	if (req) {
 	    const MIfProvOwner* reqo = req->provided()->rqOwner();
@@ -59,7 +60,15 @@ void TrBase::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 		ifr = dynamic_cast<MDesInpObserver*>(this);
 		addIfpLeaf(ifr, aReq);
 	    }
-	}
+#ifdef DEST_IFR_INPOBS
+	} else {
+            // Local request, redirect to pairs
+            for (auto pair : mPairs) {
+                MUnit* pu = pair->lIf(pu);
+                pu->resolveIface(aName, aReq);
+            }
+#endif
+        }
     } else {
 	CpStateOutp::resolveIfc(aName, aReq);
     }
@@ -69,6 +78,17 @@ void TrBase::onInpUpdated()
 {
     // Invalidate data cache
     mCInv = true;
+#ifdef DEST_IFR_INPOBS
+    // Notify inputs
+    if (!mIobsIfProv) {
+        mIobsIfProv = defaultIfProv(MDesInpObserver::Type());
+    }
+    auto* ifcs = mIobsIfProv->ifaces();
+    for (auto ifc : *ifcs) {
+	auto* obs = reinterpret_cast<MDesInpObserver*>(ifc);
+	obs->onInpUpdated();
+    }
+#else
     // Redirect to call to pairs
     for (auto pair : mPairs) {
 	MUnit* pe = pair->lIf(pe);
@@ -77,6 +97,7 @@ void TrBase::onInpUpdated()
 	    ifc->onInpUpdated();
 	}
     }
+#endif
 }
 
 Func::TInpIc* TrBase::GetInps(FInp& aInp)
@@ -91,7 +112,7 @@ Func::TInpIc* TrBase::GetInps(FInp& aInp)
 	PFL_DUR_STAT_REC(PEvents::EDurStat_Tmp2);
     } else {
 	PFL_DUR_STAT_START(PEvents::EDurStat_Tmp);
-	res = aInp.mIfp ? aInp.mIfp->ifaces() : nullptr;
+	res = aInp.mIfp->ifaces();
 	PFL_DUR_STAT_REC(PEvents::EDurStat_Tmp);
     }
     if (!res || res->size() == 0) {

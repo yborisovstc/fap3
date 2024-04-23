@@ -56,6 +56,7 @@ class TrBase: public CpStateOutp, public MDVarGet, protected MDesInpObserver
 	void AddInput(const string& aName);
 	bool mCInv;              //!< Sign of data cache invalidated
 	const DtBase* mResp = nullptr;
+	MIfProv* mIobsIfProv = nullptr;
 };
 
 template <class T> inline const T* TrBase::GetInpData(FInp& aInp, const T* aData)
