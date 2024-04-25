@@ -494,6 +494,7 @@ void State::setActivated()
 
 void State::update()
 {
+    PFL_DUR_STAT_START(PEvents::EDurStat_StUpdate);
     mActNotified = false;
     string dtype;
     if (mCdata) {
@@ -519,6 +520,7 @@ void State::update()
     } else {
 	mInpValid = false;
     }
+    PFL_DUR_STAT_REC(PEvents::EDurStat_StUpdate);
 }
 
 void State::NotifyInpsUpdated()
@@ -1489,9 +1491,6 @@ void ADes::setActivated()
 	    //obs = getDesObs();
 	}
 #else
-        if (getUriS() == ".testroot.Test.Window.Scene.Drp.CntAgent") {
-	    LOGN(EInfo, "YB1");
-        }
         if (!mDobsIfProv) {
             mDobsIfProv = defaultIfProv(MDesObserver::Type());
         }

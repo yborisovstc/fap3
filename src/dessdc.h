@@ -53,6 +53,8 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 	 * */
 	class SdcIapb: public MDesInpObserver {
 	    public:
+            using TInpIfcs = vector<MDVarGet*>;
+	    public:
 		SdcIapb(const string& aName, ASdc* aHost, const string& aInpUri);
 		string getInpUri() const { return mInpUri;}
 		// From MDesInpObserver
@@ -62,10 +64,13 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 		// Local
 		virtual bool isDataValid() const = 0;
 		virtual bool updateData() = 0;
+                TInpIfcs* getInps();
 	    public:
 		ASdc* mHost;
 		string mName;    /*!< Iap name */
 		string mInpUri;  /*!< Input URI */
+                MIfProv* mIfp = nullptr;   //<! Interface provider, not owned
+                bool mUpdated = false;
 	};
 
  	/** @brief Input access point operating with Sdata
@@ -80,8 +85,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 		T& data(bool aConf = true);
 		bool isDataValid() const override { return mCdt.IsValid();}
 	    public:
-		T mUdt;  /*!< Updated data */
-		T& mCdt = mUdt;  /*!< Confirmed data */
+		T mCdt;  /*!< Data */
 	};
 
  	/** @brief Input "Enable" access point
@@ -92,23 +96,6 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 		SdcIapEnb(const string& aName, ASdc* aHost, const string& aInpUri): SdcIap<Sdata<bool>>(aName, aHost, aInpUri) {}
 		// Local
 		virtual bool updateData();
-	};
-
-
- 	/** @brief Input access point operating with generic data
-	 * @param  T  data type 
-	 * */
-	template <class T>
-	class SdcIapg: public SdcIapb {
-	    public:
-		SdcIapg(const string& aName, ASdc* aHost, const string& aInpUri): SdcIapb(aName, aHost, aInpUri) {}
-		// Local
-		virtual bool updateData() override;
-		T& data(bool aConf = true);
-		bool isDataValid() const override { return mCdt.IsValid();}
-	    public:
-		T mUdt;  /*!< Updated data */
-		T& mCdt = mUdt;  /*!< Confirmed data */
 	};
 
 	/** @brief Parameter access point base
@@ -126,6 +113,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 		string mName;
 		ASdc* mHost;
 		string mCpUri;  /*!< Output URI */
+                MIfProv* mInpobsIfProv = nullptr;
 	};
 
 	/** @brief Parameter access point, using Sdata
@@ -265,7 +253,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
     protected:
 	bool rifDesIobs(SdcIapb& aIap, MIfReq::TIfReqCp* aReq);
 	bool rifDesPaps(SdcPapb& aPap, MIfReq::TIfReqCp* aReq);
-	template<typename T> bool GetInpSdata(const string aInpUri, T& aRes);
+        template<typename T> bool GetInpSdata(const string aInpUri, T& aRes);
 	template<typename T> bool GetInpData(const string aInpUri, T& aRes);
 	void getOut(Sdata<bool>& aData);
 	// Utilities
@@ -317,7 +305,7 @@ class ASdcMut : public ASdc
 	bool doCtl() override;
     protected:
 	ASdc::SdcIap<Sdata<string>> mIapTarg; /*!< "Target" input access point, URI */
-	ASdc::SdcIapg<DChr2> mIapMut; /*!< "Mutation" input access point, Chromo2 */
+	ASdc::SdcIap<DChr2> mIapMut; /*!< "Mutation" input access point, Chromo2 */
 	bool mMutApplied; /*!< Indicatio of mut has been applied successfully */
 };
 
@@ -356,7 +344,7 @@ class ASdcCompT : public ASdc
 	virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override;
 	virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override;
     protected:
-	ASdc::SdcIapg<DGuri> mIapTarg; /*!< "Target" input access point */
+	ASdc::SdcIap<DGuri> mIapTarg; /*!< "Target" input access point */
 	ASdc::SdcIap<Sdata<string>> mIapName; /*!< "Name" input access point */
 	ASdc::SdcIap<Sdata<string>> mIapParent; /*!< "Parent" input access point */
 };
@@ -412,9 +400,9 @@ class ASdcConnT : public ASdc
 	virtual bool getState(bool aConf = false) override;
 	bool doCtl() override;
     protected:
-	ASdc::SdcIapg<DGuri> mIapTarg; /*!< "Target" input access point */
-	ASdc::SdcIapg<DGuri> mIapV1; /*!< "V1" input access point */
-	ASdc::SdcIapg<DGuri> mIapV2; /*!< "V2" input access point */
+	ASdc::SdcIap<DGuri> mIapTarg; /*!< "Target" input access point */
+	ASdc::SdcIap<DGuri> mIapV1; /*!< "V1" input access point */
+	ASdc::SdcIap<DGuri> mIapV2; /*!< "V2" input access point */
         NodeCreationObserver mNco1;
         NodeCreationObserver mNco2;
 };

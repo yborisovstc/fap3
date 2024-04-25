@@ -22,12 +22,15 @@ namespace PEvents {
 	EDurStat_DesRfInpObs = 2001,       // Refresh input observers
 	EDurStat_DesAsUpd = 2002,
 	EDurStat_StConfirm = 3001,
-	EDurStat_AMNAdpConfirm = 3002,
+	EDurStat_StUpdate = 3002,
+	EDurStat_AMNAdpConfirm = 3003,
 	EDurStat_DAdpIAP = 3006,
 	EDurStat_ASdcConfirm = 3100,
 	EDurStat_ASdcConfState = 3101,
-	EDurStat_ASdcConfCtl = 3102,
+	EDurStat_ASdcCtlConn = 3102,
 	EDurStat_ASdcCtlCmp = 3103,
+	EDurStat_ASdcCtlMut = 3104,
+	EDurStat_ASdcUpdate = 3105,
 	EDurStat_Clbr = 3200,              // Profiler calibration
 	EDurStat_Tmp = 3201,              // Temporary measuring
 	EDurStat_Tmp2 = 3202,              // Temporary measuring 2

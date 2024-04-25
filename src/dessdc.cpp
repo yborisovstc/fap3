@@ -96,15 +96,26 @@ ASdc::SdcIapb::SdcIapb(const string& aName, ASdc* aHost, const string& aInpUri):
     mHost->registerIap(this);
 }
 
+ASdc::SdcIapb::TInpIfcs* ASdc::SdcIapb::getInps()
+{
+    MIfProv::TIfaces* res = nullptr;
+    if (!mIfp) {
+	MNode* inp = mHost->getNode(mInpUri);
+	MUnit* inpu = inp ? inp->lIf(inpu) : nullptr;
+	mIfp = inpu ? inpu->defaultIfProv(MDVarGet::Type()) : nullptr;
+    }
+    res = mIfp->ifaces();
+    if (!res || res->size() == 0) {
+	LOGNN(mHost, EDbg, "Cannot get input [" + mInpUri + "]");
+    }
+    return reinterpret_cast<TInpIfcs*>(res);
+}
+
 ASdc::SdcPapb::SdcPapb(const string& aName, ASdc* aHost, const string& aCpUri):
     mName(aName), mHost(aHost), mCpUri(aCpUri)
 {
     mHost->registerPap(this);
 }
-
-template <typename T> string toStr(const T& aData) { return to_string(aData); }
-
-string toStr(const string& aData) { return aData;}
 
     template <class T>
 T& ASdc::SdcIap<T>::data(bool aConf)
@@ -112,90 +123,76 @@ T& ASdc::SdcIap<T>::data(bool aConf)
     if (aConf) return mCdt;
     else {
 	updateData();
-	return mUdt;
+	return mCdt;
     }
 }
 
     template <class T>
 bool ASdc::SdcIap<T>::updateData()
 {
-    T old_data;
-    if (mHost->isLogLevel(EDbg)) {
-        old_data = mUdt;
+    if (mUpdated) {
+	//LOGNN(mHost, EDbg, "[" + mName + "] updateData with mUpdated");
+	return true;
     }
-    bool res = mHost->GetInpData<T>(mInpUri, mUdt);
-    if (mHost->isLogLevel(EDbg)) {
-        if (mUdt != old_data) {
-            LOGNN(mHost, EDbg, "[" + mName + "] Updated: [" + toStr(old_data.mData) + "] -> [" + toStr(mUdt.mData) + "]");
-        }
+    bool res = false;
+    T old_data;
+    bool dbg = mHost->isLogLevel(EDbg);
+    if (dbg) {
+	old_data = mCdt;
+    }
+    auto* ifcs = getInps();
+    if (ifcs->size() == 1) {
+	const T* data = ifcs->at(0)->DtGet(data);
+	if (data) {
+	    mCdt = *data;
+	    res = data->IsValid();
+	}
+	if (dbg) {
+	    if (mCdt != old_data) {
+		LOGNN(mHost, EDbg, "[" + mName + "] Updated: [" + old_data.ToString() + "] -> [" + mCdt.ToString() + "]");
+	    }
+	}
+    } else if (ifcs->size() > 1) {
+	LOGNN(mHost, EDbg, "[" + mName + "] More than one inputs on " + mInpUri);
     }
     return res;
 }
 
 bool ASdc::SdcIapEnb::updateData()
 {
+    if (mUpdated) return true;
     bool res = false;
-    MNode* inp = mHost->getNode(mInpUri);
-    MVert* inpv = inp ? inp->lIf(inpv) : nullptr;
-    MUnit* vgetu = inp->lIf(vgetu);
-    auto ifaces = vgetu->getIfs<MDVarGet>();
-    // We need to interpret not-connecting "enable" in favor of "disable"
-    // So using workaround here
+    bool dbg = mHost->isLogLevel(EDbg);
     Sdata<bool> old_data;
-    if (mHost->isLogLevel(EDbg)) {
-        old_data = mUdt;
+    if (dbg) {
+	old_data = mCdt;
     }
-    if (ifaces && ifaces->size() >= inpv->pairsCount()) {
-	bool first = true;
-	if (ifaces) for (auto ifc : *ifaces) {
-	    MDVarGet* vget = reinterpret_cast<MDVarGet*>(ifc);
-	    const Sdata<bool>* st = vget->DtGet(st);
-	    if (st) {
-		if (first) mUdt = *st;
-		else {
-		    mUdt.mData &= st->mData;
-		    mUdt.mValid &= st->mValid;
-		}
-		first = false;
-		res = true;
-		if (!st->IsValid()) {
-		    break;
-		}
+    auto* ifaces = getInps();
+    bool first = true;
+    for (auto ifc : *ifaces) {
+	const Sdata<bool>* st = ifc->DtGet(st);
+	if (st) {
+	    if (first) mCdt = *st;
+	    else {
+		mCdt.mData &= st->mData;
+		mCdt.mValid &= st->mValid;
+	    }
+	    first = false;
+	    res = true;
+	    if (!st->IsValid()) {
+		break;
 	    }
 	}
-    } else {
-	// Disconnected "enable"
-	mUdt.mData = false;
-	mUdt.mValid = true;
     }
-    if (mHost->isLogLevel(EDbg)) {
-        if (mUdt != old_data) {
-            LOGNN(mHost, EDbg, "[" + mName + "] Updated: [" + toStr(old_data.mData) + "] -> [" + toStr(mUdt.mData) + "]");
-        }
+    if (dbg) {
+	if (mCdt != old_data) {
+	    LOGNN(mHost, EDbg, "[" + mName + "] Updated: [" + old_data.ToString() + "] -> [" + mCdt.ToString() + "]");
+	}
     }
+    mUpdated = true;
     return res;
 }
 
-    template <class T>
-bool ASdc::SdcIapg<T>::updateData()
-{
-    T old_data = mUdt;
-    bool res = mHost->GetInpData<T>(mInpUri, mUdt);
-    if (mUdt != old_data) {
-        LOGNN(mHost, EDbg, "[" + mName + "] Updated: [" + old_data.ToString() + "] -> [" + mUdt.ToString() + "]");
-    }
-    return res;
-}
-
-    template <class T>
-T& ASdc::SdcIapg<T>::data(bool aConf)
-{ 
-    if (aConf) return mCdt;
-    else {
-	updateData();
-	return mUdt;
-    }
-}
 
 
 ASdc::ASdc(const string &aType, const string& aName, MEnv* aEnv): Unit(aType, aName, aEnv),
@@ -203,7 +200,6 @@ ASdc::ASdc(const string &aType, const string& aName, MEnv* aEnv): Unit(aType, aN
     mOapOut("Outp", this, K_CpUri_Outp, [this](Sdata<bool>& aData) {getOut(aData);}),
     mMagObs(this), mCdone(false)
 {
-    mIapEnb.mUdt = false;
     mIapEnb.mCdt = false;
 }
 
@@ -306,18 +302,16 @@ void ASdc::addOutput(const string& aName)
 
 void ASdc::update()
 {
+    PFL_DUR_STAT_START(PEvents::EDurStat_ASdcUpdate);
     for (auto iap : mIaps) {
-	    iap->updateData();
-	    /*
-	if (iap->mActivated) {
-	    iap->update();
-	}
-	*/
+	iap->updateData();
+	iap->mUpdated = true;
     }
     mActNotified = false;
 #ifndef DES_LISTS_SWAP
     setUpdated();
 #endif
+    PFL_DUR_STAT_REC(PEvents::EDurStat_ASdcUpdate);
 }
 
 bool ASdc::areInpsValid() const
@@ -339,9 +333,7 @@ void ASdc::confirm()
         bool state = getState(true);
         PFL_DUR_STAT_REC(PEvents::EDurStat_ASdcConfState);
         if (!state) { // Ref ds_dcs_sdc_dsgn_cc Solution#2
-            PFL_DUR_STAT_START(PEvents::EDurStat_ASdcConfCtl);
             bool res = doCtl();
-            PFL_DUR_STAT_REC(PEvents::EDurStat_ASdcConfCtl);
             if (!res) {
                 LOGN(EErr, "Failed controlling managed agent");
             } else {
@@ -351,6 +343,9 @@ void ASdc::confirm()
         }
     }
     mUpdNotified = false;
+    for (auto iap : mIaps) {
+	iap->mUpdated = false;
+    }
     PFL_DUR_STAT_REC(PEvents::EDurStat_ASdcConfirm);
 }
 
@@ -377,13 +372,13 @@ void ASdc::setActivated()
 	if (obs) {
 	    obs->onActivated(this);
 	    mActNotified = true;
-            // System is activated, this means some inputs are notified of change
-            // Status transition potentially depends on any inputs so we need to
-            // propagate notification to output
-            notifyOutp();
 	} else {
-	    LOGN(EInfo, "setActivated, observer not found");
-        }
+	    //LOGN(EInfo, "setActivated, observer not found");
+	}
+	// System is activated, this means some inputs are notified of change
+	// Status transition potentially depends on any inputs so we need to
+	// propagate notification to output
+	notifyOutp();
 #endif
     }
 }
@@ -522,13 +517,6 @@ template<typename T> bool ASdc::GetInpData(const string aInpUri, T& aRes)
     bool res = false;
     MNode* inp = getNode(aInpUri);
     if (inp) {
-	/*
-	   T data;
-	   res =  GetGData(inp, data);
-	   if (res) {
-	   aRes = data;
-	   }
-	   */
 	GetGData(inp, aRes);
     } else {
 	LOGN(EDbg, "Cannot get input [" + aInpUri + "]");
@@ -553,11 +541,14 @@ bool ASdc::registerPap(SdcPapb* aPap)
 
 void ASdc::SdcPapb::NotifyInpsUpdated()
 {
-    MNode* cp = mHost->getNode(mCpUri);
-    MUnit* cpu = cp ? cp->lIf(cpu) : nullptr;
-    auto ifaces = cpu->getIfs<MDesInpObserver>();
-    if (ifaces) for (auto ifc : *ifaces) {
-	MDesInpObserver* ifco = dynamic_cast<MDesInpObserver*>(ifc);
+    if (!mInpobsIfProv) {
+	MNode* cp = mHost->getNode(mCpUri);
+	MUnit* cpu = cp ? cp->lIf(cpu) : nullptr;
+	mInpobsIfProv = cpu->defaultIfProv(MDesInpObserver::Type());
+    }
+    auto* ifcs = mInpobsIfProv->ifaces();
+    for (auto ifc : *ifcs) {
+	MDesInpObserver* ifco = reinterpret_cast<MDesInpObserver*>(ifc);
 	if (ifco) {
 	    ifco->onInpUpdated();
 	}
@@ -589,6 +580,7 @@ bool ASdcMut::getState(bool aConf)
 
 bool ASdcMut::doCtl()
 {
+    PFL_DUR_STAT_START(PEvents::EDurStat_ASdcCtlMut);
     bool res = false;
     MNode* targn = mMag->getNode(mIapTarg.mCdt.mData);
     if (!targn) {
@@ -603,6 +595,7 @@ bool ASdcMut::doCtl()
 	LOGN(EInfo, "Managed agent is mutated  [" + muts + "]");
 	res = true;
     }
+    PFL_DUR_STAT_REC(PEvents::EDurStat_ASdcCtlMut);
     return res;
 }
 
@@ -634,19 +627,17 @@ bool ASdcComp::getState(bool aConf)
 bool ASdcComp::doCtl()
 {
     bool res = false;
- //   PFL_DUR_STAT_START(PEvents::EDurStat_ASdcCtlCmp);
+    PFL_DUR_STAT_START(PEvents::EDurStat_ASdcCtlCmp);
     TNs ns; MutCtx mutctx(NULL, ns);
     MChromo* chr = mEnv->provider()->createChromo();
     TMut mut(ENt_Node, ENa_Id, mIapName.mCdt.mData, ENa_Parent, mIapParent.mCdt.mData);
     chr->Root().AddChild(mut);
-    PFL_DUR_STAT_START(PEvents::EDurStat_ASdcCtlCmp);
     mMag->mutate(chr->Root(), false, mutctx, true);
-    PFL_DUR_STAT_REC(PEvents::EDurStat_ASdcCtlCmp);
     delete chr;
     string muts = mut.ToString();
     LOGN(EInfo, "Managed agent is mutated [" + muts + "]");
     res = true;
- //   PFL_DUR_STAT_REC(PEvents::EDurStat_ASdcCtlCmp);
+    PFL_DUR_STAT_REC(PEvents::EDurStat_ASdcCtlCmp);
     return res;
 }
 
@@ -815,6 +806,7 @@ bool ASdcConn::getState(bool aConf)
 
 bool ASdcConn::doCtl()
 {
+    PFL_DUR_STAT_START(PEvents::EDurStat_ASdcCtlConn);
     bool res = false;
     MNode* v1n = mMag->getNode(mIapV1.mCdt.mData);
     MNode* v2n = mMag->getNode(mIapV2.mCdt.mData);
@@ -841,6 +833,7 @@ bool ASdcConn::doCtl()
 	} else {
 	    LOGN(EInfo, "CP doesn't exist: [" + (v2n ? mIapV1.mCdt.mData : mIapV2.mCdt.mData) + "]");
 	}
+    PFL_DUR_STAT_REC(PEvents::EDurStat_ASdcCtlConn);
     return res;
 }
 
