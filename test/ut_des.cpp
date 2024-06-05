@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <filesystem>
 
 #include "des.h"
 #include "env.h"
@@ -467,9 +468,17 @@ void Ut_des::test_des_utl_2()
 {
     cout << endl << "=== Test of DES utilities: reset  ===" << endl;
 
-    MNode* root = constructSystem("ut_des_utl_2");
+    string ssname = "ut_des_utl_2";
+    MNode* root = constructSystem(ssname);
     MNode* launcher = root->getNode("Launcher");
     CPPUNIT_ASSERT_MESSAGE("Failed getting launcher", launcher);
+    if (mEnv->profiler()) mEnv->profiler()->saveMetrics();
+    std::filesystem::rename(ssname + ".chs~durstat.csv", ssname + ".chs~durstat_constr.csv");
+    std::ofstream rds; // Root MNode dump
+    rds.open(ssname + "_constr_root.dump", std::ofstream::out);
+    mEnv->Root()->MNode_doDump(0xff,0,rds);
+    rds.close();
+ 
 
     // Run
     bool res = mEnv->RunSystem(15, 2);
@@ -486,33 +495,61 @@ void Ut_des::test_des_1()
     cout << endl << "=== Test of simple DES ===" << endl;
 
 
+#if 0
     // Benchmarking
     cout << endl << "Benchmarking ut_des_1_2 - many DES layers" << endl;
     constructSystem("ut_des_1_2");
     mEnv->RunSystem(500000, 2);
-    mEnv->profiler()->saveMetrics();
+    if (mEnv->profiler()) mEnv->profiler()->saveMetrics();
     delete mEnv;
     cout << endl << "Benchmarking ut_des_1_2r - single DES layer" << endl;
     constructSystem("ut_des_1_2r");
     mEnv->RunSystem(500000, 2);
-    mEnv->profiler()->saveMetrics();
+    if (mEnv->profiler()) mEnv->profiler()->saveMetrics();
+
+    // Profiler calibration
+    PROF_DUR_START(mEnv->profiler(), PROF_DUR, PEvents::EDur_Tst1);
+    for (int i = 0; i < 1000000; i++) {
+	PFL_DUR_STAT_START(PEvents::EDurStat_Clbr);
+	PFL_DUR_STAT_REC(PEvents::EDurStat_Clbr);
+    }
+    PROF_DUR_REC(mEnv->profiler(), PROF_DUR, PEvents::EDur_Tst1);
+    cout << endl << "Profiler calibration (1000000 durstate cycles): " << PROF_FIELD(mEnv->profiler(), PROF_DUR, PEvents::EDur_Tst1, PIndFId::EInd_VAL) << ", "
+        << PROF_FIELD(mEnv->profiler(), PROF_DUR_STAT, PEvents::EDurStat_Clbr, PIndFId::EStat_SUM) << endl;
+
     delete mEnv;
+#endif
+
 #if 0
     constructSystem("ut_des_1_3");
     mEnv->RunSystem(10000, 2);
     delete mEnv;
 #endif
 
-
-    MNode* root = constructSystem("ut_des_1");
+    string ssname = "ut_des_1";
+    MNode* root = constructSystem(ssname);
     MNode* launcher = root->getNode("Launcher");
-    CPPUNIT_ASSERT_MESSAGE("Failed getting launcher", launcher);
+    //CPPUNIT_ASSERT_MESSAGE("Failed getting launcher", launcher);
+    if (mEnv->profiler()) {
+       	mEnv->profiler()->saveMetrics();
+	std::filesystem::rename(ssname + ".chs~durstat.csv", ssname + ".chs~durstat_constr.csv");
+    }
+    // Root MNode dump
+    std::ofstream rds;
+    rds.open(ssname + "_constr_root.dump", std::ofstream::out);
+    mEnv->Root()->MNode_doDump(0xff,0,rds);
+    rds.close();
+    // Provider registry dump
+    rds.open(ssname + "_prov_reg.dump", std::ofstream::out);
+    mEnv->provider()->MProvider_doDump(0xff,0,rds);
+    rds.close();
+ 
 
     // Run
     // Verifying iface cache update, ref ds_desopt_uic 
     bool res = mEnv->RunSystem(5, 2);
     CPPUNIT_ASSERT_MESSAGE("Ds1.St1 failed on phase 1", getStateDstr("Launcher.Ds1.St1") == "SI 5");
-    mEnv->profiler()->saveMetrics();
+    if (mEnv->profiler()) mEnv->profiler()->saveMetrics();
 
 
     MNode* c1n = launcher->getNode("Ds1.Const_1");

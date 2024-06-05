@@ -59,7 +59,7 @@ class MNode: public MIface
 	virtual string MNode_Uid() const = 0;
 	virtual MIface* getLif(const char *aType) override { return MNode_getLif(aType);}
 	virtual MIface* MNode_getLif(const char *aType) = 0;
-	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { return MNode_doDump(aLevel, aIdt, std::cout);}
+	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { return MNode_doDump(aLevel, aIdt, aOs);}
 	virtual void MNode_doDump(int aLevel, int aIdt, ostream& aOs) const = 0;
 	// Local
 	virtual string name() const = 0;
@@ -74,6 +74,7 @@ class MNode: public MIface
 	virtual const MNode* getNode(const GUri& aUri) const = 0;
 	virtual MNode* getNode(const GUri& aUri) = 0;
 	virtual MNode* getNodeS(const char* aUri) = 0;
+        // TODO replace aName with uri
 	virtual MNode* getNode(const string& aName, const TNs& aNs) = 0;
 	virtual void getUri(GUri& aUri, MNode* aBase = NULL) const = 0;
 	string getUriS(MNode* aBase = NULL) const { GUri uri; getUri(uri, aBase); return uri.toString();}

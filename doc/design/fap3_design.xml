@@ -3255,6 +3255,48 @@
 		</programlisting>
 	    </sect3>
 	</sect2>
+	<sect2><title>Optimization of model creation - ut_avr_syst_drp_1.chs</title>
+	    <sect3><title>Intro</title>
+		<simpara>ut_avr_syst_drp_1.chs model is most comprehensive atm. It shows that just construction time is about 800 ms.</simpara>
+	    </sect3>
+	    <sect3><title>Some basic metrics (using ut_des_1.chs model)</title>
+		<programlisting>
+		    MyRoot;Completed of creating system, nodes: 11, time: 0.001052
+		    IFC_PVD_CRNODE (Node creation): 17 us
+		    IFC_MUT_CAD (adding chromo):    12 us
+		    IFC_MUT_ATT (Node attach):      15 us
+		</programlisting>
+	    </sect3>
+	    <sect3><title>Build with -O2 and w/o debug increase performance significantly (>= 2 times)</title>
+		<programlisting>
+		    MyRoot;Completed of creating system, nodes: 11, time: 0.000098
+		    IFC_PVD_CRNODE (Node creation): 02 us
+		    IFC_MUT_CAD (adding chromo):    01 us
+		    IFC_MUT_ATT (Node attach):      02 us
+		</programlisting>
+	    </sect3>
+	</sect2>
+	<sect2><title>Optimization fap3 profiler.</title>
+	    <sect3><title>Intro</title>
+		<simpara>
+		    gprof flat profile shows high time consimtion by fap3 profiler (!!gprof shows almost all time of process is consumed).
+		    flat profile of ut_avr_syst_drp_1 run is as:
+		</simpara>
+		<programlisting>
+		     17.02      0.08     0.08 34622981     0.00     0.00  std::_Rb_tree&lt;int, std::pair&lt;int const, PindDurStat*&gt; ...
+		    10.64      0.13     0.05  6344074     0.00     0.00  std::_Rb_tree&lt;int, std::pair&lt;int const, PindDurStat*&gt;, std::_Select1st ...
+		</programlisting>
+		<simpara>The model ut_avr_syst_drp_1 execution time isn't significantly decrease if switch fap3 profiler off, that
+		    contradicts with gprof flat profile data. Even in that case it makes sense to optimize fap3 profiler.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_desopt_gpr"><title>Using profiler gprof</title>
+	    <simpara>fap3 UT</simpara>
+	    <programlisting>
+		fap3/test$ .libs/ut-fap3-lib Ut_des
+		gprof -p .libs/ut-fap3-lib gmon.out > flat_profile.txt
+	    </programlisting>
+	</sect2>
     </sect1>
 
     <sect1 id="ds_dsps"><title>[Impl] Dynamic switching with TrSwitchBool: design problem and possible solution</title>
@@ -3909,7 +3951,39 @@
 		<simpara>Resolved 20240409</simpara>
 	    </sect3>
 	</sect2>
-
+	<sect2 id="ds_iss_021"><title>[<glossterm id="iss_021">DS_ISS_021</glossterm>] [Open] 20240510 ProvBase::CreateAgent() is called too often </title>
+	    <sect3><title>Description</title>
+		<simpara>
+		    Updated ut_des test ut_des_1 (added ut_des_1.chs constructing). The system consists of 13 nodes. It is expected that ProvBase::CreateAgent()  
+		    to be called 13 times but profiling shows "IFC_PVD_CRNODE  36". 
+		</simpara>
+	    </sect3>
+	    <sect3><title>Analysis</title>
+		<simpara>There are two root-causes of that case:</simpara>
+		<simpara>
+		    _1 Node::getNode(const string&amp; aName, const TNs&amp; aNs) (is used for namespace case) calls local getNode() first
+		    <programlisting>
+			res = getNode(uri);
+		    </programlisting>
+			so with a great probability fails but
+		</simpara>
+		<simpara>
+		    _2 Node::getNode(const GUri&amp; aUri) in case of node not found tries native node:
+		    <programlisting>
+			23-             if (!res &amp;&amp; aUri.size() == 1) {
+			234                 // Try native
+			34-                 if (mEnv &amp;&amp; mEnv->provider()) {
+			345                     res = mEnv->provider()->provGetNode(aUri.at(0));
+			345                 }
+			234             }
+		    </programlisting>
+			that leads to provGetNode() thus for call of ProvBase::CreateAgent()
+		</simpara>
+	    </sect3>
+	    <sect3><title>Solution</title>
+		<simpara>To disable resolving native agent by default. Enable the resolving for getting parents only.</simpara>
+	    </sect3>
+	</sect2>
     </sect1>
 
     <sect1><title>Tools</title>

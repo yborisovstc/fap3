@@ -152,6 +152,7 @@ bool ImportsMgr::Import(const string& aUri)
     assert(moduri.isName());
     string modname = moduri.at(0);
     string modpath = GetModulePath(modname);
+    mHost.Logger()->Write(EInfo, NULL, "Started importing node: [%s]", aUri.c_str());
     if (!modpath.empty()) {
 	MNode* icontr = GetImportsContainer();
 	assert(icontr);
@@ -178,12 +179,7 @@ void ImportsMgr::ImportToNode(MNode* aNode, const ChromoNode& aMut)
 	MNode* comp = aNode->getNode(aMut.Attr(ENa_Id));
 	if (!comp) {
 	    // Node doesn't exist yet, to mutate
-	    // Using external mut instead of nodes mut to avoid mut update on recursive import
-	    MChromo* mut = mHost.provider()->createChromo();
-	    mut->Init(ENt_Node);
-	    mut->Root().AddChild(aMut);
-	    aNode->mutate(mut->Root(), false, MutCtx(aNode), true);
-	    delete mut;
+	    aNode->mutate(aMut, false, MutCtx(aNode), false);
 	} else {
 	    // mHost.Logger()->Write(EErr, NULL, "Importing [%s]: module already exists", aMut.Name().c_str());
 	}
@@ -287,7 +283,9 @@ void Env::constructSystem()
 		    }
 		}
 		PROF_DUR_REC(mProf, PROF_DUR, PEvents::EDur_Construct);
-		Logger()->Write(EInfo, mRoot, "Completed of creating system: %s", PROF_FIELD(mProf, PROF_DUR, PEvents::EDur_Construct, PIndFId::EInd_VAL).c_str());
+                auto ncnt = mRoot->owner()->bpcount(true);
+		Logger()->Write(EInfo, mRoot, "Completed of creating system, nodes: %d, time: %s", ncnt,
+                        PROF_FIELD(mProf, PROF_DUR, PEvents::EDur_Construct, PIndFId::EInd_VAL).c_str());
 	    } else {
 		Logger()->WriteFormat("Env: cannot create root elem");
 	    }

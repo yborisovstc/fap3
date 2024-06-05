@@ -238,7 +238,7 @@ void Ut_elem::test_elem_mutperf_1()
     MNode* root = constructSystem(ssname);
     CPPUNIT_ASSERT_MESSAGE("Fail to construct system", root);
     cout << "Construct duration: " << PROF_FIELD(mEnv->profiler(), PROF_DUR, PEvents::EDur_Construct, PIndFId::EInd_VAL) << endl;
-    mEnv->profiler()->saveMetrics();
+    if (mEnv->profiler()) mEnv->profiler()->saveMetrics();
 
     // Profiler calibration
     PROF_DUR_START(mEnv->profiler(), PROF_DUR, PEvents::EDur_Tst1);

@@ -110,7 +110,7 @@ void Node::MObservable_doDump(int aLevel, int aIdt, ostream& aOs) const
 void Node::MNode_doDump(int aLevel, int aIdt, ostream& aOs) const
 {
     if (aLevel & Ifu::EDM_Base) {
-	Ifu::offset(aIdt, cout); cout << "Name: " << mName << endl;
+	Ifu::offset(aIdt, aOs); aOs << "Name: " << mName << endl;
     }
     if (aLevel & Ifu::EDM_Comps) {
 	for (int i = 0; i < owner()->pcount(); i++) {
@@ -118,16 +118,16 @@ void Node::MNode_doDump(int aLevel, int aIdt, ostream& aOs) const
 		const MOwned* comp = owner()->pairAt(i)->provided();
 		const MNode* compn = comp->lIf(compn);
 		if (compn) {
-		    Ifu::offset(aIdt, cout);
-		    cout << "- "  << compn->name() << endl;
+		    Ifu::offset(aIdt, aOs);
+		    aOs << "- "  << compn->name() << endl;
 		    if (aLevel & Ifu::EDM_Recursive) {
-			compn->doDump(Ifu::EDM_Comps | Ifu::EDM_Recursive, aIdt + Ifu::KDumpIndent, cout);
+			compn->doDump(Ifu::EDM_Comps | Ifu::EDM_Recursive, aIdt + Ifu::KDumpIndent, aOs);
 		    }
 		} else {
-		    cout << "=== ERROR on getting component [" << i << "] MNode" << endl;
+		    aOs << "=== ERROR on getting component [" << i << "] MNode" << endl;
 		}
 	    } else {
-		cout << "=== ERROR on getting comp [" << i << "]" << endl;
+		aOs << "=== ERROR on getting comp [" << i << "]" << endl;
 	    }
 	}
     }
@@ -166,12 +166,14 @@ const MNode* Node::getNode(const GUri& aUri) const
 		    res = res->getComp(aUri.at(i));
 		}
 	    }
+            /* Disable resolving native agents by default, ref ds_iss_021
 	    if (!res && aUri.size() == 1) {
 		// Try native
 		if (mEnv && mEnv->provider()) {
 		    res = mEnv->provider()->provGetNode(aUri.at(0));
 		}
 	    }
+            */
 	}
     } else {
 	Log(EErr, TLog(this) + "Invalid URI [" + aUri + "]");
@@ -275,6 +277,7 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
     bool targ_nil = false;
 
     ChromoNode rno = aMut;
+    //Log(EInfo, TLog(this) + "Mut ");
     Logger()->SetContextMutId(rno.LineId());
     // Get target node by analysis of mut-target and mut-node, ref ds_chr2_cctx_tn_umt
     PFL_DUR_STAT_START(PEvents::EDurStat_MutNtf);
@@ -302,6 +305,7 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
 	    res = false;
 	}
     }
+    //Log(EInfo, TLog(this) + "Mut 2");
     if (res) {
 	if (targ != this || targ_nil) {
 	    // Targeted mutation
@@ -365,6 +369,8 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
 	    } else {
 		Logger()->Write(EErr, this, "Unknown mutation [%d]", rnotype);
 	    }
+            //Log(EInfo, TLog(this) + "Mut 3");
+            //Log(EInfo, TLog(this) + "Mut 4");
 	    Logger()->SetContextMutId();
 	}
     }
@@ -395,14 +401,12 @@ bool Node::attachOwned(MNode* aOwned)
 
 MNode* Node::createHeir(const string& aName)
 {
-    PFL_DUR_STAT_START(PEvents::EDurStat_MutCrn);
     MNode* uheir = nullptr;
     if (Provider()->isProvided(this)) {
 	uheir = Provider()->createNode(name(), aName, mEnv);
     } else {
 	Log(EInfo, TLog(this) + "The parent of [" + aName + "] is not of provided");
     }
-    PFL_DUR_STAT_REC(PEvents::EDurStat_MutCrn);
     return uheir;
 }
 
@@ -461,24 +465,30 @@ MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
     if (!sparent.empty()) {
 	// Check the parent scheme
 	GUri prnturi(sparent);
-	parent = getParent(prnturi);
-	if (parent) {
-	    // Create heir from the parent
-	    uelem = parent->createHeir(sname);
-	    if (uelem) {
-		PFL_DUR_STAT_START(PEvents::EDurStat_MutAtt);
-		attachOwned(uelem);
-		parent->attachHeir(uelem);
-		PFL_DUR_STAT_REC(PEvents::EDurStat_MutAtt);
-	    } else {
-		Log(EErr, TLog(this) + "Adding node [" + sname + "] failed");
-	    }
-	} else {
-	    Logger()->Write(EErr, this, "Creating [%s] - parent [%s] not found", sname.c_str(), sparent.c_str());
-	    parent = getParent(prnturi);
-	}
+        parent = getParent(prnturi);
+        if (!parent && prnturi.size() == 1) {
+            // Try native
+            if (mEnv && mEnv->provider()) {
+                parent = mEnv->provider()->provGetNode(prnturi.at(0));
+            }
+        }
+        if (parent) {
+            // Create heir from the parent
+            uelem = parent->createHeir(sname);
+            if (uelem) {
+                PFL_DUR_STAT_START(PEvents::EDurStat_MutAtt);
+                attachOwned(uelem);
+                parent->attachHeir(uelem);
+                PFL_DUR_STAT_REC(PEvents::EDurStat_MutAtt);
+            } else {
+                Log(EErr, TLog(this) + "Adding node [" + sname + "] failed");
+            }
+        } else {
+            Logger()->Write(EErr, this, "Creating [%s] - parent [%s] not found", sname.c_str(), sparent.c_str());
+            parent = getParent(prnturi);
+        }
     } else {
-	Log(EErr, TLog(this) + "Missing parent name");
+        Log(EErr, TLog(this) + "Missing parent name");
     }
     return uelem;
 }
@@ -488,13 +498,13 @@ void Node::mutRemove(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
     string snode, sname;
     sname = aMut.Attr(ENa_Id);
     if (owner()->pairAt(sname)) {
-	MOwned* owned = owner()->pairAt(sname)->provided();
-	onOwnedDetached(owned); // TODO to rename to onOwnedTobeDetached
-	owned->onOwnerDetached();
-	bool res = owner()->disconnect(owner()->pairAt(sname));
-	if (res) {
-	    owned->deleteOwned();
-	    Log(EInfo, TLog(this) + "Removed node [" + sname + "]");
+        MOwned* owned = owner()->pairAt(sname)->provided();
+        onOwnedDetached(owned); // TODO to rename to onOwnedTobeDetached
+        owned->onOwnerDetached();
+        bool res = owner()->disconnect(owner()->pairAt(sname));
+        if (res) {
+            owned->deleteOwned();
+            Log(EInfo, TLog(this) + "Removed node [" + sname + "]");
 	} else {
 	    Log(EErr, TLog(this) + "Failed detached owned [" + sname + "]");
 	}

@@ -21,6 +21,13 @@ AC_ARG_ENABLE([debug],
 			      [enable debug code (default is no)])],
 			      [debug="$withval"], [debug=no])
 
+# Configure options: --enable-profiling[=no].
+AC_ARG_ENABLE([profiling],
+	      [AS_HELP_STRING([--enable-profiling],
+			      [enable profiling code (default is no)])],
+			      [profiling="$withval"], [profiling=no])
+
+
 
 PKG_CHECK_MODULES([LIBCPPU], [cppunit >= 1.13], , [AC_MSG_ERROR([
 You must have the libcppunit-1.13 and development headers installed to build.
@@ -29,15 +36,22 @@ You must have the libcppunit-1.13 and development headers installed to build.
 AC_SUBST(LIBCPPU_CFLAGS)
 AC_SUBST(LIBCPPU_LIBS)
 
-CXXFLAGS="-std=c++17 -DPROFILING_ENABLED"
+CXXFLAGS="-std=c++17 "
 
 if test x$debug = xyes; then
-    CXXFLAGS="$CXXFLAGS -g -O0"
-#    LDFLAGS="$LDFLAGS -lprofiler -gp"
+    # Debug variant. Enable profiling also
+    CXXFLAGS="$CXXFLAGS -g -O0 -pg"
+    LDFLAGS="$LDFLAGS -ggdb"
 else
-    CXXFLAGS="$CXXFLAGS -g -O0"
-#    LDFLAGS="$LDFLAGS -lprofiler -gp"
+    # Release variant
+    CXXFLAGS="$CXXFLAGS -O2"
+#    LDFLAGS="$LDFLAGS"
 fi
+
+if test x$profiling = xyes; then
+    CXXFLAGS="$CXXFLAGS -DPROFILING_ENABLED"
+fi
+
 
 LDFLAGS="$LDFLAGS -lpthread"
 
@@ -53,6 +67,7 @@ echo "
 ($PACKAGE_NAME) version $PACKAGE_VERSION
 Prefix.........: $prefix
 Debug Build....: $debug
+Profiling......: $profiling
 C++ Compiler...: $CXX $CXXFLAGS $CPPFLAGS
 Linker.........: $LD $LDFLAGS $LIBS
 Doxygen........: ${DOXYGEN:-NONE}

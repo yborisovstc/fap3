@@ -140,9 +140,7 @@ MNode* Elem::createHeir(const string& aName)
 {
     MNode* heir = nullptr;
     if (Provider()->isProvided(this)) {
-	PFL_DUR_STAT_START(PEvents::EDurStat_MutCrn);
 	heir = Provider()->createNode(name(), aName, mEnv);
-	PFL_DUR_STAT_REC(PEvents::EDurStat_MutCrn);
     } else {
 	assert(parent());
 	heir = parent()->createHeirPrnt(aName);

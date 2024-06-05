@@ -184,9 +184,12 @@ class MNcpp
 	virtual void dump(int aIdt) const {}
 	/** @brief Gets binded connpoint, in tree node for instance, ref ds_nn_tree_bc */
 	virtual TPair* binded() = 0;
-	const TPair* binded() const { return const_cast<const TPair*>(const_cast<TSelf*>(this)->binded());}
+	virtual const TPair* binded() const = 0;
+	//const TPair* binded() const { return const_cast<const TPair*>(const_cast<TSelf*>(this)->binded());}
 	/** @brief Gets pairs count */
 	virtual int pcount(bool aRcr = false) const = 0;
+	/** @brief Gets binded pairs count */
+	virtual int bpcount(bool aRcr = false) const = 0;
 	/** @brief Pair by index, for debugging purpore mostly */
 	virtual TPair* pairAt(int aInd) = 0;
 	virtual const TPair* pairAt(int aInd) const = 0;
@@ -308,7 +311,19 @@ class NCpOmip : public MNcpp<TPif, TRif>
 	    }
 	}
 	virtual TPair* binded() override { return nullptr;}
-	virtual int pcount(bool aRcr = false) const override { return mPairs.size(); }
+	virtual const TPair* binded() const override { return nullptr;}
+	virtual int pcount(bool aRcr = false) const override {
+	    return mPairs.size();
+        }
+	virtual int bpcount(bool aRcr = false) const override {
+	    int res = mPairs.size();
+	    if (aRcr) {
+		for (auto it = mPairs.begin(); it != mPairs.end(); it++) {
+		    res += it->second->bpcount(aRcr);
+		}
+	    }
+	    return res;
+	}
 	virtual const TPair* pairAt(int aInd) const override {
 	    for (auto it = mPairs.begin(); it != mPairs.end(); it++) {
 		if (aInd-- == 0) return it->second;
@@ -473,12 +488,16 @@ class NCpOmnp : public MNcpp<TPif, TRif>
 	virtual bool isConnected(TPair* aPair) const override;
 	virtual bool getId(string& aId) const override { return false;}
 	virtual TPair* binded() override { return nullptr;}
+	virtual const TPair* binded() const override { return nullptr;}
 	virtual int pcount(bool aRcr = false) const override {
+	    return mPairs.size();
+        }
+	virtual int bpcount(bool aRcr = false) const override {
 	    int res = mPairs.size();
 	    if (aRcr) {
 		for (auto it = mPairs.begin(); it != mPairs.end(); it++) {
 		    auto pair = *it;
-		    res += pair->pcount(aRcr);
+		    res += pair->bpcount(aRcr);
 		}
 	    }
 	    return res;
@@ -616,7 +635,11 @@ class NCpOnp : public MNcpp<TPif, TRif>
 	virtual bool isConnected(TPair* aPair) const override;
 	virtual bool getId(string& aId) const override { return false;}
 	virtual TPair* binded() override { return nullptr;}
+	virtual const TPair* binded() const override { return nullptr;}
 	virtual int pcount(bool aRcr = false) const override {return mPair ? 1 : 0;}
+	virtual int bpcount(bool aRcr = false) const override {
+            return binded() ? binded()->bpcount(aRcr) : 0;
+        }
 	virtual const TPair* pairAt(int aInd) const override { return (aInd < pcount()) ? mPair : nullptr; }
 	virtual TPair* pairAt(int aInd) override { return (aInd < pcount()) ? mPair : nullptr; }
 	virtual TPair* pairAt(const string aId) override { return nullptr;}
@@ -704,6 +727,7 @@ class NTnip : public NCpOnp<TProv, TReq>
 		Cnode(TReq* aPx, NTnip* aHost): TCnode(aPx), mHost(aHost) {}
 		// From MNcpp
 		virtual typename TCnode::TPair* binded() override { return mHost->cnodeBinded();}
+                virtual const typename TCnode::TPair* binded() const override { return mHost->cnodeBinded();}
 	    private:
 		NTnip* mHost;
 	};
@@ -711,6 +735,10 @@ class NTnip : public NCpOnp<TProv, TReq>
 	NTnip(TProv* aProvPx, TReq* aReqPx): NCpOnp<TProv, TReq>(aProvPx), mCnode(aReqPx,this) {}
 	// From MNcpp
 	virtual typename TScp::TPair* binded() override { return &mCnode;}
+	virtual const typename TScp::TPair* binded() const override { return &mCnode;}
+	virtual int bpcount(bool aRcr = false) const override {
+	    return mCnode.bpcount(aRcr);
+	}
 	virtual bool disconnectAll() override {
 	    bool res = TScp::disconnectAll();
 	    res = res && mCnode.disconnectAll();
@@ -740,6 +768,7 @@ class NTnnp : public NCpOnp<TProv, TReq>
 		Cnode(TReq* aPx, NTnnp* aHost): TCnode(aPx), mHost(aHost) {}
 		// From MNcpp
 		virtual typename TCnode::TPair* binded() override { return mHost;}
+		virtual const typename TCnode::TPair* binded() const override { return mHost;}
 	    private:
 		NTnnp* mHost;
 	};
@@ -747,6 +776,7 @@ class NTnnp : public NCpOnp<TProv, TReq>
 	NTnnp(TProv* aProvPx, TReq* aReqPx): NCpOnp<TProv, TReq>(aProvPx), mCnode(aReqPx, this) {}
 	// From MNcpp
 	virtual typename TScp::TPair* binded() override { return &mCnode;}
+	virtual const typename TScp::TPair* binded() const override { return &mCnode;}
 	virtual bool disconnectAll() override {
 	    bool res = TScp::disconnectAll();
 	    res = res && mCnode.disconnectAll();

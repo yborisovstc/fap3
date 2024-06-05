@@ -55,7 +55,7 @@ class ConnPointu: public Vertu, public MConnPoint, public Cnt::Host
 
 /** @brief Extender, monolitic, multicontent, unit. Redirects request for iface to internal CP of extention.
 */
-class Extd: public Vertu
+class Extd: public Vertu, public Cnt::Host
 {
     public:
 	static const char* Type() { return "Extd";};
@@ -66,8 +66,13 @@ class Extd: public Vertu
 	virtual TDir getDir() const override;
 	// From Unit.MIfProvOwner
 	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	// From Cnt.Host
+	virtual string getCntUid(const string& aName, const string& aIfName) const override { return getUid(aName, aIfName);}
+	virtual MContentOwner* cntOwner() override { return this;}
     public:
 	static const string KUriInt;  /*!< Internal connpoint */
+	Cnt mDir = Cnt(*this, KContDir);
+	static const string KContDir;
 };
 
 /** @brief Extender, chromoable, monolitic, multicontent, unit. Redirects request for iface to internal CP of extention.

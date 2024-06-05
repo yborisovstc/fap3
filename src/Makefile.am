@@ -1,6 +1,6 @@
 includedir = @includedir@/fap3
 
-AM_CPPFLAGS = -D_PLAT_LINUX_ -g -O0 -pthread
+AM_CPPFLAGS = -D_PLAT_LINUX_ -pthread
 
 lib_LTLIBRARIES = libfap3.la
 

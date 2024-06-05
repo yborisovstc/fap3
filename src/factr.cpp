@@ -169,3 +169,11 @@ DtBase* Factory::createData(const string& aType)
     return res;
 
 }
+
+void Factory::MProvider_doDump(int aLevel, int aIdt, ostream& aOs) const
+{
+    for (auto it = iProviders.cbegin(); it != iProviders.cend(); it++) {
+	auto* prov = it->second;
+	prov->MProvider_doDump(aLevel, aIdt, aOs);
+    }
+}

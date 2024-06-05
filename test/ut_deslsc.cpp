@@ -95,13 +95,13 @@ void Ut_deslsc::test_DesLsc_2()
     MNode* root = constructSystem("ut_deslsc_2l");
     bool res = mEnv->RunSystem(8000, 2);
     printf("\n Run completed, deleting system\n");
-    mEnv->profiler()->saveMetrics();
+    if (mEnv->profiler()) mEnv->profiler()->saveMetrics();
 
     printf("\n Running DES without LSC\n");
     root = constructSystem("ut_deslsc_2lo");
     res = mEnv->RunSystem(8000, 2);
     printf("\n Run completed, deleting system\n");
-    mEnv->profiler()->saveMetrics();
+    if (mEnv->profiler()) mEnv->profiler()->saveMetrics();
 
     delete mEnv;
 }
@@ -116,14 +116,14 @@ void Ut_deslsc::test_DesLsc_2a()
     MNode* root = constructSystem("ut_deslsc_2la");
     bool res = mEnv->RunSystem(8000, 2);
     printf("\n Run completed, deleting system\n");
-    mEnv->profiler()->saveMetrics();
+    if (mEnv->profiler()) mEnv->profiler()->saveMetrics();
 
     /*
     printf("\n Running DES without LSC\n");
     root = constructSystem("ut_deslsc_2lo");
     res = mEnv->RunSystem(8000, 2);
     printf("\n Run completed, deleting system\n");
-    mEnv->profiler()->saveMetrics();
+    if (mEnv->profiler()) mEnv->profiler()->saveMetrics();
     */
 
     delete mEnv;

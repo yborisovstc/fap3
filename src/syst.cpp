@@ -175,7 +175,7 @@ void ConnPointu::onDisconnected()
 
 
 const string Extd::KUriInt = "Int";  /*!< Internal connpoint */
-const string KContDir = "Direction";
+const string Extd::KContDir = "Direction";
 const string KContDir_Val_Regular = "Regular";
 const string KContDir_Val_Inp = "Inp";
 const string KContDir_Val_Out = "Out";
@@ -186,7 +186,7 @@ const string KContDir_Val_Out = "Out";
 
 Extd::Extd(const string &aType, const string& aName, MEnv* aEnv): Vertu(aType, aName, aEnv)
 {
-    setContent(KContDir, KContDir_Val_Regular);
+    //setContent(KContDir, KContDir_Val_Regular);
 }
 
 void Extd::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
@@ -237,10 +237,12 @@ MVert* Extd::getExtd()
 MVert::TDir Extd::getDir() const
 {
     TDir res = ERegular;
+    /*
     string cdir;
     getContent(KContDir, cdir);
     if (cdir == KContDir_Val_Inp) res = EInp;
     else if (cdir == KContDir_Val_Out) res = EOut;
+    */
     return res;
 }
 
@@ -251,7 +253,7 @@ const string Extde::KUriInt = "Int";  /*!< Internal connpoint */
 
 Extde::Extde(const string &aType, const string& aName, MEnv* aEnv): Vert(aType, aName, aEnv)
 {
-    setContent(KContDir, KContDir_Val_Regular);
+    //setContent(KContDir, KContDir_Val_Regular);
 }
 
 void Extde::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
@@ -302,10 +304,12 @@ MVert* Extde::getExtd()
 MVert::TDir Extde::getDir() const
 {
     TDir res = ERegular;
+    /*
     string cdir;
     getContent(KContDir, cdir);
     if (cdir == KContDir_Val_Inp) res = EInp;
     else if (cdir == KContDir_Val_Out) res = EOut;
+    */
     return res;
 }
 
@@ -316,7 +320,7 @@ MVert::TDir Extde::getDir() const
 Socket::Socket(const string &aType, const string& aName, MEnv* aEnv): Vert(aType, aName, aEnv)
 {
 //    if (aName.empty()) mName = Type();
-    setContent(KContDir, KContDir_Val_Regular);
+    //setContent(KContDir, KContDir_Val_Regular);
 }
 
 MIface* Socket::MNode_getLif(const char *aType)
@@ -497,10 +501,12 @@ MVert* Socket::getExtd()
 MVert::TDir Socket::getDir() const
 {
     TDir res = ERegular;
+    /*
     string cdir;
     getContent(KContDir, cdir);
     if (cdir == KContDir_Val_Inp) res = EInp;
     else if (cdir == KContDir_Val_Out) res = EOut;
+    */
     return res;
 }
 
@@ -596,7 +602,6 @@ void Syst::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 	qn = getNode(sq, aCtx.mNs);
     }
     if (pn && qn) {
-	PFL_DUR_STAT_START(PEvents::EDurStat_MutConn);
 	MVert* pv = pn->lIf(pv);
 	MVert* qv = qn->lIf(pv);
 	if (pv && qv) {
@@ -624,7 +629,6 @@ void Syst::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 		LOGN(EErr, "Connecting [" + sp + "] to [" + sq + "] -  [" + (pv ? sq : sp) + "] isn't connectable");
 	    }
 	}
-	PFL_DUR_STAT_REC(PEvents::EDurStat_MutConn);
     } else {
 	LOGN(EErr, "Connecting [" + sp + "] to [" + sq + "] - cannot find [" + (pn ? sq : sp) + "]");
     }

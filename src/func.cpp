@@ -806,7 +806,7 @@ template<class T> const DtBase* FPair<T>::FDtGet()
 // Just to keep templated methods in cpp
 class Fhost: public Func::Host { };
 
-void Init()
+void __attribute__((optimize("O0"))) Init()
 {
     Fhost* host = nullptr;
     FAddDt<Sdata<int>>::Create(host, "");
@@ -814,6 +814,7 @@ void Init()
     FSubDt2<Sdata<int>>::Create(host, "");
     FMplDt<Sdata<int>>::Create(host, "");
     FDivDt<Sdata<int>>::Create(host, "");
+    FMinDt<Sdata<int>>::Create(host, "");
     FMaxDt<Sdata<int>>::Create(host, "");
     FCmp<Sdata<int> >::Create(host, "", "", FCmpBase::ELt);
     FCmp<Sdata<string> >::Create(host, "", "", FCmpBase::ELt);
@@ -833,5 +834,3 @@ void Init()
     FPair<DGuri>::Create(host, "", "");
     FPair<Sdata<int>>::Create(host, "", "");
 }
-
-

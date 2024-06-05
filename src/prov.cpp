@@ -38,9 +38,11 @@ MNode* Provider::provGetNode(const string& aUri)
 bool Provider::isProvided(const MNode* aElem) const
 {
     bool res = false;
+    PFL_DUR_STAT_START(PEvents::EDurStat_Tmp3);
     for (TReg::const_iterator it = mReg.begin(); it != mReg.end() && !res; it++) {
 	res = aElem == it->second;
     }
+    PFL_DUR_STAT_REC(PEvents::EDurStat_Tmp3);
     return res;
 }
 
@@ -66,6 +68,16 @@ MIface* Provider::MProvider_getLif(const char *aType)
 
 void Provider::MProvider_doDump(int aLevel, int aIdt, ostream& aOs) const
 {
+    if (aLevel & Ifu::EDM_Base) {
+	Ifu::offset(aIdt, aOs); aOs << "Name: " << mName << endl;
+    }
+    if (aLevel & Ifu::EDM_Comps) {
+	Ifu::offset(aIdt, aOs); aOs << "Register: " << endl;
+        for (auto it = mReg.cbegin(); it != mReg.cend(); it++) {
+	    auto* elem = it->second;
+	    Ifu::offset(aIdt, aOs); aOs << "- " << elem->name() << endl;
+        }
+    }
 }
 
 
@@ -82,9 +94,9 @@ ProvBase::~ProvBase()
 
 MNode* ProvBase::createNode(const string& aType, const string& aName, MEnv* aEnv)
 {
-    PFL_DUR_STAT_START(PEvents::EDurStat_PvdCNode);
     MNode* res = NULL;
     res = CreateAgent(aType, aName, mEnv);
+    /*YB!!
     if (res) {
 	MNode* parent = provGetNode(aType);
 	if (parent) {
@@ -94,7 +106,7 @@ MNode* ProvBase::createNode(const string& aType, const string& aName, MEnv* aEnv
 	    }
 	}
     }
-    PFL_DUR_STAT_REC(PEvents::EDurStat_PvdCNode);
+    */
     return res;
 }
 
@@ -124,11 +136,13 @@ DtBase* ProvBase::createData(const string& aType)
 
 MNode* ProvBase::CreateAgent(const string& aType, const string& aName, MEnv* aEnv) const
 {
+    PFL_DUR_STAT_START(PEvents::EDurStat_PvdCNode);
     MNode* res = NULL;
     if (FReg().count(aType) > 0) {
 	TFact* fact = FReg().at(aType);
 	res = fact(aName, aEnv);
     }
+    PFL_DUR_STAT_REC(PEvents::EDurStat_PvdCNode);
     return res;
 }
 
