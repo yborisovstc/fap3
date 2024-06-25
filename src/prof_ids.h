@@ -6,44 +6,48 @@
 
 
 namespace PEvents {
+    // Duration pind
     enum {
-	// Env based events
 	EDur_Construct = 1,
 	EDur_LaunchActive = 2,
 	EDur_Tst1 = 3,
 	EDur_EnvSetChromo = 4,
-	EDurStat_Trans = 100,
-	EDurStat_PvdCNode = 101,         // Provider creates node
-	EDurStat_UInvldIrm = 102,
-	EDurStat_IFR_IFaces= 104,
-	EDurStat_LaunchRun = 1001,
-	EDurStat_LaunchUpdate = 1004,
-	EDurStat_LaunchConfirm = 1005,
-	EDurStat_DesRfInpObs = 2001,       // Refresh input observers
-	EDurStat_DesAsUpd = 2002,
-	EDurStat_StConfirm = 3001,
-	EDurStat_StUpdate = 3002,
-	EDurStat_AMNAdpConfirm = 3003,
-	EDurStat_DAdpIAP = 3006,
-	EDurStat_ASdcConfirm = 3100,
-	EDurStat_ASdcConfState = 3101,
-	EDurStat_ASdcCtlConn = 3102,
-	EDurStat_ASdcCtlCmp = 3103,
-	EDurStat_ASdcCtlMut = 3104,
-	EDurStat_ASdcUpdate = 3105,
-	EDurStat_Clbr = 3200,              // Profiler calibration
-	EDurStat_Tmp = 3201,              // Temporary measuring
-	EDurStat_Tmp2 = 3202,              // Temporary measuring 2
-	EDurStat_Tmp3 = 3203,              // Temporary measuring 3
-	EDurStat_MutCrn = 3300,           // Mutation. Creation of native agent
-	EDurStat_MutConn = 3301,           // Mutation. Connect.
-	EDurStat_MutDsc = 3302,           // Mutation. Disconnect.
-	EDurStat_MutCont = 3303,           // Mutation. Content.
-	EDurStat_MutRm = 3304,           // Mutation. Removal.
-	EDurStat_MutAtt = 3305,           // Mutation. Adding node. Attaching.
-	EDurStat_MutNtf = 3306,           // Mutation. Owner notification
-	EDurStat_MutCad = 3307,           // Mutation. Adding mut to target chromo root
-	EDurStat_Tst1 = 3400,           // Test
+    };
+    // Durstat pind
+    enum {
+	EDurStat_Trans = 0,
+	EDurStat_PvdCNode = 1,         // Provider creates node
+	EDurStat_UInvldIrm = 2,
+	EDurStat_IFR_IFaces= 3,
+	EDurStat_LaunchRun = 4,
+	EDurStat_LaunchUpdate = 5,
+	EDurStat_LaunchConfirm = 6,
+	EDurStat_DesRfInpObs = 7,       // Refresh input observers
+	EDurStat_DesAsUpd = 8,
+	EDurStat_StConfirm = 9,
+	EDurStat_StUpdate = 10,
+	EDurStat_AMNAdpConfirm = 11,
+	EDurStat_DAdpIAP = 12,
+	EDurStat_ASdcConfirm = 13,
+	EDurStat_ASdcConfState = 14,
+	EDurStat_ASdcCtlConn = 15,
+	EDurStat_ASdcCtlCmp = 16,
+	EDurStat_ASdcCtlMut = 17,
+	EDurStat_ASdcUpdate = 18,
+	EDurStat_Clbr = 19,              // Profiler calibration
+	EDurStat_Tmp = 20,              // Temporary measuring
+	EDurStat_Tmp2 = 21,              // Temporary measuring 2
+	EDurStat_Tmp3 = 22,              // Temporary measuring 3
+	EDurStat_MutCrn = 23,           // Mutation. Creation of native agent
+	EDurStat_MutConn = 24,           // Mutation. Connect.
+	EDurStat_MutDsc = 25,           // Mutation. Disconnect.
+	EDurStat_MutCont = 26,           // Mutation. Content.
+	EDurStat_MutRm = 27,           // Mutation. Removal.
+	EDurStat_MutAtt = 28,           // Mutation. Adding node. Attaching.
+	EDurStat_MutNtf = 29,           // Mutation. Owner notification
+	EDurStat_MutCad = 30,           // Mutation. Adding mut to target chromo root
+	EDurStat_Tst1 = 31,           // Test
+	EDurStat_MAX = 50,              // Max durstat pind
     };
 }
 

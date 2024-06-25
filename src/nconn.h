@@ -240,7 +240,8 @@ class NCpOmip : public MNcpp<TPif, TRif>
 	using TThis = NCpOmip<TPif, TRif>;
 	using TSelf= typename MNcpp<TPif, TRif>::TSelf;
 	using TPair= typename MNcpp<TPif, TRif>::TPair;
-	using TPairs = unordered_map<string, TPair*>;
+	//using TPairs = unordered_map<string, TPair*>;
+	using TPairs = map<string, TPair*>;
 	using TPairsElem = pair<string, TPair*>;
 	using TPairsIterator = typename TPairs::iterator;
 	using TPairsConstIterator = typename TPairs::const_iterator;

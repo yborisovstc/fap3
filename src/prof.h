@@ -272,8 +272,8 @@ public:
     static const int KTypeId = TItem::KTypeId;
 public:
     using TPitem = TItem;
-    using TItems = map<PindItem::TId, TPitem*>;
-    using TItemsElem = pair<PindItem::TId, TPitem*>;
+    using TItems = vector<TPitem*>;
+    using TItemsElem = TPitem*;
     using TInitItems = vector<typename TPitem::TIdata>;
     /** Initialization data */
     struct Idata : public Pind::Idata {
@@ -285,7 +285,9 @@ public:
     PindCluster(const Idata &aIdata) : Pind(aIdata.mDescr, -1) {
         addItems(aIdata);
     }
-    virtual ~PindCluster() { for (auto item : mItems) delete item.second;}
+    virtual ~PindCluster() {
+	for (auto item : mItems) delete item;
+    }
     // From MPind
     virtual TTid tid() const { return KTypeId; }
     virtual string getFileSuf() const override { return getDescription();}
@@ -300,20 +302,17 @@ public:
     void addItems(const Idata &aIdata) {
         for (auto itemInit : aIdata.mItems) {
             TItem *item = new TItem(itemInit);
-            mItems.insert(TItemsElem(itemInit.mId, item));
+	    if (itemInit.mId >= mItems.size()) {
+		mItems.resize(itemInit.mId + 1, nullptr);
+	    }
+            mItems[itemInit.mId] = item;
         }
     }
-    TPitem *getItem(PindItem::TId aId) const { return mItems.count(aId) > 0 ? mItems.at(aId) : NULL; }
+    TPitem *getItem(PindItem::TId aId) const {
+	return (aId < mItems.size()) ? mItems.at(aId) : NULL;
+    }
     TPitem *getItemByIdx(int aIdx) const {
-	TPitem* res = nullptr;
-	if (aIdx < mItems.size()) {
-	    auto it = mItems.begin();
-	    for (int i = 0; i < aIdx; i++) {
-		it++;
-	    }
-	    res = it->second;
-	}
-	return res;
+	return getItem(aIdx);
     }
 protected:
     TItems mItems;

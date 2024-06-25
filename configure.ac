@@ -40,7 +40,8 @@ CXXFLAGS="-std=c++17 "
 
 if test x$debug = xyes; then
     # Debug variant. Enable profiling also
-    CXXFLAGS="$CXXFLAGS -g -O0 -pg"
+    #CXXFLAGS="$CXXFLAGS -g -O0 -pg"
+    CXXFLAGS="$CXXFLAGS -g -O0"
     LDFLAGS="$LDFLAGS -ggdb"
 else
     # Release variant
