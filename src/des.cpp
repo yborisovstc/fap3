@@ -1107,6 +1107,10 @@ void Des::confirm()
 	    LOGN(EErr, "Error on confirm [" + comp->Uid() + "]");
 	}
     }
+    if (mIsActive && !mActNotified) {
+	mIsActive = false;
+	notifyChanged();
+    }
     mUpdNotified = false;
 }
 
@@ -1132,6 +1136,11 @@ void Des::setActivated()
 	if (obs) {
 	    obs->onActivated(this);
 	    mActNotified = true;
+	    // TODO Improve notification design, ref ds_obsi
+	    if (!mIsActive) {
+		mIsActive = true;
+		notifyChanged();
+	    }
 	}
 #else
         if (!mDobsIfProv) {
@@ -1148,6 +1157,11 @@ void Des::setActivated()
 	}
 #endif
     }
+}
+
+bool Des::isActive() const
+{
+    return mIsActive;
 }
 
 int Des::countOfActive(bool aLocal) const
@@ -1447,6 +1461,10 @@ void ADes::confirm()
 	    comp->confirm();
 	}
     }
+    if (mIsActive && !mActNotified) {
+	mIsActive = false;
+	notifyChanged();
+    }
     mUpdNotified = false;
 }
 
@@ -1499,6 +1517,10 @@ void ADes::setActivated()
 	if (obs) {
 	    obs->onActivated(this);
 	    mActNotified = true;
+	    if (!mIsActive) {
+		mIsActive = true;
+		notifyChanged();
+	    }
 	} else {
 	    //LOGN(EInfo, "setActivated, observer not found");
         }
@@ -1523,6 +1545,11 @@ void ADes::onActivated(MDesSyncable* aComp)
 void ADes::onUpdated(MDesSyncable* aComp)
 {
 //    setUpdated();
+}
+
+bool ADes::isActive() const
+{
+    return mIsActive;
 }
 
 int ADes::countOfActive(bool aLocal) const
@@ -1745,7 +1772,7 @@ bool DesLauncher::Run(int aCount, int aIdleCount)
 	    if (idlecnt == 0) {
 		LOGN(EInfo, "IDLE");
 	    }
-            LOGN(EInfo, "Idle [" + to_string(idlecnt) + "]");
+            //LOGN(EInfo, "Idle [" + to_string(idlecnt) + "]");
 	    OnIdle();
 	    idlecnt++;
 	}
@@ -1897,7 +1924,8 @@ void DesEIbMnode::update()
         }
     }
     if (!res) {
-        this->eHost()->logEmb(TLogRecCtg::EDbg, TLog(TP::mHost) + "Cannot get input [" + this->mUri + "]");
+        //this->eHost()->logEmb(TLogRecCtg::EDbg, TLog(TP::mHost) + "Cannot get input [" + this->mUri + "]");
+	LOGEMB(TLogRecCtg::EDbg, (TLog(mHost) + "Cannot get input [" + this->mUri + "]"));
     } else {
         this->mActivated = false;
         this->setUpdated();

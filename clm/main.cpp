@@ -32,6 +32,7 @@ Options:\n\
 -i <limit> - idle cycles limit\n\
 -o <file> - converted spec file\n\
 -e <name,value> - environment variable\n\
+-v <level> - log level: no(1), err(2), warn(10), info(20), dbg(30), all(50)\n\
 \n";
 
 
@@ -115,6 +116,10 @@ int main(int argc, char* argv[])
 		    cout << "Error: incorrect env var spec [" << sevar << "]" << endl;
 		    res = -1;
 		}
+	    } else if (arg.compare("-v") == 0) {
+		string slevel(argv[++i]);
+                int level = stoi(slevel);
+                mnt.setLogLevel(level);
 	    } else {
 		cout << "Error: unknown argument [" << arg << "]" << endl;
 		res = -1;

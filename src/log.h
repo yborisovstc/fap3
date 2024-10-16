@@ -26,6 +26,8 @@
 	    virtual void RemoveLogObserver(MLogObserver* aObs);
 	    virtual int GetStat(TLogRecCtg aCtg) const;
 	    virtual void Write(const TLog& aRec);
+            virtual void SetLevel(int aLevel) override { mLevel = aLevel;}
+            virtual bool MeetsLevel(int aLevel) const override { return (aLevel <= mLevel);}
 	protected:
 	    void WriteRecord(const char* aText);
 	    void WriteRecord(const string& aText);
@@ -36,6 +38,7 @@
 	    MLogObserver* iObs;
 	    int mCtxMutId;
 	    int mStat[ECtg_Max];
+            int mLevel = EAll;
 	public:
 	    static const int KLogRecBufSize;
     };

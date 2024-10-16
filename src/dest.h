@@ -67,7 +67,7 @@ template <class T> inline const T* TrBase::GetInpData(FInp& aInp, const T* aData
 	auto* get = (Ic->size() == 1) ? Ic->at(0) : nullptr;
 	data = get ? get->DtGet(data) : nullptr;
 	if (get && !data) { // There already is the log in GetInps
-	    Log(EDbg, TLog(this) + "Cannot get input [" + aInp.mName + "]");
+	    LOGN(EDbg, "Cannot get input [" + aInp.mName + "]");
 	}
     }
     return data;
@@ -86,7 +86,7 @@ class TrVar: public TrBase, public Func::Host
 	// From Func::Host
 	virtual int GetInpCpsCount() const {return 0;}
 	virtual string GetInpUri(int aId) const override;
-	inline void log(int aCtg, const string& aMsg) override { Log(aCtg, TLog(this) + aMsg); }
+	inline void log(int aCtg, const string& aMsg) override { LOGN(aCtg, aMsg); }
 	virtual bool hostIsLogLevel(int aLevel) const override { return isLogLevel(aLevel);}
 	virtual string getHostUri() const { return getUriS(nullptr);}
 	virtual Func::TInpIc* GetInps(int aInpId) override;

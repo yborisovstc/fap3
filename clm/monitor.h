@@ -33,6 +33,7 @@ class Monitor
 	void setOutSpecName(const string& aFileName);
 	bool setLogFile(const string& aPath);
 	bool setProfPath(const string& aPath);
+	void setLogLevel(int aLevel);
 	void initEnv(bool aVerbose = true);
 	void runModel(int aCount = 0);
 	void continueRunningModel(int aCount = 0);
@@ -71,6 +72,7 @@ class Monitor
 	string mSpecName;  //!< Input spec file name
 	string mCSpecName; //!< Convrted spec file name
 	string mLogName;
+        int mLogLevel = 0;
 	/** Profiler file path */
 	string mProfName;
 	vector<string> mModPaths; /*!< Module paths */	

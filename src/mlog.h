@@ -82,6 +82,8 @@ class MLogRec: public MIface
 	virtual void RemoveLogObserver(MLogObserver* aObs) = 0;
 	virtual int GetStat(TLogRecCtg aCtg) const = 0;
 	virtual void Write(const TLog& aRec) = 0;
+        virtual void SetLevel(int aLevel) = 0;
+        virtual bool MeetsLevel(int aLevel) const = 0;
 };
 
 // Log observer

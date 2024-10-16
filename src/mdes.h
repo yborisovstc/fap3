@@ -66,6 +66,9 @@ class MDesSyncable: public MIface
 	virtual void confirm() = 0;
 	virtual void setUpdated() = 0; // TODO not used with ds_mdc_sw
 	virtual void setActivated() = 0;
+	/** @brief Returns sign of system being active
+	 * */
+	virtual bool isActive() const = 0;
 	/** @brief Debug. Returns the count of active synched owneds */
 	virtual int countOfActive(bool aLocal = false) const = 0;
 };

@@ -31,7 +31,7 @@ class SdoBase : public CpStateOutp, public MDVarGet, public MObserver, public MD
 		    if (inp) {
 			res = GetSData(inp, aData);
 		    } else {
-			mHost->Log(EDbg, TLog(mHost) + "Cannot get input [" + mName + "]");
+			LOGNN(mHost, EDbg, "Cannot get input [" + mName + "]");
 		    }
 		    return res;
 		}
@@ -47,7 +47,7 @@ class SdoBase : public CpStateOutp, public MDVarGet, public MObserver, public MD
 		    if (inp) {
 			res = GetGData(inp, aData);
 		    } else {
-			mHost->Log(EDbg, TLog(mHost) + "Cannot get input [" + mName + "]");
+			LOGNN(mHost, EDbg, "Cannot get input [" + mName + "]");
 		    }
 		    return res;
 		}
@@ -66,10 +66,10 @@ class SdoBase : public CpStateOutp, public MDVarGet, public MObserver, public MD
 			    aData = link->pair();
 			    res = true;
 			} else {
-			    mHost->Log(EDbg, TLog(mHost) + "Cannot get link via input [" + mName + "]");
+			    LOGNN(mHost, EDbg, "Cannot get link via input [" + mName + "]");
 			}
 		    } else {
-			mHost->Log(EDbg, TLog(mHost) + "Cannot get input [" + mName + "]");
+			LOGNN(mHost, EDbg, "Cannot get input [" + mName + "]");
 		    }
 		    return res;
 		}
@@ -391,6 +391,18 @@ class SdoEdges : public Sdog<Vector<Pair<DGuri>>>
 	SdoEdges(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual const DtBase* VDtGet(const string& aType) override;
 };
+
+/** @brief SDO "DES is idle"
+ * */
+class SdoDesIdle : public Sdog<Sdata<bool>>
+{
+    public:
+	static const char* Type() { return "SdoDesIdle";};
+	SdoDesIdle(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	virtual const DtBase* VDtGet(const string& aType) override;
+	virtual void onEagChanged() override;
+};
+
 
 
 #if 0 // NOT COMPLETED

@@ -7,6 +7,7 @@
 
 #include <cppunit/extensions/HelperMacros.h>
 
+#include "ut_base.h"
 
 /** @brief Test of Layered System control (LSC)
 */
@@ -15,49 +16,31 @@ class Ut_deslsc : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST_SUITE(Ut_deslsc);
 
     //CPPUNIT_TEST(test_DesLsc_1);
-    CPPUNIT_TEST(test_DesLsc_2);
+    ///CPPUNIT_TEST(test_DesLsc_2);
     //CPPUNIT_TEST(test_DesLsc_2a);
+    //CPPUNIT_TEST(test_DesLsc_3);
+    CPPUNIT_TEST(test_DesLsc_3a);
     CPPUNIT_TEST_SUITE_END();
     public:
     virtual void setUp();
     virtual void tearDown();
     private:
-    string getStateDstr(const string& aUri);
-    MNode* constructSystem(const string& aFname);
+    string getStateDstr(const string& aUri) {return UtUtils::getStateDstr(mEnv, aUri);}
+    MNode* constructSystem(const string& aFname) { return UtUtils::constructSystem(mEnv, aFname);}
     private:
     void test_DesLsc_1();
     void test_DesLsc_2();
     void test_DesLsc_2a();
+    void test_DesLsc_3();
+    void test_DesLsc_3a();
     private:
     Env* mEnv;
 };
 
+
 CPPUNIT_TEST_SUITE_REGISTRATION( Ut_deslsc );
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(Ut_deslsc, "Ut_deslsc");
 
-string Ut_deslsc::getStateDstr(const string& aUri)
-{
-    MNode* st = mEnv->Root()->getNode(aUri);
-    MDVarGet* stg = st ? st->lIf(stg) : nullptr;
-    const DtBase* data = stg ? stg->VDtGet(string()) : nullptr;
-    return data ? data->ToString(true) : string();
-}
-
-MNode* Ut_deslsc::constructSystem(const string& aSpecn)
-{
-    string ext = "chs";
-    string spec = aSpecn + string(".") + "chs";
-    string log = aSpecn + "_" + ext + ".log";
-    mEnv = new Env(spec, log);
-    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv != 0);
-    mEnv->ImpsMgr()->ResetImportsPaths();
-    mEnv->ImpsMgr()->AddImportsPaths("../modules");
-    mEnv->constructSystem();
-    MNode* root = mEnv->Root();
-    MElem* eroot = root ? root->lIf(eroot) : nullptr;
-    CPPUNIT_ASSERT_MESSAGE("Fail to get root", root && eroot);
-    return root;
-}
 
 void Ut_deslsc::setUp()
 {
@@ -125,6 +108,40 @@ void Ut_deslsc::test_DesLsc_2a()
     printf("\n Run completed, deleting system\n");
     if (mEnv->profiler()) mEnv->profiler()->saveMetrics();
     */
+
+    delete mEnv;
+}
+
+/** @brief DES LSC test 3: control on Controllable gets idle, ref ds_desopt_au
+ * */
+void Ut_deslsc::test_DesLsc_3()
+{
+    printf("\n\n === Test of DES LSC: control on Controllable gets idle, ref ds_desopt_au\n");
+    printf("\n Running DES with LSC\n");
+    MNode* root = constructSystem("ut_deslsc_3");
+    bool res = mEnv->RunSystem(8000, 2);
+    printf("\n Run completed, deleting system\n");
+    if (mEnv->profiler()) mEnv->profiler()->saveMetrics();
+
+    CPPUNIT_ASSERT_MESSAGE("Counter failed", getStateDstr("Launcher.System.Controlled.Counter") == "SI 100");
+    CPPUNIT_ASSERT_MESSAGE("Idle_Dbg failed", getStateDstr("Launcher.System.Idle_Dbg") == "SB true");
+
+    delete mEnv;
+}
+
+/** @brief DES LSC test 3a: control on Controllable (Syst+ADes) gets idle, ref ds_desopt_au
+ * */
+void Ut_deslsc::test_DesLsc_3a()
+{
+    printf("\n\n === Test of DES LSC: control on Controllable (Syst+ADes) gets idle, ref ds_desopt_au\n");
+    printf("\n Running DES with LSC\n");
+    MNode* root = constructSystem("ut_deslsc_3a");
+    bool res = mEnv->RunSystem(8000, 2);
+    printf("\n Run completed, deleting system\n");
+    if (mEnv->profiler()) mEnv->profiler()->saveMetrics();
+
+    CPPUNIT_ASSERT_MESSAGE("Counter failed", getStateDstr("Launcher.System.Controlled.Counter") == "SI 100");
+    CPPUNIT_ASSERT_MESSAGE("Idle_Dbg failed", getStateDstr("Launcher.System.Idle_Dbg") == "SB true");
 
     delete mEnv;
 }

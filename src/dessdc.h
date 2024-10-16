@@ -231,6 +231,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 	virtual void confirm() override;
 	virtual void setUpdated() override;
 	virtual void setActivated() override;
+	virtual bool isActive() const override { return false;}
 	virtual int countOfActive(bool aLocal = false) const override { return 1;}
 	// From MDesObserver
 	virtual string MDesObserver_Uid() const override {return getUid<MDesObserver>();}

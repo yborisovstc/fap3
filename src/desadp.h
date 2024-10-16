@@ -130,6 +130,7 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 	virtual MIface* MDesSyncable_getLif(const char *aType) override { return nullptr; }
 	virtual void update() override;
 	virtual void confirm() override;
+	virtual bool isActive() const override { return false;}
 	virtual int countOfActive(bool aLocal = false) const override { return 1;}
 	// From MDesObserver
 	virtual string MDesObserver_Uid() const override {return getUid<MDesObserver>();}
@@ -320,6 +321,7 @@ class DAdp : public Des, public IDesEmbHost
 	// From IDesEmbHost
 	virtual void registerIb(DesEIbb* aIap) override;
 	virtual void registerOst(DesEOstb* aItem) override;
+	virtual bool meetsLogLev(int aLev) const override { return Logger()->MeetsLevel(aLev) && isLogLevel(aLev); }
 	virtual void logEmb(int aCtg, const TLog& aRec) override { Log(aCtg, aRec);}
 	// From Unit.MIfProvOwner
 	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;

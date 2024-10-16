@@ -25,7 +25,7 @@ template<typename T> constexpr pair<string, Monitor::TIhFact*> Item() {
 	(T::command(), T::create);
 }
 
-Monitor::Monitor(): mEnv(nullptr), mPrompt(KDefPrompt),
+Monitor::Monitor(): mEnv(nullptr), mPrompt(KDefPrompt), mLogLevel(EAll),
     mIdleCyclesLimit(0)
 {
 
@@ -46,6 +46,11 @@ void Monitor::SetIdleCyclesLimit(int aLimit)
     mIdleCyclesLimit = aLimit;
 }
 
+void Monitor::setLogLevel(int aLevel)
+{
+    mLogLevel = aLevel;
+}
+
 void Monitor::initEnv(bool aVerbose)
 {
     if (mEnv != nullptr) {
@@ -60,6 +65,7 @@ void Monitor::initEnv(bool aVerbose)
 	cout << "Error: chromo filename is not specified" << endl;
     }
     mEnv = new Env(mSpecName, mLogName);
+    mEnv->Logger()->SetLevel(mLogLevel);
     for (auto path : mModPaths) {
 	mEnv->ImpsMgr()->AddImportsPaths(path);
     }

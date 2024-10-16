@@ -338,10 +338,12 @@ class NCpOmip : public MNcpp<TPif, TRif>
     	    return nullptr;
 	}
 	virtual TPair* pairAt(const string aId) {
-	    return mPairs.count(aId) > 0 ? mPairs.at(aId) : nullptr;
+            auto it = mPairs.find(aId);
+            return (it == mPairs.end()) ? nullptr : it->second;
 	}
 	virtual const TPair* pairAt(const string aId) const {
-	    return const_cast<const TPair*>(const_cast<TThis*>(this)->pairAt(aId));
+            auto it = mPairs.find(aId);
+            return (it == mPairs.end()) ? nullptr : it->second;
 	}
 	// Traversal
 	virtual typename TSelf::PairsIter pairsBegin() override {
@@ -406,7 +408,8 @@ bool NCpOmip<TPif, TRif>::isConnected(TPair* aPair) const
 {
     string pid;
     assert(aPair && aPair->getId(pid));
-    return mPairs.count(pid) == 1 && mPairs.at(pid) == aPair;
+    auto it = mPairs.find(pid);
+    return (it != mPairs.end()) && (it->second == aPair);
 }
 
 

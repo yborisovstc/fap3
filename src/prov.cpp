@@ -113,8 +113,9 @@ MNode* ProvBase::createNode(const string& aType, const string& aName, MEnv* aEnv
 MNode* ProvBase::provGetNode(const string& aUri)
 {
     MNode* res = NULL;
-    if (mReg.count(aUri) > 0) {
-	res = mReg.at(aUri);
+    auto it = mReg.find(aUri);
+    if (it != mReg.end()) {
+        res = it->second;
     } else { 
 	res = CreateAgent(aUri, string(), mEnv);
 	if (res) {
@@ -138,9 +139,9 @@ MNode* ProvBase::CreateAgent(const string& aType, const string& aName, MEnv* aEn
 {
     PFL_DUR_STAT_START(PEvents::EDurStat_PvdCNode);
     MNode* res = NULL;
-    if (FReg().count(aType) > 0) {
-	TFact* fact = FReg().at(aType);
-	res = fact(aName, aEnv);
+    auto it = FReg().find(aType);
+    if (it != FReg().end()) {
+        res = it->second(aName, aEnv);
     }
     PFL_DUR_STAT_REC(PEvents::EDurStat_PvdCNode);
     return res;
@@ -149,8 +150,9 @@ MNode* ProvBase::CreateAgent(const string& aType, const string& aName, MEnv* aEn
 DtBase* ProvBase::CreateData(const string& aType) const
 {
     DtBase* res = NULL;
-    if (FDtReg().count(aType) > 0) {
-	TDtFact* fact = FDtReg().at(aType);
+    auto it = FDtReg().find(aType);
+    if (it != FDtReg().end()) {
+	TDtFact* fact = it->second;
 	res = fact();
     }
     return res;

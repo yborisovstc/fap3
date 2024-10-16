@@ -75,12 +75,14 @@ const string& TMut::NodeTypeName(TNodeType aType)
 
 TNodeAttr TMut::NodeAttr(const string& aAttrName)
 {
-    return KNodeAttrs.count(aAttrName) > 0 ? KNodeAttrs[aAttrName] : ENa_Unknown;
+    auto it = KNodeAttrs.find(aAttrName);
+    return (it != KNodeAttrs.end()) ?  it->second : ENa_Unknown;
 }
 
 TNodeType TMut::NodeType(const string& aTypeName)
 {
-    return KNodeTypes.count(aTypeName) > 0 ? KNodeTypes[aTypeName] : ENt_Unknown;
+    auto it = KNodeTypes.find(aTypeName);
+    return (it != KNodeTypes.end()) ? it->second : ENt_Unknown;
 }
 
 TMut::TMut(): mType(ENt_Unknown), mIsValid(true)
@@ -124,12 +126,13 @@ TMut::TMut(const ChromoNode& aCnode): mType(aCnode.Type()), mIsValid(true)
 
 bool TMut::AttrExists(TNodeAttr aId) const
 {
-    return mAttrs.count(aId) > 0;
+    return mAttrs.find(aId) != mAttrs.end();
 }
 
 string TMut::Attr(TNodeAttr aId) const
 {
-    return mAttrs.count(aId) > 0 ? mAttrs.at(aId) : string();
+    auto it = mAttrs.find(aId);
+    return (it != mAttrs.end()) ? it->second : string();
 }
 
 void TMut::SetAttr(TNodeAttr aAttr, const string& aAttrVal)

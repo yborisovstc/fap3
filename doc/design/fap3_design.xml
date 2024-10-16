@@ -218,6 +218,12 @@
 		    <xref linkend="ds_dcs_sl"/> for details.  </para></glossdef>
 	</glossentry>
 
+	<glossentry id="gls_mso"><glossterm>MSO</glossterm> <acronym>MSO</acronym>
+	    <glossdef> <para>
+			Managed Subsystem Owned, approach of <xref linkend="gls_lsc"/>
+			    where Owned subsystem is owned by managing subsystem. Ref
+		    <xref linkend="ds_dcs_sl_hil_s1"/>.
+	</para></glossdef> </glossentry>
 
 	<glossentry id="gls_ncn"><glossterm>NCN</glossterm> <acronym>NCN</acronym>
 	    <glossdef> <para>
@@ -3276,7 +3282,7 @@
 		</programlisting>
 	    </sect3>
 	</sect2>
-	<sect2><title>Optimization fap3 profiler.</title>
+	<sect2 id="ds_desopt_optp"><title>Optimization fap3 with profiling.</title>
 	    <sect3><title>Intro</title>
 		<simpara>
 		    gprof flat profile shows high time consimtion by fap3 profiler (!!gprof shows almost all time of process is consumed).
@@ -3296,6 +3302,107 @@
 		fap3/test$ .libs/ut-fap3-lib Ut_des
 		gprof -p .libs/ut-fap3-lib gmon.out > flat_profile.txt
 	    </programlisting>
+	</sect2>
+	<sect2><title>Using perf plus flamegraph</title>
+	    <sect3><title>Intro</title>
+	    </sect3>
+	    <sect3><title>Refs</title>
+		<biblioentry id="ref_nx_upfg"> <abbrev>NX_UPFG</abbrev>
+		    <productname><ulink url="https://nanxiao.me/en/use-perf-and-flamegraph-to-profile-program-on-linux/"/></productname>
+		    <title>Nan Xiao's. Use perf and FlameGraph to profile program on Linux.</title> </biblioentry>
+		<biblioentry id="ref_db_bpwp"> <abbrev>DB_BPWP</abbrev>
+		    <productname><ulink url="https://easyperf.net/blog/2018/08/26/Basics-of-profiling-with-perf"/></productname>
+		    <title>Denis Bakhvalov. Basics of profiling with perf.</title> </biblioentry>
+		<biblioentry id="ref_bg_pex"> <abbrev>BG_PEX</abbrev>
+		    <productname><ulink url="https://www.brendangregg.com/perf.html"/></productname>
+		    <title>Brendan Gregg. perf Examples.</title> </biblioentry>
+	    </sect3>
+	    <sect3><title>Log</title>
+		<itemizedlist>
+		    <listitem>
+			    Follow usefull manual <ulink url="https://nanxiao.me/en/use-perf-and-flamegraph-to-profile-program-on-linux/"/>
+			</listitem>
+			<listitem>
+			    Install perf
+			    <programlisting>
+				sudo apt-get install linux-tools-common
+				sudo apt-get install linux-tools-5.15.0-113-generic
+			    </programlisting>
+			</listitem>
+			<listitem>
+			    Set perf_event_paranoid to enable recording events
+			    <programlisting> sudo sysctl kernel.perf_event_paranoid=0 </programlisting>
+		    </listitem>
+		    <listitem>
+			Record events
+			<programlisting> perf record --call-graph dwarf -- fapm3 -s ./modnav2.chs -m ../../modules -e Model,./test_model_syst.chs -a </programlisting>
+			    Output will be perf.data
+		    </listitem>
+		    <listitem>
+			Create flamegraph
+			<programlisting>
+			    cd ~/projects_work/fap/tools
+			    git clone --depth 1 https://github.com/brendangregg/FlameGraph
+			    cd FlameGraph
+			    # Copy perf.data into current directory
+			    perf script | ./stackcollapse-perf.pl |./flamegraph.pl > perf.svg
+			</programlisting>
+			    Output will be perf.svg
+		    </listitem>
+		    <listitem>
+			Error on perf report: "addr2line: DWARF error: section .debug_info is larger than its filesize!"
+			<para>
+			    Ref
+			    <ulink url="https://stackoverflow.com/questions/71410361/what-to-do-with-dwarf-error-section-debug-info-is-larger-than-its-filesize"/>
+			</para>
+		    </listitem>
+		</itemizedlist>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_optp_pfgaf"><title>perf flamegraph analysis finding</title>
+	    <sect3><title></title>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_desopt_au"><title>Some updates are needed only on rare condition (fap3-vis DRP rendering for example). Avoid that update each iteration. </title>
+	    <sect3><title>Intro</title>
+		<simpara>
+		    The example is fap3-vis DRP unnecessary rendering, ref modnav  test_model_syst.chs Sys DRP.
+		    The profiler metrics shows that Syst DRP rendering takes one third of model running time. Rendering is performed
+		    each model iteration (104) where actually we need to render DRP only on DRP layouting gets completed. So performing
+		    the rendering just one time we can reduce the rendering time significantly. 
+		</simpara>
+	    </sect3>
+	    <sect3><title>DRP rendering improvement design outline.</title>
+		<simpara>This can be implemented with usage of <xref linkend="gls_lsc"/> approach.</simpara>
+		<simpara>What we need is:</simpara>
+		<itemizedlist>
+		    <listitem>[1] Make the rendering operation controlled</listitem>
+		    <listitem>[2] Introduce DES observing of DES idle condition.</listitem>
+		    <listitem>[3] Create DES controlling that allows DRP rendering only when DRP gets idle.</listitem>
+		</itemizedlist>
+		<simpara>
+		    <xref linkend="gls_lsc"/>
+			is straitforward approach here. But for this particular case of DRP rendering optimization
+			we can also implement "internal" widget mechanism of enabling/disabling rendering on each Confirm depending
+			on mode (content) "Render on complete only". This solution will be more simpler that DES controlling.
+		</simpara>
+	    </sect3>
+	    <sect3><title>Design outline</title>
+		<simpara>
+		    Base
+		    <xref linkend="gls_sdo"/>
+			approach is to observe target agent/system, notify DES inp updated and then
+			implement MDVarGet to provide corresponding data. The question is how to generate observable event "isActive" in 
+			observable system. The direct way is to generate the event each DES iteration, but it will cause performance 
+			degradation. It seems that we need to notify observer only on change of status "active".
+		</simpara>
+		<simpara>
+		    DES can set sign of active in setActivated() method. DES can reset this sign in Confirm if mActNotified is false.
+		</simpara>
+	    </sect3>
+	</sect2>
+	<sect2><title>Avoid unnecessary notification via MObserver</title>
+	    <simpara>Ref <xref linkend="ds_obsi"/></simpara>
 	</sect2>
     </sect1>
 
@@ -3555,6 +3662,22 @@
 	</sect2>
     </sect1>
 
+    <sect1 id="ds_obsi"><title>Improve native heir MObserver interface</title>
+	<sect2><title>Intro</title>
+	    <simpara>
+		Initially considered as auxiliary MObserver interface becames important.
+		<xref linkend="gls_sdo"/> and 
+		<xref linkend="gls_sdc"/> agents are using this iface to "project" native agents to
+		<xref linkend="gls_des"/> and vice versa. 
+	    </simpara>
+	    <simpara>
+		The problem is that current version of MObserver iface is designed rather purely. For instance is
+		supports observer notification of just small number of observable events. Also the iface causes performance
+		problem because it doesn't allow to specify events filter so any observer receives the full set of events.
+	    </simpara>
+	</sect2>
+    </sect1>
+
     <sect1 id="ds_ibc"><title>Tracking: Design items to be handed</title>
 	<sect2><title>Intro</title>
 	    <simpara>Ref <xref linkend="ds_itr_sp"/> for the initial list of the problems need to be addressed in FAP3.</simpara>
@@ -3619,6 +3742,7 @@
 	<sect2><title><xref linkend="ds_dcs_sl_lsc"/></title> </sect2>
 	<sect2><title><xref linkend="ds_dcs_sl_nti"/></title> </sect2>
 	<sect2><title><xref linkend="ds_clmd"/></title> </sect2>
+	<sect2><title><xref linkend="ds_obsi"/></title> </sect2>
     </sect1>
 
     <sect1 id="ds_ic"><title>Tracking: Design items completed</title>

@@ -3,7 +3,7 @@
 
 
 const string KContProvided = "Provided";
-const string KContRequired = "Required";
+static const GUri KContRequired = "Required";
 
 string ConnPointu::KReqName = "Required";
 string ConnPointu::KProvName = "Provided";

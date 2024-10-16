@@ -201,13 +201,13 @@ inline int Node::getLocLogLevel() const
 }
 
 #define LOGN(aLevel, aContent) \
-    if (isLogLevel(aLevel)) {\
+    if (Logger()->MeetsLevel(aLevel) && isLogLevel(aLevel)) {\
 	TLog rec(aLevel, this, aContent);\
 	Logger()->Write(rec);\
     }\
 
 #define LOGNN(aNode, aLevel, aContent) \
-    if (aNode->isLogLevel(aLevel)) {\
+    if (aNode->Logger()->MeetsLevel(aLevel) && aNode->isLogLevel(aLevel)) {\
 	TLog rec(aLevel, aNode, aContent);\
 	aNode->Logger()->Write(rec);\
     }\

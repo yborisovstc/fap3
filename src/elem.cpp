@@ -156,7 +156,7 @@ MNode* Elem::createHeir(const string& aName)
 		heire->Chromos().Root().SetAttr(ENa_Parent, name());
 	    }
 	} else {
-	    Log(EErr, TLog(this) + "Failed creating heir [" + aName + "]");
+	    LOGN(EErr, "Failed creating heir [" + aName + "]");
 	}
     }
     return heir;

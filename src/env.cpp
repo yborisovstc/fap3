@@ -11,6 +11,11 @@
 #include "prof.h"
 #include "prof_ids.h"
 
+#define LOGIM(aLevel, aContent) \
+    if (mHost.Logger()->MeetsLevel(aLevel)) {\
+	TLog rec(aLevel, nullptr, aContent);\
+	mHost.Logger()->Write(rec);\
+    }\
 
 static const string KLogFileName = "faplog.txt";
 static const string KModulesName = "Modules";
@@ -100,7 +105,8 @@ void ImportsMgr::AddImportModulesInfo(const string& aPath)
 	    spec->SetFromFile(filepath);
 	    if (spec->IsError()) {
 		const CError& cerr = spec->Error();
-		mHost.Logger()->Write(EErr, NULL, "Module [%s] error [pos %d]: %s", filepath.c_str(), cerr.mPos.operator streamoff(), cerr.mText.c_str());
+		//mHost.Logger()->Write(EErr, NULL, "Module [%s] error [pos %d]: %s", filepath.c_str(), cerr.mPos.operator streamoff(), cerr.mText.c_str());
+                LOGIM(EErr, "Module [" + filepath + "] error [pos " + to_string(cerr.mPos.operator streamoff()) + "]: " + cerr.mText);
 	    }
 	    string rname = spec->Root().Attr(ENa_Id);
 	    mModsPaths.insert(pair<string, string>(rname, filepath));
@@ -108,7 +114,8 @@ void ImportsMgr::AddImportModulesInfo(const string& aPath)
 	}
 	closedir(dp);
     } else {
-	mHost.Logger()->Write(EErr, NULL, "Collecting modules, cannot open imports dir [%s]", dirpath.c_str());
+	//mHost.Logger()->Write(EErr, NULL, "Collecting modules, cannot open imports dir [%s]", dirpath.c_str());
+        LOGIM(EErr, "Collecting modules, cannot open imports dir [" + dirpath + "]");
     }
 }
 
@@ -152,7 +159,8 @@ bool ImportsMgr::Import(const string& aUri)
     assert(moduri.isName());
     string modname = moduri.at(0);
     string modpath = GetModulePath(modname);
-    mHost.Logger()->Write(EInfo, NULL, "Started importing node: [%s]", aUri.c_str());
+    //mHost.Logger()->Write(EInfo, NULL, "Started importing node: [%s]", aUri.c_str());
+    LOGIM(EInfo, "Started importing node: [" + aUri + "]");
     if (!modpath.empty()) {
 	MNode* icontr = GetImportsContainer();
 	assert(icontr);
@@ -161,14 +169,17 @@ bool ImportsMgr::Import(const string& aUri)
 	ImportToNode(icontr, chromo->Root());
 	MNode* node = icontr->getNode(moduri);
 	if (node) {
-	    mHost.Logger()->Write(EInfo, NULL, "Imported node: [%s]", aUri.c_str());
+	    //mHost.Logger()->Write(EInfo, NULL, "Imported node: [%s]", aUri.c_str());
+            LOGIM(EInfo, "Imported node: [" + aUri + "]");
 	    res = true;
 	} else {
-	    mHost.Logger()->Write(EErr, NULL, "Importing node: failed [%s]", aUri.c_str());
+	    //mHost.Logger()->Write(EErr, NULL, "Importing node: failed [%s]", aUri.c_str());
+            LOGIM(EErr, "Importing node [" + aUri + "] failed");
 	}
 	delete chromo;
     } else {
-	mHost.Logger()->Write(EErr, NULL, "Importing [%s]: cannot find module", aUri.c_str());
+	//mHost.Logger()->Write(EErr, NULL, "Importing [%s]: cannot find module", aUri.c_str());
+        LOGIM(EErr, "Importing [" + aUri + "]: cannot find module");
     }
     return res;
 }
@@ -181,7 +192,7 @@ void ImportsMgr::ImportToNode(MNode* aNode, const ChromoNode& aMut)
 	    // Node doesn't exist yet, to mutate
 	    aNode->mutate(aMut, false, MutCtx(aNode), false);
 	} else {
-	    // mHost.Logger()->Write(EErr, NULL, "Importing [%s]: module already exists", aMut.Name().c_str());
+            //mHost.Logger()->Write(EErr, NULL, "Importing [%s]: module already exists", aMut.Name().c_str());
 	}
     }
 }
@@ -189,6 +200,13 @@ void ImportsMgr::ImportToNode(MNode* aNode, const ChromoNode& aMut)
 
 
 ///// Env
+
+#define LOGENV(aLevel, aContent) \
+    if (Logger()->MeetsLevel(aLevel)) {\
+	TLog rec(aLevel, nullptr, aContent);\
+	Logger()->Write(rec);\
+    }\
+
 
 
 Env::Env(const string& aSpecFile, const string& aLogFileName): mRoot(NULL), mSpecFile(aSpecFile), mLogger(nullptr),
@@ -242,9 +260,11 @@ void Env::constructSystem()
 	if (mChromo->IsError()) {
 	    const CError& cerr = mChromo->Error();
 	    if (!mSpecFile.empty()) {
-		Logger()->Write(EErr, NULL, "Chromo [%s] error [pos %d]: %s", mSpecFile.c_str(), cerr.mPos.operator streamoff(), cerr.mText.c_str());
+		//Logger()->Write(EErr, NULL, "Chromo [%s] error [pos %d]: %s", mSpecFile.c_str(), cerr.mPos.operator streamoff(), cerr.mText.c_str());
+                LOGENV(EErr, "Chromo [" + mSpecFile + "] error [pos " + to_string(cerr.mPos.operator streamoff()) + "]: " + cerr.mText);
 	    } else {
-		Logger()->Write(EErr, NULL, "Chromo error [pos %d]: %s", cerr.mPos.operator streamoff(), cerr.mText.c_str());
+		//Logger()->Write(EErr, NULL, "Chromo error [pos %d]: %s", cerr.mPos.operator streamoff(), cerr.mText.c_str());
+                LOGENV(EErr, "Chromo error [pos " + to_string(cerr.mPos.operator streamoff()) + "]: " + cerr.mText);
 	    }
 	} else {
 	    /*
@@ -265,7 +285,8 @@ void Env::constructSystem()
 	    /**/
 	    MElem* eroot = mRoot ? mRoot->lIf(eroot) : nullptr;
 	    if (eroot != NULL) {
-		Logger()->Write(EInfo, mRoot, "Started of creating system, spec [%s], loaded: %s", mSpecFile.c_str(), PROF_FIELD(mProf, PROF_DUR, PEvents::EDur_EnvSetChromo, PIndFId::EInd_VAL).c_str());
+		//Logger()->Write(EInfo, mRoot, "Started of creating system, spec [%s], loaded: %s", mSpecFile.c_str(), PROF_FIELD(mProf, PROF_DUR, PEvents::EDur_EnvSetChromo, PIndFId::EInd_VAL).c_str());
+                LOGENV(EInfo, "Started of creating system, spec [" + mSpecFile + "], loaded" + PROF_FIELD(mProf, PROF_DUR, PEvents::EDur_EnvSetChromo, PIndFId::EInd_VAL));
 		PROF_DUR_START(mProf, PROF_DUR, PEvents::EDur_Construct);
 		MutCtx mc(mRoot);
 		// Adding Modules node for imports
@@ -284,10 +305,11 @@ void Env::constructSystem()
 		}
 		PROF_DUR_REC(mProf, PROF_DUR, PEvents::EDur_Construct);
                 auto ncnt = mRoot->owner()->bpcount(true);
-		Logger()->Write(EInfo, mRoot, "Completed of creating system, nodes: %d, time: %s", ncnt,
-                        PROF_FIELD(mProf, PROF_DUR, PEvents::EDur_Construct, PIndFId::EInd_VAL).c_str());
+		//Logger()->Write(EInfo, mRoot, "Completed of creating system, nodes: %d, time: %s", ncnt,
+                 //       PROF_FIELD(mProf, PROF_DUR, PEvents::EDur_Construct, PIndFId::EInd_VAL).c_str());
+                LOGENV(EInfo, "Completed of creating system, nodes: " + to_string(ncnt) + ", time" + PROF_FIELD(mProf, PROF_DUR, PEvents::EDur_Construct, PIndFId::EInd_VAL));
 	    } else {
-		Logger()->WriteFormat("Env: cannot create root elem");
+		LOGENV(EErr, "Env: cannot create root elem");
 	    }
 	}
     }
@@ -319,7 +341,8 @@ bool Env::RunSystem(int aCount, int aIdleCount)
     if (mLauncher) {
 	res = mLauncher->Run(aCount, aIdleCount);
     } else {
-	Logger()->WriteFormat("Env: Failed running system - launcher isn't found");
+	//Logger()->WriteFormat("Env: Failed running system - launcher isn't found");
+        LOGENV(EErr, "Failed running system - launcher isn't found");
     }
     return res;
 }

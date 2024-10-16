@@ -176,7 +176,7 @@ const MNode* Node::getNode(const GUri& aUri) const
             */
 	}
     } else {
-	Log(EErr, TLog(this) + "Invalid URI [" + aUri + "]");
+	LOGN(EErr, "Invalid URI [" + aUri.toString() + "]");
     }
     return res;
 }
@@ -218,7 +218,7 @@ void Node::updateNs(TNs& aNs, const ChromoNode& aCnode)
 	if (!ns.empty()) {
 	    MNode* nsu = getNode(ns, aNs);
 	    if (nsu == NULL) {
-		Log(EErr, TLog(this) + "Cannot find namespace [" + ns + "]");
+		LOGN(EErr, "Cannot find namespace [" + ns + "]");
 	    } else {
 		aNs.clear(); // Override namespace by explicitly stated one
 		aNs.push_back(nsu);
@@ -245,7 +245,7 @@ MNode* Node::getNode(const string& aName, const TNs& aNs)
 	// Applied namespaces priority approach, ref I_NRC
 	res = resns;
     } else if (resns && res != this) {
-	Log(EErr, TLog(this) + "Same node [" + uri.toString() + "] is resolved both in current ctx and namespace");
+	LOGN(EErr, "Same node [" + uri.toString() + "] is resolved both in current ctx and namespace");
     }
     return res;
 }
@@ -277,7 +277,7 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
     bool targ_nil = false;
 
     ChromoNode rno = aMut;
-    //Log(EInfo, TLog(this) + "Mut ");
+    //LOGN(EInfo, "Mut ");
     Logger()->SetContextMutId(rno.LineId());
     // Get target node by analysis of mut-target and mut-node, ref ds_chr2_cctx_tn_umt
     PFL_DUR_STAT_START(PEvents::EDurStat_MutNtf);
@@ -305,7 +305,7 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
 	    res = false;
 	}
     }
-    //Log(EInfo, TLog(this) + "Mut 2");
+    //LOGN(EInfo, "Mut 2");
     if (res) {
 	if (targ != this || targ_nil) {
 	    // Targeted mutation
@@ -369,8 +369,6 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
 	    } else {
 		Logger()->Write(EErr, this, "Unknown mutation [%d]", rnotype);
 	    }
-            //Log(EInfo, TLog(this) + "Mut 3");
-            //Log(EInfo, TLog(this) + "Mut 4");
 	    Logger()->SetContextMutId();
 	}
     }
@@ -394,7 +392,7 @@ bool Node::attachOwned(MNode* aOwned)
 	}
 	*/
     } else {
-	Log(EErr, TLog(this) + "Attaching owned: already exists [" + aOwned->name() + "]");
+	LOGN(EErr, "Attaching owned: already exists [" + aOwned->name() + "]");
     }
     return res;
 }
@@ -405,7 +403,7 @@ MNode* Node::createHeir(const string& aName)
     if (Provider()->isProvided(this)) {
 	uheir = Provider()->createNode(name(), aName, mEnv);
     } else {
-	Log(EInfo, TLog(this) + "The parent of [" + aName + "] is not of provided");
+	LOGN(EInfo, "The parent of [" + aName + "] is not of provided");
     }
     return uheir;
 }
@@ -455,7 +453,7 @@ MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
     updateNs(ns, aMut);
     */
     bool res = false;
-    //Log(EDbg2, TLog(this, aMut) + "Adding element [" + sname + "]");
+    //Log(EDbg2, TLog(this, aMut) + "Adding element [" + sname + "]"); // To LOGN
 
     assert(!sname.empty());
     MNode* uelem = NULL;
@@ -481,14 +479,14 @@ MNode* Node::mutAddElem(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCt
                 parent->attachHeir(uelem);
                 PFL_DUR_STAT_REC(PEvents::EDurStat_MutAtt);
             } else {
-                Log(EErr, TLog(this) + "Adding node [" + sname + "] failed");
+                LOGN(EErr, "Adding node [" + sname + "] failed");
             }
         } else {
             Logger()->Write(EErr, this, "Creating [%s] - parent [%s] not found", sname.c_str(), sparent.c_str());
             parent = getParent(prnturi);
         }
     } else {
-        Log(EErr, TLog(this) + "Missing parent name");
+        LOGN(EErr, "Missing parent name");
     }
     return uelem;
 }
@@ -504,12 +502,12 @@ void Node::mutRemove(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
         bool res = owner()->disconnect(owner()->pairAt(sname));
         if (res) {
             owned->deleteOwned();
-            Log(EInfo, TLog(this) + "Removed node [" + sname + "]");
+            LOGN(EInfo, "Removed node [" + sname + "]");
 	} else {
-	    Log(EErr, TLog(this) + "Failed detached owned [" + sname + "]");
+	    LOGN(EErr, "Failed detached owned [" + sname + "]");
 	}
     } else {
-	Log(EErr, TLog(this) + "Failed removing [" + sname + "] - not found");
+	LOGN(EErr, "Failed removing [" + sname + "] - not found");
     }
 }
 
@@ -524,14 +522,14 @@ void Node::mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 {
     string sp = aMut.Attr(ENa_P);
     string sq = aMut.Attr(ENa_Q);
-    Log(EErr, TLog(this) + "Connecting [" + sp + "] to [" + sq + "] - not supported");
+    LOGN(EErr, "Connecting [" + sp + "] to [" + sq + "] - not supported");
 }
 
 void Node::mutDisconnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
 {
     string sp = aMut.Attr(ENa_P);
     string sq = aMut.Attr(ENa_Q);
-    Log(EErr, TLog(this) + "Disconnecting [" + sp + "] from [" + sq + "] - not supported");
+    LOGN(EErr, "Disconnecting [" + sp + "] from [" + sq + "] - not supported");
 }
 
 void Node::mutImport(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
@@ -541,7 +539,7 @@ void Node::mutImport(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx)
     string srcs = aMut.Attr(ENa_Id);
     bool res = impmgr->Import(srcs);
     if (!res) {
-	Log(EErr, TLog(this) + "Importing [" + srcs + "] failed");
+	LOGN(EErr, "Importing [" + srcs + "] failed");
     }
 }
 
@@ -710,7 +708,7 @@ bool Node::setContent(const GUri& aCuri, const string& aData)
 	res = cnode->setData(aData);
     }
     if (!res) {
-	Log(EErr, TLog(this) + "Setting [" + aCuri.toString() + "] to [" + aData + "]: content doesn't exist");
+	LOGN(EErr, "Setting [" + aCuri.toString() + "] to [" + aData + "]: content doesn't exist");
     }
     return res;
 
@@ -902,11 +900,11 @@ int Node::parseLogLevel(const string& aData)
 	    } catch (std::exception& e) { }
 	    if (extl != -1) res += extl;
 	    else {
-		Log(EErr, TLog(this) + "Wrong log level extension [" + ext + "]");
+		LOGN(EErr, "Wrong log level extension [" + ext + "]");
 	    }
 	}
     } else {
-	Log(EErr, TLog(this) + "Unknown log level [" + name + "]");
+	LOGN(EErr, "Unknown log level [" + name + "]");
     }
     return res;
 }
