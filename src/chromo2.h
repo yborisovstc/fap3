@@ -130,6 +130,7 @@ class Chromo2Mdl: public MChromoMdl
 	virtual void TransfTl(const THandle& aHandle, const THandle& aSrc) override;
     public:
 	bool CheckTree(const C2MdlNode& aNode) const;
+	bool getName(const string& aFileName, string& aName);
 	THandle SetFromFile(const string& aFileName);
 	THandle Set(const string& aUri);
 	THandle SetFromSpec(const string& aSpec);
@@ -150,6 +151,9 @@ class Chromo2Mdl: public MChromoMdl
 	bool rdp_string(istream& aIs, string& aRes);
 	bool rdp_uri(istream& aIs, string& aRes);
 	bool rdp_mut_create_chromo(istream& aIs, C2MdlNode& aMnode);
+	/** @brief Parsing create chromo for just getting name
+	 * */
+	bool rdp_mut_create_chromo_name(istream& aIs, string& aName);
 	bool rdp_mut_create(istream& aIs, C2MdlNode& aMnode);
 	bool rdp_mut_content(istream& aIs, C2MdlNode& aMnode);
 	bool rdp_mut_content_err_p(istream& aIs, C2MdlNode& aMnode);
@@ -219,6 +223,7 @@ class Chromo2: public MChromo
 	// From MChromo
 	virtual ChromoNode& Root();
 	virtual const ChromoNode& Root() const;
+	virtual bool getName(const string& aFileName, string& aName) override;
 	virtual void SetFromFile(const string& aFileName);
 	virtual bool Set(const string& aUri);
 	virtual bool SetFromSpec(const string& aSpec);

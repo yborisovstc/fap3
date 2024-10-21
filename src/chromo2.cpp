@@ -810,6 +810,20 @@ int Chromo2Mdl::GetLineId(const THandle& aHandle) const
     return node->mChromoPos;
 }
 
+bool Chromo2Mdl::getName(const string& aFileName, string& aName)
+{
+    bool res = false;
+    ifstream is(aFileName, std::ifstream::in);
+    if ( (is.rdstate() & ifstream::failbit ) == 0 ) {
+	Reset();
+	is.seekg(0, is.beg);
+	res = rdp_mut_create_chromo_name(is, aName);
+    } else {
+	SetErr(RDPE_FailedReadingSpec);
+    }
+    return res;
+}
+
 // TODO to support pure "segment" chromo, ref DS_ISS_005 
 THandle Chromo2Mdl::SetFromFile(const string& aFileName)
 {
@@ -1500,7 +1514,6 @@ bool Chromo2Mdl::rdp_segment_namespace(istream& aIs, C2MdlNode& aMnode, C2MdlNod
     return res;
 }
 
-
 bool Chromo2Mdl::rdp_mut_create_chromo(istream& aIs, C2MdlNode& aMnode)
 {
     bool res = rdp_mut_create(aIs, aMnode);
@@ -1511,6 +1524,35 @@ bool Chromo2Mdl::rdp_mut_create_chromo(istream& aIs, C2MdlNode& aMnode)
         }
     }
     return res;
+}
+
+bool Chromo2Mdl::rdp_mut_create_chromo_name(istream& aIs, string& aName)
+{
+    bool res = false;
+    string name;
+    streampos pos = aIs.tellg();
+    dbg << "pos: " << pos << endl;
+    res = rdp_name(aIs, name);
+    if (res) {
+	res = rdp_sep(aIs);
+	if (res) {
+	    char c = aIs.get();
+	    if (c == KT_MutAdd) {
+		res = rdp_sep(aIs);
+		if (res) {
+		    string parent;
+		    res = rdp_uri(aIs, parent);
+		    if (res) {
+			aName = name;
+		    }
+		}
+	    } else {
+		res = false;
+	    }
+	}
+    }
+    return res;
+
 }
 
 bool Chromo2Mdl::rdp_mut_create(istream& aIs, C2MdlNode& aMnode)
@@ -2167,6 +2209,11 @@ void Chromo2::SetFromFile(const string& aFileName)
     THandle root = mMdl.SetFromFile(aFileName);
     C2MdlNode* nroot = root.Data(nroot);
     mRootNode = ChromoNode(&mMdl, root);
+}
+
+bool Chromo2::getName(const string& aFileName, string& aName)
+{
+    return mMdl.getName(aFileName, aName);
 }
 
 bool Chromo2::Set(const string& aUri)

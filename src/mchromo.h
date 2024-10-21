@@ -124,6 +124,9 @@ class MChromo
 	virtual ChromoNode& Root() = 0;
 	virtual const ChromoNode& Root() const= 0;
 	virtual void SetFromFile(const string& aFileName) = 0;
+	/** @brief Gets root node name
+	 * */
+	virtual bool getName(const string& aFileName, string& aName) = 0;
 	virtual bool Set(const string& aUri) = 0;
 	virtual bool SetFromSpec(const string& aSpec) = 0;
 	virtual bool GetSpec(string& aSpec) = 0;

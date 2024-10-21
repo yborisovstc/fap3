@@ -102,14 +102,14 @@ void ImportsMgr::AddImportModulesInfo(const string& aPath)
 	    // Get chromo root as the module name
 	    MChromo *spec = mHost.provider()->createChromo();
 	    assert(spec);
-	    spec->SetFromFile(filepath);
-	    if (spec->IsError()) {
-		const CError& cerr = spec->Error();
-		//mHost.Logger()->Write(EErr, NULL, "Module [%s] error [pos %d]: %s", filepath.c_str(), cerr.mPos.operator streamoff(), cerr.mText.c_str());
-                LOGIM(EErr, "Module [" + filepath + "] error [pos " + to_string(cerr.mPos.operator streamoff()) + "]: " + cerr.mText);
+	    // Avoiding parsing whole chromo, but getting just modules name, ds_imp_acc
+	    string rname;
+	    bool res = spec->getName(filepath, rname);
+	    if (!res) {
+                LOGIM(EErr, "Module [" + filepath + "]: error getting name");
+	    } else {
+		mModsPaths.insert(pair<string, string>(rname, filepath));
 	    }
-	    string rname = spec->Root().Attr(ENa_Id);
-	    mModsPaths.insert(pair<string, string>(rname, filepath));
 	    delete spec;
 	}
 	closedir(dp);
@@ -307,7 +307,7 @@ void Env::constructSystem()
                 auto ncnt = mRoot->owner()->bpcount(true);
 		//Logger()->Write(EInfo, mRoot, "Completed of creating system, nodes: %d, time: %s", ncnt,
                  //       PROF_FIELD(mProf, PROF_DUR, PEvents::EDur_Construct, PIndFId::EInd_VAL).c_str());
-                LOGENV(EInfo, "Completed of creating system, nodes: " + to_string(ncnt) + ", time" + PROF_FIELD(mProf, PROF_DUR, PEvents::EDur_Construct, PIndFId::EInd_VAL));
+                LOGENV(EInfo, "Completed creating of system, nodes: " + to_string(ncnt) + ", time: " + PROF_FIELD(mProf, PROF_DUR, PEvents::EDur_Construct, PIndFId::EInd_VAL));
 	    } else {
 		LOGENV(EErr, "Env: cannot create root elem");
 	    }

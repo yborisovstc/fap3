@@ -181,18 +181,38 @@ const MNode* Node::getNode(const GUri& aUri) const
     return res;
 }
 
+// TODO condider design of provided agents namespaces
+// Optimization ds_desopt_aip
 void Node::getUri(GUri& aUri, MNode* aBase) const
 {
+    // Note that it's disabled for native agents to be in native tree, ref ds_iss_021
     aUri.clear();
-    if (mEnv && mEnv->provider() && mEnv->provider()->isProvided(this)) {
-	// Provided
-	aUri.appendElem(mName);
-    } else if (aBase != this) {
-	// From native hier
+    if (aBase != this) {
 	const MOwner* owner = Owner();
 	if (owner) {
 	    owner->ownerGetUri(aUri, aBase);
 	} else {
+	    if (mEnv && mEnv->provider() && mEnv->provider()->isProvided(this)) {
+		// Provided
+	    } else {
+		// Root
+		aUri.appendElem(string());
+	    }
+	}
+	aUri.appendElem(mName);
+    }
+}
+
+// Optimization ds_desopt_aip
+void Node::ownerGetUri(GUri& aUri, MNode* aBase) const
+{
+    aUri.clear();
+    if (aBase != this) {
+	const MOwner* owner = Owner();
+	if (owner) {
+	    owner->ownerGetUri(aUri, aBase);
+	} else {
+	    // Root
 	    aUri.appendElem(string());
 	}
 	aUri.appendElem(mName);

@@ -1886,11 +1886,25 @@
     <sect1 id="ds_imp"><title>Redesign import</title>
 	<sect2><title>Intro</title>
 	</sect2>
-	<sect2><title>Parent's resolution mechanism.</title>
+	<sect2 id="ds_imp_prm"><title>Parent's resolution mechanism.</title>
 	    <sect3><title>Intro</title>
 		<simpara>It is very important to simplify specifying parent in system chromo. The best way is to specify just parent's name. But in that case
 		    we need to specific mechanism to resolve parent by its name.</simpara>
 		<simpara>Refer issue <xref linkend="iss_008"/> for the related issue.</simpara>
+	    </sect3>
+	</sect2>
+	<sect2 id="ds_imp_acc"><title>Avoid creating chromos of all modules in ImportsMgr::AddImportModulesInfo().</title>
+	    <sect3><title>Intro</title>
+		<simpara>
+		    Currently Import manager "loads" all the modules chromos on env initialization phase, ref ImportsMgr::AddImportModulesInfo().
+		    But import manager do it just to get modules names and assosiate each module name with module chromo path.
+		    From performance point of view this is very unoptimal especially for small systems.
+		    For "incrementor.chs" example creation system (loading modules takes most part of the time) takes 0.002083 while
+		    8 iter run - 0.001310.
+		</simpara>
+		<simpara>
+		    It would be more optimal if the we find the way of getting modules name without loading the whole chromo.
+		</simpara>
 	    </sect3>
 	</sect2>
     </sect1>
@@ -3360,7 +3374,14 @@
 	    </sect3>
 	</sect2>
 	<sect2 id="ds_optp_pfgaf"><title>perf flamegraph analysis finding</title>
-	    <sect3><title></title>
+	    <sect3><title>Embedded DES - apply getNode() when resolve ifaces.</title>
+		<simpara>
+		    DesEIbd&lt;T&gt;::update() calls getNode() and GetGData() that is ineffective. Better to keep MDVarGet provider.:w
+		    However flamegraph doesn't show significant spending on that ops.
+		</simpara>
+		<simpara>
+		    DesEOstb::NotifyInpsUpdated() calls getNode() to resolve MDesInpObserver
+		</simpara>
 	    </sect3>
 	</sect2>
 	<sect2 id="ds_desopt_au"><title>Some updates are needed only on rare condition (fap3-vis DRP rendering for example). Avoid that update each iteration. </title>
@@ -3403,6 +3424,30 @@
 	</sect2>
 	<sect2><title>Avoid unnecessary notification via MObserver</title>
 	    <simpara>Ref <xref linkend="ds_obsi"/></simpara>
+	</sect2>
+	<sect2 id="ds_desopt_aip"><title>Avoid frequent call of mEnv->provider()->isProvided() in getUri()</title>
+	    <simpara>Look at ut_des_1.chs. It consists of 13 nodes and run just 5 cycles but traced 94 call of isProvided().</simpara>
+	    <simpara>
+		The cause is that we check if the node is provided every getUri(). Potentially we can avoid it. Note that provided agent
+		cannot be in native tree, ref
+		<xref linkend="ds_iss_021"/> so we can check isProvided() only if the node doesn't have owner.
+	    </simpara>
+	</sect2>
+	<sect2><title>Embedded DES comps - do we need them at all</title>
+	    <sect3><title>Intro</title>
+		<simpara>
+		    Embedded DES double buffering input DesEIbb inherited and embedded pseudo-state DesEOstb were introduced in scope of
+		    designing AAdp and AWidget. But the question is if they have some valuable traits or can be replaced by standard
+		    DES comps, by State for instance.
+		</simpara>
+	    </sect3>
+	    <sect3><title>Analysis</title>
+		<simpara>
+		    The idea of embedding scpecial DES comps was basing on aim to reduce native tree. But anycase embedded inp/outp
+		    defines their "own" inputs and outputs, so increases native tree anyway.
+		    So instead of using embedded input we can just use CpStateInp.
+		</simpara>
+	    </sect3>
 	</sect2>
     </sect1>
 
@@ -3678,6 +3723,16 @@
 	</sect2>
     </sect1>
 
+    <sect1 id="ds_pans"><title>Namespace of provided agents</title>
+	<sect2><title>Intro</title>
+	    <simpara>
+		Currently provided agent has to have unique name but it can cause problem if we have a lot of providers. Names
+		clash is probable. We need to introduce namespace mechanism for provided agents. This will affect URI scheme also -
+		currently temporary scheme is used where provided agent URI is just name.
+	    </simpara>
+	</sect2>
+    </sect1>
+
     <sect1 id="ds_ibc"><title>Tracking: Design items to be handed</title>
 	<sect2><title>Intro</title>
 	    <simpara>Ref <xref linkend="ds_itr_sp"/> for the initial list of the problems need to be addressed in FAP3.</simpara>
@@ -3743,6 +3798,8 @@
 	<sect2><title><xref linkend="ds_dcs_sl_nti"/></title> </sect2>
 	<sect2><title><xref linkend="ds_clmd"/></title> </sect2>
 	<sect2><title><xref linkend="ds_obsi"/></title> </sect2>
+	<sect2><title><xref linkend="ds_pans"/></title> </sect2>
+	<sect2><title><xref linkend="ds_imp_acc"/></title> </sect2>
     </sect1>
 
     <sect1 id="ds_ic"><title>Tracking: Design items completed</title>

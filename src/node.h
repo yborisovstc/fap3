@@ -86,7 +86,7 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	// From MOwner
 	virtual string MOwner_Uid() const {return getUid<MOwner>();}
 	virtual MIface* MOwner_getLif(const char *aType) override;
-	virtual void ownerGetUri(GUri& aUri, MNode* aBase = nullptr) const override { getUri(aUri, aBase);}
+	virtual void ownerGetUri(GUri& aUri, MNode* aBase = nullptr) const override;
 	virtual MNode* ownerGetNode(const GUri& aUri, const MNode* aReq) const override;
 	virtual void onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx) override;
 	virtual void onOwnedAttached(MOwned* aOwned) override;
@@ -177,6 +177,7 @@ inline bool Node::isLogLevel(int aLevel) const {
     return (aLevel <= ll);
 }
 
+// TODO to avoid using it - decreases performance via TLog ctor
 inline void Node::Log(int aLevel, const TLog& aRec) const
 {
     if (isLogLevel(aLevel)) {

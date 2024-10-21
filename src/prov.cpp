@@ -42,6 +42,8 @@ bool Provider::isProvided(const MNode* aElem) const
     for (TReg::const_iterator it = mReg.begin(); it != mReg.end() && !res; it++) {
 	res = aElem == it->second;
     }
+    // TODO check this opt
+    // res = mReg.find(aElem->name()) != mReg.end();
     PFL_DUR_STAT_REC(PEvents::EDurStat_Tmp3);
     return res;
 }
