@@ -18,7 +18,7 @@ Vertu::~Vertu()
 MIface* Vertu::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MVert>(aType));
+    if (res = checkLif2(aType, mMVertPtr));
     else res = Unit::MNode_getLif(aType);
     return res;
 }
@@ -26,8 +26,8 @@ MIface* Vertu::MNode_getLif(const char *aType)
 MIface* Vertu::MVert_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MVert>(aType));
-    else if (res = checkLif<MUnit>(aType));
+    if (res = checkLif2(aType, mMVertPtr));
+    else if (res = checkLif2(aType, mMUnitPtr));
     return res;
 }
 
@@ -148,7 +148,7 @@ Vert::~Vert()
 MIface* Vert::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MVert>(aType));
+    if (res = checkLif2(aType, mMVertPtr));
     else res = Elem::MNode_getLif(aType);
     return res;
 }
@@ -156,8 +156,8 @@ MIface* Vert::MNode_getLif(const char *aType)
 MIface* Vert::MVert_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MVert>(aType));
-    else if (res = checkLif<MUnit>(aType));
+    if (res = checkLif2(aType, mMVertPtr));
+    else if (res = checkLif2(aType, mMUnitPtr));
     // TODO Wrong redirection, vulnerability, to fix
     else res = MNode_getLif(aType);
     return res;

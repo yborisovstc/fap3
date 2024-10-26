@@ -76,6 +76,8 @@ class ADesSpc : public Unit, public MAgent, public MDesSpc
 	virtual void onOwnerAttached() override;
     protected:
 	TAgtCp mAgtCp;                   /*!< Agent connpoint */ 
+	MAgent* mMAgentPtr = nullptr;
+	MDesSpc* mMDesSpcPtr = nullptr;
 };
 
 #endif

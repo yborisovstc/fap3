@@ -62,30 +62,16 @@ Node::~Node()
     mOcp.disconnectAll();
 }
 
-#ifdef ENABLE_IFC
 MIface* Node::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif2<MNode>(aType, mMNodePtr));
-    else if (res = checkLif2<MOwned>(aType, mMOwnedPtr));
-    else if (res = checkLif2<MOwner>(aType, mMOwnerPtr));
-    else if (res = checkLif2<MContentOwner>(aType, mMContentOwnerPtr));
-    else if (res = checkLif2<MObservable>(aType, mMObservablePtr));
+    if (res = checkLif2(aType, mMNodePtr));
+    else if (res = checkLif2(aType, mMOwnedPtr));
+    else if (res = checkLif2(aType, mMOwnerPtr));
+    else if (res = checkLif2(aType, mMContentOwnerPtr));
+    else if (res = checkLif2(aType, mMObservablePtr));
     return res;
 }
-#else
-MIface* Node::MNode_getLif(const char *aType)
-{
-    MIface* res = nullptr;
-    if (res = checkLif<MNode>(aType));
-    else if (res = checkLif<MOwned>(aType));
-    else if (res = checkLif<MOwner>(aType));
-    else if (res = checkLif<MContentOwner>(aType));
-    else if (res = checkLif<MObservable>(aType));
-    return res;
-}
-#endif
-
 
 MIface* Node::MObservable_getLif(const char *aType)
 {
@@ -616,23 +602,12 @@ void Node::onOwnerAttached()
 }
 
 
-#ifdef ENABLE_IFC
 MIface* Node::MContentOwner_getLif(const char *aType) 
 {
     MIface* res = nullptr;
-    if (res = checkLif2<MContentOwner>(aType, mMContentOwnerPtr));
+    if (res = checkLif2(aType, mMContentOwnerPtr));
     return res;
 }
-#else
-MIface* Node::MContentOwner_getLif(const char *aType) 
-{
-    MIface* res = nullptr;
-    if (res = checkLif<MContentOwner>(aType));
-    return res;
-}
-#endif
-
-
 
 void Node::MContentOwner_doDump(int aLevel, int aIdt, ostream& aOs) const 
 {
@@ -742,24 +717,12 @@ const MContent* Node::getCont(const GUri& aUri) const
     return res;
 }
 
-#ifdef ENABLE_IFC
 MIface* Node::MOwned_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif2<MNode>(aType, mMNodePtr));
+    if (res = checkLif2(aType, mMNodePtr));
     return res;
 }
-#else
-MIface* Node::MOwned_getLif(const char *aType)
-{
-    MIface* res = nullptr;
-    if (res = checkLif<MNode>(aType));
-    else if (res = checkLif<MContent>(aType));
-    return res;
-}
-#endif
-
-
 
 bool Node::isOwner(const MOwner* mOwned) const
 {
@@ -836,32 +799,17 @@ bool Node::isOwned(const MOwned* aOwned) const
     return res;
 }
 
-#ifdef ENABLE_IFC
 MIface* Node::MOwner_getLif(const char *aType)
 {
     MIface* res = nullptr;
     // TODO Vulnerabilty, consider to configure the access
-    if (res = checkLif2<MObservable>(aType, mMObservablePtr));
+    if (res = checkLif2(aType, mMObservablePtr));
     // TODO to introduce specific iface for explorable, ref ds_dcs_aes_acp
-    else if (res = mExplorable ? checkLif2<MNode>(aType, mMNodePtr) : nullptr);
-    else if (res = mControllable ? checkLif2<MNode>(aType, mMNodePtr) : nullptr);
-    else if (res = checkLif2<MContentOwner>(aType, mMContentOwnerPtr));
+    else if (res = mExplorable ? checkLif2(aType, mMNodePtr) : nullptr);
+    else if (res = mControllable ? checkLif2(aType, mMNodePtr) : nullptr);
+    else if (res = checkLif2(aType, mMContentOwnerPtr));
     return res;
 }
-#else
-MIface* Node::MOwner_getLif(const char *aType)
-{
-    MIface* res = nullptr;
-    // TODO Vulnerabilty, consider to configure the access
-    if (res = checkLif<MObservable>(aType));
-    // TODO to introduce specific iface for explorable, ref ds_dcs_aes_acp
-    else if (res = mExplorable ? checkLif<MNode>(aType) : nullptr);
-    else if (res = mControllable ? checkLif<MNode>(aType) : nullptr);
-    else if (res = checkLif<MContentOwner>(aType));
-    return res;
-}
-#endif
-
 
 bool Node::isNodeOwned(const MNode* aNode) const
 {

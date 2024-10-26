@@ -172,8 +172,8 @@ ADesSpc::ADesSpc(const string &aType, const string& aName, MEnv* aEnv): Unit(aTy
 MIface* ADesSpc::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MDesSpc>(aType));
-    else if (res = checkLif<MAgent>(aType));
+    if (res = checkLif2(aType, mMDesSpcPtr));
+    else if (res = checkLif2(aType, mMAgentPtr));
     else res = Unit::MNode_getLif(aType);
     return res;
 }
@@ -181,8 +181,8 @@ MIface* ADesSpc::MNode_getLif(const char *aType)
 MIface* ADesSpc::MAgent_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MDesSpc>(aType));
-    else if (res = checkLif<MUnit>(aType)); // To allow client to request IFR
+    if (res = checkLif2(aType, mMDesSpcPtr));
+    else if (res = checkLif2(aType, mMUnitPtr)); // To allow client to request IFR
     return res;
 }
 

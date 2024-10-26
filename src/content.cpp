@@ -14,8 +14,8 @@ Content::~Content()
 MIface* Content::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MContent>(aType));
-    else if (res = checkLif<MContentOwner>(aType));
+    if (res = checkLif2(aType, mMContentPtr));
+    else if (res = checkLif2(aType, mMContentOwnerPtr));
     else res = Node::MNode_getLif(aType);
     return res;
 }
@@ -23,7 +23,7 @@ MIface* Content::MNode_getLif(const char *aType)
 MIface* Content::MContent_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MContentOwner>(aType));
+    if (res = checkLif2(aType, mMContentOwnerPtr));
     return res;
 }
 

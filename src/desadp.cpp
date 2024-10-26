@@ -32,9 +32,9 @@ AAdp::~AAdp()
 MIface* AAdp::MAgent_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MDesSyncable>(aType));
-    else if (res = checkLif<MUnit>(aType)); // To allow client to request IFR
-    else if (res = checkLif<MDesObserver>(aType));
+    if (res = checkLif2(aType, mMDesSyncablePtr));
+    else if (res = checkLif2(aType, mMUnitPtr)); // To allow client to request IFR
+    else if (res = checkLif2(aType, mMDesObserverPtr));
     return res;
 }
 
@@ -135,10 +135,10 @@ void AAdp::onObsChanged(MObservable* aObl)
 MIface* AAdp::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MDesSyncable>(aType));
-    else if (res = checkLif<MAgent>(aType));
-    else if (res = checkLif<MDesObserver>(aType));
-    else if (res = checkLif<MDesInpObserver>(aType));
+    if (res = checkLif2(aType, mMDesSyncablePtr));
+    else if (res = checkLif2(aType, mMAgentPtr));
+    else if (res = checkLif2(aType, mMDesObserverPtr));
+    else if (res = checkLif2(aType, mMDesInpObserverPtr));
     else res = Unit::MNode_getLif(aType);
     return res;
 }
@@ -799,7 +799,7 @@ DAdp::DAdp(const string &aType, const string& aName, MEnv* aEnv): Des(aType, aNa
 MIface* DAdp::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MDesAdapter>(aType));
+    if (res = checkLif2(aType, mMDesAdapterPtr));
     else res = Des::MNode_getLif(aType);
     return res;
 }
@@ -807,7 +807,7 @@ MIface* DAdp::MNode_getLif(const char *aType)
 MIface* DAdp::MOwner_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MDesAdapter>(aType));
+    if (res = checkLif2(aType, mMDesAdapterPtr));
     else if (res = Des::MOwner_getLif(aType));
     return res;
 }
@@ -953,6 +953,6 @@ MNode* DAdp::getMag()
 
 MIface* DAdp::MagLink::MLink_getLif(const char *aType)
 {
-    return (strcmp(aType, MLink::Type()) == 0) ? reinterpret_cast<MLink*>(this) : nullptr;;
+    return checkLif2(aType, mMLinkPtr);
 }
 

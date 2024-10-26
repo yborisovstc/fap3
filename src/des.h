@@ -77,6 +77,7 @@ class CpStateInp: public CpState, public MDesInpObserver
 	virtual void onInpUpdated() override;
     protected:
 	InpObsProvider mIop;
+	MDesInpObserver* mMDesInpObserverPtr = nullptr;
 };
 
 #else // DES_CPS_IFC
@@ -184,6 +185,9 @@ class ExtdStateOutpI : public ExtdStateOutp, public MDVarGet, protected MDesInpO
 	virtual const DtBase* VDtGet(const string& aType) override;
 	virtual string VarGetIfid() const override;
 	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+    protected:
+	MDesInpObserver* mMDesInpObserverPtr = nullptr;
+	MDVarGet* mMDVarGetPtr = nullptr;
 };
 
 
@@ -310,6 +314,11 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 	MNode* mInp;      //<! Input cached
 	MIfProv* mDobsIfProv = nullptr;
 	MIfProv* mInpobsIfProv = nullptr;
+	MConnPoint* mMConnPointPtr = nullptr;
+	MDesSyncable* mMDesSyncablePtr = nullptr;
+	MDesInpObserver* mMDesInpObserverPtr = nullptr;
+	MDVarGet* mMDVarGetPtr = nullptr;
+	MDVarSet* mMDVarSetPtr = nullptr;
 };
 
 
@@ -399,6 +408,8 @@ class Const: public Vertu, public MConnPoint, public MDVarGet, public Cnt::Host
 	SContValue mValue = SContValue(*this, KCont_Value);
 	MIfProv* mInpProv;
 	bool mIsDead;     //<! Sign of instance destructed, needs to avoid callbacks initialted by bases */
+	MConnPoint* mMConnPointPtr = nullptr;
+	MDVarGet* mMDVarGetPtr = nullptr;
 };
 
 
@@ -464,6 +475,10 @@ class Des: public Syst, public MDesSyncable, public MDesObserver, public MDesAda
 	bool mPaused;       //<! Status of pause of DES evolving
 	bool mIsActive = true; //<! Status of being active. Tmp solution of ds_desopt_au
 	MIfProv* mDobsIfProv = nullptr;
+	MDesSyncable* mMDesSyncablePtr = nullptr;
+	MDesObserver* mMDesObserverPtr = nullptr;
+	MDesAdapter* mMDesAdapterPtr = nullptr;
+	MDesManageable* mMDesManageablePtr = nullptr;
 };
 
 /** @brief DES agent
@@ -544,6 +559,12 @@ class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver
 	bool mPaused;                    //<! Status of pause of DES evolving
 	bool mIsActive = true;           //<! Status of being active. Tmp solution of ds_desopt_au
 	MIfProv* mDobsIfProv = nullptr;
+	MAgent* mMAgentPtr = nullptr;
+	MDesSyncable* mMDesSyncablePtr = nullptr;
+	MDesObserver* mMDesObserverPtr = nullptr;
+	MObserver* mMObserverPtr = nullptr;
+	MDesManageable* mMDesManageablePtr = nullptr;
+	MDesAdapter* mMDesAdapterPtr = nullptr;
 };
 
 
@@ -573,6 +594,7 @@ class DesLauncher: public Des, public MLauncher
     protected:
 	int mCounter = 0;
 	bool mStop;
+	MLauncher* mMLauncherPtr = nullptr;
 };
 
 /** @brief Active subsystem of DES
@@ -925,6 +947,7 @@ class DesCtxSpl : public Des, public MDesCtxSpl
 	virtual MDesCtxSpl::TCp* splCp() override { return &mSplCp; }
     protected:
 	TSplCp mSplCp;  /*!< Ctx supplier CP */
+	MDesCtxSpl* mMDesCtxSplPtr = nullptr;
 };
 
 
@@ -962,6 +985,7 @@ class DesCtxCsm : public Des, public MDesCtxCsm
 	bool mInitialized;
 	bool mInitFailed;
 	TCsmCp mCsmCp;  /*!< Consumer Cp */
+	MDesCtxCsm* mMDesCtxCsmPtr = nullptr;
 };
 
 /** @brief DES Input demultiplexor, ref ds_des_idmux

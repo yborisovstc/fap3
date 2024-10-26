@@ -39,8 +39,8 @@ void Elem::MElem_doDump(int aLevel, int aIdt, ostream& aOs) const
 MIface* Elem::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MElem>(aType));
-    else if (res = checkLif<MParent>(aType));
+    if (res = checkLif2(aType, mMElemPtr));
+    else if (res = checkLif2(aType, mMParentPtr));
     else res = Unit::MNode_getLif(aType);
     return res;
 }

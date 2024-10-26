@@ -14,7 +14,7 @@ TrBase::TrBase(const string &aType, const string& aName, MEnv* aEnv): CpStateOut
 MIface* TrBase::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MDVarGet>(aType));
+    if (res = checkLif2(aType, mMDVarGetPtr));
     else res = CpStateOutp::MNode_getLif(aType);
     return res;
 }
@@ -22,7 +22,7 @@ MIface* TrBase::MNode_getLif(const char *aType)
 MIface* TrBase::MVert_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MConnPoint>(aType));
+    if (res = checkLif2(aType, mMConnPointPtr));
     else res = Vertu::MVert_getLif(aType);
     return res;
 }
@@ -30,7 +30,7 @@ MIface* TrBase::MVert_getLif(const char *aType)
 MIface* TrBase::MOwner_getLif(const char *aType)
 {
     MIface* res = NULL;
-    if (res = checkLif<MUnit>(aType));  // IFR from inputs
+    if (res = checkLif2(aType, mMUnitPtr));  // IFR from inputs
     else res = CpStateOutp::MOwner_getLif(aType);
     return res;
 }

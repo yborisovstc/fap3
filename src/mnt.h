@@ -26,6 +26,7 @@ class AMntp : public Node, public MMntp
 	bool CreateModel(const string& aSpecPath);
     private:
 	Env* mMdlEnv;
+	MMntp* mMMntpPtr = nullptr;
 };
 
 

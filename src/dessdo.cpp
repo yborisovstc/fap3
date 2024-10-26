@@ -20,8 +20,8 @@ SdoBase::SdoBase(const string &aType, const string& aName, MEnv* aEnv): CpStateO
 MIface* SdoBase::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MDVarGet>(aType));
-    else if (res = checkLif<MDesInpObserver>(aType));
+    if (res = checkLif2(aType, mMDVarGetPtr));
+    else if (res = checkLif2(aType, mMDesInpObserverPtr));
     else res = CpStateOutp::MNode_getLif(aType);
     return res;
 }

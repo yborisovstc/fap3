@@ -61,6 +61,8 @@ class Elem: public Unit, public MElem, public MParent, public MChild
     protected:
 	MChromo* mChromo;     /*!< Chromo */
 	TInhTreeNode mInode;  /*!< Inheritance tree node */
+	MElem* mMElemPtr = nullptr;
+	MParent* mMParentPtr = nullptr;
 };
 
 #endif

@@ -51,6 +51,7 @@ class ConnPointu: public Vertu, public MConnPoint, public Cnt::Host
 	Cnt mProv = Cnt(*this, KProvName);
 	static string KReqName;
 	static string KProvName;
+	MConnPoint* mMConnPointPtr = nullptr;
 };
 
 /** @brief Extender, monolitic, multicontent, unit. Redirects request for iface to internal CP of extention.
@@ -115,6 +116,8 @@ class Socket: public Vert, public MSocket
 	virtual int PinsCount() const override;
 	virtual MNode* GetPin(int aInd) override;
 	virtual MNode* GetPin(MIfReq::TIfReqCp* aReq) override;
+    protected:
+	MSocket* mMSocketPtr = nullptr;
 };
 
 
@@ -155,6 +158,9 @@ class Syst : public Elem, public MAhost, public MActr, public MSyst
     protected:
 	TAgtCp mAgtCp;  /*!< Agents connpoint */
 	TEdges mEdges;  /*!< Edges */
+	MAhost* mMAhostPtr = nullptr;
+	MActr* mMActrPtr = nullptr;
+	MSyst* mMSystPtr = nullptr;
 };
 
 
@@ -200,6 +206,7 @@ class AgtBase: public Unit, public MAgent
 	MNode* ahostNode();
     protected:
 	TAgtCp mAgtCp;                   /*!< Agent connpoint */
+	MAgent* mMAgentPtr = nullptr;
 };
 
 #endif

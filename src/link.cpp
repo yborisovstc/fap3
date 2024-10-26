@@ -23,7 +23,7 @@ void Link::MLink_doDump(int aLevel, int aIdt, ostream& aOs) const
 MIface* Link::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MLink>(aType));
+    if (res = checkLif2(aType, mMLinkPtr));
     else res = Unit::MNode_getLif(aType);
     return res;
 }

@@ -138,6 +138,9 @@ class SdoBase : public CpStateOutp, public MDVarGet, public MObserver, public MD
 	EagObs mEagObs;  /*!< Explored agent observer */
 	MNode* mSue; /*!< System under exploring */
 	bool mCInv;              //!< Sign of data cache invalidated
+	MDVarGet* mMDVarGetPtr = nullptr;
+	MObserver* mMObserverPtr = nullptr;
+	MDesInpObserver* mMDesInpObserverPtr = nullptr;
 };
 
 /** @brief SDO providing generic data

@@ -210,9 +210,8 @@ ASdc::~ASdc()
 MIface* ASdc::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MDesSyncable>(aType));
-
-    else if (res = checkLif<MDesInpObserver>(aType));
+    if (res = checkLif2(aType, mMDesSyncablePtr));
+    else if (res = checkLif2(aType, mMDesObserverPtr));
     else res = Unit::MNode_getLif(aType);
     return res;
 }

@@ -70,7 +70,7 @@ void CpStateInp::onInpUpdated()
 MIface* CpStateInp::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MDesInpObserver>(aType));
+    if (res = checkLif2(aType, mMDesInpObserverPtr));
     else res = CpState::MNode_getLif(aType);
     return res;
 }
@@ -191,7 +191,7 @@ ExtdStateOutpI::ExtdStateOutpI(const string &aType, const string& aName, MEnv* a
 MIface* ExtdStateOutpI::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MDVarGet>(aType));
+    if (res = checkLif2(aType, mMDVarGetPtr));
     else res = ExtdStateOutp::MNode_getLif(aType);
     return res;
 }
@@ -318,11 +318,11 @@ State::~State()
 MIface* State::MNode_getLif(const char *aType)
 {
     MIface* res = NULL;
-    if (res = checkLif<MDesSyncable>(aType));
-    else if (res = checkLif<MDesInpObserver>(aType));
-    else if (res = checkLif<MConnPoint>(aType));
-    else if (res = checkLif<MDVarGet>(aType));
-    else if (res = checkLif<MDVarSet>(aType));
+    if (res = checkLif2(aType, mMDesSyncablePtr));
+    else if (res = checkLif2(aType, mMDesInpObserverPtr));
+    else if (res = checkLif2(aType, mMConnPointPtr));
+    else if (res = checkLif2(aType, mMDVarGetPtr));
+    else if (res = checkLif2(aType, mMDVarSetPtr));
     else res = Vertu::MNode_getLif(aType);
     return res;
 }
@@ -330,8 +330,8 @@ MIface* State::MNode_getLif(const char *aType)
 MIface* State::MOwner_getLif(const char *aType)
 {
     MIface* res = NULL;
-    if (res = checkLif<MDesSyncable>(aType)); // ??
-    else if(res = checkLif<MUnit>(aType));  // IFR from inputs
+    if (res = checkLif2(aType, mMDesSyncablePtr)); // ??
+    else if(res = checkLif2(aType, mMUnitPtr));  // IFR from inputs
     else res = Vertu::MOwner_getLif(aType);
     return res;
 }
@@ -339,7 +339,7 @@ MIface* State::MOwner_getLif(const char *aType)
 MIface* State::MOwned_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MDesSyncable>(aType));
+    if (res = checkLif2(aType, mMDesSyncablePtr));
     else res = Unit::MOwned_getLif(aType);
     return res;
 }
@@ -429,7 +429,7 @@ void State::onContentChanged(const MContent* aCont)
 MIface* State::MVert_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MConnPoint>(aType));
+    if (res = checkLif2(aType, mMConnPointPtr));
     else res = Vertu::MVert_getLif(aType);
     return res;
 }
@@ -777,8 +777,8 @@ Const::~Const()
 MIface* Const::MNode_getLif(const char *aType)
 {
     MIface* res = NULL;
-    if (res = checkLif<MConnPoint>(aType));
-    else if (res = checkLif<MDVarGet>(aType));
+    if (res = checkLif2(aType, mMConnPointPtr));
+    else if (res = checkLif2(aType, mMDVarGetPtr));
     else res = Vertu::MNode_getLif(aType);
     return res;
 }
@@ -786,7 +786,7 @@ MIface* Const::MNode_getLif(const char *aType)
 MIface* Const::MOwner_getLif(const char *aType)
 {
     MIface* res = NULL;
-    if(res = checkLif<MUnit>(aType));  // IFR from inputs
+    if(res = checkLif2(aType, mMUnitPtr));  // IFR from inputs
     else res = Vertu::MOwner_getLif(aType);
     return res;
 }
@@ -853,7 +853,7 @@ void Const::onContentChanged(const MContent* aCont)
 MIface* Const::MVert_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MConnPoint>(aType));
+    if (res = checkLif2(aType, mMConnPointPtr));
     else res = Vertu::MVert_getLif(aType);
     return res;
 }
@@ -1003,10 +1003,10 @@ mPaused(false)
 MIface* Des::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MDesSyncable>(aType));
-    else if (res = checkLif<MDesObserver>(aType));
-    else if (res = checkLif<MDesAdapter>(aType));
-    else if (res = checkLif<MDesManageable>(aType));
+    if (res = checkLif2(aType, mMDesSyncablePtr));
+    else if (res = checkLif2(aType, mMDesObserverPtr));
+    else if (res = checkLif2(aType, mMDesAdapterPtr));
+    else if (res = checkLif2(aType, mMDesManageablePtr));
     else res = Syst::MNode_getLif(aType);
     return res;
 }
@@ -1231,7 +1231,7 @@ void Des::onOwnedDetached(MOwned* aOwned)
 MIface* Des::MOwned_getLif(const char *aType)
 {
     MIface* res = NULL;
-    if (res = checkLif<MDesSyncable>(aType));
+    if (res = checkLif2(aType, mMDesSyncablePtr));
     else res = Syst::MOwned_getLif(aType);
     return res;
 }
@@ -1239,8 +1239,8 @@ MIface* Des::MOwned_getLif(const char *aType)
 MIface* Des::MOwner_getLif(const char *aType)
 {
     MIface* res = NULL;
-    if (res = checkLif<MDesObserver>(aType)); // Notifying from owned 
-    else if (res = checkLif<MDesAdapter>(aType));
+    if (res = checkLif2(aType, mMDesObserverPtr)); // Notifying from owned 
+    else if (res = checkLif2(aType, mMDesAdapterPtr));
     else res = Syst::MOwner_getLif(aType);
     return res;
 }
@@ -1336,11 +1336,11 @@ ADes::~ADes()
 MIface* ADes::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MDesSyncable>(aType));
-    else if (res = checkLif<MAgent>(aType));
-    else if (res = checkLif<MDesObserver>(aType));
-    else if (res = checkLif<MDesManageable>(aType));
-    else if (res = checkLif<MDesAdapter>(aType));
+    if (res = checkLif2(aType, mMDesSyncablePtr));
+    else if (res = checkLif2(aType, mMAgentPtr));
+    else if (res = checkLif2(aType, mMDesObserverPtr));
+    else if (res = checkLif2(aType, mMDesManageablePtr));
+    else if (res = checkLif2(aType, mMDesAdapterPtr));
     else res = Unit::MNode_getLif(aType);
     return res;
 }
@@ -1348,11 +1348,11 @@ MIface* ADes::MNode_getLif(const char *aType)
 MIface* ADes::MAgent_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MDesSyncable>(aType));
-    else if (res = checkLif<MUnit>(aType)); // To allow client to request IFR
-    else if (res = checkLif<MDesObserver>(aType));
-    else if (res = checkLif<MDesManageable>(aType));
-    else if (res = checkLif<MDesAdapter>(aType));
+    if (res = checkLif2(aType, mMDesSyncablePtr));
+    else if (res = checkLif2(aType, mMUnitPtr)); // To allow client to request IFR
+    else if (res = checkLif2(aType, mMDesObserverPtr));
+    else if (res = checkLif2(aType, mMDesManageablePtr));
+    else if (res = checkLif2(aType, mMDesAdapterPtr));
     return res;
 }
 
@@ -1566,7 +1566,7 @@ int ADes::countOfActive(bool aLocal) const
 MIface* ADes::MOwned_getLif(const char *aType)
 {
     MIface* res = NULL;
-    if (res = checkLif<MDesSyncable>(aType));
+    if (res = checkLif2(aType, mMDesSyncablePtr));
     else res = Unit::MOwned_getLif(aType);
     return res;
 }
@@ -1797,7 +1797,7 @@ void DesLauncher::OnIdle()
 MIface* DesLauncher::MOwned_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MLauncher>(aType));
+    if (res = checkLif2(aType, mMLauncherPtr));
     else res = Des::MOwned_getLif(aType);
     return res;
 }
@@ -1805,7 +1805,7 @@ MIface* DesLauncher::MOwned_getLif(const char *aType)
 MIface* DesLauncher::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MLauncher>(aType));
+    if (res = checkLif2(aType, mMLauncherPtr));
     else res = Des::MNode_getLif(aType);
     return res;
 }
@@ -1964,7 +1964,7 @@ DesCtxSpl::DesCtxSpl(const string &aType, const string& aName, MEnv* aEnv): Des(
 MIface* DesCtxSpl::MNode_getLif(const char *aType)
 {
     MIface* res = NULL;
-    if (res = checkLif<MDesCtxSpl>(aType));
+    if (res = checkLif2(aType, mMDesCtxSplPtr));
     else res = Des::MNode_getLif(aType);
     return res;
 }
@@ -1972,14 +1972,14 @@ MIface* DesCtxSpl::MNode_getLif(const char *aType)
 MIface* DesCtxSpl::MOwned_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MDesCtxSpl>(aType));
+    if (res = checkLif2(aType, mMDesCtxSplPtr));
     else res = Des::MOwned_getLif(aType);
     return res;
 }
 
 MIface* DesCtxSpl::MDesCtxSpl_getLif(const char *aType)
 {
-    return checkLif<MUnit>(aType); // To enable IFR
+    return checkLif2(aType, mMUnitPtr); // To enable IFR
 }
 
 void DesCtxSpl::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
@@ -2068,7 +2068,7 @@ DesCtxCsm::DesCtxCsm(const string &aType, const string& aName, MEnv* aEnv): Des(
 MIface* DesCtxCsm::MNode_getLif(const char *aType)
 {
     MIface* res = NULL;
-    if (res = checkLif<MDesCtxCsm>(aType));
+    if (res = checkLif2(aType, mMDesCtxCsmPtr));
     else res = Des::MNode_getLif(aType);
     return res;
 }

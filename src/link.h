@@ -37,6 +37,7 @@ class Link : public Unit, public MLink, public MObserver
     protected:
 	TObserverCp mOcp;  /*<! Observer native cp */
 	MNode* mPair;
+	MLink* mMLinkPtr = nullptr;
 };
 
 #endif

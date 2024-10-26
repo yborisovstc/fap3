@@ -50,7 +50,7 @@ Unit::~Unit()
 MIface* Unit::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MUnit>(aType));
+    if (res = checkLif2(aType, mMUnitPtr));
     else res = Node::MNode_getLif(aType);
     return res;
 }
@@ -58,7 +58,7 @@ MIface* Unit::MNode_getLif(const char *aType)
 MIface* Unit::MOwned_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MUnit>(aType)); // Enagle IRM from owner
+    if (res = checkLif2(aType, mMUnitPtr)); // Enable IRM from owner
     else res = Node::MOwned_getLif(aType);
     return res;
 }
@@ -66,8 +66,8 @@ MIface* Unit::MOwned_getLif(const char *aType)
 MIface* Unit::MUnit_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MUnit>(aType));
-    else if (res = checkLif<MIfProvOwner>(aType));
+    if (res = checkLif2(aType, mMUnitPtr));
+    else if (res = checkLif2(aType, mMIfProvOwnerPtr));
     else res = MNode_getLif(aType); //YB?? vulnerability
     return res;
 }
@@ -78,8 +78,8 @@ MIface* Unit::MUnit_getLif(const char *aType)
 MIface* Unit::MIfProvOwner_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MUnit>(aType));
-    else if (res = checkLif<MNode>(aType));
+    if (res = checkLif2(aType, mMUnitPtr));
+    else if (res = checkLif2(aType, mMNodePtr));
     return res;
 }
 
@@ -239,7 +239,7 @@ void Unit::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 MIface* Unit::MOwner_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MUnit>(aType)); // To enable ifr request to owner
+    if (res = checkLif2(aType, mMUnitPtr)); // To enable ifr request to owner
     else res = Node::MOwner_getLif(aType);
     return res;
 }

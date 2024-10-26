@@ -281,6 +281,9 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 	bool mCdone;               /*!<  Sign that controlling was completed, ref ds_dcs_sdc_dsgn_cc */
 	bool mOutCInv = true;      //!< Sign of output data cache invalidated
 	MIfProv* mDobsIfProv = nullptr;
+	MDesSyncable* mMDesSyncablePtr = nullptr;
+	MDesObserver* mMDesObserverPtr = nullptr;
+	MObserver* mMObserverPtr = nullptr;
 };
 
 template <typename T>

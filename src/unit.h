@@ -50,6 +50,8 @@ class Unit : public Node, public MUnit, public MIfProvOwner
     protected:
 	map<string, IfrNode*> mLocalIrn; /*!< Local IFR node */
 	list<IfrNode*> mIrns;  /*! IFR nodes */
+	MUnit* mMUnitPtr = nullptr;
+	MIfProvOwner* mMIfProvOwnerPtr = nullptr;
 };
 	
 

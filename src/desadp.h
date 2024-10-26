@@ -195,6 +195,10 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 	bool mUpdNotified;  //<! Sign of that State notified observers on Update
 	bool mActNotified;  //<! Sign of that State notified observers on Activation
 	bool mSelfAsBase;  //<! Sign of that host is acts as MAG base
+	MDesSyncable* mMDesSyncablePtr = nullptr;
+	MDesObserver* mMDesObserverPtr = nullptr;
+	MDesInpObserver* mMDesInpObserverPtr = nullptr;
+	MAgent* mMAgentPtr = nullptr;
 };
 
 
@@ -291,15 +295,25 @@ class DAdp : public Des, public IDesEmbHost
 		virtual bool disconnect(MNode* aPair) override { return false;}
 		virtual MNode* pair() override { return mHost->mMag; }
 	    private:
+		template<class T> MIface* checkLif2(const char* aType, T*& aPtr) {
+		    if (strcmp(aType, T::Type()) == 0) {
+			if (!aPtr) {
+			    aPtr = dynamic_cast<T*>(this);
+			}
+			return aPtr;
+		    } else return nullptr;
+		}
+	    private:
 		DAdp* mHost;
+		MLink* mMLinkPtr = nullptr;
 	};
 	/** @brief Managed agent observer
 	 * */
 	class MagObs : public MObserver {
 	    using TObserverCp = NCpOmnp<MObserver, MObservable>;
 	    public:
-		MagObs(DAdp* aHost): mHost(aHost), mOcp(this) {}
-		// From MObserver
+	    MagObs(DAdp* aHost): mHost(aHost), mOcp(this) {}
+	    // From MObserver
 		virtual string MObserver_Uid() const {return mHost->getUidC<MObserver>("MagObs");}
 		virtual MIface* MObserver_getLif(const char *aName) override { return nullptr;}
                 virtual void onObsOwnerAttached(MObservable* aObl) override {}

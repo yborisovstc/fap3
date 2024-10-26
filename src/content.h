@@ -34,6 +34,7 @@ class Content : public Node, public MContent
     protected:
 	string mData;
 	bool mValid = false;
+	MContent* mMContentPtr = nullptr;
 };
 
 

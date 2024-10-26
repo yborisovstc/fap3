@@ -47,6 +47,7 @@ class Vertu : public Unit, public MVert
 	virtual void onDisconnected();
     protected:
 	TPairs mPairs;
+	MVert* mMVertPtr = nullptr;
 };
 
 
@@ -87,6 +88,7 @@ class Vert : public Elem, public MVert
 	virtual void onDisconnected();
     protected:
 	TPairs mPairs;
+	MVert* mMVertPtr = nullptr;
 };
 
 

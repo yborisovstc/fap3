@@ -66,7 +66,7 @@ bool AMntp::CreateModel(const string& aSpecPath)
 MIface* AMntp::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MMntp>(aType));
+    if (res = checkLif2(aType, mMMntpPtr));
     else res = Node::MNode_getLif(aType);
     return res;
 }

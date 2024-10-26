@@ -2,7 +2,7 @@
 #include "mlink.h"
 
 
-const string KContProvided = "Provided";
+static const GUri KContProvided = "Provided";
 static const GUri KContRequired = "Required";
 
 string ConnPointu::KReqName = "Required";
@@ -16,8 +16,8 @@ ConnPointu::ConnPointu(const string &aType, const string &aName, MEnv* aEnv): Ve
 MIface* ConnPointu::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MConnPoint>(aType));
-    else if (res = checkLif<MIfProvOwner>(aType));
+    if (res = checkLif2(aType, mMConnPointPtr));
+    else if (res = checkLif2(aType, mMIfProvOwnerPtr));
     else res = Vertu::MNode_getLif(aType);
     return res;
 }
@@ -25,7 +25,7 @@ MIface* ConnPointu::MNode_getLif(const char *aType)
 MIface* ConnPointu::MVert_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MConnPoint>(aType));
+    if (res = checkLif2(aType, mMConnPointPtr));
     else res = Vertu::MVert_getLif(aType);
     return res;
 }
@@ -34,7 +34,7 @@ MIface* ConnPointu::MVert_getLif(const char *aType)
 MIface* ConnPointu::MIfProvOwner_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MConnPoint>(aType));
+    if (res = checkLif2(aType, mMConnPointPtr));
     else res = Vertu::MIfProvOwner_getLif(aType);
     return res;
 }
@@ -326,7 +326,7 @@ Socket::Socket(const string &aType, const string& aName, MEnv* aEnv): Vert(aType
 MIface* Socket::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MSocket>(aType));
+    if (res = checkLif2(aType, mMSocketPtr));
     else res = Vert::MNode_getLif(aType);
     return res;
 }
@@ -555,7 +555,7 @@ Syst::~Syst()
 MIface* Syst::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MSyst>(aType));
+    if (res = checkLif2(aType, mMSystPtr));
     else res = Elem::MNode_getLif(aType);
     return res;
 }
@@ -568,9 +568,9 @@ MIface* Syst::MNode_getLif(const char *aType)
 MIface* Syst::MOwner_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MUnit>(aType));
-    else if (res = checkLif<MContentOwner>(aType));
-    else if (res = checkLif<MActr>(aType));
+    if (res = checkLif2(aType, mMUnitPtr));
+    else if (res = checkLif2(aType, mMContentOwnerPtr));
+    else if (res = checkLif2(aType, mMActrPtr));
     else res = Unit::MOwner_getLif(aType);
     return res;
 }
@@ -726,8 +726,8 @@ bool Syst::detachAgent(MAgent::TCp* aAgt)
 MIface* Syst::MAhost_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MNode>(aType));
-    else if (res = checkLif<MContentOwner>(aType)); // To get agent an access to content
+    if (res = checkLif2(aType, mMNodePtr));
+    else if (res = checkLif2(aType, mMContentOwnerPtr)); // To get agent an access to content
     return res;
 }
 
@@ -764,13 +764,13 @@ AgtBase::~AgtBase()
 
 MIface* AgtBase::MAgent_getLif(const char *aType)
 {
-    return checkLif<MUnit>(aType); // To allow client to request IFR
+    return checkLif2(aType, mMUnitPtr); // To allow client to request IFR
 }
 
 MIface* AgtBase::MNode_getLif(const char *aType)
 {
     MIface* res = nullptr;
-    if (res = checkLif<MAgent>(aType));
+    if (res = checkLif2(aType, mMAgentPtr));
     else res = Unit::MNode_getLif(aType);
     return res;
 }
