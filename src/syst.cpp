@@ -7,6 +7,8 @@ static const GUri KContRequired = "Required";
 
 string ConnPointu::KReqName = "Required";
 string ConnPointu::KProvName = "Provided";
+const GUri ConnPointu::KReqUri = ConnPointu::KReqName;
+const GUri ConnPointu::KProvUri = ConnPointu::KProvName;
 
 
 ConnPointu::ConnPointu(const string &aType, const string &aName, MEnv* aEnv): Vertu(aType, aName, aEnv)
@@ -72,10 +74,9 @@ const MContent* ConnPointu::getCont(int aIdx) const
 bool ConnPointu::getContent(const GUri& aCuri, string& aRes) const
 {
     bool res = true;
-    string name = aCuri;
-    if (name == KProvName)
+    if (aCuri == KProvUri)
 	res = mProv.getData(aRes);
-    else if (name == KReqName)
+    else if (aCuri == KReqUri)
 	res = mReq.getData(aRes);
     else res = Vertu::getContent(aCuri, aRes);
     return res;
@@ -84,10 +85,9 @@ bool ConnPointu::getContent(const GUri& aCuri, string& aRes) const
 bool ConnPointu::setContent(const GUri& aCuri, const string& aData)
 {
     bool res = true;
-    string name = aCuri;
-    if (name == KProvName)
+    if (aCuri == KProvUri)
 	res = mProv.setData(aData);
-    else if (name == KReqName)
+    else if (aCuri == KReqUri)
 	res = mReq.setData(aData);
     else res = Vertu::setContent(aCuri, aData);
     return res;
@@ -201,8 +201,7 @@ void Extd::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	MIfProvOwner* intcpo = intcpu ? intcpu->lIf(intcpo) : nullptr;
 	if (intcpo && aReq->provided()->isRequestor(intcpo)) {
 	    // Redirect to pairs
-	    for (int i = 0; i < pairsCount(); i++) {
-		MVert* pair = getPair(i);
+	    for (MVert* pair : mPairs) {
 		MUnit* pairu = pair ? pair->lIf(pairu) : nullptr;  
 		MIfProvOwner* pairo = pairu ? pairu->lIf(pairo) : nullptr;
 		if (pairo && !aReq->provided()->isRequestor(pairo)) {
@@ -229,7 +228,7 @@ bool Extd::isCompatible(MVert* aPair, bool aExt)
 MVert* Extd::getExtd()
 {
     MVert* res = nullptr;
-    MNode* extn = getNode(KUriInt);
+    MNode* extn = getComp(KUriInt);
     res = extn ? extn->lIf(res) : nullptr;
     return res;
 }
@@ -238,11 +237,11 @@ MVert::TDir Extd::getDir() const
 {
     TDir res = ERegular;
     /*
-    string cdir;
-    getContent(KContDir, cdir);
-    if (cdir == KContDir_Val_Inp) res = EInp;
-    else if (cdir == KContDir_Val_Out) res = EOut;
-    */
+       string cdir;
+       getContent(KContDir, cdir);
+       if (cdir == KContDir_Val_Inp) res = EInp;
+       else if (cdir == KContDir_Val_Out) res = EOut;
+       */
     return res;
 }
 
@@ -268,8 +267,7 @@ void Extde::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	MIfProvOwner* intcpo = intcpu ? intcpu->lIf(intcpo) : nullptr;
 	if (intcpo && aReq->provided()->isRequestor(intcpo)) {
 	    // Redirect to pairs
-	    for (int i = 0; i < pairsCount(); i++) {
-		MVert* pair = getPair(i);
+	    for (MVert* pair : mPairs) {
 		MUnit* pairu = pair ? pair->lIf(pairu) : nullptr;  
 		MIfProvOwner* pairo = pairu ? pairu->lIf(pairo) : nullptr;
 		if (pairo && !aReq->provided()->isRequestor(pairo)) {
@@ -296,7 +294,7 @@ bool Extde::isCompatible(MVert* aPair, bool aExt)
 MVert* Extde::getExtd()
 {
     MVert* res = nullptr;
-    MNode* extn = getNode(KUriInt);
+    MNode* extn = getComp(KUriInt);
     res = extn ? extn->lIf(res) : nullptr;
     return res;
 }
@@ -412,11 +410,10 @@ void Socket::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 			    if (apairs != NULL) {
 				MNode* pereq = apairs->GetPin(req);
 				if (pereq) {
-				    pcomp = getNode(pereq->name());
+				    pcomp = getComp(pereq->name());
 				}
 			    }
 			}
-			//req = req->binded()->firstPair();
 			req = *(req->binded()->pairsBegin());
 			reqo = req ? req->provided()->rqOwner() : nullptr;
 			reqn = const_cast<MNode*>(reqo ? reqo->lIf(reqn) : nullptr);
@@ -478,8 +475,7 @@ bool Socket::isCompatible(MVert* aPair, bool aExt)
 	    MNode* compn = comp->lIf(compn);
 	    MVert* compv = compn ? compn->lIf(compv) : nullptr;
 	    if (compv) {
-		MNode* compn = comp->lIf(compn);
-		MNode* pcomp = cpn->getNode(compn->name());
+		MNode* pcomp = cpn->getComp(compn->name());
 		if (pcomp) {
 		    MVert* pcompv = pcomp->lIf(pcompv);
 		    res = compv->isCompatible(pcompv, ext);

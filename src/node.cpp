@@ -813,13 +813,7 @@ MIface* Node::MOwner_getLif(const char *aType)
 
 bool Node::isNodeOwned(const MNode* aNode) const
 {
-    bool res = false;
-    for (auto it = owner()->pairsCBegin(); it != owner()->pairsCEnd() && !res; it++) {
-	auto* comp = (*it)->provided();
-	const MNode* compn = comp->lIf(compn);
-	res = (aNode == compn);
-    }
-    return res;
+    return owner()->isConnected(const_cast<MNode*>(aNode)->owned());
 }
 
 // TODO not working because of access owd to owr is prohibited in owning tree. Remove?

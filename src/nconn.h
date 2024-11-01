@@ -148,7 +148,7 @@ class MNcpp
 		    if (node) {
 			auto pli = node->leafsBegin();
 			if (pli != node->leafsEnd()) {
-			    mPi.splice_after(mPi.before_begin(), pli.mPi);
+			    mPi.splice_after(mPi.before_begin(), move(pli.mPi));
 			}
 		    }
 		}
@@ -194,8 +194,8 @@ class MNcpp
 	virtual TPair* pairAt(int aInd) = 0;
 	virtual const TPair* pairAt(int aInd) const = 0;
 	/** @brief Pair by ID */
-	virtual TPair* pairAt(const string aId) = 0;
-	virtual const TPair* pairAt(const string aId) const = 0;
+	virtual TPair* pairAt(const string& aId) = 0;
+	virtual const TPair* pairAt(const string& aId) const = 0;
 	// Traversal
 	virtual PairsIter pairsBegin() = 0;
 	virtual PairsIter pairsEnd() = 0;
@@ -213,7 +213,7 @@ class MNcpp
 		    // Node, proceed to leafs
 		    auto pli = bpair->leafsBegin();
 		    if (pli != bpair->leafsEnd()) {
-			it.mPi.splice_after(it.mPi.before_begin(), pli.mPi);
+			it.mPi.splice_after(it.mPi.before_begin(), move(pli.mPi));
 		    }
 		}
 	    }
@@ -337,11 +337,11 @@ class NCpOmip : public MNcpp<TPif, TRif>
 	    }
     	    return nullptr;
 	}
-	virtual TPair* pairAt(const string aId) {
+	virtual TPair* pairAt(const string& aId) override {
             auto it = mPairs.find(aId);
             return (it == mPairs.end()) ? nullptr : it->second;
 	}
-	virtual const TPair* pairAt(const string aId) const {
+	virtual const TPair* pairAt(const string& aId) const override {
             auto it = mPairs.find(aId);
             return (it == mPairs.end()) ? nullptr : it->second;
 	}
@@ -508,8 +508,8 @@ class NCpOmnp : public MNcpp<TPif, TRif>
 	}
 	virtual const TPair* pairAt(int aInd) const override { for (auto it = mPairs.begin(); it != mPairs.end(); it++) if (aInd-- == 0) return *it; return nullptr; }
 	virtual TPair* pairAt(int aInd) override { for (auto it = mPairs.begin(); it != mPairs.end(); it++) if (aInd-- == 0) return *it; return nullptr; }
-	virtual TPair* pairAt(const string aId) { return nullptr;}
-	virtual const TPair* pairAt(const string aId) const { return nullptr;}
+	virtual TPair* pairAt(const string& aId) override { return nullptr;}
+	virtual const TPair* pairAt(const string& aId) const override { return nullptr;}
 	// Traversal
 	virtual typename TSelf::PairsIter pairsBegin() {
 	    auto pb = mPairs.begin();
@@ -572,7 +572,7 @@ bool NCpOmnp<TPif, TRif>::disconnect(TPair* aPair)
 template <class TPif, class TRif>
 bool NCpOmnp<TPif, TRif>::isConnected(TPair* aPair) const
 {
-    return mPairs.count(aPair) == 1;
+    return mPairs.find(aPair) != mPairs.end();
 }
 
 
@@ -646,8 +646,8 @@ class NCpOnp : public MNcpp<TPif, TRif>
         }
 	virtual const TPair* pairAt(int aInd) const override { return (aInd < pcount()) ? mPair : nullptr; }
 	virtual TPair* pairAt(int aInd) override { return (aInd < pcount()) ? mPair : nullptr; }
-	virtual TPair* pairAt(const string aId) override { return nullptr;}
-	virtual const TPair* pairAt(const string aId) const { return nullptr;}
+	virtual TPair* pairAt(const string& aId) override { return nullptr;}
+	virtual const TPair* pairAt(const string& aId) const override { return nullptr;}
 	// Traversal
 	virtual typename TSelf::PairsIter pairsBegin() {
 	    auto it = typename TSelf::PairsIter(new PIter(mPair));

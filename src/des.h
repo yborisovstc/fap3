@@ -319,6 +319,7 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 	MDesInpObserver* mMDesInpObserverPtr = nullptr;
 	MDVarGet* mMDVarGetPtr = nullptr;
 	MDVarSet* mMDVarSetPtr = nullptr;
+	static const string KInpName;
 };
 
 

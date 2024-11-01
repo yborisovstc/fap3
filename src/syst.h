@@ -51,6 +51,8 @@ class ConnPointu: public Vertu, public MConnPoint, public Cnt::Host
 	Cnt mProv = Cnt(*this, KProvName);
 	static string KReqName;
 	static string KProvName;
+	static const GUri KReqUri;
+	static const GUri KProvUri;
 	MConnPoint* mMConnPointPtr = nullptr;
 };
 

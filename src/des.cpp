@@ -54,8 +54,8 @@ void CpState::onIfpInvalidated(MIfProv* aProv)
 
 CpStateInp::CpStateInp(const string &aType, const string& aName, MEnv* aEnv): CpState(aType, aName, aEnv), mIop(this)
 {
-    bool res = setContent("Provided", "MDesInpObserver");
-    res = setContent("Required", "MDVarGet");
+    bool res = setContent(KProvUri, "MDesInpObserver");
+    res = setContent(KReqUri, "MDVarGet");
     assert(res);
 }
 
@@ -196,7 +196,6 @@ MIface* ExtdStateOutpI::MNode_getLif(const char *aType)
     return res;
 }
 
-
 void ExtdStateOutpI::onInpUpdated()
 {
     // Rederect to call to pairs
@@ -240,7 +239,7 @@ void ExtdStateOutpI::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	MUnit* intcpu = intcp ? intcp->lIf(intcpu) : nullptr;
 	MIfProvOwner* intcpo = intcpu ? intcpu->lIf(intcpo) : nullptr;
 	if (intcpo && aReq->provided()->isRequestor(intcpo)) {
-	    ifr = dynamic_cast<MDesInpObserver*>(this);
+	    ifr = mMDesInpObserverPtr ? mMDesInpObserverPtr : (mMDesInpObserverPtr = dynamic_cast<MDesInpObserver*>(this));
 	    addIfpLeaf(ifr, aReq);
 	}
     } else {
@@ -283,6 +282,7 @@ static const int KStatecDlog_ObsIfr = 7;  // Observers ifaces routing
 // State, ver. 2, non-inhritable, monolitic, direct data, switching updated-confirmed
 
 const string State::KCont_Value = "";
+const string State::KInpName = "Inp";
 
 bool State::SContValue::getData(string& aData) const
 {
@@ -298,7 +298,7 @@ bool State::SContValue::setData(const string& aData)
 State::State(const string &aType, const string& aName, MEnv* aEnv): Vertu(aType, aName, aEnv),
     mPdata(NULL), mCdata(NULL), mUpdNotified(false), mActNotified(false), mInpProv(nullptr), mStDead(false), mInp(nullptr)
 {
-    MNode* cp = Provider()->createNode(CpStateInp::Type(), "Inp", mEnv);
+    MNode* cp = Provider()->createNode(CpStateInp::Type(), KInpName, mEnv);
     assert(cp);
     bool res = attachOwned(cp);
     assert(res);
@@ -553,7 +553,7 @@ void State::confirm()
     PFL_DUR_STAT_START(PEvents::EDurStat_StConfirm);
     if (mCdata) {
 	string old_value;
-	if (isLogLevel(EDbg)) {
+	if (LOG_LEVEL(EDbg)) {
 	    old_value = mCdata->ToString();
 	}
 	if (mInpValid) {
@@ -579,9 +579,11 @@ void State::confirm()
 	    // State is not changed. No need to notify connected inps.
 	    // But we still need to make IFR paths to inps actual. Ref ds_asr.
 	    // TODO PERF
+#ifndef DES_IFR_INPOBS
 	    PFL_DUR_STAT_START(PEvents::EDurStat_DesRfInpObs);
 	    refreshInpObsIfr();
 	    PFL_DUR_STAT_REC(PEvents::EDurStat_DesRfInpObs);
+#endif
 	}
     } else {
 	if (mPdata) {
@@ -620,7 +622,7 @@ MDVarGet* State::GetInp()
     MDVarGet* res = nullptr;
     MIfProv::TIfaces* ifcs = nullptr;
     if (!mInpProv) {
-	if (!mInp) mInp = getNode("Inp");
+	if (!mInp) mInp = getComp(KInpName);
 	MNode* inp = mInp;
 	MUnit* inpu = inp ? inp->lIf(inpu) : nullptr;
 	mInpProv = inpu ? inpu->defaultIfProv(MDVarGet::Type()) : nullptr;

@@ -199,6 +199,8 @@ inline int Node::getLocLogLevel() const
     return mLogLevel & K_Ll_Mask;
 }
 
+#define LOG_LEVEL(aLevel) (Logger()->MeetsLevel(aLevel) && isLogLevel(aLevel))
+
 #define LOGN(aLevel, aContent) \
     if (Logger()->MeetsLevel(aLevel) && isLogLevel(aLevel)) {\
 	TLog rec(aLevel, this, aContent);\
