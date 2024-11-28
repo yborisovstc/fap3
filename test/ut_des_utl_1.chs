@@ -117,6 +117,7 @@ MyRoot : Elem {
                 }
             )
             CrpResolver.InpParents ~ Adapter.Parents
+            CrpResolver.InpDefRes ~ : Const { = "URI Vert" }
             CrpRes_Dbg : State (
                 _@ < Debug.LogLevel = "Dbg"
                 _@ < = "URI"

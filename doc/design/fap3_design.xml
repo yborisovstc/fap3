@@ -1266,9 +1266,18 @@
 		</sect4>
 	    </sect3>
 	    <sect3><title>Clean-up chromo abstract model (chromo.h)</title>
-		<simpara>For instance ENa_Id can be replaced by ENa_P, etc. ENt_Change can be replaced by ENt_Rename with corresponding replacing of ENa_MutAttr and ENa_MutVal</simpara>
+		<simpara>
+			For instance ENa_Id can be replaced by ENa_P, etc. ENt_Change can be replaced by ENt_Rename with corresponding replacing of ENa_MutAttr and ENa_MutVal
+		</simpara>
 	    </sect3>
 	    <sect3><title>Do we need multiple context?</title>
+	    </sect3>
+	    <sect3 id="ds_cli_pi_gral"><title>Get rid of chromo abstract layer</title>
+		<simpara>
+		    Currently chromo client uses chromo iface (ChromoNode, MChromo) to get chromo data from Chromo2Mdl backend. This design
+		    was applied historically in the process of changing chromo syntax variants (so chromo model). But now chromo syntax
+		    gets established so probably it makes sense to use intrinsic chromo model API.
+		</simpara>
 	    </sect3>
 	</sect2>
 	<sect2><title>FAP2 chromo language analysis and criticism.</title>
@@ -1525,6 +1534,23 @@
 			    But there is the problem of how to refer anonumous mode in the mutions that goes after anonumous node is created.</simpara>
 		    </sect3>
 		    <sect3><title>Using generated name of anonymous node.</title>
+		    </sect3>
+		</sect2>
+		<sect2 id="ds_cli_ser"><title>Chromo serialization/deserialization</title>
+		    <sect3><title>Intro</title>
+			<simpara>
+			    Significant time consumtion is observed for chromo parsing procedure, ref
+			    <xref linkend="ds_desopt_pfgaf_cset"/>.
+				So, needs to optimize this.
+			</simpara>
+		    </sect3>
+		    <sect3><title>Serialization</title>
+			<sect4><title>Intro</title>
+			    <simpara>
+				This is one of optimization options. With that solution the app parses chs format chromo first time and save chromo
+				in serialized binary form. Next time the app uses serialized chromo to speed up chromo creation process.
+			    </simpara>
+			</sect4>
 		    </sect3>
 		</sect2>
 	    </sect1>
@@ -3047,39 +3073,101 @@
 
 	    <sect1 id="ds_desas"><title>DES active subsystem (<xref linkend="gls_desas"/>)</title>
 		<sect2><title>Intro</title>
-		    <simpara>In many cases it seems effective to desing the part of DES as subsystem that also is DES but in contrary to normal "monolitic" subsystem runs in it's own loop.
+		    <simpara>In many cases it seems effective to desing the part of DES as subsystem that also is DES but in contrary to
+			normal "monolitic" subsystem runs in it's own loop.
 			The example can be subsystem that do iterative updates. This can be searching front of list etc.
 			The idea of using such subsystem is that the subsystem runs "inside" main system update step and
 			completes running "in a moment" from main system point of view. Thus the main system loop gets shorter and DES signalling is reduced.</simpara>
-		    <simpara>This subsytem having completed trajectory "in a moment" also allows to awoid special indication of completeness in case of "monolitic" subsystem.</simpara>
+		    <simpara>This subsytem having completed trajectory "in a moment" also allows to awoid special indication of completeness in case
+			of "monolitic" subsystem.</simpara>
 		    <simpara>Even the main idea is clear the use-case model is not established yet.</simpara>
 		</sect2>
 		<sect2 id="ds_desas_sis"><title>Design issue: setting initial states.</title>
 		    <sect3><title>Intro</title>
 			<simpara>The autonomous subsystem in fact performs its trajectory from some initial states that are set by owning system. The question is how to set these
-			    initial states. The best option would be to use standard state input desing. The initial idea is to use switch that switches from work topology to initial value inputs
-			    after subsystem stops. But this idea is not working because update of switch selector notifies the state of update so subsytem starts new movement.</simpara>
+			    initial states. The best option would be to use standard state input desing.
+			    The initial idea is to use switch that switches from work topology to initial value inputs
+			    after subsystem stops. But this idea is not working because update of switch selector notifies the
+			    state of update so subsytem starts new movement.</simpara>
 			<simpara>What would be the solutions?  </simpara>
 		    </sect3>
 		    <sect3><title>Solution#1 Create special switcher that doesn't resolve MDesInpObserver for selector input.</title>
 			<para>The idea isn't perfect, having this "special" switcher breaks the transitions common desing.</para>
 		    </sect3>
 		    <sect3 id="ds_desas_sis_iph"><title>Solution#2 Implements special "init" phase in DESAS agent.</title>
-			<simpara>Each subsystem should have special boolean state "Init" that indicates special "init" phase. This state can be connected to the selector of the switchers
-			    connecting internal states to the initial states value inputs. DESAS agent sets this state on the initial step of subsystem and then resets it.</simpara>
+			<simpara>Each subsystem should have special boolean state "Init" that indicates special "init" phase.
+			    This state can be connected to the selector of the switchers
+			    connecting internal states to the initial states value inputs. DESAS agent sets this state on the initial
+			    step of subsystem and then resets it.</simpara>
+		    </sect3>
+		</sect2>
+		<sect2 id="ds_desas_nio"><title>Design issue: DesAs subsystem notifies inp observers on master system update phase.</title>
+		    <sect3><title>Intro</title>
+			<simpara>
+			    Ref
+			    <xref linkend="ds_iss_022"/> for issue details.
+			</simpara>
+		    </sect3>
+		    <sect3 id="ds_desas_nio_do"><title>Solution_1: Active system dedicated ouput states</title>
+			<simpara>
+			    Seems we need dedicated completion handling like as initialization handling is implemented.
+			    This completion would need to buffer the outputs of the system. So the points are:
+			</simpara>
+			<itemizedlist>
+			    <listitem>
+				Introduce subnode "Outputs" to keep state buffering the active system outputs
+				<para>States in "Outputs" are conneced to "Subsys" outputs, i.e. are buffering them.</para>
+			    </listitem>
+			    <listitem>
+				Active system runs not whole itself but "Subsys" (actual running subsystem) only
+				<para>Note that "Outputs" is not running, so states in "Outputs" doesn't notify inp observers.
+				    But states in "Outputs" are notified of all theirs inputs upates, so can be activated.
+				    Important here is that active system is DES observer of "Outputs" states and also disables
+				    onActive() notif propagation. This "isolates" active system outputs from master system so
+				    avoids the exception when system activates on update phase (actually the initial problem here)</para>
+			    </listitem>
+			    <listitem>
+				Active system confirms "Outputs" on active system confirm.
+				<para>Currently active system omits confirm phase. "Outputs" confirmation will generate inp observers
+				    notifications properly.</para>
+			    </listitem>
+			    <listitem>
+				Hmm, this approach seems not working
+				<para>If we disable propagating onActivated() from outputs to active system (outputs DES observer actually) then
+				    how outputs get activated?</para>
+			    </listitem>
+			</itemizedlist>
+		    </sect3>
+		    <sect3 id="ds_desas_nio_ric"><title>Soution_2: Just move DesAs run into confirm. Output states to isolate active subs outputs.</title>
+			<sect4><title>Intro</title>
+			    <simpara>
+				This solution seems rather simple but it works. The only limitation is that ouput states have to issue
+				onInpUpdated() notification just once per DesAs running. Otherwise the assert will happen of activating the 
+				connected state more than once.
+			    </simpara>
+			    <simpara>So this solution needs to be considered as temporary. Needs to prepare more solid design of active subs
+				as a special case of "async" subsystems.</simpara>
+			</sect4>
 		    </sect3>
 		</sect2>
 		<sect2><title>Status</title>
 		    <simpara>20220710 Initial design is implemented, ref des.h:DesAs. The desing is a bit weird. The subsystem "isolation" desing is not perfect. </simpara>
 		    <simpara>20220714 Applied solution#2 for setting initial states (ref <xref linkend="ds_desas_sis"/>), UT  ut_desas_2.chs.</simpara>
+		    <simpara>
+			20241101 Discovered serious design flaw, ref
+			<xref linkend="ds_iss_022"/> that actually prevents using DesAs, added sec <xref linkend="ds_desas_nio"/> for handling.
+		    </simpara>
 		</sect2>
 	    </sect1>
 
 	    <sect1 id="ds_ndes"><title>Native DES as the base of designing DES framework.</title>
 		<sect2><title>Intro</title>
-		    <simpara>The DES framework core approach is changeable and structured agents, ref <xref linkend="ds_itr_pss"/>. This "changeable and structured agents" framework is
-			created using generic OOP (C++). However the base agent (node) and it's heirs contains wide context, so are DES. For instance node context includes references to owned nodes,
-			content. Moreover nodes in the system depens on the context of other nodes. To support these dependencies specific mechanism of observation is designed. So the native agents
+		    <simpara>The DES framework core approach is changeable and structured agents, ref <xref linkend="ds_itr_pss"/>.
+			This "changeable and structured agents" framework is
+			created using generic OOP (C++). However the base agent (node) and it's heirs contains wide context, so are DES.
+			For instance node context includes references to owned nodes,
+			content. Moreover nodes in the system depens on the context of other nodes.
+			To support these dependencies specific mechanism of observation is designed. So the native agents
 			theyself seem can be effectivelly implemented basing on low-level DES framework.</simpara>
 		    <simpara>Using low-level DES can optimize the resolving of native dependencies. This low-level framework can alse be used as generic DES framework in 
 			OOP applications.</simpara>
@@ -3433,7 +3521,12 @@
 		    <sect3><title>Report: Factory::createNode 3%</title> </sect3>
 		    <sect3><title>Report: __dynamic_cast 3%</title> </sect3>
 		    <sect3><title>Report: Node::getNode 2.66%</title> </sect3>
-		    <sect3><title>Report: Chromo2::Set 21,7%</title> </sect3>
+		    <sect3 id="ds_desopt_pfgaf_cset"><title>Report: Chromo2::Set 21,7%</title>
+			<simpara>
+			    Ref
+			    <xref linkend="ds_cli_ser"/>, <xref linkend="ds_cli_pi_gral"/> for discussion regarding optimization options.
+			</simpara>
+		    </sect3>
 		    <sect3><title>Report: Env::constructSystem Elem::mutate 20,7%</title> </sect3>
 		    <sect3><title>Report: IfrNodeRoot::ifaces 19.4%</title> </sect3>
 		</sect2>
@@ -4235,6 +4328,34 @@
 		    </sect3>
 		    <sect3><title>Solution</title>
 			<simpara>To disable resolving native agent by default. Enable the resolving for getting parents only.</simpara>
+		    </sect3>
+		</sect2>
+		<sect2 id="ds_iss_022"><title>[<glossterm id="iss_022">DS_ISS_022</glossterm>] [Open] 20241102 Assert on activating ADes in update phase. DesAs design flaw?</title>
+		    <sect3><title>Description</title>
+			<simpara>
+			    The problem happens in fap3-vis modnav running for the model with 5 subsystem (3 subsystem model doesn't cause the problem).
+			    The problem is the assert
+			    <programlisting>
+				void ADes::onActivated(MDesSyncable* aComp)
+				-   {
+				|       assert(!mUpd);
+			    </programlisting>
+			</simpara>
+			<simpara>
+			    The root cause is that avr2 CpResolver (actually DesAs, ref
+			    <xref linkend="ds_desas"/>) generates onInpUpdated() notif when running.
+			    Note that DesAs runs on master system update phase, so the onInpUpdated() happens on master system update
+			    phase that is wrong conditions thus causes assert.
+			</simpara>
+		    </sect3>
+		    <sect3><title>Analysis</title>
+			<simpara>
+			    avr2 design for CpResolver is wrong. DesAs cannot generates inp update notif when running.
+			    The problem is that DesAs itself doesn't prevent from its such wrong usage.
+			</simpara>
+		    </sect3>
+		    <sect3><title>Solution</title>
+			<simpara>Ref <xref linkend="ds_desas_nio"/> for discussion.</simpara>
 		    </sect3>
 		</sect2>
 	    </sect1>

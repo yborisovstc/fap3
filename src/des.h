@@ -610,12 +610,42 @@ class DesAs: public DesLauncher
 	virtual bool Run(int aCount = 0, int aIdleCount = 0) override;
 	// From MDesSyncable
 	virtual void update() override;
-	virtual void confirm() override {}
+	virtual void confirm() override;
 	virtual void setUpdated() override {}
 	virtual void setActivated() override;
     protected:
 	bool mRunning;
 };
+
+
+#if 0
+/** @brief Active subsystem of DES, ver. 2, ref ds_desas_nio_do
+ * Runs on master DES update, buffers outputs in "Output" subnode
+ * Not working atm.
+ * */
+class DesAs2: public DesLauncher
+{
+    public:
+	static const char* Type() { return "DesAs2";};
+	DesAs2(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From MLauncher
+	virtual bool Run(int aCount = 0, int aIdleCount = 0) override;
+	// From MDesObserver
+	virtual void onActivated(MDesSyncable* aComp) override;
+	// From MDesSyncable
+	virtual void update() override;
+	virtual void confirm() override;
+	virtual void setUpdated() override {}
+	virtual void setActivated() override;
+    protected:
+	bool mRunning;
+	static const GUri K_OutpUri;
+	static const GUri K_SsysUri;
+	static const GUri K_SsysInitUri;
+};
+#endif
+
+
 
 
 

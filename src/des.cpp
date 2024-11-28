@@ -1156,6 +1156,10 @@ void Des::setActivated()
 	if (obs) {
 	    obs->onActivated(this);
 	    mActNotified = true;
+	    if (!mIsActive) {
+		mIsActive = true;
+		notifyChanged();
+	    }
 	}
 #endif
     }
@@ -1506,6 +1510,10 @@ void ADes::setActivated()
 	if (obs) {
 	    obs->onActivated(this);
 	    mActNotified = true;
+	    if (!mIsActive) {
+		mIsActive = true;
+		notifyChanged();
+	    }
 	} else {
 	    //LOGN(EInfo, "setActivated, observer not found");
 	    //obs = getDesObs();
@@ -1831,10 +1839,10 @@ void DesLauncher::outputCounter(int aCnt)
 }
 
 
+/// Active subsystem of DES
+
 static const string K_SsInitUri = "Init";
 static const string K_SsUri = "Subsys";
-
-/// Active subsystem of DES
 
 DesAs::DesAs(const string &aType, const string& aName, MEnv* aEnv): DesLauncher(aType, aName, aEnv),
     mRunning(false)
@@ -1873,24 +1881,28 @@ bool DesAs::Run(int aCount, int aIdleCount)
         }
         cntInit->setContent("", "SB false");
         // Run subsystem
-        //while (!mStop && (aCount == 0 || cnt < aCount) && (aIdleCount == 0 || idlecnt < aIdleCount)) {
-        while (!mStop && (aCount == 0 || cnt < aCount) && !mActive->empty()) {
-            //updateCounter(cnt);
-            LOGN(EInfo, ">>> Update [" + to_string(cnt) + "]");
-            Des::update();
-            if (!mUpdated->empty()) {
-                LOGN(EInfo, ">>> Confirm [" + to_string(cnt) + "]");
-                outputCounter(cnt);
-                Des::confirm();
-            }
-            cnt++;
-        }
+	while (!mStop && (aCount == 0 || cnt < aCount) && !mActive->empty()) {
+	    //updateCounter(cnt);
+	    LOGN(EInfo, ">>> Update [" + to_string(cnt) + "]");
+	    Des::update();
+	    if (!mUpdated->empty()) {
+		LOGN(EInfo, ">>> Confirm [" + to_string(cnt) + "]");
+		outputCounter(cnt);
+		Des::confirm();
+	    }
+	    cnt++;
+	}
     } while (false);
-        return res;
-    }
+    return res;
+}
 
-    void DesAs::update()
-    {
+void DesAs::update()
+{
+}
+
+// Running on confirm phase, ref solution ds_desas_nio_ric
+void DesAs::confirm()
+{
     PFL_DUR_STAT_START(PEvents::EDurStat_DesAsUpd);
     mRunning = true;
     bool res = Run(0, 1);
@@ -1908,6 +1920,114 @@ void DesAs::setActivated()
     }
 }
 
+
+#if 0
+
+/// Active subsystem of DES ver.2
+
+const GUri DesAs2::K_OutpUri = "Output";
+const GUri DesAs2::K_SsysUri = "Subsys";
+const GUri DesAs2::K_SsysInitUri = "Init";
+
+
+DesAs2::DesAs2(const string &aType, const string& aName, MEnv* aEnv): DesLauncher(aType, aName, aEnv),
+    mRunning(false)
+{
+}
+
+bool DesAs2::Run(int aCount, int aIdleCount)
+{
+    bool res = true;
+    int cnt = 0;
+    int idlecnt = 0;
+    do {
+	MNode* ss = getNode(K_SsysUri);
+	MDesSyncable* ssds = ss->lIf(ssds);
+	if (ss == nullptr) {
+	    LOGN(EErr, "No subsystem [" + K_SsysUri.toString() + "] found");
+	    break;
+	}
+	MNode* ssinit = ss->getNode(K_SsysInitUri);
+	if (!ssinit) {
+	    LOGN(EErr, "Couldn't find Init state");
+	    res = false; break;
+	}
+	MContentOwner* cntInit = ssinit->lIf(cntInit);
+	if (!cntInit) {
+	    LOGN(EErr, "Couldn't find Init state content");
+	    res = false; break;
+	}
+	cntInit->setContent("", "SB true");
+	if (!mActive->empty()) {
+	    LOGN(EInfo, ">>> Init update");
+	    ssds->update();
+	    LOGN(EInfo, ">>> Init confirm");
+	    ssds->confirm();
+	}
+	cntInit->setContent("", "SB false");
+	// Run subsystem
+	while (!mStop && (aCount == 0 || cnt < aCount) && ssds->isActive()) {
+	    //updateCounter(cnt);
+	    LOGN(EInfo, ">>> Subs Update [" + to_string(cnt) + "]");
+	    ssds->update();
+	    LOGN(EInfo, ">>> Subs Confirm [" + to_string(cnt) + "]");
+	    outputCounter(cnt);
+	    ssds->confirm();
+	    cnt++;
+	}
+    } while (false);
+    return res;
+}
+
+void DesAs2::update()
+{
+    PFL_DUR_STAT_START(PEvents::EDurStat_DesAsUpd);
+    mRunning = true;
+    bool res = Run(0, 1);
+    mRunning = false;
+    if (!res) {
+	LOGN(EErr, "Failed run");
+    }
+    PFL_DUR_STAT_REC(PEvents::EDurStat_DesAsUpd);
+}
+
+void DesAs2::confirm()
+{
+    LOGN(EInfo, "Confirm");
+    DesLauncher::confirm();
+
+    /*
+       MNode* outp = getNode(K_OutpUri);
+       MDesSyncable* outpds = outp->lIf(outpds);
+       if (!outpds) {
+       LOGN(EErr, "No outputs [" + K_OutpUri.toString() + "] found");
+       } else {
+       outpds->confirm();
+       } 
+       */
+}
+
+void DesAs2::onActivated(MDesSyncable* aComp)
+{
+    if (!mRunning) {
+	DesLauncher::onActivated(aComp);
+    }
+}
+
+void DesAs2::setActivated()
+{
+    if (!mRunning) {
+	DesLauncher::setActivated();
+    }
+}
+
+#endif
+
+
+
+
+
+
 // Embedded elements support
 
 /// Embedded Input buffered
@@ -1919,20 +2039,23 @@ void DesEIbMnode::update()
     MNode* inp = TP::mHost->getNode(TP::mUri);
     MUnit* inpu = inp ? inp->lIf(inpu) : nullptr;
     if (inpu) {
-        // Resolve MLink first to avoid MNode wrong resolution
-        MLink* mmtl = inpu->getSif(mmtl);
-        if (mmtl) {
-            mUdt = mmtl->pair(); res = true;
-        }
+	// Resolve MLink first to avoid MNode wrong resolution
+	MLink* mmtl = inpu->getSif(mmtl);
+	if (mmtl) {
+	    mUdt = mmtl->pair(); res = true;
+	}
     }
     if (!res) {
-        //this->eHost()->logEmb(TLogRecCtg::EDbg, TLog(TP::mHost) + "Cannot get input [" + this->mUri + "]");
+	//this->eHost()->logEmb(TLogRecCtg::EDbg, TLog(TP::mHost) + "Cannot get input [" + this->mUri + "]");
 	LOGEMB(TLogRecCtg::EDbg, (TLog(mHost) + "Cannot get input [" + this->mUri + "]"));
     } else {
-        this->mActivated = false;
-        this->setUpdated();
+	this->mActivated = false;
+	this->setUpdated();
     }
 }
+
+
+
 
 
 /// Embedded Output state
@@ -1943,10 +2066,10 @@ void DesEOstb::NotifyInpsUpdated()
     MUnit* cpu = cp ? cp->lIf(cpu) : nullptr;
     auto ifaces = cpu->getIfs<MDesInpObserver>();
     if (ifaces) for (auto ifc : *ifaces) {
-        MDesInpObserver* ifco = reinterpret_cast<MDesInpObserver*>(ifc);
-        if (ifco) {
-            ifco->onInpUpdated();
-        }
+	MDesInpObserver* ifco = reinterpret_cast<MDesInpObserver*>(ifc);
+	if (ifco) {
+	    ifco->onInpUpdated();
+	}
     }
 }
 
@@ -1987,27 +2110,27 @@ MIface* DesCtxSpl::MDesCtxSpl_getLif(const char *aType)
 void DesCtxSpl::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 {
     if (aName == MDesCtxSpl::Type()) {
-        MIfReq* ireq = aReq->provided()->tail(); // Initial requestor
-        if (ireq) {
-            MUnit* ownu = Owner()->lIf(ownu);
-            if (ownu) {
-                auto ifaces = ownu->getIfs<MDesCtxSpl>();
-                // Filter out same id suppliers, ref ds_dctx_dic_cs Solution_2
-                if (ifaces) for (auto ifc : *ifaces) {
-                    MDesCtxSpl* spl = reinterpret_cast<MDesCtxSpl*>(ifc);
-                    if (spl->getSplId() != getSplId()) {
-                        addIfpLeaf(spl, aReq);
-                    }
-                }
-            }
-        } else { // Propagate request to owner
-            MUnit* ownu = Owner()->lIf(ownu);
-            if (ownu) {
-                ownu->resolveIface(aName, aReq);
-            }
-        }
+	MIfReq* ireq = aReq->provided()->tail(); // Initial requestor
+	if (ireq) {
+	    MUnit* ownu = Owner()->lIf(ownu);
+	    if (ownu) {
+		auto ifaces = ownu->getIfs<MDesCtxSpl>();
+		// Filter out same id suppliers, ref ds_dctx_dic_cs Solution_2
+		if (ifaces) for (auto ifc : *ifaces) {
+		    MDesCtxSpl* spl = reinterpret_cast<MDesCtxSpl*>(ifc);
+		    if (spl->getSplId() != getSplId()) {
+			addIfpLeaf(spl, aReq);
+		    }
+		}
+	    }
+	} else { // Propagate request to owner
+	    MUnit* ownu = Owner()->lIf(ownu);
+	    if (ownu) {
+		ownu->resolveIface(aName, aReq);
+	    }
+	}
     } else {
-        Des::resolveIfc(aName, aReq);
+	Des::resolveIfc(aName, aReq);
     }
 }
 
@@ -2030,21 +2153,21 @@ bool DesCtxSpl::bindCtx(const string& aCtxId, MVert* aCtx)
     MNode* ctxn =  getComp(aCtxId);
     MVert* ctxv = ctxn ? ctxn->lIf(ctxv) : nullptr;
     if (ctxv) {
-        res = MVert::connect(ctxv, aCtx);
+	res = MVert::connect(ctxv, aCtx);
     } else {
-        // Redirect to next supplier in the stack
-        // To use dedicated iface provider instead of finding supplier here
-        MUnit* ownu = Owner()->lIf(ownu);
-        if (ownu) {
-            auto ifaces = ownu->getIfs<MDesCtxSpl>();
-            // Find same id supplier
-            if (ifaces) for (auto ifc : *ifaces) {
-                MDesCtxSpl* spl = reinterpret_cast<MDesCtxSpl*>(ifc);
-                if (spl->getSplId() == getSplId()) {
-                    res = spl->bindCtx(aCtxId, aCtx);
-                }
-            }
-        }
+	// Redirect to next supplier in the stack
+	// To use dedicated iface provider instead of finding supplier here
+	MUnit* ownu = Owner()->lIf(ownu);
+	if (ownu) {
+	    auto ifaces = ownu->getIfs<MDesCtxSpl>();
+	    // Find same id supplier
+	    if (ifaces) for (auto ifc : *ifaces) {
+		MDesCtxSpl* spl = reinterpret_cast<MDesCtxSpl*>(ifc);
+		if (spl->getSplId() == getSplId()) {
+		    res = spl->bindCtx(aCtxId, aCtx);
+		}
+	    }
+	}
     }
     return res;
 }
@@ -2102,11 +2225,11 @@ void DesCtxCsm::confirm()
 {
     Des::confirm();
     if (!mInitialized) {
-        mInitFailed = !init();
-        if (mInitFailed) {
-            LOGN(EErr, "Init failed");
-        }
-        mInitialized = true;
+	mInitFailed = !init();
+	if (mInitFailed) {
+	    LOGN(EErr, "Init failed");
+	}
+	mInitialized = true;
     }
 }
 
@@ -2117,17 +2240,17 @@ bool DesCtxCsm::init()
     bool res = false;
     MUnit* ownu = Owner()->lIf(ownu);
     if (ownu) {
-        auto ifaces = ownu->getIfs<MDesCtxSpl>();
-        if (ifaces) for (auto ifc : *ifaces) {
-            MDesCtxSpl* spl = reinterpret_cast<MDesCtxSpl*>(ifc);
-            if (spl->getSplId() == getCsmId()) {
-                res = spl->registerCsm(&mCsmCp);
-                if (res) {
-                    res = bindCtxs();
-                }
-                break;
-            }
-        }
+	auto ifaces = ownu->getIfs<MDesCtxSpl>();
+	if (ifaces) for (auto ifc : *ifaces) {
+	    MDesCtxSpl* spl = reinterpret_cast<MDesCtxSpl*>(ifc);
+	    if (spl->getSplId() == getCsmId()) {
+		res = spl->registerCsm(&mCsmCp);
+		if (res) {
+		    res = bindCtxs();
+		}
+		break;
+	    }
+	}
     }
     return res;
 }
@@ -2138,10 +2261,10 @@ bool DesCtxCsm::init()
     bool res = false;
     MDesCtxSpl* spl = getSif<MDesCtxSpl>(spl);
     if (spl) {
-        res = spl->registerCsm(&mCsmCp);
-        if (res) {
-            res = bindCtxs();
-        }
+	res = spl->registerCsm(&mCsmCp);
+	if (res) {
+	    res = bindCtxs();
+	}
     }
     return res;
 }
@@ -2160,15 +2283,15 @@ bool DesCtxCsm::bindCtxs()
     bool res = false;
     for (auto it = owner()->pairsBegin(); it != owner()->pairsEnd(); it++) {
 	auto owdCp = *it;
-        MNode* compn = owdCp->provided()->lIf(compn);
-        MVert* compv = compn ? compn->lIf(compv) : nullptr;
-        if (compv) {
-            MVert* extd = compv->getExtd();
-            if (extd) {
-                res = (*mCsmCp.pairsBegin())->provided()->bindCtx(compn->name(), extd);
-                if (!res) break;
-            }
-        }
+	MNode* compn = owdCp->provided()->lIf(compn);
+	MVert* compv = compn ? compn->lIf(compv) : nullptr;
+	if (compv) {
+	    MVert* extd = compv->getExtd();
+	    if (extd) {
+		res = (*mCsmCp.pairsBegin())->provided()->bindCtx(compn->name(), extd);
+		if (!res) break;
+	    }
+	}
     }
     return res;
 }
@@ -2177,19 +2300,19 @@ bool DesCtxCsm::bindCtxs()
 void DesCtxCsm::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 {
     if (aName == MDesCtxSpl::Type()) {
-        // Propagate request to owner
-        MUnit* ownu = Owner()->lIf(ownu);
-        if (ownu) {
-            auto ifaces = ownu->getIfs<MDesCtxSpl>();
-            if (ifaces) for (auto ifc : *ifaces) {
-                MDesCtxSpl* spl = reinterpret_cast<MDesCtxSpl*>(ifc);
-                if (spl->getSplId() == getCsmId()) {
-                    addIfpLeaf(spl, aReq);
-                }
-            }
-        }
+	// Propagate request to owner
+	MUnit* ownu = Owner()->lIf(ownu);
+	if (ownu) {
+	    auto ifaces = ownu->getIfs<MDesCtxSpl>();
+	    if (ifaces) for (auto ifc : *ifaces) {
+		MDesCtxSpl* spl = reinterpret_cast<MDesCtxSpl*>(ifc);
+		if (spl->getSplId() == getCsmId()) {
+		    addIfpLeaf(spl, aReq);
+		}
+	    }
+	}
     } else {
-        Syst::resolveIfc(aName, aReq);
+	Syst::resolveIfc(aName, aReq);
     }
 }
 #endif
@@ -2230,7 +2353,7 @@ int DesInpDemux::getIfcCount()
     MUnit* inpu = inp ? inp->lIf(inpu) : nullptr;
     auto ifaces = inpu->getIfs<MDVarGet>();
     if (ifaces && !ifaces->empty()) {
-        res = ifaces->size();
+	res = ifaces->size();
     }
     return res;
 }
@@ -2238,33 +2361,33 @@ int DesInpDemux::getIfcCount()
 void DesInpDemux::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 {
     if (aName == MDVarGet::Type()) {
-        MNode* outp = getNode(K_Cp_Outp);
-        MUnit* outpu = outp ? outp->lIf(outpu) : nullptr;
-        MIfProvOwner* outppo = outpu ? outpu->lIf(outppo) : nullptr;
-        if (outppo && aReq->provided()->isRequestor(outppo)) {
-            // Request from output
-            MNode* inp = getNode(K_Cp_Inp);
-            MUnit* inpu = inp ? inp->lIf(inpu) : nullptr;
-            auto ifaces = inpu->getIfs<MDVarGet>();
-            if (!ifaces || ifaces->empty() || ifaces->size() <= mIdx) {
-                Logger()->Write(EErr, this, "Ifaces idx overflow");
-            } else {
-                auto* ifc = reinterpret_cast<MDVarGet*>(ifaces->at(mIdx));
-                addIfpLeaf(ifc, aReq);
-            }
-        }
+	MNode* outp = getNode(K_Cp_Outp);
+	MUnit* outpu = outp ? outp->lIf(outpu) : nullptr;
+	MIfProvOwner* outppo = outpu ? outpu->lIf(outppo) : nullptr;
+	if (outppo && aReq->provided()->isRequestor(outppo)) {
+	    // Request from output
+	    MNode* inp = getNode(K_Cp_Inp);
+	    MUnit* inpu = inp ? inp->lIf(inpu) : nullptr;
+	    auto ifaces = inpu->getIfs<MDVarGet>();
+	    if (!ifaces || ifaces->empty() || ifaces->size() <= mIdx) {
+		Logger()->Write(EErr, this, "Ifaces idx overflow");
+	    } else {
+		auto* ifc = reinterpret_cast<MDVarGet*>(ifaces->at(mIdx));
+		addIfpLeaf(ifc, aReq);
+	    }
+	}
     } else if (aName == MDesObserver::Type()) {
-        MNode* inp = getNode(K_Cp_Inp);
-        MUnit* inpu = inp ? inp->lIf(inpu) : nullptr;
-        MIfProvOwner* inppo = inpu ? inpu->lIf(inppo) : nullptr;
-        if (inppo && aReq->provided()->isRequestor(inppo)) {
-            // Request from input, redirect to output
-            MNode* outp = getNode(K_Cp_Outp);
-            MUnit* outpu = outp ? outp->lIf(outpu) : nullptr;
-            outpu->resolveIface(aName, aReq);
-        }
+	MNode* inp = getNode(K_Cp_Inp);
+	MUnit* inpu = inp ? inp->lIf(inpu) : nullptr;
+	MIfProvOwner* inppo = inpu ? inpu->lIf(inppo) : nullptr;
+	if (inppo && aReq->provided()->isRequestor(inppo)) {
+	    // Request from input, redirect to output
+	    MNode* outp = getNode(K_Cp_Outp);
+	    MUnit* outpu = outp ? outp->lIf(outpu) : nullptr;
+	    outpu->resolveIface(aName, aReq);
+	}
     } else {
-        Des::resolveIfc(aName, aReq);
+	Des::resolveIfc(aName, aReq);
     }
 }
 
@@ -2274,7 +2397,7 @@ void DesInpDemux::confirm()
     Des::confirm();
     int ifcnt = getIfcCount();
     if (mIdx < (ifcnt - 1)) {
-        mIdx++;
+	mIdx++;
     }
 
 }

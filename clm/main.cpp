@@ -17,7 +17,7 @@ static bool mAutoRun = false;
 static bool mConvert = false; //!< Flag operation of converting spec */
 static bool mFormat = false; //!< Flag operation of formatting spec */
 
-const string help = "\nFAP2 Command line monitor\n\n\
+const string help = "\nFAP3 Command line monitor\n\n\
 Usage:\n\
 fapm [options] [file]\n\
 Options:\n\
