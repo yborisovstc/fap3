@@ -599,7 +599,7 @@ class DesLauncher: public Des, public MLauncher
 };
 
 /** @brief Active subsystem of DES
- * Runs on master DES update
+ * Runs on master DES confirm, ds_desas_nio_ric
  * */
 class DesAs: public DesLauncher
 {
@@ -618,7 +618,6 @@ class DesAs: public DesLauncher
 };
 
 
-#if 0
 /** @brief Active subsystem of DES, ver. 2, ref ds_desas_nio_do
  * Runs on master DES update, buffers outputs in "Output" subnode
  * Not working atm.
@@ -643,7 +642,6 @@ class DesAs2: public DesLauncher
 	static const GUri K_SsysUri;
 	static const GUri K_SsysInitUri;
 };
-#endif
 
 
 

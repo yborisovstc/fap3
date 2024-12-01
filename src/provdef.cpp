@@ -64,7 +64,7 @@ const ProvDef::TFReg ProvDef::mReg ( {
 	/* DES context */
 	Item<DesCtxSpl>(), Item<DesCtxCsm>(), 
 	/* DES active subs */
-	Item<DesAs>(),/*Item<DesAs2>(),*/
+	Item<DesAs>(), Item<DesAs2>(),
 	/* DES service point */
 	Item<DesSpe>(), Item<DesSp>(), Item<DesSpt>(), Item<ADesSpc>(), 
 	/* DES constants */

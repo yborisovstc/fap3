@@ -3081,6 +3081,13 @@
 		    <simpara>This subsytem having completed trajectory "in a moment" also allows to awoid special indication of completeness in case
 			of "monolitic" subsystem.</simpara>
 		    <simpara>Even the main idea is clear the use-case model is not established yet.</simpara>
+		    <simpara>Initial version was prepared and tried in modnav. There were a number of problems. So the question is still open  if
+			such design does makes sense for DES</simpara>
+		    <sect3><title>Main idea - to make complex "transition" with "hidden" subsystem.</title>
+			<simpara>Such usecase is quite clear. For instance DesUtils.PrntMappingResolver that is used in avr2 gives CRP parent to SDC that creates CRP.
+			    This simplifies SDC creation scheme.
+		    </simpara>
+		    </sect3>
 		</sect2>
 		<sect2 id="ds_desas_sis"><title>Design issue: setting initial states.</title>
 		    <sect3><title>Intro</title>
@@ -3107,6 +3114,11 @@
 			    Ref
 			    <xref linkend="ds_iss_022"/> for issue details.
 			</simpara>
+			<simpara>
+			    Two solutions were considered, ref
+			    <xref linkend="ds_desas_nio_do"/> and  <xref linkend="ds_desas_nio_ric"/> and tested with modnav.
+				Both are working. Needs to decide what solution select.
+		    </simpara>
 		    </sect3>
 		    <sect3 id="ds_desas_nio_do"><title>Solution_1: Active system dedicated ouput states</title>
 			<simpara>
@@ -3132,11 +3144,24 @@
 				    notifications properly.</para>
 			    </listitem>
 			    <listitem>
-				Hmm, this approach seems not working
-				<para>If we disable propagating onActivated() from outputs to active system (outputs DES observer actually) then
-				    how outputs get activated?</para>
+				Solution flaw #1: how system connected to DesAs output gets onInpUpdated() notification?
+				<para>
+				    Initial idea is that DesAs acts as transition event having subsystem actually that implements
+				    this "transition". So the DesAs inputs updates need to result in onInpUpdated() to 
+				    system that connect to DesAs output.
+				</para>
 			    </listitem>
-			</itemizedlist>
+			    <listitem>
+				Solution flaw #2: "one step" delay
+				<para>
+				    Version of PrntMappingResolver using this approach behaves slightly differen than 
+				    the original PrntMappingResolver - it doesn't give subsys result on update phase but on confirm.
+				    This is because now the output of PrntMappingResolver is the output of dedicated output state.
+				    So we have "one step" delay. Actually this causes modnav not working with new ver of 
+				    PrntMappingResolver.
+				</para>
+			</listitem>
+		    </itemizedlist>
 		    </sect3>
 		    <sect3 id="ds_desas_nio_ric"><title>Soution_2: Just move DesAs run into confirm. Output states to isolate active subs outputs.</title>
 			<sect4><title>Intro</title>
@@ -3150,12 +3175,34 @@
 			</sect4>
 		    </sect3>
 		</sect2>
+		<sect2><title>Is the main idea achievable? Can subs simulate transition at all?</title>
+		    <simpara>
+			Let's look at DesUtils.PrntMappingResolver. The input InpParents update doesn't cause onInpUpdated to system
+			connected to PrntMappingResolver output. This is because this input onInpUpdated is finally propagated to 
+			state IdxItr.SIdx. This examples shows that active subsystem inputs can affect only active subsystem internal states
+			so may not affect active subsystem outputs directly. This shows that the initial idea of "simulating" transition 
+			with active subsystem is wrong.
+		    </simpara>
+		    <simpara>How can we modify the idea? Actually we can get rid the idea of simulating transition and consider active des as
+			subsystem that outputs the data of its states. We will have "delay" in such subsystem (there is no such delay with transition
+			simulating) but it's generic way. </simpara>
+		</sect2>
 		<sect2><title>Status</title>
 		    <simpara>20220710 Initial design is implemented, ref des.h:DesAs. The desing is a bit weird. The subsystem "isolation" desing is not perfect. </simpara>
 		    <simpara>20220714 Applied solution#2 for setting initial states (ref <xref linkend="ds_desas_sis"/>), UT  ut_desas_2.chs.</simpara>
 		    <simpara>
 			20241101 Discovered serious design flaw, ref
 			<xref linkend="ds_iss_022"/> that actually prevents using DesAs, added sec <xref linkend="ds_desas_nio"/> for handling.
+		    </simpara>
+		    <simpara>
+			20241128 Applied Solution_2 (
+			<xref linkend="ds_desas_nio_ric"/>) for the issue <xref linkend="ds_desas_nio"/>). Tested with avr2. Needed to add one more delay in
+			    avr2 CompNameD to "compensate" one step additional delay in DesUtils.PrntMappingResolver.
+		    </simpara>
+		    <simpara>
+			20241130 Tried Solution_1 slightly modified
+			Tested with avr2. Needed to add one more delay in 
+			avr2 CompNameD to "compensate" one step additional delay in DesUtils.PrntMappingResolver.
 		    </simpara>
 		</sect2>
 	    </sect1>

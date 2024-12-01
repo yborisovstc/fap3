@@ -443,91 +443,81 @@ DesUtils : Elem {
             )
         }
         OutpRes.Int ~ OutpRes_Int : TrSwitchBool (
+            _@ < Debug.LogLevel = "Dbg"
             Inp1 ~ Subsys.Outp
             Inp2 ~ InpDefRes.Int
             Sel ~ NotFound
         )
         # ">>> Parent mapping resolver"
     }
-    _ <  {
-        PrntMappingResolver2 : DesAs2 {
-            # ">>> Parent mapping resolver, v.2 based on DesAs2, not working atm"
-            # "Finds data (URI) assosiated to parent"
-            # "Input: parents hierarchy (VDU)"
-            InpParents : ExtdStateInp
-            # "Input: Mapping parent to result"
-            InpMpg : ExtdStateInp
-            # "Input: Default result"
-            InpDefRes : ExtdStateInp
-            # "Output: Resolved CRP URI, buf and CP"
-            OutpRes : State {
-                Debug.LogLevel = "Dbg"
-                = "URI"
+    PrntMappingResolver2 : DesAs2 {
+        # ">>> Parent mapping resolver, v.2 based on DesAs2, not working atm"
+        # "Finds data (URI) assosiated to parent"
+        # "Input: parents hierarchy (VDU)"
+        InpParents : ExtdStateInp
+        # "Input: Mapping parent to result"
+        InpMpg : ExtdStateInp
+        # "Input: Default result"
+        InpDefRes : ExtdStateInp
+        # "Output: Resolved CRP URI, buf and CP"
+        OutpRes : State {
+            Debug.LogLevel = "Dbg"
+            = "URI"
+        }
+        Subsys : Des {
+            InpSsParents : ExtdStateInp
+            InpMapping : ExtdStateInp
+            Outp : ExtdStateOutp
+            # "Desas init indicator"
+            Init : State {
+                = "SB false"
+                Debug.LogLevel = "Err"
             }
-            Subsys : Des {
-                InpSsParents : ExtdStateInp
-                InpMapping : ExtdStateInp
-                Outp : ExtdStateOutp
-                # "Desas init indicator"
-                Init : State {
-                    = "SB false"
-                    Debug.LogLevel = "Err"
-                }
-                ParentsIter : DesUtils.VectIter (
-                    _@ < Debug.LogLevel = "Dbg"
-                    InpV ~ InpSsParents.Int
-                    _ < InpDone ~ : SB_True
-                    InpReset ~ Init
-                )
-                FindCrp : TrFindByP (
-                    Inp ~ InpMapping.Int
-                    Sample ~ ParentsIter.OutV
-                )
-                ParentsIter.InpDone ~ : TrNegVar (
-                    Inp ~ : TrIsValid (
-                        Inp ~ FindCrp
-                    )
-                )
-                Outp.Int ~ FindCrp
-            }
-            Parents_Dbg : State (
+            ParentsIter : DesUtils.VectIter (
                 _@ < Debug.LogLevel = "Dbg"
-                _@ < = "VDU"
+                InpV ~ InpSsParents.Int
+                _ < InpDone ~ : SB_True
+                InpReset ~ Init
+            )
+            FindCrp : TrFindByP (
+                Inp ~ InpMapping.Int
+                Sample ~ ParentsIter.OutV
+            )
+            ParentsIter.InpDone ~ : TrNegVar (
+                Inp ~ : TrIsValid (
+                    Inp ~ FindCrp
+                )
+            )
+            Outp.Int ~ FindCrp
+        }
+        Parents_Dbg : State (
+            _@ < Debug.LogLevel = "Dbg"
+            _@ < = "VDU"
+            Inp ~ InpParents.Int
+        )
+        Res_Dbg : State (
+            _@ < Debug.LogLevel = "Dbg"
+            _@ < = "URI"
+            Inp ~ Subsys.Outp
+        )
+        NotFound : TrAndVar (
+            Inp ~ : TrIsValid (
+                Inp ~ InpMpg.Int
+            )
+            Inp ~ : TrIsValid (
                 Inp ~ InpParents.Int
             )
-            Res_Dbg : State (
-                _@ < Debug.LogLevel = "Dbg"
-                _@ < = "URI"
+            Inp ~ : TrIsInvalid (
                 Inp ~ Subsys.Outp
             )
-            NotFound : TrAndVar (
-                Inp ~ : TrIsValid (
-                    Inp ~ InpMpg.Int
-                )
-                Inp ~ : TrIsValid (
-                    Inp ~ InpParents.Int
-                )
-                Inp ~ : TrIsInvalid (
-                    Inp ~ Subsys.Outp
-                )
-            )
-            Subsys.InpSsParents ~ InpParents.Int
-            Subsys.InpMapping ~ InpMpg.Int
-            _ <  {
-                OutpRes.Int ~ Subsys.Outp
-                OutpRes.Int ~ OutpRes_Int : TrSvldVar (
-                    _@ < Debug.LogLevel = "Dbg"
-                    Inp1 ~ Subsys.Outp
-                    Inp2 ~ InpDefRes.Int
-                )
-            }
-            OutpRes.Inp ~ OutpRes_Int : TrSwitchBool (
-                _@ < Debug.LogLevel = "Dbg"
-                Inp1 ~ Subsys.Outp
-                Inp2 ~ InpDefRes.Int
-                Sel ~ NotFound
-            )
-            # ">>> Parent mapping resolver"
-        }
+        )
+        Subsys.InpSsParents ~ InpParents.Int
+        Subsys.InpMapping ~ InpMpg.Int
+        OutpRes.Inp ~ OutpRes_Int : TrSwitchBool (
+            Inp1 ~ Subsys.Outp
+            Inp2 ~ InpDefRes.Int
+            Sel ~ NotFound
+        )
+        # ">>> Parent mapping resolver"
     }
 }

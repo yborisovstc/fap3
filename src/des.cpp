@@ -1921,9 +1921,8 @@ void DesAs::setActivated()
 }
 
 
-#if 0
 
-/// Active subsystem of DES ver.2
+/// Active subsystem of DES ver.2, ds_desas_nio_do
 
 const GUri DesAs2::K_OutpUri = "Output";
 const GUri DesAs2::K_SsysUri = "Subsys";
@@ -1988,6 +1987,7 @@ void DesAs2::update()
     if (!res) {
 	LOGN(EErr, "Failed run");
     }
+    DesLauncher::update();
     PFL_DUR_STAT_REC(PEvents::EDurStat_DesAsUpd);
 }
 
@@ -2021,7 +2021,6 @@ void DesAs2::setActivated()
     }
 }
 
-#endif
 
 
 

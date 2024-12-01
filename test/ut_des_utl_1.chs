@@ -111,7 +111,7 @@ MyRoot : Elem {
                 }
             )
             # ">>> Example of AVR resolving type of CRP"
-            CrpResolver : DesUtils.PrntMappingResolver (
+            CrpResolver : DesUtils.PrntMappingResolver2 (
                 InpMpg ~ : State {
                     = "VPDU ( PDU ( URI Vert , URI VertCrp ) , PDU ( URI Vertu , URI VertCrp )  , PDU ( URI .MyRoot.Launcher.Vert2 , URI Vert2Crp )  , PDU ( URI Syst , URI SystCrp ) )"
                 }
