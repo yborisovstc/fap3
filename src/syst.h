@@ -63,6 +63,8 @@ class Extd: public Vertu, public Cnt::Host
     public:
 	static const char* Type() { return "Extd";};
 	Extd(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From MNode
+	virtual string parentName() const override { return Type(); }
 	// From MVert
 	virtual bool isCompatible(MVert* aPair, bool aExt) override;
 	virtual MVert* getExtd() override;
@@ -85,6 +87,8 @@ class Extde: public Vert
     public:
 	static const char* Type() { return "Extde";};
 	Extde(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	// From MNode
+	virtual string parentName() const override { return Type(); }
 	// From MVert
 	virtual bool isCompatible(MVert* aPair, bool aExt) override;
 	virtual MVert* getExtd() override;
@@ -134,6 +138,7 @@ class Syst : public Elem, public MAhost, public MActr, public MSyst
 	using TAgtCp = NCpOmnp<MAhost, MAgent>;
     public:
 	static const char* Type() { return "Syst";}
+	static vector<GUri> getParentsUri();
 	Syst(const string &aType, const string &aName, MEnv* aEnv);
 	virtual ~Syst();
 	// From Node
@@ -141,6 +146,7 @@ class Syst : public Elem, public MAhost, public MActr, public MSyst
 	virtual void mutDisconnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx) override;
 	virtual MIface* MNode_getLif(const char *aType) override;
 	virtual MIface* MOwner_getLif(const char *aType) override;
+	vector<GUri> parentsUri() const override { return getParentsUri(); }
 	// From MActr
 	virtual string MActr_Uid() const override {return getUid<MActr>();}
 	// TODO Do we really need it? System can observe owned attach and then do attach/detach agent

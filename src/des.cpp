@@ -114,6 +114,13 @@ void CpStateInp::InpObsProvider::onIfpInvalidated(MIfProv* aProv)
 
 #else // DES_CPS_IFC
 
+vector<GUri> CpStateInp::getParentsUri()
+{
+    auto p = CpState::getParentsUri();
+    p.insert(p.begin(), Type());
+    return p;
+}
+
 CpStateInp::CpStateInp(const string &aType, const string& aName, MEnv* aEnv): CpState(aType, aName, aEnv)
 {
     bool res = setContent("Provided", "MDesInpObserver");
@@ -124,6 +131,13 @@ CpStateInp::CpStateInp(const string &aType, const string& aName, MEnv* aEnv): Cp
 #endif // DES_CPS_IFC
 
 /* Connection point - output of combined chain state AStatec */
+
+vector<GUri> CpStateOutp::getParentsUri()
+{
+    auto p = CpState::getParentsUri();
+    p.insert(p.begin(), Type());
+    return p;
+}
 
 CpStateOutp::CpStateOutp(const string &aType, const string& aName, MEnv* aEnv): CpState(aType, aName, aEnv)
 {
@@ -164,6 +178,13 @@ CpStateMnodeOutp::CpStateMnodeOutp(const string &aType, const string& aName, MEn
 
 /// CpStateInp direct extender
 
+vector<GUri> ExtdStateInp::getParentsUri()
+{
+    auto p = Extd::getParentsUri();
+    p.insert(p.begin(), Type());
+    return p;
+}
+
 ExtdStateInp::ExtdStateInp(const string &aType, const string& aName, MEnv* aEnv): Extd(aType, aName, aEnv)
 {
     MNode* cp = Provider()->createNode(CpStateOutp::Type(), Extd::KUriInt , mEnv);
@@ -173,6 +194,13 @@ ExtdStateInp::ExtdStateInp(const string &aType, const string& aName, MEnv* aEnv)
 }
 
 /// CpStateOutp direct extender
+
+vector<GUri> ExtdStateOutp::getParentsUri()
+{
+    auto p = Extd::getParentsUri();
+    p.insert(p.begin(), Type());
+    return p;
+}
 
 ExtdStateOutp::ExtdStateOutp(const string &aType, const string& aName, MEnv* aEnv): Extd(aType, aName, aEnv)
 {
@@ -283,6 +311,14 @@ static const int KStatecDlog_ObsIfr = 7;  // Observers ifaces routing
 
 const string State::KCont_Value = "";
 const string State::KInpName = "Inp";
+
+
+vector<GUri> State::getParentsUri()
+{
+    auto p = Vertu::getParentsUri();
+    p.insert(p.begin(), Type());
+    return p;
+}
 
 bool State::SContValue::getData(string& aData) const
 {
@@ -751,6 +787,13 @@ DtBase* State::VDtGet(const string& aType)
 // Constant data
 
 const string Const::KCont_Value = "";
+
+vector<GUri> Const::getParentsUri()
+{
+    auto p = Vertu::getParentsUri();
+    p.insert(p.begin(), Type());
+    return p;
+}
 
 bool Const::SContValue::getData(string& aData) const
 {

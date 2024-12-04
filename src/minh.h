@@ -34,6 +34,8 @@ class MParent : public MIface
          * iface to avoid vulnerability with getting MNode
          * */
 	virtual void getUriPrnt(GUri& aUri) const = 0;
+        /** @brief Gets native parents URI chain, binding to MNode::parentsUri() * */
+        virtual vector<GUri> parentsUriPrnt() const = 0;
 };
 
 

@@ -4,6 +4,12 @@
 #include "chromo.h"
 
 
+vector<GUri> Elem::getParentsUri()
+{
+    auto p = Unit::getParentsUri();
+    p.insert(p.begin(), Type());
+    return p;
+}
 
 Elem::Elem(const string &aType, const string &aName, MEnv* aEnv): Unit(aType, aName, aEnv), mInode(this, this)
 {

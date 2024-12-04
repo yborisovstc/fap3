@@ -26,6 +26,14 @@ testroot : Elem {
                     Cmp3_2 : Node
                     Cmp3_3 : Node
                 }
+                # "Target_4"
+                Target4 : Des {
+                    St1 : State {
+                        = "SI 1"
+                    }
+                }
+                # "Target_5"
+                Target5 : Target4
             }
             # "Controller uses adapter for access to target"
             Adapter : DAdp {
@@ -77,7 +85,6 @@ testroot : Elem {
                 _@ < = "VDU"
                 Inp ~ Adapter.Parents
             )
-
             # "OutpMagUri debug"
             OutpMagUri_Dbg : State (
                 _@ < Debug.LogLevel = "Dbg"
@@ -98,7 +105,7 @@ testroot : Elem {
             Incr.Inp ~ Counter
             # "Managed agent 1 URI"
             MagUri : State {
-                = "SS Target2"
+                = "SS Target5"
             }
             # "Managed agent 2 URI"
             MagUri2 : State {

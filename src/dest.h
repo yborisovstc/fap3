@@ -27,10 +27,12 @@ class TrBase: public CpStateOutp, public MDVarGet, protected MDesInpObserver
 {
     public:
 	static const char* Type() { return "TrBase";}
+	static vector<GUri> getParentsUri();
 	TrBase(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From Node
 	virtual MIface* MNode_getLif(const char *aType) override;
 	virtual MIface* MOwner_getLif(const char *aType) override;
+	vector<GUri> parentsUri() const override { return getParentsUri(); }
 	// From MVert
 	virtual MIface *MVert_getLif(const char *aType) override;
 	// From MConnPoint
@@ -133,6 +135,7 @@ class TrAdd2Var: public TrVar
     public:
 	static const char* Type() { return "TrAdd2Var";};
 	TrAdd2Var(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	virtual string parentName() const override { return Type(); }
 	// From TrVar
 	virtual void Init(const string& aIfaceName) override;
 	virtual FInp* GetFinp(int aId) override;
@@ -345,6 +348,7 @@ class TrAndVar: public TrBool
     public:
 	static const char* Type() { return "TrAndVar";};
 	TrAndVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL): TrBool(aType, aName, aEnv) {}
+	virtual string parentName() const override { return Type(); }
 	virtual const DtBase* doVDtGet(const string& aType) override;
 };
 

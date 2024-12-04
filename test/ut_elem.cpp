@@ -17,10 +17,10 @@
 class Ut_elem : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_elem);
-    //CPPUNIT_TEST(test_elem_inh_1);
+    CPPUNIT_TEST(test_elem_inh_1);
     //CPPUNIT_TEST(test_elem_imp_1);
     //CPPUNIT_TEST(test_elem_dmc_1);
-    CPPUNIT_TEST(test_elem_mutperf_1);
+    //CPPUNIT_TEST(test_elem_mutperf_1);
     CPPUNIT_TEST_SUITE_END();
 public:
     virtual void setUp();
@@ -93,6 +93,11 @@ void Ut_elem::test_elem_inh_1()
     MNode* e1 = root->getNode("E1");
     MElem* e1e = e1 ? e1->lIf(e1e) : nullptr;
     CPPUNIT_ASSERT_MESSAGE("Fail to get E1", e1e);
+    cout << endl << "=== e1 parentsUri() ===" << endl;
+    for (auto e : e1->parentsUri()) {
+	cout << e << " ";
+    }
+    cout << endl << endl;
     string cnt_e1_about;
     bool res = e1->cntOw()->getContent("About", cnt_e1_about);
     //!!CPPUNIT_ASSERT_MESSAGE("Fail to get E1 about", res && cnt_e1_about == "E1");

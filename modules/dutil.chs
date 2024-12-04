@@ -394,7 +394,7 @@ DesUtils : Elem {
                 = "SB false"
                 Debug.LogLevel = "Err"
             }
-            ParentsIter : DesUtils.VectIter (
+            ParentsIter : VectIter (
                 _@ < Debug.LogLevel = "Dbg"
                 InpV ~ InpSsParents.Int
                 _ < InpDone ~ : SB_True
@@ -473,7 +473,7 @@ DesUtils : Elem {
                 = "SB false"
                 Debug.LogLevel = "Err"
             }
-            ParentsIter : DesUtils.VectIter (
+            ParentsIter : VectIter (
                 _@ < Debug.LogLevel = "Dbg"
                 InpV ~ InpSsParents.Int
                 _ < InpDone ~ : SB_True

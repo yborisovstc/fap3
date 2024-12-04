@@ -7,6 +7,13 @@
 // Experimental: enable using IFR for MDesInpObserver
 #define DEST_IFR_INPOBS
 
+vector<GUri> TrBase::getParentsUri()
+{
+    auto p = CpStateOutp::getParentsUri();
+    p.insert(p.begin(), Type());
+    return p;
+}
+
 TrBase::TrBase(const string &aType, const string& aName, MEnv* aEnv): CpStateOutp(aType, aName, aEnv), mCInv(true)
 {
 }

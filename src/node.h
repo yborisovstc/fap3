@@ -36,6 +36,7 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	using TObsCp = NCpOmnp<MObservable, MObserver>;  /*!< Observable connpoint */
     public:
 	static const char* Type() { return "Node";}
+	static vector<GUri> getParentsUri() { return vector<GUri>(1, Type()); }
 	Node(const string &aType, const string &aName, MEnv* aEnv);
 	virtual ~Node();
 	// From MNode.MIface
@@ -44,7 +45,8 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	virtual void MNode_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	// From MNode
 	virtual string name() const override { return mName;}
-	virtual string parentName() const { return Type(); }
+	virtual string parentName() const override { return Type(); }
+	vector<GUri> parentsUri() const override { return getParentsUri(); }
 	virtual const MNode* getComp(const string& aId) const override;
 	virtual MNode* getComp(const string& aId) override { return const_cast<MNode*>(const_cast<const Node*>(this)->getComp(aId));}
 	virtual const MNode* getNode(const GUri& aUri) const override;

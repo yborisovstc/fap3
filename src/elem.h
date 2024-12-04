@@ -15,11 +15,13 @@ class Elem: public Unit, public MElem, public MParent, public MChild
 	using TInhTreeNode = NTnnp<MChild, MParent>; 
     public:
 	static const char* Type() { return "Elem";}
+	static vector<GUri> getParentsUri();
 	Elem(const string &aType, const string &aName, MEnv* aEnv);
 	virtual ~Elem();
 	// From MNode.MIface
 	virtual MIface* MNode_getLif(const char *aType) override;
 	virtual string parentName() const override;
+	vector<GUri> parentsUri() const override { return getParentsUri(); }
 	// From MElem.MIface
 	virtual string MElem_Uid() const override { return getUid<MElem>();}
 	virtual MIface* MElem_getLif(const char *aType) override;
@@ -41,6 +43,7 @@ class Elem: public Unit, public MElem, public MParent, public MChild
 	virtual MNode* createHeirPrnt(const string& aName) override;
 	virtual bool attachChild(MChild* aChild) override;
 	virtual void getUriPrnt(GUri& aUri) const override;
+        vector<GUri> parentsUriPrnt() const override { return parentsUri(); }
 	// From MChild
 	virtual string MChild_Uid() const override {return getUid<MParent>();}
 	virtual MIface* MChild_getLif(const char *aType) override;

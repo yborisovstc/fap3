@@ -89,6 +89,9 @@ class CpStateInp: public CpState
     public:
 	static const char* Type() { return "CpStateInp";};
 	CpStateInp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	virtual string parentName() const override { return Type(); }
+	static vector<GUri> getParentsUri();
+	vector<GUri> parentsUri() const override { return getParentsUri(); }
 };
 #endif // DES_CPS_IFC
 
@@ -111,7 +114,10 @@ class CpStateOutp: public CpState
 {
     public:
 	static const char* Type() { return "CpStateOutp";};
+	static vector<GUri> getParentsUri();
 	CpStateOutp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+	virtual string parentName() const override { return Type(); }
+	vector<GUri> parentsUri() const override { return getParentsUri(); }
 	// From Vertu
 	virtual void onConnected() override;
 	virtual void onDisconnected() override;
@@ -134,8 +140,10 @@ class ExtdStateInp : public Extd
 {
     public:
 	static const char* Type() { return "ExtdStateInp";};
+	static vector<GUri> getParentsUri();
 	ExtdStateInp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual string parentName() const override { return Type(); }
+	vector<GUri> parentsUri() const override { return getParentsUri(); }
 };
 
 /** @brief CpStateOutp direct extender (extd as outp)
@@ -144,8 +152,10 @@ class ExtdStateOutp : public Extd
 {
     public:
 	static const char* Type() { return "ExtdStateOutp";};
+	static vector<GUri> getParentsUri();
 	ExtdStateOutp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual string parentName() const override { return Type(); }
+	vector<GUri> parentsUri() const override { return getParentsUri(); }
 };
 
 /** @brief CpStateInp direct extender (extd as inp)
@@ -234,12 +244,15 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 	};
     public:
 	static const char* Type() { return "State";};
+	static vector<GUri> getParentsUri();
 	State(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual ~State();
 	// From Node.MIface
 	virtual MIface* MNode_getLif(const char *aType) override;
 	// From Node
 	virtual MIface* MOwner_getLif(const char *aType) override;
+	virtual string parentName() const override { return Type(); }
+	vector<GUri> parentsUri() const override { return getParentsUri(); }
 	// From Unit.MIfProvOwner
 	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
 	// From Node.MContentOwner
@@ -354,12 +367,15 @@ class Const: public Vertu, public MConnPoint, public MDVarGet, public Cnt::Host
 	};
     public:
 	static const char* Type() { return "Const";};
+	static vector<GUri> getParentsUri();
 	Const(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual ~Const();
 	// From Node.MIface
 	virtual MIface* MNode_getLif(const char *aType) override;
 	// From Node
 	virtual MIface* MOwner_getLif(const char *aType) override;
+	virtual string parentName() const override { return Type(); }
+	vector<GUri> parentsUri() const override { return getParentsUri(); }
 	// From Unit.MIfProvOwner
 	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
 	// From Node.MContentOwner

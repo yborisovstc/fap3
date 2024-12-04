@@ -197,21 +197,24 @@ const DtBase* SdoParents::VDtGet(const string& aType)
         } else {
             MElem* suee = mSue->lIf(suee);
             if (suee) {
-                //auto* cn = suee->asChild()->cP()->firstPair();
+                MParent* prnt = nullptr;;
                 auto* cn = *suee->asChild()->cP()->pairsBegin();
                 // TODO this solution exploits the access to upper inheritance tree
                 // that allowed thru MChild::cP() and creates vulnarability. Consider redesign. 
                 while (cn) {
-                    MParent* prnt = cn->provided();
+                    prnt = cn->provided();
                     GUri uri;
                     prnt->getUriPrnt(uri);
                     mRes.mData.push_back(DGuri(uri));
-                    //cn = cn->binded()->firstPair();
                     cn = *cn->binded()->pairsBegin();
                 }
+                // Add native parents chain
+                auto p = prnt->parentsUriPrnt();
+                mRes.mData.insert(mRes.mData.end(), p.begin(), p.end());
             } else {
                 // Explorable isn't elem - take just parent's name
-                mRes.mData.push_back(DGuri(mSue->parentName()));
+                auto p = mSue->parentsUri();
+                mRes.mData.insert(mRes.mData.end(), p.begin(), p.end());
             }
             mRes.mValid = true;
         }

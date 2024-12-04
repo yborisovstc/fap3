@@ -329,23 +329,25 @@ void Node::mutate(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx, boo
 		mutSegment(rno, aUpdOnly, mctx);
 	    } else if (rnotype == ENt_Node) {
 		MNode* mres = mutAddElem(rno, aUpdOnly, mctx);
-		if (rno.Count()) {
-		    TNs root_ns;
-		    assert(!(exs_targ && rno.AttrExists(ENa_NS)));
-		    if (exs_targ) {
-			targ = mres;
-		    } else if (rno.AttrExists(ENa_NS) && rno.Attr(ENa_NS).empty()) {
-			if (rno.Attr(ENa_NS).empty()) {
-			    root_ns.push_back(mres);
-			    targ = this;
+		if (mres) {
+		    if (rno.Count()) {
+			TNs root_ns;
+			assert(!(exs_targ && rno.AttrExists(ENa_NS)));
+			if (exs_targ) {
+			    targ = mres;
+			} else if (rno.AttrExists(ENa_NS) && rno.Attr(ENa_NS).empty()) {
+			    if (rno.Attr(ENa_NS).empty()) {
+				root_ns.push_back(mres);
+				targ = this;
+			    } else {
+			    }
 			} else {
+			    targ = mres;
 			}
-		    } else {
-			targ = mres;
-		    }
-		    MutCtx mctx(this, root_ns);
-		    if (targ) {
-			targ->mutate(rno, aUpdOnly, mctx, true);
+			MutCtx mctx(this, root_ns);
+			if (targ) {
+			    targ->mutate(rno, aUpdOnly, mctx, true);
+			}
 		    }
 		}
 	    } else if (rnotype == ENt_Change) {

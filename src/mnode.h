@@ -68,6 +68,8 @@ class MNode: public MIface
          * TODO isn't it better to provide parents URI?
          * */
 	virtual string parentName() const = 0;
+        /** @brief Gets the chain of native parents * */
+	virtual vector<GUri> parentsUri() const = 0;
 	// TODO !! All navigation thru native hier to be moved to owning iface ?
 	virtual const MNode* getComp(const string& aId) const = 0;
 	virtual MNode* getComp(const string& aId) = 0;

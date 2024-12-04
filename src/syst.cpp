@@ -539,6 +539,12 @@ MNode* Socket::GetPin(MIfReq::TIfReqCp* aReq)
 
 // System
 
+vector<GUri> Syst::getParentsUri()
+{
+    auto p = Elem::getParentsUri();
+    p.insert(p.begin(), Type());
+    return p;
+}
 
 Syst::Syst(const string &aType, const string &aName, MEnv* aEnv): Elem(aType, aName, aEnv), mAgtCp(this)
 {

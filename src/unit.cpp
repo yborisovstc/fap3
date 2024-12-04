@@ -9,6 +9,13 @@
 //#define DBG_INV_IFR_QNT
 #define DBG_INV_IFR_QNT_LIM (200)
 
+vector<GUri> Unit::getParentsUri()
+{
+    auto p = Node::getParentsUri();
+    p.insert(p.begin(), Type());
+    return p;
+}
+
 Unit::Unit(const string &aType, const string &aName, MEnv* aEnv): Node(aType, aName, aEnv)
 {
 }
