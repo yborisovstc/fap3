@@ -145,12 +145,8 @@ DesUtils : Elem {
                 Inp1 ~ Sw2 : TrSwitchBool (
                     Sel ~ CidxAnd1 : TrAndVar (
                         Inp ~ Cmp_Gt : TrCmpVar (
-                            Inp ~ : TrSub2Var (
-                                Inp ~ InpCnt.Int
-                                Inp2 ~ : SI_1
-                            )
+                            Inp ~ InpCnt.Int
                             Inp2 ~ SIdx
-                            _@ < Debug.LogLevel = "Err"
                         )
                         Inp ~ InpDone.Int
                     )
@@ -164,80 +160,15 @@ DesUtils : Elem {
                 Sel ~ InpReset.Int
             )
         )
-        Outp.Int ~ SIdx
-        OutpDone.Int ~ : TrNegVar (
-            Inp ~ Cmp_Gt
-        )
-    }
-    IdxItr2 : Des {
-        # "Index based iterator"
-        # "Ver.2 Set outp to invalid if container is empty"
-        # "InpCnt - container elements count"
-        # "InpDone - sign of selected input is handled"
-        # "OutpDone - sign of iterator reaches the end"
-        InpCnt : ExtdStateInp
-        InpDone : ExtdStateInp
-        InpReset : ExtdStateInp
-        Outp : ExtdStateOutp
-        OutpDone : ExtdStateOutp
-        ICnt_Dbg : State (
-            _@ <  {
-                Debug.LogLevel = "Dbg"
-                = "SI _INV"
-            }
-            Inp ~ InpCnt.Int
-        )
-        SIdx : State (
-            # "Index"
-            _@ <  {
-                = "SI 0"
-                Debug.LogLevel = "Dbg"
-            }
-            Inp ~ Sw1 : TrSwitchBool (
-                Inp1 ~ Sw2 : TrSwitchBool (
-                    Sel ~ CidxAnd1 : TrAndVar (
-                        Inp ~ Cmp_Gt : TrCmpVar (
-                            Inp ~ : TrAddVar (
-                                Inp ~ InpCnt.Int
-                                InpN ~ : State {
-                                    = "SI 1"
-                                }
-                            )
-                            Inp2 ~ SIdx
-                            _@ < Debug.LogLevel = "Err"
-                        )
-                        Inp ~ InpDone.Int
-                    )
-                    Inp1 ~ SIdx
-                    Inp2 ~ : TrAddVar (
-                        Inp ~ SIdx
-                        Inp ~ : State {
-                            = "SI 1"
-                        }
-                    )
-                )
-                Inp2 ~ : State {
-                    = "SI 0"
-                }
-                Sel ~ InpReset.Int
-            )
-        )
-        # "Set outp to invalid if container is empty"
-        Outp.Int ~ : TrSwitchBool (
-            Inp1 ~ SIdx
-            Inp2 ~ : Const {
+        Outp.Int ~ OutpSw : TrSwitchBool (
+            Sel ~ Cmp_Gt
+            Inp1 ~ : Const {
                 = "SI"
             }
-            Sel ~ Cmp2_Eq : TrCmpVar (
-                Inp ~ InpCnt.Int
-                Inp2 ~ : SI_0
-            )
+            Inp2 ~ SIdx
         )
-        OutpDone.Int ~ : TrAndVar (
-            Inp ~ InpDone.Int
-            Inp ~ : TrNegVar (
-                Inp ~ Cmp_Gt
-            )
+        OutpDone.Int ~ : TrNegVar (
+            Inp ~ Cmp_Gt
         )
     }
     InpItr : Des {

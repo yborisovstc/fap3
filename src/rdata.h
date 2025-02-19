@@ -377,6 +377,7 @@ class VectorBase : public DtBase
 	virtual void ElemToString(int aInd, ostringstream& aStream) const { aStream << "?";};
 	virtual void ElemFromString(int aIdx, istringstream& aStream) = 0;
 	virtual int Size() const { return -1;}
+	virtual void Reset() {}
 	// From DtBase
 	virtual void DataToString(ostringstream& aStream) const override;
 	virtual void DataFromString(istringstream& aStream) override;
@@ -397,6 +398,7 @@ class Vector : public VectorBase
 	static bool IsDataFit(const Vector<T>& aData) { return DtBase::IsDataFit(aData, TypeSig());};
 	// From VectorBase
 	virtual int Size() const override { return mData.size();}
+	virtual void Reset() { mData.clear();}
 	virtual void ElemToString(int aIdx, ostringstream& aStream) const override {
 	    aStream << mData.at(aIdx);
 	}

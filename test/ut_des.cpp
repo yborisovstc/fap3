@@ -29,8 +29,8 @@ class Ut_des : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(test_des_asr_1);
     */
     //CPPUNIT_TEST(test_des_asr_2);
-    CPPUNIT_TEST(test_des_utl_1);
-    //CPPUNIT_TEST(test_des_utl_2);
+    //CPPUNIT_TEST(test_des_utl_1);
+    CPPUNIT_TEST(test_des_utl_2);
     /*
     CPPUNIT_TEST(test_des_sp_1);
     */
@@ -472,8 +472,10 @@ void Ut_des::test_des_utl_2()
     MNode* root = constructSystem(ssname);
     MNode* launcher = root->getNode("Launcher");
     CPPUNIT_ASSERT_MESSAGE("Failed getting launcher", launcher);
-    if (mEnv->profiler()) mEnv->profiler()->saveMetrics();
-    std::filesystem::rename(ssname + ".chs~durstat.csv", ssname + ".chs~durstat_constr.csv");
+    if (mEnv->profiler()) {
+	mEnv->profiler()->saveMetrics();
+	std::filesystem::rename(ssname + ".chs~durstat.csv", ssname + ".chs~durstat_constr.csv");
+    }
     std::ofstream rds; // Root MNode dump
     rds.open(ssname + "_constr_root.dump", std::ofstream::out);
     mEnv->Root()->MNode_doDump(0xff,0,rds);

@@ -408,10 +408,8 @@ template <class T> Func* FCmp<T>::Create(Host* aHost, const string& aInp1Iid, co
 template <class T> const DtBase* FCmp<T>::FDtGet()
 {
     mRes.mValid = false;
-    auto* arg1d = GetInpData(EInp1);
-    auto* arg2d = GetInpData(EInp2);
-    const T* arg1 = arg1d ? reinterpret_cast<const T*>(arg1d) : nullptr;
-    const T* arg2 = arg2d ? reinterpret_cast<const T*>(arg2d) : nullptr;
+    const T* arg1 = GetInpData(EInp1, arg1);
+    const T* arg2 = GetInpData(EInp2, arg2);
     if (arg1 && arg2) {
 	if (arg1->IsCompatible(*arg2)) {
 	    if (arg1->mValid && arg2->mValid) {
@@ -431,7 +429,7 @@ template <class T> const DtBase* FCmp<T>::FDtGet()
 	    }
 	}
     }
-    LOGF(EDbg, "Inp [" + (arg1 ? arg1d->ToString(true) : "nil") + "], Inp2 [" + (arg2 ? arg2d->ToString(true) : "nil")  + "], res [" + mRes.ToString(true) + "]");
+    LOGF(EDbg, "Inp [" + (arg1 ? arg1->DtBase::ToString(true) : "nil") + "], Inp2 [" + (arg2 ? arg2->DtBase::ToString(true) : "nil")  + "], res [" + mRes.ToString(true) + "]");
     return &mRes;
 }
 

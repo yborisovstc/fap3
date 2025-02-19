@@ -954,6 +954,7 @@ void VectorBase::DataFromString(istringstream& aStream)
     char c = aStream.get();
     mValid = (c == KCompDataStart);
     if (mValid) {
+        Reset();
 	int idx = 0;
 	do {
 	    RdpUtil::sep(aStream);

@@ -552,6 +552,8 @@ void State::update()
 	    if (mPdata) {
 		*mPdata = *pdata;
 	    }
+	} else {
+            mInpValid = false;
 	}
     } else {
 	mInpValid = false;
@@ -760,7 +762,7 @@ bool State::updateWithContValue(const string& aData)
 	mPdata->FromString(aData);
 	if (mCdata->IsValid()) {
 	    if (mCdata->IsChanged()) {
-		//LOGN(EDbg, "Initialized:  " + mCdata->ToString(true) + "]");
+		LOGN(EDbg2, "Initialized:  " + mCdata->ToString(true) + "]");
 		NotifyInpsUpdated();
 	    }
 	}  else {
