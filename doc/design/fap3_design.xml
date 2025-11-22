@@ -12,7 +12,7 @@
 	<releaseinfo>Ver.0.01 at 05-Dec-2020</releaseinfo>
 
 	<abstract>
-	    <simpara>This document collects software desing for Discrete Events System (DES) framework ver 3.</simpara>
+	    <simpara>This document collects software design for Discrete Events System (DES) framework ver 3.</simpara>
 	</abstract>
 
 	<revhistory>
@@ -94,20 +94,27 @@
 	<glossentry id="gls_dce"><glossterm>DCE</glossterm> <acronym>DCE</acronym>
 	    <glossdef> <para>
 			Dedicated Content Element of native hier.  Approach of content support based on dedicated elements of native hier. Ref
-		    <xref linkend="ds_dce"/> for desing details </para></glossdef>
+		    <xref linkend="ds_dce"/> for design details </para></glossdef>
 	</glossentry>
 
 	<glossentry id="gls_dcs"><glossterm>DCS</glossterm> <acronym>DCS</acronym>
 	    <glossdef> <para>
 			DES Control of System, the mechanism of managing some subsystem by DES. 
-		    <xref linkend="ds_dcs"/> for desing details </para></glossdef>
+		    <xref linkend="ds_dcs"/> for design details </para></glossdef>
+	</glossentry>
+
+	<glossentry id="gls_dctx"><glossterm>DCTX</glossterm> <acronym>DCTX</acronym>
+	    <glossdef> <para>
+                DES context, the mechanism of propagating data between system and its subsystem. 
+                Widely used in complex systems to simplify the system structure.
+		    </para></glossdef>
 	</glossentry>
 
 
 	<glossentry id="gls_ssp"><glossterm>SSP</glossterm>
 	    <glossdef><para>
 		DES Service Point. Mechanism the system provides to the "client" to update clents state depending on system context.
-		    <xref linkend="ds_ssp"/> for desing details </para></glossdef>
+		    <xref linkend="ds_ssp"/> for design details </para></glossdef>
 	</glossentry>
 
 	<glossentry id="gls_deds"><glossterm>DEDS</glossterm> <acronym>DEDS</acronym>
@@ -137,7 +144,7 @@
 	    <glossentry id="gls_dhc"><glossterm>DHC</glossterm> <acronym>DHC</acronym>
 	    <glossdef> <para>Direct Hierarchical Chromosome</para> <para>
 		Approach of multi-agent system definition that describes the model's structure directly. 
-		Ref <xref linkend="ds_smc"/> for discussion regarding chromo desing approaches.
+		Ref <xref linkend="ds_smc"/> for discussion regarding chromo design approaches.
 		    Ref <xref linkend="gls_osm"/> for anoter design approach.</para></glossdef> </glossentry>
 
 	<glossentry id="gls_dmc"><glossterm>DMC</glossterm> <acronym>DHC</acronym>
@@ -185,6 +192,14 @@
 		is implemented as managing DES model, ref also
 		    <xref linkend="ds_dmm"/> for details.</para></glossdef> </glossentry>
 
+	<glossentry id="gls_dri"><glossterm>DRI</glossterm> <acronym>DRI</acronym>
+	    <glossdef> <para>Direct Resolution of Interfaces</para> <para>
+		Design approach of resolving interfaces by agents. With that approach agent gets the iface provided by connpoint. 
+		This approach is the alternative of
+		    <xref linkend="gls_irm"/>.  Ref
+		    <xref linkend="ds_dri"/> for details. </para></glossdef> </glossentry>
+
+
 	<glossentry id="gls_eosm"><glossterm>EOSM</glossterm> <acronym>OSM</acronym>
 	    <glossdef> <para>
 		Extended Original Sequence of Mutations chromo language approach- 
@@ -201,7 +216,11 @@
 	</glossentry>
 
 	<glossentry id="gls_irm"><glossterm>IRM</glossterm>
-	    <glossdef> <para>Interface resolution mechanism.  <ulink url="../../../grayb/doc/design/index.htmds_ifcache"/>
+	    <glossdef> <para>
+		Interface resolution mechanism. Ref for initial design
+		    <ulink url="../../../grayb/doc/design/index.html#ds_ifcache"/>
+			Alternative design approach is
+		    <xref linkend="gls_dri"/>
 	</para></glossdef> </glossentry>
 
 	<glossentry id="gls_irmc"><glossterm>IRMC</glossterm>
@@ -333,14 +352,14 @@
 
     <sect1 id="ds_itr"><title>Intro</title>
 	<sect2 id="ds_itr_sp"><title>The scope of the project</title>
-	    <simpara>This project is focusing on re-desing of DES framework fap2, aka grayb, ref <ulink url="../../../grayb/doc/design/index.html"/> for
-		the desing. Ref also <xref linkend="ds_ibc"/> and <xref linkend="ds_ic"/> for tracked list of the items to be addressed and completed items in FAP3.
+	    <simpara>This project is focusing on re-design of DES framework fap2, aka grayb, ref <ulink url="../../../grayb/doc/design/index.html"/> for
+		the design. Ref also <xref linkend="ds_ibc"/> and <xref linkend="ds_ic"/> for tracked list of the items to be addressed and completed items in FAP3.
 		    The main areas of improvement are:</simpara>
 	    <itemizedlist>
 		<listitem>
-		    Unify of native level relations (connections), like owner-component, observer-observable, etc. Create common desing for the
+		    Unify of native level relations (connections), like owner-component, observer-observable, etc. Create common design for the
 		    relations.
-		    <simpara>Ref <ulink url="../../../grayb/doc/design/index.html#ds_i_anr"/> for current desing weakness analysis.</simpara>
+		    <simpara>Ref <ulink url="../../../grayb/doc/design/index.html#ds_i_anr"/> for current design weakness analysis.</simpara>
 		</listitem>
 		<listitem>Design native connections iterating mechanism.</listitem>
 		<listitem>
@@ -349,7 +368,7 @@
 		</listitem>
 		<listitem>
 		    Design content basing on native level connections tree of content units.
-		    <simpara>Also look at <xref linkend="ds_cnh"/> for another content desing discussion.</simpara>
+		    <simpara>Also look at <xref linkend="ds_cnh"/> for another content design discussion.</simpara>
 		</listitem>
 		<listitem>Easy support of anonymous units.</listitem>
 		<listitem>
@@ -362,7 +381,7 @@
 		<listitem>Redesign system navigation mechanism to restrict the access. <simpara>Ref <xref linkend="ds_sn"/></simpara></listitem>
 		<listitem>
 		    Improve chromo language: support mutations chain (<xref linkend="gls_dmc"/>), use strong parsing.
-		    <simpara>Ref <ulink url="../../../grayb/doc/design/index.html#ds_chr2_mc"/> for FAP2 desing item. Ref <xref linkend="ds_cli"/> for the material.</simpara>
+		    <simpara>Ref <ulink url="../../../grayb/doc/design/index.html#ds_chr2_mc"/> for FAP2 design item. Ref <xref linkend="ds_cli"/> for the material.</simpara>
 		    <simpara></simpara>
 		</listitem>
 		<listitem>Redesign import to avoid chromo analysis for selecting imported node. Ref <xref linkend="ds_imp"/> for details.</listitem>
@@ -373,13 +392,13 @@
 		<listitem>
 		    Redesign chromo to make it really copyable.
 		    <simpara>At least one related use-case is MElem <xref linkend="gls_adp"/> that can mutate managed agent basing on the input
-			receiveing chromo. Current chromo desing potentially allows copy (ref DChr2 data based state) but in rather messy way.
+			receiveing chromo. Current chromo design potentially allows copy (ref DChr2 data based state) but in rather messy way.
 			Ref <xref linkend="ds_mcrc"/>
 		    </simpara>
 		</listitem>
-		<listitem>Redesign connpoint extender. Ref <ulink url="../../../grayb/doc/design/index.html#ds_di_wrcpe"/> for desing issue.</listitem>
+		<listitem>Redesign connpoint extender. Ref <ulink url="../../../grayb/doc/design/index.html#ds_di_wrcpe"/> for design issue.</listitem>
 		<listitem>
-		    <glossterm id="ds_itr_sp_rnac">Redesing notification of agent change.</glossterm>
+		    <glossterm id="ds_itr_sp_rnac">Redesign notification of agent change.</glossterm>
 		    <simpara>
 			Currently, the agent notifies of its updates to owner, embedded agents and observers. This is too comlicated. We need
 			to remain only observer and implement proper native relation observer-observable. Also there should be some policy enabling
@@ -387,7 +406,7 @@
 		    </simpara>
 		</listitem>
 		<listitem>
-		    Redesing URI to make is simpler and convenient.
+		    Redesign URI to make is simpler and convenient.
 		    <simpara>Ref <xref linkend="ds_urd"/> for details.</simpara>
 		</listitem>
 		<listitem>
@@ -444,8 +463,8 @@
 		connection is defined via this specifics of connected units.</simpara>
 	    <simpara>Parameters of system level connectins are defined via system creaton spec (specifying in terms of system creation language).</simpara>
 	</sect2>
-	<sect2><title>Considering common desing for native net two-ways relations.</title>
-	    <simpara>The serious problem in fap2 was that this desing principle was not supported completely. For instance owned-owner iface is not defined
+	<sect2><title>Considering common design for native net two-ways relations.</title>
+	    <simpara>The serious problem in fap2 was that this design principle was not supported completely. For instance owned-owner iface is not defined
 		properly, huge MUnit is used instead.</simpara>
 	</sect2>
 	<sect2><title>Interface vs connections</title>
@@ -459,9 +478,9 @@
 	    <sect3><title>Do we need "connecting" iface?</title>
 		<simpara>The possible design solution is MIface is extended to introduce connection functions, ref MCIface or MCIface2 in 74ed7dd2. The rationale
 		    of such design is that iface can be obtain using the current iface resolution  or local iface providing mechanisms,
-		    so as iface supports connection we can connect it. The emotions promoting this desing was "What? Why we need now two abstractions to be taken care -
+		    so as iface supports connection we can connect it. The emotions promoting this design was "What? Why we need now two abstractions to be taken care -
 		    iface and connpoint. Let's have just one."</simpara>
-		<simpara>This desing is not clear actually. The iface resolution itself involves connections. As for local iface providing, the specific API can 
+		<simpara>This design is not clear actually. The iface resolution itself involves connections. As for local iface providing, the specific API can 
 		    be addd to access conn points.</simpara>
 		<simpara>The idea is: connection is just means of accessing and managing iface. They are not same level abstractions.</simpara>
 	    </sect3>
@@ -500,7 +519,7 @@
 	<sect2 id="ds_nn_tree"><title>How to implement tree?</title>
 	    <sect3><title>Intro</title>
 		<simpara>There is the initial implementation (4da8309df913) of the tree node, ref nconn.h:NTnnp or nconn.h:NTnip. But there are doubts regarding the
-		    desing, it seems not proper. This is bacause of quite complicated scheme. Actually the "tree node" functionality is implemented on application
+		    design, it seems not proper. This is bacause of quite complicated scheme. Actually the "tree node" functionality is implemented on application
 		    iface level but not in the tree node class itself.</simpara>
 	    </sect3>
 	    <sect3 id="ds_nn_tree_si"><title>Design approach: specific iface for tree node.</title>
@@ -522,7 +541,7 @@
 		</sect4>
 	    </sect3>
 	</sect2>
-	<sect2><title>How to simplify the desing of native net.</title>
+	<sect2><title>How to simplify the design of native net.</title>
 	    <sect3><title>Intro</title>
 		<simpara>Current implementation of native net is quite complicated and not convenient in use. How can we simplify it. Look for instance
 		    at firstLeafB().</simpara>
@@ -567,7 +586,7 @@
 	    <sect3><title>UC: owned depends on name. Renaming. Do we need notification.</title>
 		<simpara>This is use-case for the case when  "Name as the attribute of the relation" approach is also applied.
 		    In this case owning shall have method to get owned name. But it is not enough.
-		    Owned can depend on its name (not sure this is a good desing), TrCmpVar for instance, or future constants like SI_23 where the name
+		    Owned can depend on its name (not sure this is a good design), TrCmpVar for instance, or future constants like SI_23 where the name
 		    encodes the constant parameter. Yes, owned can get the name from owning but it also needs to be notified when the name gets changed.</simpara>
 	    </sect3>
 	    <sect3><title>UC: Removing owned.</title>
@@ -575,7 +594,7 @@
 		</simpara>
 	    </sect3>
 	    <sect3><title>Does it really increase the performance?</title>
-		<simpara>Most imprtant native hier node method that ownership relation desing affects is MNode::getNode(GUri). This method is called actively not
+		<simpara>Most imprtant native hier node method that ownership relation design affects is MNode::getNode(GUri). This method is called actively not
 		    only on the system creation phase but on system running also.</simpara>
 		<simpara>I just experimented, added input cache into State:</simpara>
 		<programlisting>
@@ -681,7 +700,7 @@
 		<simpara>In <xref linkend="gls_fap2"/> the only ifaces have identification. The focus was to provide native hier creating iface (MUnit) with
 		    safe identification mechanism. Other ifaces are identified via MUnit identification plus iface type - so the identifiation scheme is restricted,
 		    there is no rule to identify given iface in case of MUnit node includes number of ifaces of same type.
-		    Ref <xref linkend="ds_f2dw_isr"/> for the desing weakness description.</simpara>
+		    Ref <xref linkend="ds_f2dw_isr"/> for the design weakness description.</simpara>
 		<simpara>
 		    The question is if we really need to identify all ifaces? The identification require some additional resources.
 		    This why in <xref linkend="gls_fap2"/> the exact identification is supported by MUnit only (it supports identification by name and is element of native
@@ -780,9 +799,9 @@
 		</sect4>
 	    </sect3>
 	</sect2>
-	<sect2 id="ds_irm_pdi"><title>Proposal of <xref linkend="gls_irm"/> desing improvement</title>
+	<sect2 id="ds_irm_pdi"><title>Proposal of <xref linkend="gls_irm"/> design improvement</title>
 	    <sect3><title>Intro</title>
-		<simpara>The current desing (1641500c15) seems a bit overkill. IfrNode implements both provider and requester ifaces. IfrNode also
+		<simpara>The current design (1641500c15) seems a bit overkill. IfrNode implements both provider and requester ifaces. IfrNode also
 		    includes ref to the owning node as MIfProvOwner dedicated iface. Can we simplify the design utilizing NTnnp ifaces proxy feature so that the 
 		    owning node acts as the provider and requestor.</simpara>
 		<simpara>Do we really need MUnit iface? Why don't use directly MIfProv?</simpara>
@@ -857,7 +876,7 @@
 
     <sect1 id="ds_sn"><title>System navigation improvement. Access restrictions</title>
 	<sect2><title>Intro</title>
-	    <simpara>There is the gap in FAP2 desing: the access to system nodes is not restricted. So any node can access to any node. This can cause the models
+	    <simpara>There is the gap in FAP2 design: the access to system nodes is not restricted. So any node can access to any node. This can cause the models
 		unreliability.</simpara>
 	</sect2>
 	<sect2><title>GUri improvement: avoid upward navigation</title>
@@ -970,11 +989,11 @@
 	    </sect3>
 	    <sect3 id="ds_sn_aul_avcp"><title>Using Accessor agent giving access to manager agent via conn point.</title>
 		<sect4><title>Intro</title>
-		    <simpara>Using Link approach often leads to bad system desing, ref <xref linkend="ds_sn_aul_lnk_cohl"/>. Alternative solution can be using the 
+		    <simpara>Using Link approach often leads to bad system design, ref <xref linkend="ds_sn_aul_lnk_cohl"/>. Alternative solution can be using the 
 			standard connections via connpoint. In that case the connection can be structured to keep subsystem isolation.</simpara>
 		    <simpara>Indeed, the standard connection point mechanism can provide access to any interface including MNode for instance. What we need is 
 			to introduce "managing" agent that includes the connpoint provideing the required iface (MNode for instance) and redirecting IFR request
-			to managed agent. The desing can be simplified event more - we can just embed the connpoint into the managed agent, connpoint will
+			to managed agent. The design can be simplified event more - we can just embed the connpoint into the managed agent, connpoint will
 			redirect IFR request to the agent directly.</simpara>
 		</sect4>
 		<sect4><title>Criticism:</title>
@@ -990,7 +1009,7 @@
 	</sect2>
 	<sect2><title>Support of mutation chain</title>
 	    <sect3><title>Intro</title>
-		<simpara>Ref <ulink url="../../../grayb/doc/design/index.html#ds_chr2_mc"/> for FAP2 desing discussion.</simpara>
+		<simpara>Ref <ulink url="../../../grayb/doc/design/index.html#ds_chr2_mc"/> for FAP2 design discussion.</simpara>
 	    </sect3>
 	</sect2>
 	<sect2 id="ds_cli_syntax"><title>Syntax of chromo language.</title>
@@ -1152,7 +1171,7 @@
 		    was included in the base mutations set.
 		</simpara>
 		<simpara>
-		    The drawback of this approach is clear - it doesn't allow to utilize the advantage of core FAP desing prinicple "The model is created by
+		    The drawback of this approach is clear - it doesn't allow to utilize the advantage of core FAP design prinicple "The model is created by
 		    mutating agent." (initially root agent). With current approach it is not possible to have optimized mutation language for agent specific mutation.
 		    The idea of the current approach was that there shouldn't be specific mutation and that all cases can be simply covered by mutating the base
 		    agent (Elem).
@@ -1166,7 +1185,7 @@
 		    the mutation processing.
 		</simpara>
 	    </sect3>
-	    <sect3 id="ds_cli_ascl_bdp"><title>Base desing principle of </title>
+	    <sect3 id="ds_cli_ascl_bdp"><title>Base design principle of </title>
 		<sect4 ><title>Any agents should allow mutating even if the agent can be not allowing derivation.</title>
 		    <sect5><title>Intro</title>
 			<simpara>
@@ -1483,7 +1502,7 @@
 	    <sect3 id="ds_cli_ddmc_rcdc"><title>Revieving current design of the creation of system</title>
 		<simpara>20221230 Trying implement <xref linkend="gls_ddmc"/> - improve chromo structure to have dependency as child node, chromo itself is parsed fine,
 		    but the creation of system doesn't work properly. So it needs to be also updated. Seems we need to aligned the creation mechanism to the new chromo structure.
-		    First we need to review the current design and outline the desing update areas. </simpara>
+		    First we need to review the current design and outline the design update areas. </simpara>
 		<simpara>Ref <xref linkend="ds_rcdc"/> for the details.</simpara>
 	    </sect3>
 	    <sect3><title>Status</title>
@@ -1564,7 +1583,7 @@
 
     <sect1 id="ds_rcdc"><title>Revieving current design of the creation of system</title>
 	<sect2><title>Intro</title>
-	    <simpara>This desing item was caused by <xref linkend="gls_ddmc"/> - chromo new desing, ref <xref linkend="ds_cli_ddmc_rcdc"/> for details.</simpara>
+	    <simpara>This design item was caused by <xref linkend="gls_ddmc"/> - chromo new design, ref <xref linkend="ds_cli_ddmc_rcdc"/> for details.</simpara>
 	    <simpara>This section is intended to collect the questions, spots, criticism to the current mechanism system creation.</simpara>
 	</sect2>
 	<sect2><title>What is the agent chromo: the description of how to create node or of how to change?</title>
@@ -1588,7 +1607,7 @@
     <sect1 id="ds_dce"><title>Dedicated content element of native hier (<xref linkend="gls_dce"/>)</title>
 	<sect2><title>Intro</title>
 	    <simpara>
-		This section if for discussing specific content desing solution. In earlier FAP version the complex content was implemented as
+		This section if for discussing specific content design solution. In earlier FAP version the complex content was implemented as
 		unit components, i.e. was the part of model native hier. In further FAP versions this was changed - the content was moved from native hier
 		to Unit internals, so specific MUnit API was introduced. This idea was to simplify native hier thus to improve the model performance. 
 	    </simpara>
@@ -1662,24 +1681,24 @@
 	    <sect3><title>Content provider specific mutation - "set value"</title>
 		<simpara>
 		    Interesting but if keeping content is the ability just Content nodes then the mutation "Content" gets only MCont specific, ref
-		    <xref linkend="ds_cii_ascl"/> for related desing item.
+		    <xref linkend="ds_cii_ascl"/> for related design item.
 		</simpara>
 	    </sect3>
 	    <sect3 id="ds_dce_dso_coi"><title>Do we need to have also iface for content owner?</title>
 		<simpara>
 		    This iface could be indented for nodes that owns content provider. The iface could contain FAP2-like content API -
 		    to get content by name, URI etc. Potentially this will be simple wrappers over narive hier and MCont but potentially the iface
-		    can make content desing more clear.
+		    can make content design more clear.
 		</simpara>
 	    </sect3>
 	    <sect3><title>How to notify of content change.</title>
 		<simpara>
 		    <simpara>
-			Current FAP Unit supports notification of content changed and agent changed. How this will be desingned in 
+			Current FAP Unit supports notification of content changed and agent changed. How this will be designned in 
 			<xref linkend="gls_dce"/>
 		    </simpara>
 		    <simpara>
-			Ref <xref linkend="ds_itr_sp_rnac"/> regarding re-desing of notification scheme. There will not be dedicated notif of 
+			Ref <xref linkend="ds_itr_sp_rnac"/> regarding re-design of notification scheme. There will not be dedicated notif of 
 			    content change. Instead it is up Prop owner to observe the notif of Prop change and generate it's own "Changed" notif.
 		    </simpara>
 		    <simpara></simpara>
@@ -1708,7 +1727,7 @@
 	</sect2>
     </sect1>
 
-    <sect1 id="ds_urd"><title>URI re-desing</title>
+    <sect1 id="ds_urd"><title>URI re-design</title>
 	<sect2><title>Use-cases</title>
 	    <sect3><title>URI can designates both absolute and relative path to node.</title>
 	    </sect3>
@@ -1763,7 +1782,7 @@
 	    <simpara>In <xref linkend="gls_fap2"/> the only ifaces have identification. The focus was to provide native hier creating iface (MUnit) with
 		safe identification mechanism. Other ifaces are identified via MUnit identification plus iface type - so the identifiation scheme is restricted,
 		there is no rule to identify given iface in case of MUnit node includes number of ifaces of same type.
-		Ref <xref linkend="ds_uinn_id"/> for the desing consideration.</simpara>
+		Ref <xref linkend="ds_uinn_id"/> for the design consideration.</simpara>
 	</sect2>
 	<sect2 id="ds_f2dw_ccnu"><title>Creating complex native unit is not supported safely</title>
 	    <simpara>It is often required to create "complex" native unit, adding componentes, changing context etc. This is more effective that create
@@ -1774,7 +1793,7 @@
     <sect1><title>Giving "Changeable" ability to Node</title>
 	<sect2><title>Intro</title>
 	    <simpara>
-		Currently the only MElem is truly mutable, even Unit also can be changed. It make sense to generalize mutable/changeable desing.
+		Currently the only MElem is truly mutable, even Unit also can be changed. It make sense to generalize mutable/changeable design.
 		We can give changeable ability to lower layer, havng method "Mutate" in it. The method actually will change but not mutate
 		(the term "Change" designates here the ability to be changed but not propagate this change to childs).
 	    </simpara>
@@ -1809,7 +1828,7 @@
 	<sect2><title>Initial design considerations</title>
 	    <sect3><title>Can be the dilemma solved in favor of "change is mutaion"?</title>
 		<simpara>
-		    Current desing of Chromo2 allows mutation containing chromo. Each mutaion node contains chromo segment. So let's
+		    Current design of Chromo2 allows mutation containing chromo. Each mutaion node contains chromo segment. So let's
 		    apply <xref linkend="gls_cam"/> for FAP3.
 		</simpara>
 	    </sect3>
@@ -1900,7 +1919,7 @@
     <sect1 id="ds_ams"><title>Agents mechanism support</title>
 	<sect2><title>Intro</title>
 	    <simpara>We have <xref linkend="ds_sn"/> implemented in FAP3. So now the MOwner interface doesn't provide the MNode iface to 
-		node components. How can we support embedded agents desing approach in that case? Agents normally requires full access to 
+		node components. How can we support embedded agents design approach in that case? Agents normally requires full access to 
 		agents manageable host.</simpara>
 	</sect2>
 	<sect2><title>Solution#1 Special connection point for agents.</title>
@@ -2055,8 +2074,8 @@
 		<simpara>
 		    DES architecture is based on update-confirm principle: current sytem state is updated (calculated new state value) basing on "freezed"
 		    confirmed data. Current DES
-		    desing implements the current-new system state via update-confirm pattern. Confirmed data is the current state whereas updated data is new state.
-		    This desing is compact and effective in case of updating regular data. But how this pattern can be apply to updating system structure?
+		    design implements the current-new system state via update-confirm pattern. Confirmed data is the current state whereas updated data is new state.
+		    This design is compact and effective in case of updating regular data. But how this pattern can be apply to updating system structure?
 		</simpara>
 		<simpara>
 		    Let's distinguish "system data" and "system structue data". "System data" is the data of system states. "System structure data" is the data
@@ -2180,7 +2199,7 @@
 			example is fap3-vis AVR: main view container as the managed subsystem is placed in view hierarchy but managing subsystem (controller)
 			place is out of thie hier - it just gets link to managed subsystem.
 		    </simpara>
-		    <simpara>One of the desing would be the following:</simpara>
+		    <simpara>One of the design would be the following:</simpara>
 		    <itemizedlist>
 			<listitem>
 			    Add MDesAdapter iface support to Des and ADes
@@ -2430,7 +2449,7 @@
 		    </simpara>
 		    <sect5><title>Notes</title>
 			<simpara>Ref ut_dessdc.cpp:test_Sdc_3 (ut_sdc_3.chs) for correspoiding unit test.</simpara>
-			<simpara>Ref <xref linkend="ds_dcs_sdc_dsgn_os"/> for desing item.</simpara>
+			<simpara>Ref <xref linkend="ds_dcs_sdc_dsgn_os"/> for design item.</simpara>
 		    </sect5>
 		</sect4>
 		<sect4><title>[<glossterm id="uc_sdc_05">UC_SDC_05</glossterm>] Controller change system when being notified thru "Enable" inp event inp value is not changed</title>
@@ -2452,7 +2471,7 @@
 			<simpara>Acc to <xref linkend="uc_sdc_01"/> the insertion on #3 cannot happen because the trigger value is not change.</simpara>
 		    </sect5>
 		    <sect5><title>Design</title>
-			<simpara>Ref <xref linkend="ds_dcs_sdc_dsgn_oin"/> for the desing</simpara>
+			<simpara>Ref <xref linkend="ds_dcs_sdc_dsgn_oin"/> for the design</simpara>
 		    </sect5>
 		</sect4>
 	    </sect3>
@@ -2468,11 +2487,11 @@
 		    <simpara>SDC changes the controlled system on Confirmation phase.</simpara>
 		</sect4>
 		<sect4><title>Inputs buffering</title>
-		    <simpara>To support of controlling on confirmation phase the controller buffers all the inputs. Ref fap3 6db8376c3f3e:src/dessdc ASdc::Iap desing
+		    <simpara>To support of controlling on confirmation phase the controller buffers all the inputs. Ref fap3 6db8376c3f3e:src/dessdc ASdc::Iap design
 			(mUdt, mCdt etc).</simpara>
 		    <simpara>
 			Is this really needed? Why not just get the inputs data on confirmation phase when controlling? This is the support of
-			<xref linkend="uc_sdc_02"/>. But as stated in the UC discussion there are other desing solution for that.
+			<xref linkend="uc_sdc_02"/>. But as stated in the UC discussion there are other design solution for that.
 		    </simpara>
 		</sect4>
 		<sect4 id="ds_dcs_sdc_dsgn_idp"><title>Inputs data pipeline in SDC</title>
@@ -2486,7 +2505,7 @@
 		</sect4>
 		<sect4 id="ds_dcs_sdc_dsgn_cc"><title>Forming status. Taking into account the completion of controlling.</title>
 		    <simpara>Ref <xref linkend="uc_sdc_03"/> for the use-case.  </simpara>
-		    <simpara>The desing supporting this use-case is that we need to form pipeline controllers status with taking into account that the sign of controlling completion.</simpara>
+		    <simpara>The design supporting this use-case is that we need to form pipeline controllers status with taking into account that the sign of controlling completion.</simpara>
 		    <sect5><title>Status</title>
 			<simpara>This feature is disabled because of clear indication that the use-case is not valid. Alternative design Solution#2 is used - to check the status before 
 			    performing the control.</simpara>
@@ -2559,9 +2578,9 @@
 	</sect2>
 	<sect2 id="ds_dcs_cda"><title>Composite DES adapter as the context for controllers and observers.</title>
 	    <sect3><title>Intro</title>
-		<simpara>Currently [5734b4e935a0, 20220403] the initial desing of DES adapter is in usage - tha adapter is monolitic and iface specific
-		    (MNode, MElem etc). This design has the number of cons: it makes overhead (not all CPs are used etc. So we consider another desing - 
-		    comopsite adapter. With this desing the adapter itself provides the context for owning controllers and observers. The main part of the context
+		<simpara>Currently [5734b4e935a0, 20220403] the initial design of DES adapter is in usage - tha adapter is monolitic and iface specific
+		    (MNode, MElem etc). This design has the number of cons: it makes overhead (not all CPs are used etc. So we consider another design - 
+		    comopsite adapter. With this design the adapter itself provides the context for owning controllers and observers. The main part of the context
 		    is the link to managed agent.</simpara>
 	    </sect3>
 	</sect2>
@@ -2700,7 +2719,7 @@
 	<sect2><title>Intro</title>
 	    <simpara>It is the common case when we need to set the initial "invalid" value to State. For instance quite often we need to define state signature, i.e SS but
 		we don't want to set the value that can cause system movement, so currently we use something like "SS nil" assuming that the value "nil" has to be specifically handled
-		(but actually it is not). It would be good if we have support setting of kind of "invalid" or "value-is-not-set" value. Current State desing doesn't allow doing that. </simpara>
+		(but actually it is not). It would be good if we have support setting of kind of "invalid" or "value-is-not-set" value. Current State design doesn't allow doing that. </simpara>
 	    <simpara>Not sure that currently supported by data "invalid" indication is suitable for such puproses. This indication currently interpreted as error.</simpara>
 	</sect2>
     </sect1>
@@ -2708,16 +2727,16 @@
     <sect1 id="ds_dee"><title>DES elements embedded</title>
 	<sect2><title>Intro</title>
 	    <simpara>Often it is required to create monolitic native DES specialized for the given usage. Such solution allows
-		significantly inclrease the overall system desing effectiveness. There were already many local solutions for that, ref
+		significantly inclrease the overall system design effectiveness. There were already many local solutions for that, ref
 		ASdc, AAdp etc. for instance. Having this local solution causes the code duplication and problems with support.
 		So it is time to provide the proper framework for this solutions.  </simpara>
-	    <simpara>The main idea of having DES embedded elements is to interfit native DES with DES agent's internal desing.</simpara>
+	    <simpara>The main idea of having DES embedded elements is to interfit native DES with DES agent's internal design.</simpara>
 	</sect2>
 	<sect2 id="ds_dee_ssi"><title>Double buffered input</title>
 	    <sect3><title>Intro</title>
-		<simpara>The base DES desing states that we need to update the state value on Update phase and then actualize (confirm) it
+		<simpara>The base DES design states that we need to update the state value on Update phase and then actualize (confirm) it
 		    on Confirm phase. But sometimes we can use another way for embedded solution. Let's consider tipical DES adapter (ref desadp.cpp):
-		    the adapter embeds "Managed agent" (MAG) state. With standard desing we need to have adapter input "MagUri" that value points
+		    the adapter embeds "Managed agent" (MAG) state. With standard design we need to have adapter input "MagUri" that value points
 		    to MAG relatively to MAG base and dedication state "MAG". Adaprer gets activated thru "MagUri" input notification (confirm phase)
 		    and set "MAG" state as activated, then on Update phase form preliminary MAG value and then on next confirm phase actualize
 		    the "MAG" value</simpara>
@@ -2728,11 +2747,11 @@
 		<simpara>Note that local transition (ref <xref linkend="ds_dee_sac"/> is the alternative solution, probably more elegant (this
 		    is questionable).</simpara>
 	    </sect3>
-	    <sect3 id="ds_dee_ssi_vgd"><title>Solution as the variant of DES generic desing</title>
-		<simpara>Let's look at "Dedicated states ..." solution from DES generic desing point of view. Currently the DES cycle is based on
+	    <sect3 id="ds_dee_ssi_vgd"><title>Solution as the variant of DES generic design</title>
+		<simpara>Let's look at "Dedicated states ..." solution from DES generic design point of view. Currently the DES cycle is based on
 		    calculate new states values in Update phase (states freezed), confirm states and notify deps on Confirm phase - states are double-buffered,
 		    states are freezed on Update.</simpara>
-		<simpara>But there was alternative desing, that we considered on earlier fap2 (or even fap1) projects. This desing is to freeze transitions
+		<simpara>But there was alternative design, that we considered on earlier fap2 (or even fap1) projects. This design is to freeze transitions
 		    inputs instead of states: calculate new states values in Update phase (inputs freezed), confirm inputs and notify deps on Confirm phase - inputs are
 		    double buffered, states are freezed on conirm phase.</simpara>
 		<simpara>This "Double buffered input" solution follows exactly such approach. The problem here is that for double buff inp solution DES cycle is
@@ -2744,10 +2763,16 @@
 		<simpara>The double buffered input above can be also intepreted as the embedded state connected to host input. Probably this intepretation is
 		    simpler that <xref linken="ds_dee_ssi_vgd"/></simpara>
 	    </sect3>
+            <sect3><title>Note</title>
+                <simpara>
+                    Note that "double buffering" is actually wrong design, we dont need "double" buffering, just single but on update phase to
+                    freeze the input. We prepared "double buffering" input with DesEIbt but it isn't used. SDC uses "sigle" buffering with SdcIap.
+                </simpara>
+            </sect3>
 	</sect2>
 	<sect2 id="ds_dee_sac"><title>Sharing DES agent context to transitions.</title>
 	    <sect3><title>Intro</title>
-		<simpara>It is common case when we decide to move some part of DES functionality into "internal" native desing because the transitions depends on
+		<simpara>It is common case when we decide to move some part of DES functionality into "internal" native design because the transitions depends on
 		    internal agent context. The example is fap3-vis widget: requisition states depends of font size but the transition depends on C++ font instance created
 		    in the scope of the agent. The idea of how to solve this is to keep fap3 DES style topology but give the agent context to the transition.</simpara>
 	    </sect3>
@@ -2858,7 +2883,7 @@
 			there is top-level style that can be overriden. </simpara>
 		    <simpara>For widget style we can consider the context with same ID  dependent one from another from bottom to top creating context stack.
 			Lower level context in the stack (stack head) can override the owner context by implementing specific transition structure. With this approach we need to
-			implement contex access policy to resolve lower level supplier. How this resolution policy can be desinged?</simpara>
+			implement contex access policy to resolve lower level supplier. How this resolution policy can be designed?</simpara>
 		    <simpara>Solution_1 is to have supplier iface specific method to get head supplier like getHeadSpl(). With such supplier API the resolution sequence will be as:</simpara>
 		    <simpara>Solution_2 is to involve supplier itself in the supplier iface resolution. Supplier shall request owner for ifaces and filter out the upper suppliers
 			with same ID.</simpara>
@@ -2901,7 +2926,7 @@
 	</sect2>
 	<sect2 id="ds_dctx_cvai"><title>Context vs access infrastructure.</title>
 	    <simpara>Turning back to our DRP-CRP example. Actually there is another way to allow CRP access to common states - access infrastructure. This approach is already
-		successfull applied in VIS container desing: the container deals with it's widget components via the sockets that are combined in some structure. For linear layout 
+		successfull applied in VIS container design: the container deals with it's widget components via the sockets that are combined in some structure. For linear layout 
 		container such structure is the linked list.</simpara>
 	    <simpara>So we just can extend containers socket to distribute "model base" to all the CRPs.</simpara>
 	    <simpara>Node_1: Even CRP "personal" state like "model component's URI related" can be
@@ -2953,7 +2978,7 @@
 
     <sect1 id="ds_rdi"><title>Redesign of data interfaces.</title>
 	<sect2><title>Intro</title>
-	    <simpara>Current desing weakness is exposed by the use-case: how to simply check MDtBase IsValid() parameter. This parameter is the base one, i.e. not
+	    <simpara>Current design weakness is exposed by the use-case: how to simply check MDtBase IsValid() parameter. This parameter is the base one, i.e. not
 		specific for type of data. It happens that it is not possible to get data base parameter in simply manner. Ref dest.h TrIsValid.</simpara>
 	    <simpara>Currently the data ifaces are MDVarGet and parametrized MDtGet plus similar ifaces for setting data. All data related features are based on this
 		parametrized data ifaces. This data parametrized iface approach causes a lot of related solutions. For instance there are paremetrized functions so 
@@ -2963,7 +2988,7 @@
 		But parametrized data was remain. We need to redesign the data ifaces to support universal data iface. This can vastly simplify DES framework.</simpara>
 	</sect2>
 	<sect2><title>Solution_1: Keep MDVarGet but use non-paremetrized MDget iface instead of paremetrized MDtGet. </title>
-	    <simpara>Pros: This solution allows smooth migration from templated iface. We just can redesing DES framework part by part.</simpara>
+	    <simpara>Pros: This solution allows smooth migration from templated iface. We just can redesign DES framework part by part.</simpara>
 	    <simpara>Cons: MDVarGet actually is not needed in our case - it aims exactly to support different type of data instead of generic one.</simpara>
 	</sect2>
 	<sect2><title>Solution_2: Get rid of parametrized MDtGet iface?</title>
@@ -2979,7 +3004,7 @@
 	</sect2>
     </sect1>
 
-    <sect1 id="ds_sor"><title>Redesing transtions to simplify MDesInpObserver routing.</title>
+    <sect1 id="ds_sor"><title>Redesign transtions to simplify MDesInpObserver routing.</title>
 	<sect2><title>Intro</title>
 	    <simpara>Ref <xref linkend="iss_009"/> for the problem description. The exact root-cause is that the routing of MDesInpObserver can
 		be very complex depending on tansition topology. This is because the transitions just routes the IRM request to pairs.</simpara>
@@ -3080,7 +3105,7 @@
 
     <sect1 id="ds_desas"><title>DES active subsystem (<xref linkend="gls_desas"/>)</title>
 	<sect2><title>Intro</title>
-	    <simpara>In many cases it seems effective to desing the part of DES as subsystem that also is DES but in contrary to
+	    <simpara>In many cases it seems effective to design the part of DES as subsystem that also is DES but in contrary to
 		normal "monolitic" subsystem runs in it's own loop.
 		The example can be subsystem that do iterative updates. This can be searching front of list etc.
 		The idea of using such subsystem is that the subsystem runs "inside" main system update step and
@@ -3098,14 +3123,14 @@
 	<sect2 id="ds_desas_sis"><title>Design issue: setting initial states.</title>
 	    <sect3><title>Intro</title>
 		<simpara>The autonomous subsystem in fact performs its trajectory from some initial states that are set by owning system. The question is how to set these
-		    initial states. The best option would be to use standard state input desing.
+		    initial states. The best option would be to use standard state input design.
 		    The initial idea is to use switch that switches from work topology to initial value inputs
 		    after subsystem stops. But this idea is not working because update of switch selector notifies the
 		    state of update so subsytem starts new movement.</simpara>
 		<simpara>What would be the solutions?  </simpara>
 	    </sect3>
 	    <sect3><title>Solution#1 Create special switcher that doesn't resolve MDesInpObserver for selector input.</title>
-		<para>The idea isn't perfect, having this "special" switcher breaks the transitions common desing.</para>
+		<para>The idea isn't perfect, having this "special" switcher breaks the transitions common design.</para>
 	    </sect3>
 	    <sect3 id="ds_desas_sis_iph"><title>Solution#2 Implements special "init" phase in DESAS agent.</title>
 		<simpara>Each subsystem should have special boolean state "Init" that indicates special "init" phase.
@@ -3179,6 +3204,12 @@
 		    <simpara>So this solution needs to be considered as temporary. Needs to prepare more solid design of active subs
 			as a special case of "async" subsystems.</simpara>
 		</sect4>
+                <sect4 id="ds_desas_nio_ric_swr"><title>This solution is wrong</title>
+                    <simpara>
+                        Running on confirm phase is incorrect. This is because the output of active system is not determined and depends
+                        on the order of confirmation states connected to inputs of active system and active system itself.
+                    </simpara>
+                </sect4>
 	    </sect3>
 	</sect2>
 	<sect2><title>Is the main idea achievable? Can subs simulate transition at all?</title>
@@ -3194,7 +3225,7 @@
 		simulating) but it's generic way. </simpara>
 	</sect2>
 	<sect2><title>Status</title>
-	    <simpara>20220710 Initial design is implemented, ref des.h:DesAs. The desing is a bit weird. The subsystem "isolation" desing is not perfect. </simpara>
+	    <simpara>20220710 Initial design is implemented, ref des.h:DesAs. The design is a bit weird. The subsystem "isolation" design is not perfect. </simpara>
 	    <simpara>20220714 Applied solution#2 for setting initial states (ref <xref linkend="ds_desas_sis"/>), UT  ut_desas_2.chs.</simpara>
 	    <simpara>
 		20241101 Discovered serious design flaw, ref
@@ -3210,484 +3241,489 @@
 		Tested with avr2. Needed to add one more delay in 
 		avr2 CompNameD to "compensate" one step additional delay in DesUtils.PrntMappingResolver.
 	    </simpara>
-	</sect2>
+            <simpara>
+                20250723 In the scope of FAP5: Discarded Solution_2 because of
+                <xref linkend="ds_desas_nio_ric_swr"/>
+                    Applied Solution 1 with some modifications.
+            </simpara>
+        </sect2>
     </sect1>
 
     <sect1 id="ds_ndes"><title>Native DES as the base of designing DES framework.</title>
-	<sect2><title>Intro</title>
-	    <simpara>The DES framework core approach is changeable and structured agents, ref <xref linkend="ds_itr_pss"/>.
-		This "changeable and structured agents" framework is
-		created using generic OOP (C++). However the base agent (node) and it's heirs contains wide context, so are DES.
-		For instance node context includes references to owned nodes,
-		content. Moreover nodes in the system depens on the context of other nodes.
-		To support these dependencies specific mechanism of observation is designed. So the native agents
-		theyself seem can be effectivelly implemented basing on low-level DES framework.</simpara>
-	    <simpara>Using low-level DES can optimize the resolving of native dependencies. This low-level framework can alse be used as generic DES framework in 
-		OOP applications.</simpara>
-	</sect2>
+        <sect2><title>Intro</title>
+            <simpara>The DES framework core approach is changeable and structured agents, ref <xref linkend="ds_itr_pss"/>.
+                This "changeable and structured agents" framework is
+                created using generic OOP (C++). However the base agent (node) and it's heirs contains wide context, so are DES.
+                For instance node context includes references to owned nodes,
+                content. Moreover nodes in the system depens on the context of other nodes.
+                To support these dependencies specific mechanism of observation is designed. So the native agents
+                theyself seem can be effectivelly implemented basing on low-level DES framework.</simpara>
+            <simpara>Using low-level DES can optimize the resolving of native dependencies. This low-level framework can alse be used as generic DES framework in 
+                OOP applications.</simpara>
+        </sect2>
     </sect1>
 
     <sect1 id="ds_desopt"><title>DES optimization</title>
-	<sect2 id="ds_desopt_ums"><title>Using move semantic in DES update/confirm data transition.</title>
-	    <sect3><title>Intro</title>
-		<simpara>Currently a lot of not optimized data copying happens on DES two-phase model update/confirm. This create significant overhead and
-		    decrease the system performance. We already considered the possible desings to implement DES without using two-phase approach, but failed getting
-		    valuable solution.</simpara>
-		<simpara>There is another way to optimize it - we can keep proved 2-phases approach but apply move semantic to data transferring. For instance
-		    we can avoid copying data on confirm phase but swap update and confirm data.</simpara>
-	    </sect3>
-	</sect2>
-	<sect2 id="ds_desopt_asdc"><title>Avoid state update/confirm data comparition on confirmation step</title>
-	    <sect3><title>Intro</title>
-		<simpara>Currently [20220826] state data updation is checked on update state. If the data is not updated then the state is not "marked" as updated and
-		    confirmation step of this state is omitted. This means update/confirm data comparition on confirmation step is not necessary -
-		    if state goes to comparition step this means that the data was changed.</simpara>
-		<simpara>This optimization was applied in fap4 primary deds layer.</simpara>
-	    </sect3>
-	</sect2>
-	<sect2><title>TrTuple::DtGet() - data copied via serialization-deserialization.</title>
-	    <programlisting>
-		string values;
-		inphb->ToString(values);
-		istringstream isv(values);
-		elem->FromString(isv);
-	    </programlisting>
-	</sect2>
-	<sect2 id="ds_desopt_udr"><title>Data copied from transition output. To use data reference instead.</title>
-	    <sect3><title>Intro</title>
-		<simpara>Many transition data "receivers" just copied data from its inputs and then use it. We need to avoid copying data but use refs instead.</simpara>
-		<simpara>Hm. This copying seems the correct in general - function creates new data (result) and copy it to "receiver".
-		    The only problem here is that function
-		    copy the result also to internal debugging data. This needs to be redesigned. Also getting the reference can be more optimal in the cases when the 
-		    receiver doens't need the whole data but just parts of it. The example is the tuple component selector (TrTupleSel) or Vector element
-		    selector (TrAtVar). Currently
-		    the selector transition copied the whole container and then gets the component of it. This is not optimal.</simpara>
-		<simpara>The problem with getting refence is that we will need to cache the data in transitions - indeed we can get the ref to the persistent data only.
-		    For the case of state as data getter it is simple, the state keeps persistent data.</simpara>
-	    </sect3>
-	    <sect3><title>Where to cache data in transtions: inputs or outputs?</title>
-		<simpara>As was discussed in intro we anycase need to cache the data. The only questions in what point? There are two options: cache inputs data or 
-		    cache output data.</simpara>
-		<simpara>It is quite obvious that the inputs number is greater than the number of outputs. In "internals" of transition tree inputs number is greater 
-		    because one output can be connected to the number of inputs but normally the numbers are same. But there are also "inputs" of transition tree - those
-		    tranisition inputs that connect to states outputs. They make the inputs total number greater.</simpara>
-		<simpara>So it makes sense to cache output data in transition.</simpara>
-		<simpara>In that case we can also optimize the state - we don't need "updated" data anymore - the data is already cached in the transition connected to
-		    state input.</simpara>
-		<simpara>With this approach we needs to modify data getter iface (MDtGet) - it needs to return reference instead of perform the copy of data.</simpara>
-	    </sect3>
-	    <sect3><title>How caching output approach affect distributed DES design.</title>
-		<simpara>Distributed DES design is based on iface proxy. How modified MDtGet (returning the ref) proxy will be implemented? </simpara>
-	    </sect3>
-	    <sect3><title>Use-case where using ouput data reference does't work.</title>
-		<simpara>The is when state S2 input is connected to another state S1 input. Indeed, S2 gets S1 outp data ref on update phase. But
-		    on confirm phase this ref can change or cannot, it depends on what state confirm gets done first.</simpara>
-		<simpara>This use-case shows that "using ouput data reference" approach is not correct.</simpara>
-		<simpara>Potentially we can keep this approach with disabling such state-to-state connection. However this solution is very hard to
-		    implement. It is more simpler to apply update/confirm data swap, ref <xref linkend="ds_desopt_ums"/>.</simpara>
-	    </sect3>
-	</sect2>
-	<sect2 id="ds_desopt_uic"><title>Getting inputs involves getting input node/unit - can we use iface cache directly.</title>
-	    <sect3><title>Intro</title>
-		<simpara>Look at the typical function code:</simpara>
-		<programlisting>
-		    template&lt;class T&gt; void FAddDt&lt;T&gt;::DtGet(T&amp; aData)
-		    -   {
-		    |       bool res = true;
-		    |       MIfProv::TIfaces* inps = mHost.GetInps(EInp, MDVarGet::Type(), false);
-		    ...
-		</programlisting>
-		<simpara>Where:</simpara>
-		<programlisting>
-		    MIfProv::TIfaces* TrVar::GetInps(int aId, const string&amp; aIfName, bool aOpt)
-		    -   {
-		    |       MIfProv::TIfaces* res = nullptr;
-		    |       MNode* inp = getNode(GetInpUri(aId));
-		    |-      if (inp) {
-		    ||          MUnit* inpu = inp->lIf(inpu);
-		    ||          MIfProv* ifp = inpu ? inpu->defaultIfProv(aIfName) : nullptr;
-		    ||          res = ifp ? ifp->ifaces() : nullptr;
-		</programlisting>
-		<simpara>We can see that each DES cycle getNode() is called. It needs to be avoided.</simpara>
-	    </sect3>
-	</sect2>
-	<sect2 id="ds_desopt_mdc"><title>Modify DES cycle to avoid polling the comps but keep the lists of active/updated in owner.</title>
-	    <sect3><title>Status</title>
-		Implemented
-	    </sect3>
-	    <simpara>Ref <xref linkend="ds_mdc"/> for details</simpara>
-	</sect2>
-	<sect2 id="ds_desopt_tdc"><title>[Impl] Transtions: avoid multiple update, use data cache for that.</title>
-	    <sect3><title>Status</title>
-		20230405 Implemented, b480bd415bf
-	    </sect3>
-	    <sect3><title>Intro</title>
-		<simpara>In the complex systems the transitions topology can differs from "true" tree. It can be like that:</simpara>
-		<programlisting>
-		    |                    -----
-		    |          --- ... --|
-		    |         /          | 
-		    |   TRANS            | TRANS2
-		    |        \           | 
-		    |          --- ... --|
-		    |                    -----
-		</programlisting>
-		<simpara>or similar. In that case the TRANS will be updated many times on DES update phase.</simpara>
-		<simpara>We need to avoid that. This can be done via caching transition output (this is already implemented) and 
-		    enable the cache update only at the first update in DES update phase.</simpara>
-		<simpara>Same approach can be applied to SDO and SDC also.</simpara>
-	    </sect3>
-	</sect2>
-	<sect2><title>Misc optimization items</title>
-	    <sect3><title>Seach when checking IRM requestor</title>
-		<programlisting>
-		    83	void Unit::resolveIface(const string&amp;aName, MIfReq::TIfReqCp* aReq)
-		    ...
-		    86	    // Check if the requestor was already registered
-		    87	    MIfProv* prov = nullptr;
-		    88	    for (auto item : mIrns) { 
-		    89		if (item->isConnected(aReq)) { prov = item; break;}
-		</programlisting>
-	    </sect3>
-	</sect2>
-	<sect2 id="ds_desopt_est"><title>Fap3-vis ut_avr_vert_drp_2. Extracting VertCRP Slot takes long time.</title>
-	    <sect3><title>Intro</title>
-		<simpara>Analysis of the log shows that extracting VertCrp Slot takes long time.</simpara>
-		<programlisting>
-		    04/09/23 16:27:33.446340883;INF;;.testroot.Test.Window.Scene.Drp.SdcReposExtrSlot;Started extracting node [.testroot.Test.Window.Scene.Drp.Slot_Model_vert2%MNode]
-		    04/09/23 16:27:33.629897118;INF;;.testroot.Test.Window.Scene.Drp.SdcReposExtrSlot;Started extracting node 1
-		</programlisting>
-		<simpara>So the operation takes ~180ms: disconnect </simpara>
-		<programlisting>
-		    ASdcExtract::doCtl (this=0x55555617e010) at dessdc.cpp:1307
-		    ...
-		    bool cres = MVert::disconnect(nextv, nextPair);
-		</programlisting>
-		<simpara>Where nextv is ".testroot.Test.Window.Scene.Drp.Slot_Model_vert2.Next%MVert" and nextPair is ".testroot.Test.Window.Scene.Drp.Column_0.Start.Prev%MVert"</simpara>
-		<simpara>Disconnect operation includes handling:</simpara>
-		<programlisting>
-		    void Vert::onDisconnected()
-		    -   {
-		    |       invalidateIrm();
-		    |       notifyChanged();
-		</programlisting>
-		<simpara>Checked Column_0.Start.Prev IRMs - the tree is too vast. This is because of the specifics of Columns container topology - slots CPs comprises very long chains.</simpara>
-		<simpara>Checked with profiler the time consumed by invalidateIrm - it takes 2/3 of total system run (column#3 gives the num, #4 - min dur, #5- max, #6 - total duration):</simpara>
-		<programlisting>
-		    2       IFC_U_INV       17593   0.000001        0.071517        2.918130        0.000166        0.001689        0
-		    1001    IFC_LNCH_RUN    1       4.307730        4.307730        4.307730        4.307730        0.000000        0
-		</programlisting>
-	    </sect3>
-	    <sect3><title>Status</title>
-		<simpara>20230501 Ref <xref linkend="ds_asr_cbscpd"/> for the problem analysis. Implemented interim soluiton <xref linkend="ds_asr_cbscpd_ahoi"/>.</simpara>
-	    </sect3>
-	</sect2>
-	<sect2 id="ds_desopt_ds"><title>Caching of MDesSyncable and MDesObserver to optimize DES sync</title>
-	    <sect3><title>Intro</title>
-		<simpara>
-		    Tried to estimate DES sync overhead - updated and run test Ut_des::test_des_1() "Benchmarking" part.
-		    Testing shows that system ut_des_1_2.chs containing 10 Des layers spends IFC_ST_CONF 5.289839  while system ut_des_1_2r.chs of 1 layer spends 
-		    just IFC_ST_CONF 1.614116. This overhead is caused mostly DES sync. It can be optimized for instance by caching of MDesSyncable and MDesObserver.
-		    Such approach was already use to optimize transitions, ref class FInp "MIfProv* mIfp;"
-		</simpara>
-	    </sect3>
-	    <sect3 id="ds_desopt_ds_picnu"><title>Problem: iface cache is not updated on ADes host attached to its owner.</title>
-		<simpara>
-		    The case is: there is some system with ADes (Widget for instance) that added (created and attached) to some owning system (let's call it OSYS).
-		    Initially (on creation phase) ADes doesn't have MDesObserver resolved because host is not attached yet. But when host gets attached ADes
-		    doesn't update the cache because no IRM invalidation happens.
-		</simpara>
-		<simpara>
-		    How can we invalidate IRM on host attached? Currently there is no such mechanism because natively agent (MAgent) doesn't have methods that 
-		    host can called to notify of host attached. We know that ADes actually is observer of host. But MObserver doesn't have notification of observer owner attached.
-		    Ref
-		    <xref linkend="ds_iss_020"/> for the issue.
-		</simpara>
-	    </sect3>
-	    <sect3><title>Implemented, tested</title>
-		<simpara>Tested on Ut_des::test_des_1() - it shows performance improvement for caching solutin:  </simpara>
-		<programlisting>
-		    Reduced model:                 IFC_ST_CONF    1.706256
-		    Long model w/o solution:       IFC_ST_CONF    5.563124
-		    Long model with solution:      IFC_ST_CONF    3.619542
-		</programlisting>
-		<simpara>But on fap3-vis test ut_avr_syst_drp_1 the solution shows performace degradation</simpara>
-		<programlisting>
-		    | w/o solution:       IFC_ST_CONF    0.251319
-		    |                     IFC_LNCH_RUN   3.978982
-		    | with solution:      IFC_ST_CONF    0.308852
-		    |                     IFC_LNCH_RUN   4.519964
-		</programlisting>
-	    </sect3>
-	</sect2>
-	<sect2><title>Optimization of model creation - ut_avr_syst_drp_1.chs</title>
-	    <sect3><title>Intro</title>
-		<simpara>ut_avr_syst_drp_1.chs model is most comprehensive atm. It shows that just construction time is about 800 ms.</simpara>
-	    </sect3>
-	    <sect3><title>Some basic metrics (using ut_des_1.chs model)</title>
-		<programlisting>
-		    MyRoot;Completed of creating system, nodes: 11, time: 0.001052
-		    IFC_PVD_CRNODE (Node creation): 17 us
-		    IFC_MUT_CAD (adding chromo):    12 us
-		    IFC_MUT_ATT (Node attach):      15 us
-		</programlisting>
-	    </sect3>
-	    <sect3><title>Build with -O2 and w/o debug increase performance significantly (>= 2 times)</title>
-		<programlisting>
-		    MyRoot;Completed of creating system, nodes: 11, time: 0.000098
-		    IFC_PVD_CRNODE (Node creation): 02 us
-		    IFC_MUT_CAD (adding chromo):    01 us
-		    IFC_MUT_ATT (Node attach):      02 us
-		</programlisting>
-	    </sect3>
-	</sect2>
-	<sect2 id="ds_desopt_optp"><title>Optimization fap3 with profiling.</title>
-	    <sect3><title>Intro</title>
-		<simpara>
-		    gprof flat profile shows high time consimtion by fap3 profiler (!!gprof shows almost all time of process is consumed).
-		    flat profile of ut_avr_syst_drp_1 run is as:
-		</simpara>
-		<programlisting>
-		    17.02      0.08     0.08 34622981     0.00     0.00  std::_Rb_tree&lt;int, std::pair&lt;int const, PindDurStat*&gt; ...
-		    10.64      0.13     0.05  6344074     0.00     0.00  std::_Rb_tree&lt;int, std::pair&lt;int const, PindDurStat*&gt;, std::_Select1st ...
-		</programlisting>
-		<simpara>The model ut_avr_syst_drp_1 execution time isn't significantly decrease if switch fap3 profiler off, that
-		    contradicts with gprof flat profile data. Even in that case it makes sense to optimize fap3 profiler.</simpara>
-	    </sect3>
-	</sect2>
-	<sect2 id="ds_desopt_gpr"><title>Using profiler gprof</title>
-	    <simpara>fap3 UT</simpara>
-	    <programlisting>
-		fap3/test$ .libs/ut-fap3-lib Ut_des
-		gprof -p .libs/ut-fap3-lib gmon.out > flat_profile.txt
-	    </programlisting>
-	</sect2>
-	<sect2 id="ds_desopt_up"><title>Using perf (report, flamegraph etc)</title>
-	    <sect3><title>Refs</title>
-		<biblioentry id="ref_nx_upfg"> <abbrev>NX_UPFG</abbrev>
-		    <productname><ulink url="https://nanxiao.me/en/use-perf-and-flamegraph-to-profile-program-on-linux/"/></productname>
-		    <title>Nan Xiao's. Use perf and FlameGraph to profile program on Linux.</title> </biblioentry>
-		<biblioentry id="ref_db_bpwp"> <abbrev>DB_BPWP</abbrev>
-		    <productname><ulink url="https://easyperf.net/blog/2018/08/26/Basics-of-profiling-with-perf"/></productname>
-		    <title>Denis Bakhvalov. Basics of profiling with perf.</title> </biblioentry>
-		<biblioentry id="ref_bg_pex"> <abbrev>BG_PEX</abbrev>
-		    <productname><ulink url="https://www.brendangregg.com/perf.html"/></productname>
-		    <title>Brendan Gregg. perf Examples.</title> </biblioentry>
-		<biblioentry id="ref_lka_pt"> <abbrev>LKA_PT</abbrev>
-		    <productname><ulink url="https://perfwiki.github.io/main/tutorial/"/></productname>
-		    <title>Perf Tutorial - The Linux Kernel Archives</title> </biblioentry>
-	    </sect3>
-	    <sect3><title>Intro</title>
-		<itemizedlist>
-		    <listitem>
-			Look at the docs explaining perf event-based sampling technic
-			<xref linkend="ref_db_bpwp"/>
-			<ulink url="https://perfwiki.github.io/main/tutorial/#sampling-with-perf-record"/>
-		    </listitem>
-		</itemizedlist>
-	    </sect3>
-	    <sect3 id="ds_desopt_up_pr"><title>perf report</title>
-		<sect4><title>Intro</title>
-		    <simpara> Ref <xref linkend="ds_desopt_up_fg"/> for details of perf installation.  </simpara>
-		    <simpara>
-			perf report is based on "cycles" event, ref
-			<ulink url="https://perfwiki.github.io/main/tutorial/#default-event-cycle-counting"/>
-		    </simpara>
-		    <simpara>
-			Use command "perf report" and observe report data in specific view. Press "h" for help of 
-			navigating thru the view.
-		    </simpara>
-		    <simpara>It happens that perf report view is more convenient for performance analysis that framegraph.</simpara>
-		</sect4>
-	    </sect3>
-	    <sect3 id="ds_desopt_up_fg"><title>Flamegraph</title>
-		<itemizedlist>
-		    <listitem>
-			Follow usefull manual
-			<ulink url="https://nanxiao.me/en/use-perf-and-flamegraph-to-profile-program-on-linux/"/>
-		    </listitem>
-		    <listitem>
-			Install perf
-			<programlisting>
-			    sudo apt-get install linux-tools-common
-			    sudo apt-get install linux-tools-5.15.0-113-generic
-			</programlisting>
-		    </listitem>
-		    <listitem>
-			Set perf_event_paranoid to enable recording events
-			<programlisting> sudo sysctl kernel.perf_event_paranoid=0 </programlisting>
-		    </listitem>
-		    <listitem>
-			Record events
-			<programlisting> perf record --call-graph dwarf -- fapm3 -s ./modnav2.chs -m ../../modules -e Model,./test_model_syst.chs -a </programlisting>
-			    Output will be perf.data
-		    </listitem>
-		    <listitem>
-			Create flamegraph
-			<programlisting>
-			    cd ~/projects_work/fap/tools
-			    git clone --depth 1 https://github.com/brendangregg/FlameGraph
-			    cd FlameGraph
-			    # Copy perf.data into current directory
-			    perf script | ./stackcollapse-perf.pl |./flamegraph.pl > perf.svg
-			</programlisting>
-			    Output will be perf.svg
-		    </listitem>
-		    <listitem>
-			Error on perf report: "addr2line: DWARF error: section .debug_info is larger than its filesize!"
-			<para>
-			    Ref
-			    <ulink url="https://stackoverflow.com/questions/71410361/what-to-do-with-dwarf-error-section-debug-info-is-larger-than-its-filesize"/>
-			</para>
-		    </listitem>
-		</itemizedlist>
-	    </sect3>
-	</sect2>
-	<sect2 id="ds_desopt_pfgaf"><title>perf flamegraph/report analysis finding</title>
-	    <sect3><title>Embedded DES - apply getNode() when resolve ifaces.</title>
-		<simpara>
-		    DesEIbd&lt;T&gt;::update() calls getNode() and GetGData() that is ineffective. Better to keep MDVarGet provider.:w
-		    However flamegraph doesn't show significant spending on that ops.
-		</simpara>
-		<simpara>
-		    DesEOstb::NotifyInpsUpdated() calls getNode() to resolve MDesInpObserver
-		</simpara>
-		<sect4><title>Status</title>
-		    <simpara>Postponed atm</simpara>
-		</sect4>
-	    </sect3>
-	    <sect3 id="ds_desopt_pfgaf_cli"><title>dynamic_cast is called frequently - to implement caching of local ifaces</title>
-	    </sect3>
-	    <sect3 id="ds_desopt_pfgaf_wuf"><title>AVWidget::updateFont takes valuable amount of time</title>
-		<sect4><title>Intro</title>
-		    <simpara>This is because font support is included in base widget even many widgets don't need font.</simpara>
-		</sect4>
-	    </sect3>
-	    <sect3 id="ds_desopt_pfgaf_ifc"><title>A lot of samples with IfrNodeRoot::ifaces</title>
-		<sect4><title>Intro</title>
-		    <simpara>
-			There are both IfrNode::resolve() and IfrNodeRoot::updateIcache(). Do we really need iface cache of we can
-			get ifaces directly via traversal of ifaces tree?
-		    </simpara>
-		</sect4>
-	    </sect3>
-	    <sect3><title>Report: Factory::createNode 3%</title> </sect3>
-	    <sect3><title>Report: __dynamic_cast 3%</title> </sect3>
-	    <sect3><title>Report: Node::getNode 2.66%</title> </sect3>
-	    <sect3 id="ds_desopt_pfgaf_cset"><title>Report: Chromo2::Set 21,7%</title>
-		<simpara>
-		    Ref
-		    <xref linkend="ds_cli_ser"/>, <xref linkend="ds_cli_pi_gral"/> for discussion regarding optimization options.
-		</simpara>
-	    </sect3>
-	    <sect3><title>Report: Env::constructSystem Elem::mutate 20,7%</title> </sect3>
-	    <sect3><title>Report: IfrNodeRoot::ifaces 19.4%</title> </sect3>
-	</sect2>
-	<sect2 id="ds_desopt_au"><title>Some updates are needed only on rare condition (fap3-vis DRP rendering for example). Avoid that update each iteration. </title>
-	    <sect3><title>Intro</title>
-		<simpara>
-		    The example is fap3-vis DRP unnecessary rendering, ref modnav  test_model_syst.chs Sys DRP.
-		    The profiler metrics shows that Syst DRP rendering takes one third of model running time. Rendering is performed
-		    each model iteration (104) where actually we need to render DRP only on DRP layouting gets completed. So performing
-		    the rendering just one time we can reduce the rendering time significantly. 
-		</simpara>
-	    </sect3>
-	    <sect3><title>DRP rendering improvement design outline.</title>
-		<simpara>This can be implemented with usage of <xref linkend="gls_lsc"/> approach.</simpara>
-		<simpara>What we need is:</simpara>
-		<itemizedlist>
-		    <listitem>[1] Make the rendering operation controlled</listitem>
-		    <listitem>[2] Introduce DES observing of DES idle condition.</listitem>
-		    <listitem>[3] Create DES controlling that allows DRP rendering only when DRP gets idle.</listitem>
-		</itemizedlist>
-		<simpara>
-		    <xref linkend="gls_lsc"/>
-			is straitforward approach here. But for this particular case of DRP rendering optimization
-			we can also implement "internal" widget mechanism of enabling/disabling rendering on each Confirm depending
-			on mode (content) "Render on complete only". This solution will be more simpler that DES controlling.
-		</simpara>
-	    </sect3>
-	    <sect3><title>Design outline</title>
-		<simpara>
-		    Base
-		    <xref linkend="gls_sdo"/>
-			approach is to observe target agent/system, notify DES inp updated and then
-			implement MDVarGet to provide corresponding data. The question is how to generate observable event "isActive" in 
-			observable system. The direct way is to generate the event each DES iteration, but it will cause performance 
-			degradation. It seems that we need to notify observer only on change of status "active".
-		</simpara>
-		<simpara>
-		    DES can set sign of active in setActivated() method. DES can reset this sign in Confirm if mActNotified is false.
-		</simpara>
-	    </sect3>
-	</sect2>
-	<sect2><title>Avoid unnecessary notification via MObserver</title>
-	    <simpara>Ref <xref linkend="ds_obsi"/></simpara>
-	</sect2>
-	<sect2 id="ds_desopt_aip"><title>Avoid frequent call of mEnv->provider()->isProvided() in getUri()</title>
-	    <simpara>Look at ut_des_1.chs. It consists of 13 nodes and run just 5 cycles but traced 94 call of isProvided().</simpara>
-	    <simpara>
-		The cause is that we check if the node is provided every getUri(). Potentially we can avoid it. Note that provided agent
-		cannot be in native tree, ref
-		<xref linkend="ds_iss_021"/> so we can check isProvided() only if the node doesn't have owner.
-	    </simpara>
-	</sect2>
-	<sect2 id="ds_desopt_edcw"><title>Embedded DES comps in AVWidget - do we need them?</title>
-	    <sect3><title>Intro</title>
-		<simpara>
-		    Embedded DES double buffering input DesEIbb inherited and embedded pseudo-state DesEOstb were introduced in scope of
-		    designing AAdp and AVWidget. But the question is if they have some valuable traits or can be replaced by standard
-		    DES comps, by State for instance.
-		</simpara>
-	    </sect3>
-	    <sect3><title>Analysis</title>
-		<simpara>
-		    The idea of embedding scpecial DES comps was basing on aim to reduce native tree.
-		    Also DesEIbb was inspired by ASdc::SdcIapb() - that double buffers input to keep the inputs
-		    actual on confirm phase.
-		</simpara>
-		<simpara>
-		    Can we just use CpStateInp instead of DesEIbb? Yes, it's possible but this will not be more effective.
-		    For instance AVWidget inputs such InpFont or InpText require dedicated inputs observers otherwise AVWidget will
-		    not know what inp causes activation so need to get data from all inputs, compare it with inps previous data. 
-		    Ref fap3-vis branch yb_ds_desopt_edcw for such opt attempt.
-		</simpara>
-	    </sect3>
-	</sect2>
-	<sect2><title>The optimization effect is limited. What is the way for significant performance improvement?</title>
-	    <sect3><title>Intro</title>
-		<simpara>
-		    Performance analysis with profiler perf, ref
-		    <xref linkend="ds_desopt_pfgaf"/> shows that the real time consuming parts are chromo parsing, 
-			system creation and ifaces update on system re-configuration. So the real optimization needs
-			to relate these parts. Code optimization are not sutable here even can increase performance 
-			for some percents. Needs the design fundamental update. The current design is OK for simple
-			static DES but for re-configurable DES it's not optimal - in that case iface
-			resolution tree update gets almost continuous.
-		</simpara>
-	    </sect3>
-	</sect2>
+        <sect2 id="ds_desopt_ums"><title>Using move semantic in DES update/confirm data transition.</title>
+            <sect3><title>Intro</title>
+                <simpara>Currently a lot of not optimized data copying happens on DES two-phase model update/confirm. This create significant overhead and
+                    decrease the system performance. We already considered the possible designs to implement DES without using two-phase approach, but failed getting
+                    valuable solution.</simpara>
+                <simpara>There is another way to optimize it - we can keep proved 2-phases approach but apply move semantic to data transferring. For instance
+                    we can avoid copying data on confirm phase but swap update and confirm data.</simpara>
+            </sect3>
+        </sect2>
+        <sect2 id="ds_desopt_asdc"><title>Avoid state update/confirm data comparition on confirmation step</title>
+            <sect3><title>Intro</title>
+                <simpara>Currently [20220826] state data updation is checked on update state. If the data is not updated then the state is not "marked" as updated and
+                    confirmation step of this state is omitted. This means update/confirm data comparition on confirmation step is not necessary -
+                    if state goes to comparition step this means that the data was changed.</simpara>
+                <simpara>This optimization was applied in fap4 primary deds layer.</simpara>
+            </sect3>
+        </sect2>
+        <sect2><title>TrTuple::DtGet() - data copied via serialization-deserialization.</title>
+            <programlisting>
+                string values;
+                inphb->ToString(values);
+                istringstream isv(values);
+                elem->FromString(isv);
+            </programlisting>
+        </sect2>
+        <sect2 id="ds_desopt_udr"><title>Data copied from transition output. To use data reference instead.</title>
+            <sect3><title>Intro</title>
+                <simpara>Many transition data "receivers" just copied data from its inputs and then use it. We need to avoid copying data but use refs instead.</simpara>
+                <simpara>Hm. This copying seems the correct in general - function creates new data (result) and copy it to "receiver".
+                    The only problem here is that function
+                    copy the result also to internal debugging data. This needs to be redesigned. Also getting the reference can be more optimal in the cases when the 
+                    receiver doens't need the whole data but just parts of it. The example is the tuple component selector (TrTupleSel) or Vector element
+                    selector (TrAtVar). Currently
+                    the selector transition copied the whole container and then gets the component of it. This is not optimal.</simpara>
+                <simpara>The problem with getting refence is that we will need to cache the data in transitions - indeed we can get the ref to the persistent data only.
+                    For the case of state as data getter it is simple, the state keeps persistent data.</simpara>
+            </sect3>
+            <sect3><title>Where to cache data in transtions: inputs or outputs?</title>
+                <simpara>As was discussed in intro we anycase need to cache the data. The only questions in what point? There are two options: cache inputs data or 
+                    cache output data.</simpara>
+                <simpara>It is quite obvious that the inputs number is greater than the number of outputs. In "internals" of transition tree inputs number is greater 
+                    because one output can be connected to the number of inputs but normally the numbers are same. But there are also "inputs" of transition tree - those
+                    tranisition inputs that connect to states outputs. They make the inputs total number greater.</simpara>
+                <simpara>So it makes sense to cache output data in transition.</simpara>
+                <simpara>In that case we can also optimize the state - we don't need "updated" data anymore - the data is already cached in the transition connected to
+                    state input.</simpara>
+                <simpara>With this approach we needs to modify data getter iface (MDtGet) - it needs to return reference instead of perform the copy of data.</simpara>
+            </sect3>
+            <sect3><title>How caching output approach affect distributed DES design.</title>
+                <simpara>Distributed DES design is based on iface proxy. How modified MDtGet (returning the ref) proxy will be implemented? </simpara>
+            </sect3>
+            <sect3><title>Use-case where using ouput data reference does't work.</title>
+                <simpara>The is when state S2 input is connected to another state S1 input. Indeed, S2 gets S1 outp data ref on update phase. But
+                    on confirm phase this ref can change or cannot, it depends on what state confirm gets done first.</simpara>
+                <simpara>This use-case shows that "using ouput data reference" approach is not correct.</simpara>
+                <simpara>Potentially we can keep this approach with disabling such state-to-state connection. However this solution is very hard to
+                    implement. It is more simpler to apply update/confirm data swap, ref <xref linkend="ds_desopt_ums"/>.</simpara>
+            </sect3>
+        </sect2>
+        <sect2 id="ds_desopt_uic"><title>Getting inputs involves getting input node/unit - can we use iface cache directly.</title>
+            <sect3><title>Intro</title>
+                <simpara>Look at the typical function code:</simpara>
+                <programlisting>
+                    template&lt;class T&gt; void FAddDt&lt;T&gt;::DtGet(T&amp; aData)
+                    -   {
+                    |       bool res = true;
+                    |       MIfProv::TIfaces* inps = mHost.GetInps(EInp, MDVarGet::Type(), false);
+                    ...
+                </programlisting>
+                <simpara>Where:</simpara>
+                <programlisting>
+                    MIfProv::TIfaces* TrVar::GetInps(int aId, const string&amp; aIfName, bool aOpt)
+                    -   {
+                    |       MIfProv::TIfaces* res = nullptr;
+                    |       MNode* inp = getNode(GetInpUri(aId));
+                    |-      if (inp) {
+                    ||          MUnit* inpu = inp->lIf(inpu);
+                    ||          MIfProv* ifp = inpu ? inpu->defaultIfProv(aIfName) : nullptr;
+                    ||          res = ifp ? ifp->ifaces() : nullptr;
+                </programlisting>
+                <simpara>We can see that each DES cycle getNode() is called. It needs to be avoided.</simpara>
+            </sect3>
+        </sect2>
+        <sect2 id="ds_desopt_mdc"><title>Modify DES cycle to avoid polling the comps but keep the lists of active/updated in owner.</title>
+            <sect3><title>Status</title>
+                Implemented
+            </sect3>
+            <simpara>Ref <xref linkend="ds_mdc"/> for details</simpara>
+        </sect2>
+        <sect2 id="ds_desopt_tdc"><title>[Impl] Transtions: avoid multiple update, use data cache for that.</title>
+            <sect3><title>Status</title>
+                20230405 Implemented, b480bd415bf
+            </sect3>
+            <sect3><title>Intro</title>
+                <simpara>In the complex systems the transitions topology can differs from "true" tree. It can be like that:</simpara>
+                <programlisting>
+                    |                    -----
+                    |          --- ... --|
+                    |         /          | 
+                    |   TRANS            | TRANS2
+                    |        \           | 
+                    |          --- ... --|
+                    |                    -----
+                </programlisting>
+                <simpara>or similar. In that case the TRANS will be updated many times on DES update phase.</simpara>
+                <simpara>We need to avoid that. This can be done via caching transition output (this is already implemented) and 
+                    enable the cache update only at the first update in DES update phase.</simpara>
+                <simpara>Same approach can be applied to SDO and SDC also.</simpara>
+            </sect3>
+        </sect2>
+        <sect2><title>Misc optimization items</title>
+            <sect3><title>Seach when checking IRM requestor</title>
+                <programlisting>
+                    83	void Unit::resolveIface(const string&amp;aName, MIfReq::TIfReqCp* aReq)
+                    ...
+                    86	    // Check if the requestor was already registered
+                    87	    MIfProv* prov = nullptr;
+                    88	    for (auto item : mIrns) { 
+                    89		if (item->isConnected(aReq)) { prov = item; break;}
+                </programlisting>
+            </sect3>
+        </sect2>
+        <sect2 id="ds_desopt_est"><title>Fap3-vis ut_avr_vert_drp_2. Extracting VertCRP Slot takes long time.</title>
+            <sect3><title>Intro</title>
+                <simpara>Analysis of the log shows that extracting VertCrp Slot takes long time.</simpara>
+                <programlisting>
+                    04/09/23 16:27:33.446340883;INF;;.testroot.Test.Window.Scene.Drp.SdcReposExtrSlot;Started extracting node [.testroot.Test.Window.Scene.Drp.Slot_Model_vert2%MNode]
+                    04/09/23 16:27:33.629897118;INF;;.testroot.Test.Window.Scene.Drp.SdcReposExtrSlot;Started extracting node 1
+                </programlisting>
+                <simpara>So the operation takes ~180ms: disconnect </simpara>
+                <programlisting>
+                    ASdcExtract::doCtl (this=0x55555617e010) at dessdc.cpp:1307
+                    ...
+                    bool cres = MVert::disconnect(nextv, nextPair);
+                </programlisting>
+                <simpara>Where nextv is ".testroot.Test.Window.Scene.Drp.Slot_Model_vert2.Next%MVert" and nextPair is ".testroot.Test.Window.Scene.Drp.Column_0.Start.Prev%MVert"</simpara>
+                <simpara>Disconnect operation includes handling:</simpara>
+                <programlisting>
+                    void Vert::onDisconnected()
+                    -   {
+                    |       invalidateIrm();
+                    |       notifyChanged();
+                </programlisting>
+                <simpara>Checked Column_0.Start.Prev IRMs - the tree is too vast. This is because of the specifics of Columns container topology - slots CPs comprises very long chains.</simpara>
+                <simpara>Checked with profiler the time consumed by invalidateIrm - it takes 2/3 of total system run (column#3 gives the num, #4 - min dur, #5- max, #6 - total duration):</simpara>
+                <programlisting>
+                    2       IFC_U_INV       17593   0.000001        0.071517        2.918130        0.000166        0.001689        0
+                    1001    IFC_LNCH_RUN    1       4.307730        4.307730        4.307730        4.307730        0.000000        0
+                </programlisting>
+            </sect3>
+            <sect3><title>Status</title>
+                <simpara>20230501 Ref <xref linkend="ds_asr_cbscpd"/> for the problem analysis. Implemented interim soluiton <xref linkend="ds_asr_cbscpd_ahoi"/>.</simpara>
+            </sect3>
+        </sect2>
+        <sect2 id="ds_desopt_ds"><title>Caching of MDesSyncable and MDesObserver to optimize DES sync</title>
+            <sect3><title>Intro</title>
+                <simpara>
+                    Tried to estimate DES sync overhead - updated and run test Ut_des::test_des_1() "Benchmarking" part.
+                    Testing shows that system ut_des_1_2.chs containing 10 Des layers spends IFC_ST_CONF 5.289839  while system ut_des_1_2r.chs of 1 layer spends 
+                    just IFC_ST_CONF 1.614116. This overhead is caused mostly DES sync. It can be optimized for instance by caching of MDesSyncable and MDesObserver.
+                    Such approach was already use to optimize transitions, ref class FInp "MIfProv* mIfp;"
+                </simpara>
+            </sect3>
+            <sect3 id="ds_desopt_ds_picnu"><title>Problem: iface cache is not updated on ADes host attached to its owner.</title>
+                <simpara>
+                    The case is: there is some system with ADes (Widget for instance) that added (created and attached) to some owning system (let's call it OSYS).
+                    Initially (on creation phase) ADes doesn't have MDesObserver resolved because host is not attached yet. But when host gets attached ADes
+                    doesn't update the cache because no IRM invalidation happens.
+                </simpara>
+                <simpara>
+                    How can we invalidate IRM on host attached? Currently there is no such mechanism because natively agent (MAgent) doesn't have methods that 
+                    host can called to notify of host attached. We know that ADes actually is observer of host. But MObserver doesn't have notification of observer owner attached.
+                    Ref
+                    <xref linkend="ds_iss_020"/> for the issue.
+                </simpara>
+            </sect3>
+            <sect3><title>Implemented, tested</title>
+                <simpara>Tested on Ut_des::test_des_1() - it shows performance improvement for caching solutin:  </simpara>
+                <programlisting>
+                    Reduced model:                 IFC_ST_CONF    1.706256
+                    Long model w/o solution:       IFC_ST_CONF    5.563124
+                    Long model with solution:      IFC_ST_CONF    3.619542
+                </programlisting>
+                <simpara>But on fap3-vis test ut_avr_syst_drp_1 the solution shows performace degradation</simpara>
+                <programlisting>
+                    | w/o solution:       IFC_ST_CONF    0.251319
+                    |                     IFC_LNCH_RUN   3.978982
+                    | with solution:      IFC_ST_CONF    0.308852
+                    |                     IFC_LNCH_RUN   4.519964
+                </programlisting>
+            </sect3>
+        </sect2>
+        <sect2><title>Optimization of model creation - ut_avr_syst_drp_1.chs</title>
+            <sect3><title>Intro</title>
+                <simpara>ut_avr_syst_drp_1.chs model is most comprehensive atm. It shows that just construction time is about 800 ms.</simpara>
+            </sect3>
+            <sect3><title>Some basic metrics (using ut_des_1.chs model)</title>
+                <programlisting>
+                    MyRoot;Completed of creating system, nodes: 11, time: 0.001052
+                    IFC_PVD_CRNODE (Node creation): 17 us
+                    IFC_MUT_CAD (adding chromo):    12 us
+                    IFC_MUT_ATT (Node attach):      15 us
+                </programlisting>
+            </sect3>
+            <sect3><title>Build with -O2 and w/o debug increase performance significantly (>= 2 times)</title>
+                <programlisting>
+                    MyRoot;Completed of creating system, nodes: 11, time: 0.000098
+                    IFC_PVD_CRNODE (Node creation): 02 us
+                    IFC_MUT_CAD (adding chromo):    01 us
+                    IFC_MUT_ATT (Node attach):      02 us
+                </programlisting>
+            </sect3>
+        </sect2>
+        <sect2 id="ds_desopt_optp"><title>Optimization fap3 with profiling.</title>
+            <sect3><title>Intro</title>
+                <simpara>
+                    gprof flat profile shows high time consimtion by fap3 profiler (!!gprof shows almost all time of process is consumed).
+                    flat profile of ut_avr_syst_drp_1 run is as:
+                </simpara>
+                <programlisting>
+                    17.02      0.08     0.08 34622981     0.00     0.00  std::_Rb_tree&lt;int, std::pair&lt;int const, PindDurStat*&gt; ...
+                    10.64      0.13     0.05  6344074     0.00     0.00  std::_Rb_tree&lt;int, std::pair&lt;int const, PindDurStat*&gt;, std::_Select1st ...
+                </programlisting>
+                <simpara>The model ut_avr_syst_drp_1 execution time isn't significantly decrease if switch fap3 profiler off, that
+                    contradicts with gprof flat profile data. Even in that case it makes sense to optimize fap3 profiler.</simpara>
+            </sect3>
+        </sect2>
+        <sect2 id="ds_desopt_gpr"><title>Using profiler gprof</title>
+            <simpara>fap3 UT</simpara>
+            <programlisting>
+                fap3/test$ .libs/ut-fap3-lib Ut_des
+                gprof -p .libs/ut-fap3-lib gmon.out > flat_profile.txt
+            </programlisting>
+        </sect2>
+        <sect2 id="ds_desopt_up"><title>Using perf (report, flamegraph etc)</title>
+            <sect3><title>Refs</title>
+                <biblioentry id="ref_nx_upfg"> <abbrev>NX_UPFG</abbrev>
+                    <productname><ulink url="https://nanxiao.me/en/use-perf-and-flamegraph-to-profile-program-on-linux/"/></productname>
+                    <title>Nan Xiao's. Use perf and FlameGraph to profile program on Linux.</title> </biblioentry>
+                <biblioentry id="ref_db_bpwp"> <abbrev>DB_BPWP</abbrev>
+                    <productname><ulink url="https://easyperf.net/blog/2018/08/26/Basics-of-profiling-with-perf"/></productname>
+                    <title>Denis Bakhvalov. Basics of profiling with perf.</title> </biblioentry>
+                <biblioentry id="ref_bg_pex"> <abbrev>BG_PEX</abbrev>
+                    <productname><ulink url="https://www.brendangregg.com/perf.html"/></productname>
+                    <title>Brendan Gregg. perf Examples.</title> </biblioentry>
+                <biblioentry id="ref_lka_pt"> <abbrev>LKA_PT</abbrev>
+                    <productname><ulink url="https://perfwiki.github.io/main/tutorial/"/></productname>
+                    <title>Perf Tutorial - The Linux Kernel Archives</title> </biblioentry>
+            </sect3>
+            <sect3><title>Intro</title>
+                <itemizedlist>
+                    <listitem>
+                        Look at the docs explaining perf event-based sampling technic
+                        <xref linkend="ref_db_bpwp"/>
+                        <ulink url="https://perfwiki.github.io/main/tutorial/#sampling-with-perf-record"/>
+                    </listitem>
+                </itemizedlist>
+            </sect3>
+            <sect3 id="ds_desopt_up_pr"><title>perf report</title>
+                <sect4><title>Intro</title>
+                    <simpara> Ref <xref linkend="ds_desopt_up_fg"/> for details of perf installation.  </simpara>
+                    <simpara>
+                        perf report is based on "cycles" event, ref
+                        <ulink url="https://perfwiki.github.io/main/tutorial/#default-event-cycle-counting"/>
+                    </simpara>
+                    <simpara>
+                        Use command "perf report" and observe report data in specific view. Press "h" for help of 
+                        navigating thru the view.
+                    </simpara>
+                    <simpara>It happens that perf report view is more convenient for performance analysis that framegraph.</simpara>
+                </sect4>
+            </sect3>
+            <sect3 id="ds_desopt_up_fg"><title>Flamegraph</title>
+                <itemizedlist>
+                    <listitem>
+                        Follow usefull manual
+                        <ulink url="https://nanxiao.me/en/use-perf-and-flamegraph-to-profile-program-on-linux/"/>
+                    </listitem>
+                    <listitem>
+                        Install perf
+                        <programlisting>
+                            sudo apt-get install linux-tools-common
+                            sudo apt-get install linux-tools-5.15.0-113-generic
+                        </programlisting>
+                    </listitem>
+                    <listitem>
+                        Set perf_event_paranoid to enable recording events
+                        <programlisting> sudo sysctl kernel.perf_event_paranoid=0 </programlisting>
+                    </listitem>
+                    <listitem>
+                        Record events
+                        <programlisting> perf record --call-graph dwarf -- fapm3 -s ./modnav2.chs -m ../../modules -e Model,./test_model_syst.chs -a </programlisting>
+                            Output will be perf.data
+                    </listitem>
+                    <listitem>
+                        Create flamegraph
+                        <programlisting>
+                            cd ~/projects_work/fap/tools
+                            git clone --depth 1 https://github.com/brendangregg/FlameGraph
+                            cd FlameGraph
+                            # Copy perf.data into current directory
+                            perf script | ./stackcollapse-perf.pl |./flamegraph.pl > perf.svg
+                        </programlisting>
+                            Output will be perf.svg
+                    </listitem>
+                    <listitem>
+                        Error on perf report: "addr2line: DWARF error: section .debug_info is larger than its filesize!"
+                        <para>
+                            Ref
+                            <ulink url="https://stackoverflow.com/questions/71410361/what-to-do-with-dwarf-error-section-debug-info-is-larger-than-its-filesize"/>
+                        </para>
+                    </listitem>
+                </itemizedlist>
+            </sect3>
+        </sect2>
+        <sect2 id="ds_desopt_pfgaf"><title>perf flamegraph/report analysis finding</title>
+            <sect3><title>Embedded DES - apply getNode() when resolve ifaces.</title>
+                <simpara>
+                    DesEIbd&lt;T&gt;::update() calls getNode() and GetGData() that is ineffective. Better to keep MDVarGet provider.:w
+                    However flamegraph doesn't show significant spending on that ops.
+                </simpara>
+                <simpara>
+                    DesEOstb::NotifyInpsUpdated() calls getNode() to resolve MDesInpObserver
+                </simpara>
+                <sect4><title>Status</title>
+                    <simpara>Postponed atm</simpara>
+                </sect4>
+            </sect3>
+            <sect3 id="ds_desopt_pfgaf_cli"><title>dynamic_cast is called frequently - to implement caching of local ifaces</title>
+            </sect3>
+            <sect3 id="ds_desopt_pfgaf_wuf"><title>AVWidget::updateFont takes valuable amount of time</title>
+                <sect4><title>Intro</title>
+                    <simpara>This is because font support is included in base widget even many widgets don't need font.</simpara>
+                </sect4>
+            </sect3>
+            <sect3 id="ds_desopt_pfgaf_ifc"><title>A lot of samples with IfrNodeRoot::ifaces</title>
+                <sect4><title>Intro</title>
+                    <simpara>
+                        There are both IfrNode::resolve() and IfrNodeRoot::updateIcache(). Do we really need iface cache of we can
+                        get ifaces directly via traversal of ifaces tree?
+                    </simpara>
+                </sect4>
+            </sect3>
+            <sect3><title>Report: Factory::createNode 3%</title> </sect3>
+            <sect3><title>Report: __dynamic_cast 3%</title> </sect3>
+            <sect3><title>Report: Node::getNode 2.66%</title> </sect3>
+            <sect3 id="ds_desopt_pfgaf_cset"><title>Report: Chromo2::Set 21,7%</title>
+                <simpara>
+                    Ref
+                    <xref linkend="ds_cli_ser"/>, <xref linkend="ds_cli_pi_gral"/> for discussion regarding optimization options.
+                </simpara>
+            </sect3>
+            <sect3><title>Report: Env::constructSystem Elem::mutate 20,7%</title> </sect3>
+            <sect3><title>Report: IfrNodeRoot::ifaces 19.4%</title> </sect3>
+        </sect2>
+        <sect2 id="ds_desopt_au"><title>Some updates are needed only on rare condition (fap3-vis DRP rendering for example). Avoid that update each iteration. </title>
+            <sect3><title>Intro</title>
+                <simpara>
+                    The example is fap3-vis DRP unnecessary rendering, ref modnav  test_model_syst.chs Sys DRP.
+                    The profiler metrics shows that Syst DRP rendering takes one third of model running time. Rendering is performed
+                    each model iteration (104) where actually we need to render DRP only on DRP layouting gets completed. So performing
+                    the rendering just one time we can reduce the rendering time significantly. 
+                </simpara>
+            </sect3>
+            <sect3><title>DRP rendering improvement design outline.</title>
+                <simpara>This can be implemented with usage of <xref linkend="gls_lsc"/> approach.</simpara>
+                <simpara>What we need is:</simpara>
+                <itemizedlist>
+                    <listitem>[1] Make the rendering operation controlled</listitem>
+                    <listitem>[2] Introduce DES observing of DES idle condition.</listitem>
+                    <listitem>[3] Create DES controlling that allows DRP rendering only when DRP gets idle.</listitem>
+                </itemizedlist>
+                <simpara>
+                    <xref linkend="gls_lsc"/>
+                        is straitforward approach here. But for this particular case of DRP rendering optimization
+                        we can also implement "internal" widget mechanism of enabling/disabling rendering on each Confirm depending
+                        on mode (content) "Render on complete only". This solution will be more simpler that DES controlling.
+                </simpara>
+            </sect3>
+            <sect3><title>Design outline</title>
+                <simpara>
+                    Base
+                    <xref linkend="gls_sdo"/>
+                        approach is to observe target agent/system, notify DES inp updated and then
+                        implement MDVarGet to provide corresponding data. The question is how to generate observable event "isActive" in 
+                        observable system. The direct way is to generate the event each DES iteration, but it will cause performance 
+                        degradation. It seems that we need to notify observer only on change of status "active".
+                </simpara>
+                <simpara>
+                    DES can set sign of active in setActivated() method. DES can reset this sign in Confirm if mActNotified is false.
+                </simpara>
+            </sect3>
+        </sect2>
+        <sect2 id="ds_desopt_untf"><title>Avoid unnecessary notification via MObserver</title>
+            <simpara>Ref <xref linkend="ds_obsi"/></simpara>
+        </sect2>
+        <sect2 id="ds_desopt_aip"><title>Avoid frequent call of mEnv->provider()->isProvided() in getUri()</title>
+            <simpara>Look at ut_des_1.chs. It consists of 13 nodes and run just 5 cycles but traced 94 call of isProvided().</simpara>
+            <simpara>
+                The cause is that we check if the node is provided every getUri(). Potentially we can avoid it. Note that provided agent
+                cannot be in native tree, ref
+                <xref linkend="ds_iss_021"/> so we can check isProvided() only if the node doesn't have owner.
+            </simpara>
+        </sect2>
+        <sect2 id="ds_desopt_edcw"><title>Embedded DES comps in AVWidget - do we need them?</title>
+            <sect3><title>Intro</title>
+                <simpara>
+                    Embedded DES double buffering input DesEIbb inherited and embedded pseudo-state DesEOstb were introduced in scope of
+                    designing AAdp and AVWidget. But the question is if they have some valuable traits or can be replaced by standard
+                    DES comps, by State for instance.
+                </simpara>
+            </sect3>
+            <sect3><title>Analysis</title>
+                <simpara>
+                    The idea of embedding scpecial DES comps was basing on aim to reduce native tree.
+                    Also DesEIbb was inspired by ASdc::SdcIapb() - that double buffers input to keep the inputs
+                    actual on confirm phase.
+                </simpara>
+                <simpara>
+                    Can we just use CpStateInp instead of DesEIbb? Yes, it's possible but this will not be more effective.
+                    For instance AVWidget inputs such InpFont or InpText require dedicated inputs observers otherwise AVWidget will
+                    not know what inp causes activation so need to get data from all inputs, compare it with inps previous data. 
+                    Ref fap3-vis branch yb_ds_desopt_edcw for such opt attempt.
+                </simpara>
+            </sect3>
+        </sect2>
+        <sect2><title>The optimization effect is limited. What is the way for significant performance improvement?</title>
+            <sect3><title>Intro</title>
+                <simpara>
+                    Performance analysis with profiler perf, ref
+                    <xref linkend="ds_desopt_pfgaf"/> shows that the real time consuming parts are chromo parsing, 
+                        system creation and ifaces update on system re-configuration. So the real optimization needs
+                        to relate these parts. Code optimization are not sutable here even can increase performance 
+                        for some percents. Needs the design fundamental update. The current design is OK for simple
+                        static DES but for re-configurable DES it's not optimal - in that case iface
+                        resolution tree update gets almost continuous.
+                </simpara>
+            </sect3>
+        </sect2>
     </sect1>
 
     <sect1 id="ds_dsps"><title>[Impl] Dynamic switching with TrSwitchBool: design problem and possible solution</title>
-	<sect2><title>Status</title>
-	    <simpara>20230409 Initial impl.</simpara>
-	</sect2>
-	<sect2><title>Intro</title>
-	    <simpara>In the current fap3 version there is still TrSwitchBool issue that was discussed earlier and then forgotten:
-		transition passes MDesInpObserver notification from non-selected input.</simpara>
-	    <simpara>This dynamic switching is the alternative of struncture changing via SDC. Dynamic switching is more light-weight then
-		changing of the structure. It just uses interface calls redirections instead of interface resolution.</simpara>
-	</sect2>
-	<sect2><title>Solution</title>
-	    <simpara>
-		Current implementation already does MDtGet calls redirection. The only MDesInpObserver call is not redirected.
-		Created new agent TrSwitchBool2. Added MDesInpObserver call redirection. Tested on fap3-vis ut_avr_vert_drp_2 -
-		there is no performance valuable improvement. This weak affect to the performance can be explained: transitions cache (
-		<xref linkend="ds_desopt_tdc"/>) was introduced some time ago so even the dependent state is notified extra times the state just 
-		    takes the trans cache (that is unchanged), so no re-calculation happens)
-	    </simpara>
-	</sect2>
+        <sect2><title>Status</title>
+            <simpara>20230409 Initial impl.</simpara>
+        </sect2>
+        <sect2><title>Intro</title>
+            <simpara>In the current fap3 version there is still TrSwitchBool issue that was discussed earlier and then forgotten:
+                transition passes MDesInpObserver notification from non-selected input.</simpara>
+            <simpara>This dynamic switching is the alternative of struncture changing via SDC. Dynamic switching is more light-weight then
+                changing of the structure. It just uses interface calls redirections instead of interface resolution.</simpara>
+        </sect2>
+        <sect2><title>Solution</title>
+            <simpara>
+                Current implementation already does MDtGet calls redirection. The only MDesInpObserver call is not redirected.
+                Created new agent TrSwitchBool2. Added MDesInpObserver call redirection. Tested on fap3-vis ut_avr_vert_drp_2 -
+                there is no performance valuable improvement. This weak affect to the performance can be explained: transitions cache (
+                <xref linkend="ds_desopt_tdc"/>) was introduced some time ago so even the dependent state is notified extra times the state just 
+                    takes the trans cache (that is unchanged), so no re-calculation happens)
+            </simpara>
+        </sect2>
     </sect1>
 
     <sect1 id="ds_rdr"><title>Row data redesign.</title>
@@ -3840,7 +3876,7 @@
 	</sect2>
 	<sect2><title>Design. Separate servicing subsystem for each client.</title>
 	    <sect3><title>Intro</title>
-		<simpara>Single servicing subsystem desing options (ref <xref linkend="ds_ssp_dip_sss"/>) is not clarified so far. So we need to focuse on
+		<simpara>Single servicing subsystem design options (ref <xref linkend="ds_ssp_dip_sss"/>) is not clarified so far. So we need to focuse on
 		    the initial design option where separate servicing subsystem is created for each client.</simpara>
 	    </sect3>
 	    <sect3><title>Structure</title>
@@ -3934,7 +3970,7 @@
 		<xref linkend="gls_des"/> and vice versa. 
 	    </simpara>
 	    <simpara>
-		The problem is that current version of MObserver iface is designed rather purely. For instance is
+		The problem is that current version of MObserver iface is designed rather purely. For instance it
 		supports observer notification of just small number of observable events. Also the iface causes performance
 		problem because it doesn't allow to specify events filter so any observer receives the full set of events.
 	    </simpara>
@@ -3967,7 +4003,7 @@
 	</sect2>
 	<sect2 id="ds_ibc_dgit"><title>[DS_IBC_DGIT] Do we need MDtGet iface as templated one?</title>
 	    <simpara>Potentially we can have non-templated MDtGet that provides the access to base data iface MDtBase.</simpara>
-	    <simpara>The indication of week desing is the problems with TrTuple: it is not possible to update the tuple components. The input of the 
+	    <simpara>The indication of week design is the problems with TrTuple: it is not possible to update the tuple components. The input of the 
 		transition can get the access to data only via templated MDtGet but the type isn't explicitly known.</simpara>
 	</sect2>
 	<sect2><title>Intitial invalid status of State</title>
@@ -3988,7 +4024,7 @@
 	<sect2><title>Data special values.</title>
 	    <simpara>Ref <xref linkend="ds_dsv"/></simpara>
 	</sect2>
-	<sect2><title>Redesing data interfaces.</title>
+	<sect2><title>Redesign data interfaces.</title>
 	    <simpara>Ref <xref linkend="ds_rdi"/></simpara>
 	</sect2>
 	<sect2><title>Introduce constant data instead of State</title>
@@ -4020,7 +4056,7 @@
 	<sect2><title><xref linkend="ds_imp_acc"/></title> </sect2>
     </sect1>
 
-    <sect1><title>Performance optimization. Re-design proposal: getting rid of iface resolution mechanism.</title>
+    <sect1 id="ds_dri"><title>Performance opt. Re-design proposal: direct resolution of ifaces (<xref linkend="gls_dri"/>, i.e.getting rid of iface resolution mechanism.)</title>
 	<sect2><title>Intro</title>
 	    <simpara>
 		<xref linkend="gls_irm"/> is the core mechanism of the current (fap3) design. Almost each agent in the model
@@ -4040,6 +4076,22 @@
 	    </simpara>
 	    <simpara>
 		Such approach causes to overhead because the interface signals needs to be propagated via the chain of connections.
+	    </simpara>
+	    <simpara>
+		At the moment we can consider 2 approaches here:
+		<itemizedlist>
+		    <listitem>
+			Appr#1 Propagation of iface methods call
+		    </listitem>
+		    <listitem>
+			Appr#2 resolving ifaces without IRM
+			<para>
+			    Actually this approach already was tried. It will be implemented first and then IRM was introduce as
+			    improving design. The problem with that approach is that we need to perform ifaces resolving constantly.
+			    This is very uneffective.
+			</para>
+		    </listitem>
+		</itemizedlist>
 	    </simpara>
 	</sect2>
 	<sect2><title>How to keep subsystems abstraction?</title>
@@ -4103,12 +4155,60 @@
 	    </sect3>
 	</sect2>
 	<sect2><title>Do we need local interface resolution method (getLif) in MIface iface?</title>
+	    <simpara>
+		Yes, we do. One use-case is connection of connpoints. System gets connpoints nodes first and then needs to get ConnPoint iface to
+		connect them.
+	    </simpara>
+	</sect2>
+	<sect2 id="ds_dri_nic"><title>Problem: iface call propagation required specific handling of "no iface" case</title>
+	    <sect3><title>Intro</title>
+		<simpara>
+		    <xref linkend="gls_dri"/> assumes that we use iface call propagation instead of ifaces resolution.
+			But with this design we need to invent specific mechanism of handling the case where at some point of
+			iface call propagation chain the chain gets broken (i.e. the next iface is not found).
+			The example is MDVarGet iface. Lets assume that there is the following chain:
+		    <programlisting>
+			(Extd (Int)-)-(-(Inp)-Add2)
+		    </programlisting>
+			Add2 trasition will call MDVarGet::VDtGet() method. This method will be propagated till Extd::VDtGet() that will returns  
+			nullptr (DbBase*). Currently transition Add will consider this as error so will return error as result. This is not 
+			correct behaviour. 
+		</simpara>
+	    </sect3>
+	    <sect3><title>Solutions</title>
+		<simpara>
+		    We need to indication of iface is not able to serve the request from the client. This is the case where proxied iface is
+		    requested but the proxy is not set. Such indication can be done via two solutions:
+		</simpara>
+		<itemizedlist>
+		    <listitem>
+			S#1 Have iface methos returning indication of method cannot be completed because of iface is not "valid"
+		    </listitem>
+		    <listitem>
+			S#2 Add to iface base  the method returning indication of iface is not "valid"
+		    </listitem>
+		</itemizedlist>
+	    </sect3>
 	</sect2>
     </sect1>
 
     <sect1 id="ds_ic"><title>Tracking: Design items completed</title>
 	<sect2><title><xref linkend="ds_mdc_sw"/></title> </sect2>
 	<sect2><title><xref linkend="ds_desopt_tdc"/></title> </sect2>
+    </sect1>
+
+    <sect1 id="ds_ocfap5"><title>Optimization with competition to fap5</title>
+        <sect2><title>Intro</title>
+            <simpara>
+                Fap5 project was created to try alternative design: getting rid of
+                <xref linkend="gls_irm"/>.
+                    Also the number of auxiliary optimizations was done for fap5.
+                    Benchmarks on fap5 UTs and fap5-vis UTs (ut_avr_vert_drp_2) shows that fap5 models are faster 2-3 times that fap3.
+            </simpara>
+            <simpara>
+                So we need to apply same extra optimization to fap3 and compare "pure" IRM and non-IRM solutions. 
+            </simpara>
+        </sect2>
     </sect1>
 
     <sect1 id="ds_iss"><title>Issues</title>
@@ -4162,7 +4262,7 @@
 		    Vert::connect() just invalidates the vertexes IFR. But for sockets it doesn't work - the pins are not invalidated.</simpara>
 	    </sect3>
 	    <sect3><title>Fix proposal</title>
-		<simpara>We need to redesing IFR:</simpara>
+		<simpara>We need to redesign IFR:</simpara>
 		<itemizedlist>
 		    <listitem>
 			IFR node validity sign shall indicate that node has to be updated
@@ -4186,7 +4286,7 @@
 		<simpara>The issue happens after introducing <xref linkend="gls_asr"/> solution, ref <xref linkend="ds_asr_cbs"/></simpara>
 	    </sect3>
 	</sect2>
-	<sect2 id="ds_iss_005"><title>[DS_ISS_005] Chromo2 desing assumes the top is mut_create_chromo - it is inconvenient</title>
+	<sect2 id="ds_iss_005"><title>[DS_ISS_005] Chromo2 design assumes the top is mut_create_chromo - it is inconvenient</title>
 	    <sect3><title>Intro</title>
 		<simpara>
 		    The inconvenience is that very ofter we need just segment chromo without root. Currently we need to use
@@ -4291,7 +4391,7 @@
 			The resolution is ok, but this result is just "accidental", because the "right" owner of Drp.
 		</simpara>
 		<simpara>
-		    Real root-cause is that the ContainerMod module desing is wrong:
+		    Real root-cause is that the ContainerMod module design is wrong:
 		    <programlisting>
 			317     DHLayout : DLinearLayout
 			318     {
@@ -4325,7 +4425,7 @@
 		<simpara>Simplifying of the new transitions and reducing the number of IRM pathes partially helps, but the app creating is still slow.</simpara>
 	    </sect2>
 	    <sect2><title>Solution</title>
-		<simpara>We need to redesing IRM rouing for MDesInpObserver iface. Ref <xref linkend="ds_sor"/> for the desing change details.</simpara>
+		<simpara>We need to redesign IRM rouing for MDesInpObserver iface. Ref <xref linkend="ds_sor"/> for the design change details.</simpara>
 	    </sect2>
 	</sect2>
 	<sect2 id="ds_iss_010"><title>[<glossterm id="iss_010">DS_ISS_010</glossterm>] 20230114 Socket resolves iface even the iface is not provided by socket pins</title>

@@ -683,7 +683,9 @@ void Syst::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	addIfpLeaf(ifr, aReq);
     } else {
 	// Stop resolving if local iface matches
+        // TODO To use mAgtCp to get agents
 	if (aName == MAgent::Type()) {
+            PFL_DUR_STAT_START(PEvents::EDurStat_Tmp3);
 	    for (auto it = owner()->pairsBegin(); it != owner()->pairsEnd(); it++) {
 		MOwned* comp = (*it)->provided();
 		MNode* compn = comp->lIf(compn);
@@ -692,6 +694,7 @@ void Syst::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 		    addIfpLeaf(compa, aReq);
 		}
 	    }
+            PFL_DUR_STAT_REC(PEvents::EDurStat_Tmp3);
 	} else {
 	    // Redirect to agents
 	    auto* ifcs = getTIfs<MAgent>();
@@ -777,6 +780,7 @@ MIface* AgtBase::MNode_getLif(const char *aType)
     return res;
 }
 
+// TODO to do the connection from owner (owner to be conn initiator)
 void AgtBase::onOwnerAttached()
 {
     bool res = false;

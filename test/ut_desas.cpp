@@ -13,9 +13,9 @@
 class Ut_desas : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_desas);
-    //CPPUNIT_TEST(test_Desas_1);
+    CPPUNIT_TEST(test_Desas_1);
     //CPPUNIT_TEST(test_Desas_2);
-    CPPUNIT_TEST(test_Desas_3);
+    //CPPUNIT_TEST(test_Desas_3);
     CPPUNIT_TEST_SUITE_END();
     public:
     virtual void setUp();

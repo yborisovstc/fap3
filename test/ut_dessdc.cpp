@@ -17,11 +17,13 @@ class Ut_sdc : public CPPUNIT_NS::TestFixture
     //CPPUNIT_TEST(test_Sdc_1);
     //CPPUNIT_TEST(test_Sdc_2);
     //CPPUNIT_TEST(test_Sdc_2_1);
-    //CPPUNIT_TEST(test_Sdc_3);
+    CPPUNIT_TEST(test_Sdc_3);
     //CPPUNIT_TEST(test_Sdc_4);
+    /*
     CPPUNIT_TEST(test_Sdc_5);
     CPPUNIT_TEST(test_Sdo_1);
     CPPUNIT_TEST(test_Sdo_2);
+    */
     CPPUNIT_TEST_SUITE_END();
     public:
     virtual void setUp();
@@ -146,6 +148,8 @@ void Ut_sdc::test_Sdc_2_1()
     bool res = mEnv->RunSystem(12, 2);
 
     // Verify the connection
+    // TODO This verification doesn't work because of SdoConn doesn't support
+    // observing of MAG updates, to fix
     CPPUNIT_ASSERT_MESSAGE("Node_1 connected incorrectly", getStateDstr("Launcher.List.Is_conn_ok_Dbg") == "SB true");
 
     delete mEnv;
@@ -159,18 +163,8 @@ void Ut_sdc::test_Sdc_3()
 {
     printf("\n === Test of SDC: create and remove in cycle\n");
 
-    const string specn("ut_sdc_3");
-    string ext = "chs";
-    string spec = specn + string(".") + "chs";
-    string log = specn + "_" + ext + ".log";
-    mEnv = new Env(spec, log);
-    CPPUNIT_ASSERT_MESSAGE("Fail to create Env", mEnv != 0);
-    mEnv->ImpsMgr()->ResetImportsPaths();
-    mEnv->ImpsMgr()->AddImportsPaths("../modules");
-    mEnv->constructSystem();
-    MNode* root = mEnv->Root();
-    MElem* eroot = root ? root->lIf(eroot) : nullptr;
-    CPPUNIT_ASSERT_MESSAGE("Fail to get root", root && eroot);
+    MNode* root = constructSystem("ut_sdc_3");
+    CPPUNIT_ASSERT_MESSAGE("Fail to get root", root);
 
     bool res = mEnv->RunSystem(7, 2);
 

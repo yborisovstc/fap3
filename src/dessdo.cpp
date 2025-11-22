@@ -504,8 +504,8 @@ const DtBase* SdoConn::VDtGet(const string& aType)
 
 void SdoConn::onObsChanged(MObservable* aObl)
 {
-    MObservable* op = mVpUe->lIf(op);
-    MObservable* oq = mVqUe->lIf(oq);
+    MObservable* op = mVpUe ? mVpUe->lIf(op) : nullptr;
+    MObservable* oq = mVqUe ? mVqUe->lIf(oq) : nullptr;
     if (aObl == op || aObl == oq) {
         NotifyInpsUpdated();
     } else {
