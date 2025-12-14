@@ -13,7 +13,6 @@
 
 using namespace std;
 
-template<class T> MIface* checkLifs(const char* aType, MIface* aSelf) { return (strcmp(aType, T::Type()) == 0) ? dynamic_cast<T*>(aSelf) : nullptr;}
 
 /** @brief Native hierarchy node agent
  *  Supports native hier tree and content (DCE)
@@ -21,6 +20,10 @@ template<class T> MIface* checkLifs(const char* aType, MIface* aSelf) { return (
 class Node : public MNode, public MContentOwner, public MObservable, public MOwner, public MOwned
 {
     public:
+	inline static std::string_view idStr() { return "Node"sv;}
+	inline static TIdHash idHash() { return 0x183c6ea2097bf7bf;}
+
+    protected:
 	class NOwningNode : public NTnip<MOwned, MOwner> {
 	    public:
 		NOwningNode(MOwned* aProvPx, MOwner* aReqPx): NTnip<MOwned, MOwner>(aProvPx, aReqPx) {}
@@ -35,17 +38,16 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	using TOwtNode = NOwningNode;                    /*!< Ownership tree node */ 
 	using TObsCp = NCpOmnp<MObservable, MObserver>;  /*!< Observable connpoint */
     public:
-	static const char* Type() { return "Node";}
-	static vector<GUri> getParentsUri() { return vector<GUri>(1, Type()); }
+	static vector<GUri> getParentsUri() { return vector<GUri>(1, string(idStr())); }
 	Node(const string &aType, const string &aName, MEnv* aEnv);
 	virtual ~Node();
 	// From MNode.MIface
 	virtual string MNode_Uid() const override { return getUid<MNode>();}
-	virtual MIface* MNode_getLif(const char *aType) override;
+	virtual MIface* MNode_getLif(TIdHash aTid) override;
 	virtual void MNode_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	// From MNode
 	virtual string name() const override { return mName;}
-	virtual string parentName() const override { return Type(); }
+	virtual string parentName() const override { return string(idStr()); }
 	vector<GUri> parentsUri() const override { return getParentsUri(); }
 	virtual const MNode* getComp(const string& aId) const override;
 	virtual MNode* getComp(const string& aId) override { return const_cast<MNode*>(const_cast<const Node*>(this)->getComp(aId));}
@@ -67,7 +69,7 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	virtual MContentOwner* cntOw() override;
 	// From MContentOwner
 	virtual string MContentOwner_Uid() const override { return getUid<MContentOwner>();}
-	virtual MIface* MContentOwner_getLif(const char *aType) override;
+	virtual MIface* MContentOwner_getLif(TIdHash aTid) override;
 	virtual void MContentOwner_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	virtual int contCount() const override;
 	virtual MContent* getCont(int aIdx) override;
@@ -78,13 +80,13 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	virtual void onContentChanged(const MContent* aCont) override;
 	// From MObservable
 	virtual string MObservable_Uid() const override { return getUid<MObservable>();}
-	virtual MIface* MObservable_getLif(const char *aType) override;
+	virtual MIface* MObservable_getLif(TIdHash aTid) override;
 	virtual void MObservable_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	virtual bool addObserver(MObserver::TCp* aObs) override;
 	virtual bool rmObserver(MObserver::TCp* aObs) override;
 	// From MOwner
 	virtual string MOwner_Uid() const {return getUid<MOwner>();}
-	virtual MIface* MOwner_getLif(const char *aType) override;
+	virtual MIface* MOwner_getLif(TIdHash aTid) override;
 	virtual void ownerGetUri(GUri& aUri, MNode* aBase = nullptr) const override;
 	virtual MNode* ownerGetNode(const GUri& aUri, const MNode* aReq) const override;
 	virtual void onOwnedMutated(const MOwned* aOwned, const ChromoNode& aMut, const MutCtx& aCtx) override;
@@ -95,7 +97,7 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
 	virtual bool isOwned(const MOwned* mOwned) const override;
 	// From MOwned
 	virtual string MOwned_Uid() const {return getUid<MOwned>();}
-	virtual MIface* MOwned_getLif(const char *aType) override;
+	virtual MIface* MOwned_getLif(TIdHash aTid) override;
 	virtual string ownedId() const override { return name();}
 	virtual void deleteOwned() override { delete this;}
 	virtual void onOwnerAttached() override;
@@ -105,24 +107,14 @@ class Node : public MNode, public MContentOwner, public MObservable, public MOwn
     public:
 	inline void Log(int aLevel, const TLog& aRec) const;
     protected:
-	template<class T> MIface* checkLif(const char* aType) { return (strcmp(aType, T::Type()) == 0) ? dynamic_cast<T*>(this) : nullptr;}
-	/*
-	template<class T> MIface* checkLif2(const char* aType, T*& aPtr) {
-	    if (strcmp(aType, T::Type()) == 0) {
-		if (!aPtr) {
-		    aPtr = dynamic_cast<T*>(this);
-		}
-		return aPtr;
-	    } else return nullptr;
-	}
-	*/
-	template<class T> inline MIface* checkLif2(const char* aType, T*& aPtr) {
-	    return (strcmp(aType, T::Type()) == 0) ? ((!aPtr) ? (aPtr = dynamic_cast<T*>(this)) : aPtr)  : nullptr;
+	template<class T> MIface* checkLif(TIdHash aId) { return (aId == T::idHash()) ? dynamic_cast<T*>(this) : nullptr;}
+	template<class T> inline MIface* checkLif2(TIdHash aId, T*& aPtr) {
+	    return (aId == T::idHash()) ? (aPtr ? aPtr : (aPtr = dynamic_cast<T*>(this)))  : nullptr;
 	}
 	MOwner* Owner();
 	const MOwner* Owner() const;
-	template<class T> string getUid() const {return getUriS() + Ifu::KUidSep + T::Type();}
-	template<class T> string getUidC(const string& aCname) const {return getUriS() + Ifu::KUidSepIc + aCname + Ifu::KUidSep + T::Type();}
+	template<class T> string getUid() const {return getUriS() + Ifu::KUidSep + string(T::idStr());}
+	template<class T> string getUidC(const string& aCname) const {return getUriS() + Ifu::KUidSepIc + aCname + Ifu::KUidSep + string(T::idStr());}
 	string getUid(const string& aCompName, const string& aIfName) const {return getUriS() + Ifu::KUidSepIc + aCompName + Ifu::KUidSep + aIfName;}
 	inline MLogRec* Logger() const {return mEnv ? mEnv->Logger(): nullptr; }
 	inline MProvider* Provider() const {return mEnv ? mEnv->provider(): nullptr; }

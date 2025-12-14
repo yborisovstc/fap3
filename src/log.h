@@ -14,7 +14,7 @@
 	public:
 	    // From MLogRec/MIface
 	    virtual string MLogRec_Uid() const override { return Type();}
-	    virtual MIface* MLogRec_getLif(const char *aType) override { return nullptr;}
+	    virtual MIface* MLogRec_getLif(TIdHash aTid) override { return nullptr;}
 	    virtual void MLogRec_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
 	    // From MLogRec
 	    virtual void WriteFormat(const char* aFmt,...);

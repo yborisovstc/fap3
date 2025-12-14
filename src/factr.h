@@ -11,10 +11,11 @@
 class Factory: public MProvider
 {
     public:
+	inline static constexpr std::string_view idStr() { return "Factory"sv;}
+    public:
 	typedef map<string, MProvider*> TProviders;
 	typedef pair<string, MProvider*> TProvidersElem;
     public:
-	static const char* Type() { return "Factory";};
 	Factory(const string& aName, MEnv* aEnv);
 	virtual ~Factory();
 	bool LoadPlugin(const string& aName);
@@ -22,8 +23,8 @@ class Factory: public MProvider
 	bool AddProvider(MProvider* aProv);
 	void RemoveProvider(MProvider* aProv);
 	// From MProvider/MIface
-	virtual string MProvider_Uid() const override { return Type();}
-	virtual MIface* MProvider_getLif(const char *aType) override { return nullptr;}
+	virtual string MProvider_Uid() const override { return string(idStr());}
+	virtual MIface* MProvider_getLif(TIdHash aTid) override { return nullptr;}
 	virtual void MProvider_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	// From MProvider
 	virtual const string& providerName() const { return iName;};

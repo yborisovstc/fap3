@@ -11,7 +11,7 @@ Link::~Link()
 {
 }
 
-MIface* Link::MLink_getLif(const char *aType)
+MIface* Link::MLink_getLif(TIdHash aTid)
 {
     return nullptr;
 }
@@ -20,11 +20,11 @@ void Link::MLink_doDump(int aLevel, int aIdt, ostream& aOs) const
 {
 }
 
-MIface* Link::MNode_getLif(const char *aType)
+MIface* Link::MNode_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMLinkPtr));
-    else res = Unit::MNode_getLif(aType);
+    if (res = checkLif2(aTid, mMLinkPtr));
+    else res = Unit::MNode_getLif(aTid);
     return res;
 }
 

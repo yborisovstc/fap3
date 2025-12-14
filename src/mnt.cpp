@@ -63,11 +63,11 @@ bool AMntp::CreateModel(const string& aSpecPath)
     return res;
 }
 
-MIface* AMntp::MNode_getLif(const char *aType)
+MIface* AMntp::MNode_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMMntpPtr));
-    else res = Node::MNode_getLif(aType);
+    if (res = checkLif2(aTid, mMMntpPtr));
+    else res = Node::MNode_getLif(aTid);
     return res;
 }
 

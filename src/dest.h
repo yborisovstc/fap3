@@ -26,15 +26,16 @@ class FInp
 class TrBase: public CpStateOutp, public MDVarGet, protected MDesInpObserver
 {
     public:
-	static const char* Type() { return "TrBase";}
+	inline static constexpr std::string_view idStr() { return "TrBase"sv;}
+    public:
 	static vector<GUri> getParentsUri();
 	TrBase(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From Node
-	virtual MIface* MNode_getLif(const char *aType) override;
-	virtual MIface* MOwner_getLif(const char *aType) override;
+	virtual MIface* MNode_getLif(TIdHash aTid) override;
+	virtual MIface* MOwner_getLif(TIdHash aTid) override;
 	vector<GUri> parentsUri() const override { return getParentsUri(); }
 	// From MVert
-	virtual MIface *MVert_getLif(const char *aType) override;
+	virtual MIface *MVert_getLif(TIdHash aTid) override;
 	// From MConnPoint
 	virtual string MConnPoint_Uid() const override {return getUid<MConnPoint>();}
 	// From MDesInpObserver
@@ -49,7 +50,7 @@ class TrBase: public CpStateOutp, public MDVarGet, protected MDesInpObserver
 	// Local
 	Func::TInpIc* GetInps(FInp& aInp);
 	// From Unit.MIfProvOwner
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq) override;
 	/** @brief Gets input data
 	 * */
 	template <class T> inline const T* GetInpData(FInp& aInp, const T* aData);
@@ -81,7 +82,6 @@ template <class T> inline const T* TrBase::GetInpData(FInp& aInp, const T* aData
 class TrVar: public TrBase, public Func::Host
 {
     public:
-	static const char* Type() { return "TrVar";};
 	TrVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MDVarGet
 	virtual string MDVarGet_Uid() const override { return getUid<MDVarGet>();}
@@ -115,7 +115,8 @@ class TrVar: public TrBase, public Func::Host
 class TrAddVar: public TrVar
 {
     public:
-	static const char* Type() { return "TrAddVar";};
+	inline static constexpr std::string_view idStr() { return "TrAddVar"sv;}
+    public:
 	TrAddVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From TrVar
 	virtual void Init(const string& aIfaceName) override;
@@ -133,9 +134,10 @@ class TrAddVar: public TrVar
 class TrAdd2Var: public TrVar
 {
     public:
-	static const char* Type() { return "TrAdd2Var";};
+	inline static constexpr std::string_view idStr() { return "TrAdd2Var"sv;}
+    public:
 	TrAdd2Var(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
-	virtual string parentName() const override { return Type(); }
+	virtual string parentName() const override { return string(idStr()); }
 	// From TrVar
 	virtual void Init(const string& aIfaceName) override;
 	virtual FInp* GetFinp(int aId) override;
@@ -152,7 +154,8 @@ class TrAdd2Var: public TrVar
 class TrSub2Var: public TrVar
 {
     public:
-	static const char* Type() { return "TrSub2Var";};
+	inline static constexpr std::string_view idStr() { return "TrSub2Var"sv;}
+    public:
 	TrSub2Var(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From TrVar
 	virtual void Init(const string& aIfaceName) override;
@@ -174,7 +177,8 @@ class TrSub2Var: public TrVar
 class TrMplVar: public TrVar
 {
     public:
-	static const char* Type() { return "TrMplVar";};
+	inline static constexpr std::string_view idStr() { return "TrMplVar"sv;}
+    public:
 	TrMplVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From TrVar
 	virtual void Init(const string& aIfaceName) override;
@@ -190,7 +194,8 @@ class TrMplVar: public TrVar
 class TrDivVar: public TrVar
 {
     public:
-	static const char* Type() { return "TrDivVar";};
+	inline static constexpr std::string_view idStr() { return "TrDivVar"sv;}
+    public:
 	TrDivVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From TrVar
 	virtual void Init(const string& aIfaceName) override;
@@ -210,7 +215,8 @@ class TrDivVar: public TrVar
 class TrMinVar: public TrVar
 {
     public:
-	static const char* Type() { return "TrMinVar";};
+	inline static constexpr std::string_view idStr() { return "TrMinVar"sv;}
+    public:
 	TrMinVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From ATrVar
 	virtual void Init(const string& aIfaceName) override;
@@ -226,7 +232,8 @@ class TrMinVar: public TrVar
 class TrMaxVar: public TrVar
 {
     public:
-	static const char* Type() { return "TrMaxVar";};
+	inline static constexpr std::string_view idStr() { return "TrMaxVar"sv;}
+    public:
 	TrMaxVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From ATrVar
 	virtual void Init(const string& aIfaceName) override;
@@ -242,7 +249,8 @@ class TrMaxVar: public TrVar
 class TrCmpVar: public TrVar
 {
     public:
-	static const char* Type() { return "TrCmpVar";};
+	inline static constexpr std::string_view idStr() { return "TrCmpVar"sv;}
+    public:
 	TrCmpVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	FCmpBase::TFType GetFType();
 	virtual void Init(const string& aIfaceName) override;
@@ -261,7 +269,8 @@ class TrCmpVar: public TrVar
 class TrEqVar: public TrVar
 {
     public:
-	static const char* Type() { return "TrEqVar";};
+	inline static constexpr std::string_view idStr() { return "TrEqVar"sv;}
+    public:
 	TrEqVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual void Init(const string& aIfaceName) override;
 	virtual FInp* GetFinp(int aId) override;
@@ -280,7 +289,8 @@ class TrEqVar: public TrVar
 class TrSwitchBool: public TrBase
 {
     public:
-	static const char* Type() { return "TrSwitchBool";};
+	inline static constexpr std::string_view idStr() { return "TrSwitchBool"sv;}
+    public:
 	TrSwitchBool(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual const DtBase* doVDtGet(const string& aType) override;
 	virtual string VarGetIfid() const override;
@@ -299,6 +309,8 @@ class TrSwitchBool: public TrBase
 class TrSwitchBool2: public TrBase
 {
     public:
+	inline static constexpr std::string_view idStr() { return "TrSwitchBool2"sv;}
+    public:
 	class IobsPx : public MDesInpObserver {
 	    public:
 		IobsPx(TrSwitchBool2* aHost): mHost(aHost) {}
@@ -309,12 +321,11 @@ class TrSwitchBool2: public TrBase
 	};
     friend class IobsPx;
     public:
-	static const char* Type() { return "TrSwitchBool2";};
 	TrSwitchBool2(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual const DtBase* doVDtGet(const string& aType) override;
 	virtual string VarGetIfid() const override;
     protected:
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq) override;
 	MDVarGet* GetInp();
 	void notifyInpsUpdated(const IobsPx* aPx);
     protected:
@@ -346,9 +357,10 @@ class TrBool: public TrBase
 class TrAndVar: public TrBool
 {
     public:
-	static const char* Type() { return "TrAndVar";};
+	inline static constexpr std::string_view idStr() { return "TrAndVar"sv;}
+    public:
 	TrAndVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL): TrBool(aType, aName, aEnv) {}
-	virtual string parentName() const override { return Type(); }
+	virtual string parentName() const override { return string(idStr()); }
 	virtual const DtBase* doVDtGet(const string& aType) override;
 };
 
@@ -357,7 +369,8 @@ class TrAndVar: public TrBool
 class TrOrVar: public TrBool
 {
     public:
-	static const char* Type() { return "TrOrVar";};
+	inline static constexpr std::string_view idStr() { return "TrOrVar"sv;}
+    public:
 	TrOrVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL): TrBool(aType, aName, aEnv) {}
 	virtual const DtBase* doVDtGet(const string& aType) override;
 };
@@ -368,7 +381,8 @@ class TrOrVar: public TrBool
 class TrNegVar: public TrBool
 {
     public:
-	static const char* Type() { return "TrNegVar";};
+	inline static constexpr std::string_view idStr() { return "TrNegVar"sv;}
+    public:
 	TrNegVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL): TrBool(aType, aName, aEnv) {}
 	virtual const DtBase* doVDtGet(const string& aType) override;
 };
@@ -379,10 +393,11 @@ class TrNegVar: public TrBool
 class TrToUriVar: public TrBase
 {
     public:
+	inline static constexpr std::string_view idStr() { return "TrToUriVar"sv;}
+    public:
 	using TRes = DGuri;
 	using TInp = Sdata<string>;
     public:
-	static const char* Type() { return "TrToUriVar";};
 	TrToUriVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual string VarGetIfid() const override { return TRes::TypeSig();}
 	virtual const DtBase* doVDtGet(const string& aType) override;
@@ -398,7 +413,8 @@ class TrToUriVar: public TrBase
 class TrApndVar: public TrVar
 {
     public:
-	static const char* Type() { return "TrApndVar";}
+	inline static constexpr std::string_view idStr() { return "TrApndVar"sv;}
+    public:
 	TrApndVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From ATrVar
 	virtual void Init(const string& aIfaceName) override;
@@ -413,7 +429,8 @@ class TrApndVar: public TrVar
 class TrSvldVar: public TrBase
 {
     public:
-	static const char* Type() { return "TrSvldVar";};
+	inline static constexpr std::string_view idStr() { return "TrSvldVar"sv;}
+    public:
 	TrSvldVar(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MDVarGet
 	virtual string VarGetIfid() const override;
@@ -429,7 +446,8 @@ class TrSvldVar: public TrBase
 class TrTailVar: public TrVar
 {
     public:
-	static const char* Type() { return "TrTailVar";}
+	inline static constexpr std::string_view idStr() { return "TrTailVar"sv;}
+    public:
 	TrTailVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From ATrVar
 	virtual void Init(const string& aIfaceName) override;
@@ -444,7 +462,8 @@ class TrTailVar: public TrVar
 class TrHeadVar: public TrVar
 {
     public:
-	static const char* Type() { return "TrHeadVar";}
+	inline static constexpr std::string_view idStr() { return "TrHeadVar"sv;}
+    public:
 	TrHeadVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From ATrVar
 	virtual void Init(const string& aIfaceName) override;
@@ -459,7 +478,8 @@ class TrHeadVar: public TrVar
 class TrHeadtnVar: public TrVar
 {
     public:
-	static const char* Type() { return "TrHeadtnVar";}
+	inline static constexpr std::string_view idStr() { return "TrHeadtnVar"sv;}
+    public:
 	TrHeadtnVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From ATrVar
 	virtual void Init(const string& aIfaceName) override;
@@ -475,7 +495,8 @@ class TrHeadtnVar: public TrVar
 class TrTailnVar: public TrVar
 {
     public:
-	static const char* Type() { return "TrTailnVar";}
+	inline static constexpr std::string_view idStr() { return "TrTailnVar"sv;}
+    public:
 	TrTailnVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From ATrVar
 	virtual void Init(const string& aIfaceName) override;
@@ -491,7 +512,8 @@ class TrTailnVar: public TrVar
 class TrSizeVar: public TrVar
 {
     public:
-	static const char* Type() { return "TrSizeVar";};
+	inline static constexpr std::string_view idStr() { return "TrSizeVar"sv;}
+    public:
 	TrSizeVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual void Init(const string& aIfaceName) override;
 	virtual int GetInpCpsCount() const override {return 1;}
@@ -507,7 +529,8 @@ class TrSizeVar: public TrVar
 class TrAtVar: public TrVar
 {
     public:
-	static const char* Type() { return "TrAtVar";};
+	inline static constexpr std::string_view idStr() { return "TrAtVar"sv;}
+    public:
 	TrAtVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual void Init(const string& aIfaceName) override;
 	virtual int GetInpCpsCount() const override {return 2;}
@@ -523,7 +546,8 @@ class TrAtVar: public TrVar
 class TrAtgVar: public TrVar
 {
     public:
-	static const char* Type() { return "TrAtgVar";};
+	inline static constexpr std::string_view idStr() { return "TrAtgVar"sv;}
+    public:
 	TrAtgVar(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual void Init(const string& aIfaceName) override;
 	virtual int GetInpCpsCount() const override {return 2;}
@@ -538,7 +562,8 @@ class TrAtgVar: public TrVar
 class TrFindByP: public TrVar
 {
     public:
-	static const char* Type() { return "TrFindByP";};
+	inline static constexpr std::string_view idStr() { return "TrFindByP"sv;}
+    public:
 	TrFindByP(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual void Init(const string& aIfaceName) override;
 	virtual int GetInpCpsCount() const override {return 2;}
@@ -556,7 +581,8 @@ class TrFindByP: public TrVar
 class TrTuple: public TrBase
 {
     public:
-	static const char* Type() { return "TrTuple";};
+	inline static constexpr std::string_view idStr() { return "TrTuple"sv;}
+    public:
 	TrTuple(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MDVarGet
 	virtual string VarGetIfid() const override;
@@ -572,7 +598,8 @@ class TrTuple: public TrBase
 class TrTupleSel: public TrBase
 {
     public:
-	static const char* Type() { return "TrTupleSel";};
+	inline static constexpr std::string_view idStr() { return "TrTupleSel"sv;}
+    public:
 	TrTupleSel(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MDVarGet
 	virtual string VarGetIfid() const override;
@@ -588,9 +615,10 @@ class TrTupleSel: public TrBase
  * */
 class TrTostrVar: public TrBase
 {
+    public:
+	inline static constexpr std::string_view idStr() { return "TrTostrVar"sv;}
     using TRes = Sdata<string>;
     public:
-	static const char* Type() { return "TrTostrVar";};
 	TrTostrVar(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MDVarGet
 	virtual string VarGetIfid() const override { return TRes::TypeSig();}
@@ -607,7 +635,8 @@ class TrTostrVar: public TrBase
 class TrInpSel: public TrBase
 {
     public:
-	static const char* Type() { return "TrInpSel";};
+	inline static constexpr std::string_view idStr() { return "TrInpSel"sv;}
+    public:
 	TrInpSel(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MDVarGet
 	virtual string VarGetIfid() const override;
@@ -624,8 +653,9 @@ class TrInpSel: public TrBase
 class TrInpCnt: public TrBase
 {
     public:
+	inline static constexpr std::string_view idStr() { return "TrInpCnt"sv;}
+    public:
 	using TRes = Sdata<int>;
-	static const char* Type() { return "TrInpCnt";};
 	TrInpCnt(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MDVarGet
 	virtual string VarGetIfid() const override;
@@ -641,7 +671,8 @@ class TrInpCnt: public TrBase
 class TrPair: public TrVar
 {
     public:
-	static const char* Type() { return "TrPair";};
+	inline static constexpr std::string_view idStr() { return "TrPair"sv;}
+    public:
 	TrPair(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual void Init(const string& aIfaceName) override;
 	virtual int GetInpCpsCount() const override {return 2;}
@@ -658,7 +689,8 @@ class TrPair: public TrVar
 class TrMut: public TrBase
 {
     public:
-	static const char* Type() { return "TrMut";};
+	inline static constexpr std::string_view idStr() { return "TrMut"sv;}
+    public:
 	TrMut(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual string GetInpUri(int aId) const {return string();}
 	// From MDVarGet
@@ -673,9 +705,10 @@ class TrMut: public TrBase
 class TrMutNode: public TrMut
 {
     public:
+	inline static constexpr std::string_view idStr() { return "TrMutNode"sv;}
+    public:
 	enum { EInpName, EInpParent };
     public:
-	static const char* Type() { return "TrMutNode";};
 	TrMutNode(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual const DtBase* doVDtGet(const string& aType) override;
     protected:
@@ -688,8 +721,9 @@ class TrMutNode: public TrMut
 class TrMutConn: public TrMut
 {
     public:
+	inline static constexpr std::string_view idStr() { return "TrMutConn"sv;}
+    public:
 	using TInp = Sdata<string>;
-	static const char* Type() { return "TrMutConn";};
 	TrMutConn(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual const DtBase* doVDtGet(const string& aType) override;
     protected:
@@ -701,6 +735,8 @@ class TrMutConn: public TrMut
  * */
 class TrMutCont: public TrMut
 {
+    public:
+	inline static constexpr std::string_view idStr() { return "TrMutCont"sv;}
     public:
 	static const char* Type() { return "TrMutCont";};
 	TrMutCont(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
@@ -716,8 +752,9 @@ class TrMutCont: public TrMut
 class TrMutDisconn: public TrMut
 {
     public:
+	inline static constexpr std::string_view idStr() { return "TrMutDisconn"sv;}
+    public:
 	using TInp = Sdata<string>;
-	static const char* Type() { return "TrMutDisconn";};
 	TrMutDisconn(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual const DtBase* doVDtGet(const string& aType) override;
     protected:
@@ -731,7 +768,8 @@ class TrMutDisconn: public TrMut
 class TrChr: public TrBase
 {
     public:
-	static const char* Type() { return "TrChr";};
+	inline static constexpr std::string_view idStr() { return "TrChr"sv;}
+    public:
 	TrChr(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MDVarGet
 	virtual string VarGetIfid() const override;
@@ -747,7 +785,8 @@ class TrChr: public TrBase
 class TrChrc: public TrBase
 {
     public:
-	static const char* Type() { return "TrChrc";};
+	inline static constexpr std::string_view idStr() { return "TrChrc"sv;}
+    public:
 	TrChrc(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MDVarGet
 	virtual string VarGetIfid() const override;
@@ -764,9 +803,10 @@ class TrChrc: public TrBase
 class TrIsValid: public TrBase
 {
     public:
+	inline static constexpr std::string_view idStr() { return "TrIsValid"sv;}
+    public:
 	using TRes = Sdata<bool>;
     public:
-	static const char* Type() { return "TrIsValid";};
 	TrIsValid(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MDVarGet
 	virtual string VarGetIfid() const override { return TRes::TypeSig(); }
@@ -782,9 +822,10 @@ class TrIsValid: public TrBase
 class TrIsInvalid: public TrBase
 {
     public:
+	inline static constexpr std::string_view idStr() { return "TrIsInvalid"sv;}
+    public:
 	using TRes = Sdata<bool>;
     public:
-	static const char* Type() { return "TrIsInvalid";};
 	TrIsInvalid(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MDVarGet
 	virtual string VarGetIfid() const override { return TRes::TypeSig(); }
@@ -803,7 +844,8 @@ class TrIsInvalid: public TrBase
 class TrType: public TrBase
 {
     public:
-	static const char* Type() { return "TrType";};
+	inline static constexpr std::string_view idStr() { return "TrType"sv;}
+    public:
 	TrType(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual string VarGetIfid() const override;
     protected:
@@ -815,6 +857,8 @@ class TrType: public TrBase
  * */
 class TrHash: public TrBase
 {
+    public:
+	inline static constexpr std::string_view idStr() { return "TrHash"sv;}
     public:
 	using TRes = Sdata<int>;
     public:

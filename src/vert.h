@@ -15,14 +15,15 @@ using namespace std;
 class Vertu : public Unit, public MVert
 {
     public:
+	inline static constexpr std::string_view idStr() { return "Vertu"sv;}
+    public:
 	using TPairs = set<MVert*>; 
     public:
-	static const char* Type() { return "Vertu";}
 	Vertu(const string &aType, const string &aName, MEnv* aEnv);
 	virtual ~Vertu();
 	// From MNode
-	virtual MIface* MNode_getLif(const char *aType) override;
-	virtual string parentName() const { return Type(); }
+	virtual MIface* MNode_getLif(TIdHash aTid) override;
+	virtual string parentName() const { return string(idStr()); }
 	// From MVert::MCIface
 	virtual bool connect(MCIface* aPair) override;
 	virtual bool disconnect(MCIface* aPair) override;
@@ -31,7 +32,7 @@ class Vertu : public Unit, public MVert
 	virtual bool getId(string& aId) const override { return false;}
 	// From MVert
 	virtual string MVert_Uid() const { return getUid<MVert>();}
-	virtual MIface *MVert_getLif(const char *aType) override;
+	virtual MIface *MVert_getLif(TIdHash aTid) override;
 	virtual void MVert_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	virtual bool isCompatible(MVert* aPair, bool aExt) override {return true;}
 	virtual MVert* getExtd() override {return nullptr;}
@@ -56,14 +57,15 @@ class Vertu : public Unit, public MVert
 class Vert : public Elem, public MVert
 {
     public:
+	inline static constexpr std::string_view idStr() { return "Vert"sv;}
+    public:
 	using TPairs = set<MVert*>; 
     public:
-	static const char* Type() { return "Vert";}
 	Vert(const string &aType, const string &aName, MEnv* aEnv);
 	virtual ~Vert();
 	// From MNode
-	virtual MIface* MNode_getLif(const char *aType) override;
-	virtual string parentName() const { return Type(); }
+	virtual MIface* MNode_getLif(TIdHash aTid) override;
+	virtual string parentName() const { return string(idStr()); }
 	// From MVert::MCIface
 	virtual bool connect(MCIface* aPair) override;
 	virtual bool disconnect(MCIface* aPair) override;
@@ -72,7 +74,7 @@ class Vert : public Elem, public MVert
 	virtual bool getId(string& aId) const override { return false;}
 	// From MVert
 	virtual string MVert_Uid() const { return getUid<MVert>();}
-	virtual MIface *MVert_getLif(const char *aType) override;
+	virtual MIface *MVert_getLif(TIdHash aTid) override;
 	virtual void MVert_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	virtual bool isCompatible(MVert* aPair, bool aExt) override {return true;}
 	virtual MVert* getExtd() override {return nullptr;}

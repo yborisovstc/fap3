@@ -170,6 +170,8 @@ const PindCluster<PindDurStat>::Idata KPindDurStatIdata = {
     "durstat",
     {
 	{PEvents::EDurStat_IFR_IFaces, "IFR_IFACES", 500000, false},
+	{PEvents::EDurStat_IFR_IcInv, "IFR_IFC_INVAL", 500000, false},
+	{PEvents::EDurStat_IFR_IcVal, "IFR_IFC_VAL", 1000000, false},
     }
 };
 

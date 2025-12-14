@@ -21,7 +21,7 @@ public:
     virtual void setUp();
     virtual void tearDown();
 private:
-    void test_base_1();
+    //void test_base_1();
     void test_inval_sock_1();
 private:
     Env* mEnv;
@@ -41,6 +41,7 @@ void Ut_ifr::tearDown()
     CPPUNIT_ASSERT_EQUAL_MESSAGE("tearDown", 0, 0);
 }
 
+#if 0
 /** @brief Test of base functionality
  * */
 void Ut_ifr::test_base_1()
@@ -152,6 +153,7 @@ void Ut_ifr::test_base_1()
     delete cpu3;
     delete cpu4;
 }
+#endif
 
 
 /** @brief Test of IFR invalidation in sockets

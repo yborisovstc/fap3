@@ -102,7 +102,7 @@ ASdc::SdcIapb::TInpIfcs* ASdc::SdcIapb::getInps()
     if (!mIfp) {
 	MNode* inp = mHost->getNode(mInpUri);
 	MUnit* inpu = inp ? inp->lIf(inpu) : nullptr;
-	mIfp = inpu ? inpu->defaultIfProv(MDVarGet::Type()) : nullptr;
+	mIfp = inpu ? inpu->defaultIfProv(MDVarGet::idHash()) : nullptr;
     }
     res = mIfp->ifaces();
     if (!res || res->size() == 0) {
@@ -207,12 +207,12 @@ ASdc::~ASdc()
 {
 }
 
-MIface* ASdc::MNode_getLif(const char *aType)
+MIface* ASdc::MNode_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMDesSyncablePtr));
-    else if (res = checkLif2(aType, mMDesObserverPtr));
-    else res = Unit::MNode_getLif(aType);
+    if (res = checkLif2(aTid, mMDesSyncablePtr));
+    else if (res = checkLif2(aTid, mMDesObserverPtr));
+    else res = Unit::MNode_getLif(aTid);
     return res;
 }
 
@@ -241,18 +241,18 @@ bool ASdc::rifDesPaps(SdcPapb& aPap, MIfReq::TIfReqCp* aReq)
 }
 
 
-void ASdc::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void ASdc::resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq)
 {
-    if (aName == MDesInpObserver::Type()) {
+    if (aTid == MDesInpObserver::idHash()) {
 	for (auto iap : mIaps) {
 	    rifDesIobs(*iap, aReq);
 	}
 #ifndef DES_IFR_DESOBS
-    } else if (aName == MDesObserver::Type()) {
-	MIface* iface = MNode_getLif(MDesObserver::Type());
+    } else if (aTid == MDesObserver::idHash()) {
+	MIface* iface = MNode_getLif(MDesObserver::idHash());
 	addIfpLeaf(iface, aReq);
 #else
-    } else if (aName == MDesObserver::Type()) {
+    } else if (aTid == MDesObserver::idHash()) {
         // For owned - self, for self - owning
         bool bndHasPairs = (aReq->binded()->pairsBegin() != aReq->binded()->pairsEnd());
         MIfReq::TIfReqCp* req = bndHasPairs ? *aReq->binded()->pairsBegin() : nullptr;
@@ -262,7 +262,7 @@ void ASdc::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
         //if (reqn && isNodeOwnedInd(reqn)) {
         if (reqowd && isOwned(reqowd)) {
             // Requestor from owned - resolve as self
-            auto* ifc = MNode_getLif(aName.c_str());
+            auto* ifc = MNode_getLif(aTid);
             if (ifc) {
                 addIfpLeaf(ifc, aReq);
             }
@@ -270,22 +270,22 @@ void ASdc::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
             // Self requestor or no requestor - redirect to owning
             MUnit* owru = Owner() ? Owner()->lIf(owru) : nullptr;
             if (owru) {
-		owru->resolveIface(aName, aReq);
+		owru->resolveIface(aTid, aReq);
             }
         }
 #endif
-    } else if (aName == MDVarGet::Type()) {
+    } else if (aTid == MDVarGet::idHash()) {
 	for (auto pap : mPaps) {
 	    rifDesPaps(*pap, aReq);
 	}
     } else {
-	Unit::resolveIfc(aName, aReq);
+	Unit::resolveIfc(aTid, aReq);
     }
 }
 
 void ASdc::addInput(const string& aName)
 {
-    MNode* cp = Provider()->createNode(CpStateInp::Type(), aName, mEnv);
+    MNode* cp = Provider()->createNode(string(CpStateInp::idStr()), aName, mEnv);
     assert(cp);
     bool res = attachOwned(cp);
     assert(res);
@@ -293,7 +293,7 @@ void ASdc::addInput(const string& aName)
 
 void ASdc::addOutput(const string& aName)
 {
-    MNode* cp = Provider()->createNode(CpStateOutp::Type(), aName, mEnv);
+    MNode* cp = Provider()->createNode(string(CpStateOutp::idStr()), aName, mEnv);
     assert(cp);
     bool res = attachOwned(cp);
     assert(res);
@@ -364,7 +364,7 @@ void ASdc::setActivated()
 	notifyOutp();
 #else
         if (!mDobsIfProv) {
-            mDobsIfProv = defaultIfProv(MDesObserver::Type());
+            mDobsIfProv = defaultIfProv(MDesObserver::idHash());
         }
         auto* ifcs = mDobsIfProv->ifaces();
         auto* obs = ifcs->size() ? reinterpret_cast<MDesObserver*>(ifcs->at(0)) : nullptr;
@@ -434,7 +434,7 @@ void ASdc::onObsChanged(MObservable* aObl)
     UpdateMag();
 }
 
-MIface* ASdc::MObserver_getLif(const char *aType)
+MIface* ASdc::MObserver_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
     return res;
@@ -543,7 +543,7 @@ void ASdc::SdcPapb::NotifyInpsUpdated()
     if (!mInpobsIfProv) {
 	MNode* cp = mHost->getNode(mCpUri);
 	MUnit* cpu = cp ? cp->lIf(cpu) : nullptr;
-	mInpobsIfProv = cpu->defaultIfProv(MDesInpObserver::Type());
+	mInpobsIfProv = cpu->defaultIfProv(MDesInpObserver::idHash());
     }
     auto* ifcs = mInpobsIfProv->ifaces();
     for (auto ifc : *ifcs) {

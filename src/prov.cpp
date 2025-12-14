@@ -62,7 +62,7 @@ const string& Provider::modulesPath() const
     return KModPath;
 }
 
-MIface* Provider::MProvider_getLif(const char *aType)
+MIface* Provider::MProvider_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
     return res;

@@ -29,18 +29,18 @@ AAdp::~AAdp()
 {
 }
 
-MIface* AAdp::MAgent_getLif(const char *aType)
+MIface* AAdp::MAgent_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMDesSyncablePtr));
-    else if (res = checkLif2(aType, mMUnitPtr)); // To allow client to request IFR
-    else if (res = checkLif2(aType, mMDesObserverPtr));
+    if (res = checkLif2(aTid, mMDesSyncablePtr));
+    else if (res = checkLif2(aTid, mMUnitPtr)); // To allow client to request IFR
+    else if (res = checkLif2(aTid, mMDesObserverPtr));
     return res;
 }
 
-void AAdp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void AAdp::resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq)
 {
-    if (aName == MDesInpObserver::Type()) {
+    if (aTid == MDesInpObserver::idHash()) {
 	MNode* inp = ahostGetNode(K_CpUriInpMagUri);
 	if (isRequestor(aReq, inp)) {
 	    MIface* iface = dynamic_cast<MDesInpObserver*>(&mIapMagUri);
@@ -52,14 +52,14 @@ void AAdp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 		addIfpLeaf(iface, aReq);
 	    }
 	}
-    } else if (aName == MDVarGet::Type()) {
+    } else if (aTid == MDVarGet::idHash()) {
 	MNode* outp = ahostGetNode(K_CpUri_OutpMagUri);
 	if (isRequestor(aReq, outp)) {
 	    MIface* iface = dynamic_cast<MDVarGet*>(&mPapMagUri);
 	    addIfpLeaf(iface, aReq);
 	}
     } else {
-	Unit::resolveIfc(aName, aReq);
+	Unit::resolveIfc(aTid, aReq);
     }
 }
 
@@ -132,14 +132,14 @@ void AAdp::onObsChanged(MObservable* aObl)
     }
 }
 
-MIface* AAdp::MNode_getLif(const char *aType)
+MIface* AAdp::MNode_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMDesSyncablePtr));
-    else if (res = checkLif2(aType, mMAgentPtr));
-    else if (res = checkLif2(aType, mMDesObserverPtr));
-    else if (res = checkLif2(aType, mMDesInpObserverPtr));
-    else res = Unit::MNode_getLif(aType);
+    if (res = checkLif2(aTid, mMDesSyncablePtr));
+    else if (res = checkLif2(aTid, mMAgentPtr));
+    else if (res = checkLif2(aTid, mMDesObserverPtr));
+    else if (res = checkLif2(aTid, mMDesInpObserverPtr));
+    else res = Unit::MNode_getLif(aTid);
     return res;
 }
 
@@ -416,7 +416,7 @@ MAhost* AAdp::aHost()
     return ahost;
 }
 
-MIface* AAdp::MObserver_getLif(const char *aType)
+MIface* AAdp::MObserver_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
     return res;
@@ -475,9 +475,9 @@ AMnodeAdp::AMnodeAdp(const string &aType, const string& aName, MEnv* aEnv): AAdp
     mCompNames.mValid = false;
 }
 
-void AMnodeAdp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void AMnodeAdp::resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq)
 {
-    if (aName == MDVarGet::Type()) {
+    if (aTid == MDVarGet::idHash()) {
 	MNode* cmpCount = ahostGetNode(K_CpUriCompCount);
 	if (isRequestor(aReq, cmpCount)) {
 	    MIface* iface = dynamic_cast<MDVarGet*>(&mApCmpCount);
@@ -501,14 +501,14 @@ void AMnodeAdp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 		}
 	    }
 	}
-    } else if (aName == MDesInpObserver::Type()) {
+    } else if (aTid == MDesInpObserver::idHash()) {
 	MNode* inpMut = ahostGetNode(K_InpMUtpUri);
 	if (isRequestor(aReq, inpMut)) {
 	    MIface* iface = dynamic_cast<MDesInpObserver*>(&mIapInpMut);
 	    addIfpLeaf(iface, aReq);
 	}
     }
-    AAdp::resolveIfc(aName, aReq);
+    AAdp::resolveIfc(aTid, aReq);
 }
 
 const DtBase* AMnodeAdp::GetCompsCount()
@@ -693,16 +693,16 @@ AMelemAdp::AMelemAdp(const string& aType, const string& aName, MEnv* aEnv): AAdp
     mMagChromo = mEnv->provider()->createChromo();
 }
 
-void AMelemAdp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void AMelemAdp::resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq)
 {
-    if (aName == MDesInpObserver::Type()) {
+    if (aTid == MDesInpObserver::idHash()) {
 	MNode* inpMut = ahostGetNode(K_InpMUtpUri);
 	if (isRequestor(aReq, inpMut)) {
 	    MIface* iface = dynamic_cast<MDesInpObserver*>(&mIapInpMut);
 	    addIfpLeaf(iface, aReq);
 	}
     } else {
-	AAdp::resolveIfc(aName, aReq);
+	AAdp::resolveIfc(aTid, aReq);
     }
 }
 
@@ -796,19 +796,19 @@ DAdp::DAdp(const string &aType, const string& aName, MEnv* aEnv): Des(aType, aNa
 {
 }
 
-MIface* DAdp::MNode_getLif(const char *aType)
+MIface* DAdp::MNode_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMDesAdapterPtr));
-    else res = Des::MNode_getLif(aType);
+    if (res = checkLif2(aTid, mMDesAdapterPtr));
+    else res = Des::MNode_getLif(aTid);
     return res;
 }
 
-MIface* DAdp::MOwner_getLif(const char *aType)
+MIface* DAdp::MOwner_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMDesAdapterPtr));
-    else if (res = Des::MOwner_getLif(aType));
+    if (res = checkLif2(aTid, mMDesAdapterPtr));
+    else if (res = Des::MOwner_getLif(aTid));
     return res;
 }
 
@@ -830,9 +830,9 @@ void DAdp::registerOst(DesEOstb* aItem)
     mOsts.push_back(aItem);
 }
 
-void DAdp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void DAdp::resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq)
 {
-    if (aName == MDesInpObserver::Type()) {
+    if (aTid == MDesInpObserver::idHash()) {
 	for (auto iap : mIbs) {
 	    rifDesIobs(*iap, aReq);
 	}
@@ -841,12 +841,12 @@ void DAdp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	MIface* iface = MNode_getLif(MDesObserver::Type());
 	addIfpLeaf(iface, aReq);
 	*/
-    } else if (aName == MDVarGet::Type()) {
+    } else if (aTid == MDVarGet::idHash()) {
 	for (auto item : mOsts) {
 	    rifDesOsts(*item, aReq);
 	}
     } else {
-	Des::resolveIfc(aName, aReq);
+	Des::resolveIfc(aTid, aReq);
     }
 }
 
@@ -951,8 +951,8 @@ MNode* DAdp::getMag()
 }
 
 
-MIface* DAdp::MagLink::MLink_getLif(const char *aType)
+MIface* DAdp::MagLink::MLink_getLif(TIdHash aTid)
 {
-    return checkLif2(aType, mMLinkPtr);
+    return checkLif2(aTid, mMLinkPtr);
 }
 

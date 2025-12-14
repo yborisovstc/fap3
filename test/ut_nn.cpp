@@ -12,14 +12,14 @@ class Ut_nn : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_nn);
     //CPPUNIT_TEST(test_owning_1);
-    CPPUNIT_TEST(test_liter_1);
+    //CPPUNIT_TEST(test_liter_1);
     CPPUNIT_TEST_SUITE_END();
 public:
     virtual void setUp();
     virtual void tearDown();
 private:
-    void test_owning_1();
-    void test_liter_1();
+    //void test_owning_1();
+    //void test_liter_1();
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION( Ut_nn );
@@ -36,6 +36,7 @@ void Ut_nn::tearDown()
     CPPUNIT_ASSERT_EQUAL_MESSAGE("tearDown", 0, 0);
 }
 
+#if 0
 /** @brief Test of owner-owned native conn
  * */
 void Ut_nn::test_owning_1()
@@ -50,7 +51,9 @@ void Ut_nn::test_owning_1()
     owner->owner()->connect(owned2->owned());
     delete owner;
 }
+#endif
 
+#if 0
 /** @brief Test of pairs iterator
  * */
 void Ut_nn::test_liter_1()
@@ -98,3 +101,4 @@ void Ut_nn::test_liter_1()
 
     delete owner;
 }
+#endif

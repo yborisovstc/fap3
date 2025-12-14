@@ -15,8 +15,11 @@ using namespace std;
 class MUpdatable: public MIface
 {
     public:
-	static const char* Type() { return "MUpdatable";};
+	inline static constexpr std::string_view idStr() { return "MUpdatable"sv;}
+	inline static constexpr TIdHash idHash() { return 0xc2f776bb1bf5e87b;}
+    public:
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MUpdatable_Uid();}
 	virtual string MUpdatable_Uid() const = 0;
 	// Local
@@ -27,12 +30,15 @@ class MUpdatable: public MIface
 class MDVar: public MIface
 {
     public:
-	static const char* Type() { return "MDVar";};
+	inline static constexpr std::string_view idStr() { return "MDVar"sv;}
+	inline static constexpr TIdHash idHash() { return 0x89fbb08e4b9de4c1;}
+    public:
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MDVar_Uid();}
 	virtual string MDVar_Uid() const = 0;
-	virtual MIface* getLif(const char *aType) override { return MDVar_getLif(aType);}
-	virtual MIface* MDVar_getLif(const char *aType) = 0;
+	virtual MIface* getLif(TIdHash aTid) override { return MDVar_getLif(aTid);}
+	virtual MIface* MDVar_getLif(TIdHash aTid) = 0;
 };
 
 
@@ -42,8 +48,10 @@ class MDVar: public MIface
 class MDVarGet: public MIface
 {
     public:
-	static const char* Type() { return "MDVarGet";};
+	inline static constexpr std::string_view idStr() { return "MDVarGet"sv;}
+	inline static constexpr TIdHash idHash() { return 0x5ee8e840211d938d;}
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MDVarGet_Uid();}
 	virtual string MDVarGet_Uid() const = 0;
 	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { return MDVarGet_doDump(aLevel, aIdt, std::cout);}
@@ -66,8 +74,11 @@ class MDVarGet: public MIface
 class MDVarSet: public MIface
 {
     public:
-	static const char* Type() { return "MDVarSet";};
+	inline static constexpr std::string_view idStr() { return "MDVarSet"sv;}
+	inline static constexpr TIdHash idHash() { return 0xb4b2e736046562fb;}
+    public:
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MDVarSet_Uid();}
 	virtual string MDVarSet_Uid() const = 0;
 	// Local
@@ -77,6 +88,7 @@ class MDVarSet: public MIface
 };
 
 
+#if 0
 
 /** @brief Generic data getter base
  * Temporary solution for ds_rdi
@@ -173,5 +185,6 @@ class MVectorGet : public MIface
 	string Mid() const override { return MVectorGet_Mid();}
 };
 
+#endif
 
 #endif

@@ -5,91 +5,34 @@
 static const GUri KContProvided = "Provided";
 static const GUri KContRequired = "Required";
 
-string ConnPointu::KReqName = "Required";
-string ConnPointu::KProvName = "Provided";
-const GUri ConnPointu::KReqUri = ConnPointu::KReqName;
-const GUri ConnPointu::KProvUri = ConnPointu::KProvName;
-
 
 ConnPointu::ConnPointu(const string &aType, const string &aName, MEnv* aEnv): Vertu(aType, aName, aEnv)
 {
 }
 
-MIface* ConnPointu::MNode_getLif(const char *aType)
+MIface* ConnPointu::MNode_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMConnPointPtr));
-    else if (res = checkLif2(aType, mMIfProvOwnerPtr));
-    else res = Vertu::MNode_getLif(aType);
+    if (res = checkLif2(aTid, mMConnPointPtr));
+    else if (res = checkLif2(aTid, mMIfProvOwnerPtr));
+    else res = Vertu::MNode_getLif(aTid);
     return res;
 }
 
-MIface* ConnPointu::MVert_getLif(const char *aType)
+MIface* ConnPointu::MVert_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMConnPointPtr));
-    else res = Vertu::MVert_getLif(aType);
+    if (res = checkLif2(aTid, mMConnPointPtr));
+    else res = Vertu::MVert_getLif(aTid);
     return res;
 }
 
 
-MIface* ConnPointu::MIfProvOwner_getLif(const char *aType)
+MIface* ConnPointu::MIfProvOwner_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMConnPointPtr));
-    else res = Vertu::MIfProvOwner_getLif(aType);
-    return res;
-}
-
-string ConnPointu::provName() const
-{
-    string res;
-    bool pres = getContent(KContProvided, res);
-    return res;
-}
-
-string ConnPointu::reqName() const
-{
-    string res;
-    bool pres = getContent(KContRequired, res);
-    return res;
-}
-
-MContent* ConnPointu::getCont(int aIdx)
-{
-    MContent* res = nullptr;
-    if (aIdx == 0) res = &mProv;
-    else if (aIdx == 1) res = &mReq;
-    return res;
-}
-
-const MContent* ConnPointu::getCont(int aIdx) const
-{
-    const MContent* res = nullptr;
-    if (aIdx == 0) res = &mProv;
-    else if (aIdx == 1) res = &mReq;
-    return res;
-}
-
-bool ConnPointu::getContent(const GUri& aCuri, string& aRes) const
-{
-    bool res = true;
-    if (aCuri == KProvUri)
-	res = mProv.getData(aRes);
-    else if (aCuri == KReqUri)
-	res = mReq.getData(aRes);
-    else res = Vertu::getContent(aCuri, aRes);
-    return res;
-}
-
-bool ConnPointu::setContent(const GUri& aCuri, const string& aData)
-{
-    bool res = true;
-    if (aCuri == KProvUri)
-	res = mProv.setData(aData);
-    else if (aCuri == KReqUri)
-	res = mReq.setData(aData);
-    else res = Vertu::setContent(aCuri, aData);
+    if (res = checkLif2(aTid, mMConnPointPtr));
+    else res = Vertu::MIfProvOwner_getLif(aTid);
     return res;
 }
 
@@ -107,12 +50,12 @@ bool ConnPointu::isCompatible(MVert* aPair, bool aExt)
 	}
 	if (cp) {
 	    // Check roles conformance
-	    string prov = provName();
-	    string req = reqName();
+	    TIdHash prov = idProvided();
+	    TIdHash req = idRequired();
 	    MConnPoint* mcp = cp->lIf(mcp);
 	    if (mcp) {
-		string pprov = mcp->provName();
-		string preq = mcp->reqName();
+		TIdHash pprov = mcp->idProvided();
+		TIdHash preq = mcp->idRequired();
 		if (ext) {
 		    res = prov == pprov && req == preq;
 		} else {
@@ -126,14 +69,14 @@ bool ConnPointu::isCompatible(MVert* aPair, bool aExt)
     return res;
 }
 
-void ConnPointu::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void ConnPointu::resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq)
 {
-    MIface* ifr = MNode_getLif(aName.c_str()); // Local
+    MIface* ifr = MNode_getLif(aTid); // Local
     if (ifr) {
 	addIfpLeaf(ifr, aReq);
     }
     if (!ifr) { // TODO this disables both local and remote ifaces. To fix
-	if (aName == provName()) {
+	if (aTid == idProvided()) {
 	    // Requested provided iface - cannot be obtain via pairs - redirect to owner
 	    auto owner = Owner();
 	    MUnit* ownu = owner ? const_cast<MOwner*>(owner)->lIf(ownu): nullptr;
@@ -143,14 +86,14 @@ void ConnPointu::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 		// requestor is enabled to support loop-back IRM path
 		bool isReq = aReq->provided()->isRequestor(ownupo, 1);
 		if (!isReq) {
-		    ownu->resolveIface(aName, aReq);
+		    ownu->resolveIface(aTid, aReq);
 		}
 	    }
-	} else if (aName == reqName()) {
+	} else if (aTid == idRequired()) {
 	    // Requested required iface - redirect to pairs
 	    for (MVert* pair : mPairs) {
 		MUnit* pairu = pair->lIf(pairu);
-		pairu->resolveIface(aName, aReq);
+		pairu->resolveIface(aTid, aReq);
 	    }
 	}
     }
@@ -159,14 +102,14 @@ void ConnPointu::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 void ConnPointu::onConnected()
 {
     // Invalidate only required ifr
-    invalidateIrm(reqName());
+    invalidateIrm(idRequired());
     notifyChanged();
 }
 
 void ConnPointu::onDisconnected()
 {
     // Invalidate only required ifr
-    invalidateIrm(reqName());
+    invalidateIrm(idRequired());
     notifyChanged();
 }
 
@@ -189,9 +132,9 @@ Extd::Extd(const string &aType, const string& aName, MEnv* aEnv): Vertu(aType, a
     //setContent(KContDir, KContDir_Val_Regular);
 }
 
-void Extd::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void Extd::resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq)
 {
-    MIface* ifc = MNode_getLif(aName.c_str());
+    MIface* ifc = MNode_getLif(aTid);
     if (ifc) { // Local iface
 	addIfpLeaf(ifc, aReq);
     } else {
@@ -205,12 +148,12 @@ void Extd::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 		MUnit* pairu = pair ? pair->lIf(pairu) : nullptr;  
 		MIfProvOwner* pairo = pairu ? pairu->lIf(pairo) : nullptr;
 		if (pairo && !aReq->provided()->isRequestor(pairo)) {
-		    pairu->resolveIface(aName, aReq);
+		    pairu->resolveIface(aTid, aReq);
 		}
 	    }
 	} else {
 	    // Redirect to internal CP
-	    if (intcpu) intcpu->resolveIface(aName, aReq);
+	    if (intcpu) intcpu->resolveIface(aTid, aReq);
 	}
     }
 }
@@ -255,9 +198,9 @@ Extde::Extde(const string &aType, const string& aName, MEnv* aEnv): Vert(aType, 
     //setContent(KContDir, KContDir_Val_Regular);
 }
 
-void Extde::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void Extde::resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq)
 {
-    MIface* ifc = MNode_getLif(aName.c_str());
+    MIface* ifc = MNode_getLif(aTid);
     if (ifc) { // Local iface
 	addIfpLeaf(ifc, aReq);
     } else {
@@ -271,12 +214,12 @@ void Extde::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 		MUnit* pairu = pair ? pair->lIf(pairu) : nullptr;  
 		MIfProvOwner* pairo = pairu ? pairu->lIf(pairo) : nullptr;
 		if (pairo && !aReq->provided()->isRequestor(pairo)) {
-		    pairu->resolveIface(aName, aReq);
+		    pairu->resolveIface(aTid, aReq);
 		}
 	    }
 	} else {
 	    // Redirect to internal CP
-	    if (intcpu) intcpu->resolveIface(aName, aReq);
+	    if (intcpu) intcpu->resolveIface(aTid, aReq);
 	}
     }
 }
@@ -321,17 +264,17 @@ Socket::Socket(const string &aType, const string& aName, MEnv* aEnv): Vert(aType
     //setContent(KContDir, KContDir_Val_Regular);
 }
 
-MIface* Socket::MNode_getLif(const char *aType)
+MIface* Socket::MNode_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMSocketPtr));
-    else res = Vert::MNode_getLif(aType);
+    if (res = checkLif2(aTid, mMSocketPtr));
+    else res = Vert::MNode_getLif(aTid);
     return res;
 }
 
-void Socket::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void Socket::resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq)
 {
-    MIface* ifc = MNode_getLif(aName.c_str());
+    MIface* ifc = MNode_getLif(aTid);
     if (ifc) { // Local iface
 	addIfpLeaf(ifc, aReq);
     } else {
@@ -349,14 +292,14 @@ void Socket::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 			MVert* pair = *it;
 			MUnit* pairu = pair->lIf(pairu);
 			if (pairu) {
-			    pairu->resolveIface(aName, aReq);
+			    pairu->resolveIface(aTid, aReq);
 			}
 		    }
 		} else {
 		    // No pairs. Redirect to owner.
 		    MUnit* owu = Owner()->lIf(owu);
 		    if (owu) {
-			owu->resolveIface(aName, aReq);
+			owu->resolveIface(aTid, aReq);
 		    }
 		}
 	    } else {
@@ -369,7 +312,7 @@ void Socket::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 			bool isReq = aReq->provided()->isRequestor(pairo);
 			bool isFirstReq = req ? (pairo == req->provided()->rqOwner()) : false;
 			if (!isReq || isReq && !isFirstReq) {
-			    pairu->resolveIface(aName, aReq);
+			    pairu->resolveIface(aTid, aReq);
 			}
 		    }
 		}
@@ -421,7 +364,7 @@ void Socket::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 		    if (pcomp) {
 			MUnit* pcompu = pcomp->lIf(pcompu);
 			if (pcompu) {
-			    pcompu->resolveIface(aName, aReq);
+			    pcompu->resolveIface(aTid, aReq);
 			}
 		    }
 		}
@@ -435,7 +378,7 @@ void Socket::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 			// requestor is enabled to support loop-back IRM path. !! Att, isn't tested deep
 			bool isReq = aReq->provided()->isRequestor(owo,1);
 			if (!isReq) {
-			    owu->resolveIface(aName, aReq);
+			    owu->resolveIface(aTid, aReq);
 			}
 		    }
 		}
@@ -448,7 +391,7 @@ void Socket::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 		MOwned* compo = compcp ? compcp->provided() : nullptr;
 		MUnit* compu = compo->lIf(compu);
 		if (compu) {
-		    compu->resolveIface(aName, aReq);
+		    compu->resolveIface(aTid, aReq);
 		}
 	    }
 	}
@@ -554,11 +497,11 @@ Syst::~Syst()
 {
 }
 
-MIface* Syst::MNode_getLif(const char *aType)
+MIface* Syst::MNode_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMSystPtr));
-    else res = Elem::MNode_getLif(aType);
+    if (res = checkLif2(aTid, mMSystPtr));
+    else res = Elem::MNode_getLif(aTid);
     return res;
 }
 
@@ -567,13 +510,13 @@ MIface* Syst::MNode_getLif(const char *aType)
  *  if the owned if agent. We also can have system propery with the policy of getting
  *  access to ifaces
  * */
-MIface* Syst::MOwner_getLif(const char *aType)
+MIface* Syst::MOwner_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMUnitPtr));
-    else if (res = checkLif2(aType, mMContentOwnerPtr));
-    else if (res = checkLif2(aType, mMActrPtr));
-    else res = Unit::MOwner_getLif(aType);
+    if (res = checkLif2(aTid, mMUnitPtr));
+    else if (res = checkLif2(aTid, mMContentOwnerPtr));
+    else if (res = checkLif2(aTid, mMActrPtr));
+    else res = Unit::MOwner_getLif(aTid);
     return res;
 }
 
@@ -676,15 +619,15 @@ void Syst::mutDisconnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aC
     }
 }
 
-void Syst::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void Syst::resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq)
 {
-    MIface* ifr = MNode_getLif(aName.c_str());
+    MIface* ifr = MNode_getLif(aTid);
     if (ifr) {
 	addIfpLeaf(ifr, aReq);
     } else {
 	// Stop resolving if local iface matches
         // TODO To use mAgtCp to get agents
-	if (aName == MAgent::Type()) {
+	if (aTid == MAgent::idHash()) {
             PFL_DUR_STAT_START(PEvents::EDurStat_Tmp3);
 	    for (auto it = owner()->pairsBegin(); it != owner()->pairsEnd(); it++) {
 		MOwned* comp = (*it)->provided();
@@ -701,7 +644,7 @@ void Syst::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	    for (auto* agt : *ifcs) {
 		MUnit* agtu = agt->lIf(agtu);
 		if (agtu) {
-		    agtu->resolveIface(aName, aReq);
+		    agtu->resolveIface(aTid, aReq);
 		}
 	    }
 	}
@@ -713,7 +656,7 @@ bool Syst::attachAgent(MAgent::TCp* aAgt)
     bool res = false;
     res = mAgtCp.connect(aAgt);
     // Invalidate MAgent irm nodes first to handle ifaces deps on MAgent
-    invalidateIrm(MAgent::Type());
+    invalidateIrm(MAgent::idHash());
     invalidateIrm();
     return res;
 }
@@ -723,16 +666,16 @@ bool Syst::detachAgent(MAgent::TCp* aAgt)
     bool res = false;
     res = mAgtCp.disconnect(aAgt);
     // Invalidate MAgent irm nodes first to handle ifaces deps on MAgent
-    invalidateIrm(MAgent::Type());
+    invalidateIrm(MAgent::idHash());
     invalidateIrm();
     return res;
 }
 
-MIface* Syst::MAhost_getLif(const char *aType)
+MIface* Syst::MAhost_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMNodePtr));
-    else if (res = checkLif2(aType, mMContentOwnerPtr)); // To get agent an access to content
+    if (res = checkLif2(aTid, mMNodePtr));
+    else if (res = checkLif2(aTid, mMContentOwnerPtr)); // To get agent an access to content
     return res;
 }
 
@@ -747,6 +690,17 @@ CpMnodeInp::CpMnodeInp(const string &aType, const string& aName, MEnv* aEnv): Co
     assert(res);
 }
 
+MIface::TIdHash CpMnodeInp::idProvided() const
+{
+    return 0;
+}
+
+MIface::TIdHash CpMnodeInp::idRequired() const
+{
+    return MLink::idHash();
+}
+
+
 
 // Connection point - access to MNode, outpur
 
@@ -756,6 +710,17 @@ CpMnodeOutp::CpMnodeOutp(const string &aType, const string& aName, MEnv* aEnv): 
     res &= setContent("Required", "");
     assert(res);
 }
+
+MIface::TIdHash CpMnodeOutp::idProvided() const
+{
+    return MLink::idHash();
+}
+
+MIface::TIdHash CpMnodeOutp::idRequired() const
+{
+    return 0;
+}
+
 
 // AgtBase
 
@@ -767,16 +732,16 @@ AgtBase::~AgtBase()
 {
 }
 
-MIface* AgtBase::MAgent_getLif(const char *aType)
+MIface* AgtBase::MAgent_getLif(TIdHash aTid)
 {
-    return checkLif2(aType, mMUnitPtr); // To allow client to request IFR
+    return checkLif2(aTid, mMUnitPtr); // To allow client to request IFR
 }
 
-MIface* AgtBase::MNode_getLif(const char *aType)
+MIface* AgtBase::MNode_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMAgentPtr));
-    else res = Unit::MNode_getLif(aType);
+    if (res = checkLif2(aTid, mMAgentPtr));
+    else res = Unit::MNode_getLif(aTid);
     return res;
 }
 

@@ -17,8 +17,11 @@ class MDesSyncable;
 class MDesObserver: public MIface
 {
     public:
-	static const char* Type() { return "MDesObserver";};
+	inline static constexpr std::string_view idStr() { return "MDesObserver"sv;}
+	inline static constexpr TIdHash idHash() { return 0xc31009f0fc755b37;}
+    public:
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MDesObserver_Uid();}
 	virtual string MDesObserver_Uid() const = 0;
 	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { return MDesObserver_doDump(aLevel, aIdt, std::cout);}
@@ -37,8 +40,11 @@ class MDesObserver: public MIface
 class MDesInpObserver: public MIface
 {
     public:
-	static const char* Type() { return "MDesInpObserver";};
+	inline static constexpr std::string_view idStr() { return "MDesInpObserver"sv;}
+	inline static constexpr TIdHash idHash() { return 0xcf129699ffc96672;}
+    public:
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MDesInpObserver_Uid();}
 	virtual string MDesInpObserver_Uid() const = 0;
 	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { return MDesInpObserver_doDump(aLevel, aIdt, std::cout);}
@@ -53,14 +59,17 @@ class MDesInpObserver: public MIface
 class MDesSyncable: public MIface
 {
     public:
-	static const char* Type() { return "MDesSyncable";};
+	inline static constexpr std::string_view idStr() { return "MDesSyncable"sv;}
+	inline static constexpr TIdHash idHash() { return 0xa965757b02c05b83;}
+    public:
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MDesSyncable_Uid();}
 	virtual string MDesSyncable_Uid() const = 0;
 	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { return MDesSyncable_doDump(aLevel, aIdt, std::cout);}
 	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const = 0;
-	virtual MIface* getLif(const char *aType) { return MDesSyncable_getLif(aType); }
-	virtual MIface* MDesSyncable_getLif(const char *aType) = 0;
+	virtual MIface* getLif(TIdHash aTid) { return MDesSyncable_getLif(aTid); }
+	virtual MIface* MDesSyncable_getLif(TIdHash aTid) = 0;
 	// Local
 	virtual void update() = 0;
 	virtual void confirm() = 0;
@@ -82,16 +91,19 @@ class MVert;
 class MDesCtxSpl : public MIface
 {
     public:
+	inline static constexpr std::string_view idStr() { return "MDesCtxSpl"sv;}
+	inline static constexpr TIdHash idHash() { return 0xb46422c03e7249cf;}
+    public:
 	using TCp = MNcpp<MDesCtxSpl, MDesCtxCsm>;
     public:
-	static const char* Type() { return "MDesCtxSpl";};
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MDesCtxSpl_Uid();}
 	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { return MDesCtxSpl_doDump(aLevel, aIdt, std::cout);}
-	virtual MIface* getLif(const char *aType) { return MDesCtxSpl_getLif(aType); }
+	virtual MIface* getLif(TIdHash aTid) { return MDesCtxSpl_getLif(aTid); }
 	virtual string MDesCtxSpl_Uid() const = 0;
 	virtual void MDesCtxSpl_doDump(int aLevel, int aIdt, ostream& aOs) const = 0;
-	virtual MIface* MDesCtxSpl_getLif(const char *aType) = 0;
+	virtual MIface* MDesCtxSpl_getLif(TIdHash aTid) = 0;
 	// Local
 	virtual string getSplId() const = 0;
 	/* @brief Gets head of suppliers stack, ref ds_dctx_dic_cs
@@ -112,10 +124,13 @@ class MDesCtxSpl : public MIface
 class MDesCtxCsm : public MIface
 {
     public:
+	inline static constexpr std::string_view idStr() { return "MDesCtxCsm"sv;}
+	inline static constexpr TIdHash idHash() { return 0x68950a80697af250;}
+    public:
 	using TCp = MNcpp<MDesCtxCsm, MDesCtxSpl>;
     public:
-	static const char* Type() { return "MDesCtxCsm";};
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MDesCtxCsm_Uid();}
 	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { return MDesCtxCsm_doDump(aLevel, aIdt, std::cout);}
 	virtual string MDesCtxCsm_Uid() const = 0;
@@ -134,14 +149,17 @@ class MDesCtxCsm : public MIface
 class MDesSpc: public MIface
 {
     public:
-	static const char* Type() { return "MDesSpc";};
+	inline static constexpr std::string_view idStr() { return "MDesSpc"sv;}
+	inline static constexpr TIdHash idHash() { return 0xcefe05cced514213;}
+    public:
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MDesSpc_Uid();}
 	virtual string MDesSpc_Uid() const = 0;
 	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { return MDesSpc_doDump(aLevel, aIdt, std::cout);}
 	virtual void MDesSpc_doDump(int aLevel, int aIdt, ostream& aOs) const = 0;
-	virtual MIface* getLif(const char *aType) { return MDesSpc_getLif(aType); }
-	virtual MIface* MDesSpc_getLif(const char *aType) = 0;
+	virtual MIface* getLif(TIdHash aTid) { return MDesSpc_getLif(aTid); }
+	virtual MIface* MDesSpc_getLif(TIdHash aTid) = 0;
 	// Local
 	/** @brief Provides service/client ID
 	 * */
@@ -153,8 +171,11 @@ class MDesSpc: public MIface
 class MDesManageable: public MIface
 {
     public:
-	static const char* Type() { return "MDesManageable";}
+	inline static constexpr std::string_view idStr() { return "MDesManageable"sv;}
+	inline static constexpr TIdHash idHash() { return 0x6be8efdac4a893ca;}
+    public:
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MDesManageable_Uid();}
 	virtual string MDesManageable_Uid() const = 0;
 	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override {}

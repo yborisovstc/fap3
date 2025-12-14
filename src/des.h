@@ -30,14 +30,15 @@
 class CpState: public ConnPointu
 {
     public:
-	static const char* Type() { return "CpState";};
+	inline static constexpr std::string_view idStr() { return "CpState"sv;}
+    public:
 	CpState(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
     protected:
 	// From Vertu
-	virtual void onConnected() override;
-	virtual void onDisconnected() override;
+	void onConnected() override;
+	void onDisconnected() override;
 	// From MUnit
-	virtual void onIfpInvalidated(MIfProv* aProv) override;
+	void onIfpInvalidated(MIfProv* aProv) override;
 	// Local
 	void notifyInpsUpdated();
 };
@@ -48,6 +49,8 @@ class CpState: public ConnPointu
  * */
 class CpStateInp: public CpState, public MDesInpObserver
 {
+    public:
+	inline static constexpr std::string_view idStr() { return "CpStateInp"sv;}
     protected:
 	/** @brief Ifc provider to redirect IRM request to owner.  Trans as owner require RQ context
 	 * for IRM algo. So this provider makes the context required
@@ -56,21 +59,20 @@ class CpStateInp: public CpState, public MDesInpObserver
 	    InpObsProvider(CpStateInp* aHost): mHost(aHost), mIfr(this, MDesInpObserver::Type())  {}
 	    // From MIfProvOwner
 	    virtual string MIfProvOwner_Uid() const override { return mHost->getUid<MIfProvOwner>() + "~Iop";}
-	    virtual MIface* MIfProvOwner_getLif(const char *aType) override;
-	    virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	    virtual MIface* MIfProvOwner_getLif(TIdHash aTid) override;
+	    virtual void resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq) override;
 	    virtual void onIfpDisconnected(MIfProv* aProv) override;
 	    virtual void onIfpInvalidated(MIfProv* aProv) override;
 	    CpStateInp* mHost;
 	    IfrNodeRoot mIfr;
 	};
     public:
-	static const char* Type() { return "CpStateInp";};
 	CpStateInp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
     public:
 	// From Node
-	virtual MIface* MNode_getLif(const char *aType) override;
+	virtual MIface* MNode_getLif(TIdHash aTid) override;
 	// From Unit.MIfProvOwner
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq) override;
 	// From MDesInpObserver
 	virtual string MDesInpObserver_Uid() const {return getUid<MDesInpObserver>();}
 	virtual void MDesInpObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
@@ -87,11 +89,15 @@ class CpStateInp: public CpState, public MDesInpObserver
 class CpStateInp: public CpState
 {
     public:
-	static const char* Type() { return "CpStateInp";};
+	inline static constexpr std::string_view idStr() { return "CpStateInp"sv;}
+    public:
 	CpStateInp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
-	virtual string parentName() const override { return Type(); }
+	virtual string parentName() const override { return string(idStr()); }
 	static vector<GUri> getParentsUri();
 	vector<GUri> parentsUri() const override { return getParentsUri(); }
+        // From MConnPoint
+        TIdHash idProvided() const override { return MDesInpObserver::idHash();}
+        TIdHash idRequired() const override { return MDVarGet::idHash();}
 };
 #endif // DES_CPS_IFC
 
@@ -102,8 +108,12 @@ class CpStateInp: public CpState
 class CpStateOutp: public CpState
 {
     public:
-	static const char* Type() { return "CpStateOutp";};
+	inline static constexpr std::string_view idStr() { return "CpStateOutp"sv;}
+    public:
 	CpStateOutp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+        // From MConnPoint
+        TIdHash idProvided() const override { return MDVarGet::idHash();}
+        TIdHash idRequired() const override { return MDesInpObserver::idHash();}
 };
 
 #else // DES_CPS_IFC
@@ -113,14 +123,18 @@ class CpStateOutp: public CpState
 class CpStateOutp: public CpState
 {
     public:
-	static const char* Type() { return "CpStateOutp";};
+	inline static constexpr std::string_view idStr() { return "CpStateOutp"sv;}
+    public:
 	static vector<GUri> getParentsUri();
 	CpStateOutp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
-	virtual string parentName() const override { return Type(); }
+	virtual string parentName() const override { return string(idStr()); }
 	vector<GUri> parentsUri() const override { return getParentsUri(); }
 	// From Vertu
 	virtual void onConnected() override;
 	virtual void onDisconnected() override;
+        // From MConnPoint
+        TIdHash idProvided() const override { return MDVarGet::idHash();}
+        TIdHash idRequired() const override { return MDesInpObserver::idHash();}
 };
 #endif // DES_CPS_IFC
 
@@ -130,8 +144,12 @@ class CpStateOutp: public CpState
 class CpStateMnodeInp: public CpState
 {
     public:
-	static const char* Type() { return "CpStateMnodeInp";};
+	inline static constexpr std::string_view idStr() { return "CpStateMnodeInp"sv;}
+    public:
 	CpStateMnodeInp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+        // From MConnPoint
+        TIdHash idProvided() const override;
+        TIdHash idRequired() const override;
 };
 
 /** @brief CpStateInp direct extender (extd as inp)
@@ -139,10 +157,11 @@ class CpStateMnodeInp: public CpState
 class ExtdStateInp : public Extd
 {
     public:
-	static const char* Type() { return "ExtdStateInp";};
+	inline static constexpr std::string_view idStr() { return "ExtdStateInp"sv;}
+    public:
 	static vector<GUri> getParentsUri();
 	ExtdStateInp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
-	virtual string parentName() const override { return Type(); }
+	virtual string parentName() const override { return string(idStr()); }
 	vector<GUri> parentsUri() const override { return getParentsUri(); }
 };
 
@@ -151,10 +170,11 @@ class ExtdStateInp : public Extd
 class ExtdStateOutp : public Extd
 {
     public:
-	static const char* Type() { return "ExtdStateOutp";};
+	inline static constexpr std::string_view idStr() { return "ExtdStateOutp"sv;}
+    public:
 	static vector<GUri> getParentsUri();
 	ExtdStateOutp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
-	virtual string parentName() const override { return Type(); }
+	virtual string parentName() const override { return string(idStr()); }
 	vector<GUri> parentsUri() const override { return getParentsUri(); }
 };
 
@@ -163,7 +183,8 @@ class ExtdStateOutp : public Extd
 class ExtdStateMnodeInp : public Extd
 {
     public:
-	static const char* Type() { return "ExtdStateMnodeInp";};
+	inline static constexpr std::string_view idStr() { return "ExtdStateMnodeInp"sv;}
+    public:
 	ExtdStateMnodeInp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 };
 
@@ -172,7 +193,8 @@ class ExtdStateMnodeInp : public Extd
 class ExtdStateMnodeOutp : public Extd
 {
     public:
-	static const char* Type() { return "ExtdStateMnodeOutp";};
+	inline static constexpr std::string_view idStr() { return "ExtdStateMnodeOutp"sv;}
+    public:
 	ExtdStateMnodeOutp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 };
 
@@ -182,9 +204,10 @@ class ExtdStateMnodeOutp : public Extd
 class ExtdStateOutpI : public ExtdStateOutp, public MDVarGet, protected MDesInpObserver
 {
     public:
-	static const char* Type() { return "ExtdStateOutpI";};
+	inline static constexpr std::string_view idStr() { return "ExtdStateOutpI"sv;}
+    public:
 	ExtdStateOutpI(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
-	virtual MIface* MNode_getLif(const char *aType) override;
+	virtual MIface* MNode_getLif(TIdHash aTid) override;
 	// From MDesInpObserver
 	virtual string MDesInpObserver_Uid() const {return getUid<MDesInpObserver>();}
 	virtual void MDesInpObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
@@ -194,7 +217,7 @@ class ExtdStateOutpI : public ExtdStateOutp, public MDVarGet, protected MDesInpO
 	virtual MIface* DoGetDObj(const char *aName) override { return nullptr;}
 	virtual const DtBase* VDtGet(const string& aType) override;
 	virtual string VarGetIfid() const override;
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq) override;
     protected:
 	MDesInpObserver* mMDesInpObserverPtr = nullptr;
 	MDVarGet* mMDVarGetPtr = nullptr;
@@ -208,8 +231,12 @@ class ExtdStateOutpI : public ExtdStateOutp, public MDVarGet, protected MDesInpO
 class CpStateMnodeOutp: public CpState
 {
     public:
-	static const char* Type() { return "CpStateMnodeOutp";};
+	inline static constexpr std::string_view idStr() { return "CpStateMnodeOutp"sv;}
+    public:
 	CpStateMnodeOutp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+        // From MConnPoint
+        TIdHash idProvided() const override;
+        TIdHash idRequired() const override;
 };
 
 
@@ -218,13 +245,15 @@ class CpStateMnodeOutp: public CpState
 class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesInpObserver, public MDVarGet, public MDVarSet, public Cnt::Host
 {
     public:
+	inline static constexpr std::string_view idStr() { return "State"sv;}
+    public:
 	/** @brief Pseudo content */
 	class SCont : public MContent {
 	    public:
 	    SCont(State& aHost, const string& aName) : mName(aName), mHost(aHost), mUpdated(false) {}
 	    // From MContent
-	    virtual string MContent_Uid() const override { return mHost.getCntUid(mName, MContent::Type());}
-	    virtual MIface* MContent_getLif(const char *aType) override { return nullptr;}
+	    virtual string MContent_Uid() const override { return mHost.getCntUid(mName, string(MContent::idStr()));}
+	    virtual MIface* MContent_getLif(TIdHash aTid) override { return nullptr;}
 	    virtual void MContent_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
 	    virtual string contName() const override { return mName;}
 	    public:
@@ -243,28 +272,27 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 	    virtual bool setData(const string& aData) override;
 	};
     public:
-	static const char* Type() { return "State";};
 	static vector<GUri> getParentsUri();
 	State(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual ~State();
 	// From Node.MIface
-	virtual MIface* MNode_getLif(const char *aType) override;
+	virtual MIface* MNode_getLif(TIdHash aTid) override;
 	// From Node
-	virtual MIface* MOwner_getLif(const char *aType) override;
-	virtual string parentName() const override { return Type(); }
+	virtual MIface* MOwner_getLif(TIdHash aTid) override;
+	virtual string parentName() const override { return string(idStr()); }
 	vector<GUri> parentsUri() const override { return getParentsUri(); }
 	// From Unit.MIfProvOwner
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq) override;
 	// From Node.MContentOwner
 	virtual void onContentChanged(const MContent* aCont) override;
 	// From MVert
-	virtual MIface *MVert_getLif(const char *aType) override;
+	virtual MIface *MVert_getLif(TIdHash aTid) override;
 	virtual bool isCompatible(MVert* aPair, bool aExt) override;
 	virtual TDir getDir() const override { return EOut;}
 	// From MDesSyncable
 	virtual string MDesSyncable_Uid() const override {return getUid<MDesSyncable>();}
 	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
-	virtual MIface* MDesSyncable_getLif(const char *aType) override { return nullptr; }
+	virtual MIface* MDesSyncable_getLif(TIdHash aTid) override { return nullptr; }
 	virtual void update() override;
 	virtual void confirm() override;
 	virtual void setUpdated() override;
@@ -276,9 +304,9 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 	virtual void MDesInpObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
 	virtual void onInpUpdated() override;
 	// From MConnPoint
-	virtual string MConnPoint_Uid() const {return getUid<MDesInpObserver>();}
-	virtual string provName() const override;
-	virtual string reqName() const override;
+	string MConnPoint_Uid() const override {return getUid<MDesInpObserver>();}
+        TIdHash idProvided() const override;
+        TIdHash idRequired() const override;
 	// From Cnt.Host
 	virtual string getCntUid(const string& aName, const string& aIfName) const override { return getUid(aName, aIfName);}
 	virtual MContentOwner* cntOwner() override { return this;}
@@ -306,7 +334,7 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 	/** @brief Notifies dependencies of input updated */
 	void NotifyInpsUpdated();
 	// From MNode
-	virtual MIface* MOwned_getLif(const char *aType) override;
+	virtual MIface* MOwned_getLif(TIdHash aTid) override;
 	// From MUnit
 	virtual void onIfpInvalidated(MIfProv* aProv) override;
 	// From Vertu
@@ -341,13 +369,15 @@ class State: public Vertu, public MConnPoint, public MDesSyncable, public MDesIn
 class Const: public Vertu, public MConnPoint, public MDVarGet, public Cnt::Host
 {
     public:
+	inline static constexpr std::string_view idStr() { return "Const"sv;}
+    public:
 	/** @brief Pseudo content */
 	class SCont : public MContent {
 	    public:
 	    SCont(Const& aHost, const string& aName) : mName(aName), mHost(aHost), mUpdated(false) {}
 	    // From MContent
-	    virtual string MContent_Uid() const override { return mHost.getCntUid(mName, MContent::Type());}
-	    virtual MIface* MContent_getLif(const char *aType) override { return nullptr;}
+	    virtual string MContent_Uid() const override { return mHost.getCntUid(mName, string(MContent::idStr()));}
+	    virtual MIface* MContent_getLif(TIdHash aTid) override { return nullptr;}
 	    virtual void MContent_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
 	    virtual string contName() const override { return mName;}
 	    public:
@@ -366,28 +396,27 @@ class Const: public Vertu, public MConnPoint, public MDVarGet, public Cnt::Host
 	    virtual bool setData(const string& aData) override;
 	};
     public:
-	static const char* Type() { return "Const";};
 	static vector<GUri> getParentsUri();
 	Const(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual ~Const();
 	// From Node.MIface
-	virtual MIface* MNode_getLif(const char *aType) override;
+	virtual MIface* MNode_getLif(TIdHash aTid) override;
 	// From Node
-	virtual MIface* MOwner_getLif(const char *aType) override;
-	virtual string parentName() const override { return Type(); }
+	virtual MIface* MOwner_getLif(TIdHash aTid) override;
+	virtual string parentName() const override { return string(idStr()); }
 	vector<GUri> parentsUri() const override { return getParentsUri(); }
 	// From Unit.MIfProvOwner
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq) override;
 	// From Node.MContentOwner
 	virtual void onContentChanged(const MContent* aCont) override;
 	// From MVert
-	virtual MIface *MVert_getLif(const char *aType) override;
+	virtual MIface *MVert_getLif(TIdHash aTid) override;
 	virtual bool isCompatible(MVert* aPair, bool aExt) override;
 	virtual TDir getDir() const override { return EOut;}
 	// From MConnPoint
-	virtual string MConnPoint_Uid() const {return getUid<MDesInpObserver>();}
-	virtual string provName() const override;
-	virtual string reqName() const override;
+	string MConnPoint_Uid() const override {return getUid<MDesInpObserver>();}
+        TIdHash idProvided() const override;
+        TIdHash idRequired() const override;
 	// From Cnt.Host
 	virtual string getCntUid(const string& aName, const string& aIfName) const override { return getUid(aName, aIfName);}
 	virtual MContentOwner* cntOwner() override { return this;}
@@ -411,7 +440,7 @@ class Const: public Vertu, public MConnPoint, public MDVarGet, public Cnt::Host
 	/** @brief Notifies dependencies of input updated */
 	void NotifyInpsUpdated();
 	// From MNode
-	virtual MIface* MOwned_getLif(const char *aType) override;
+	virtual MIface* MOwned_getLif(TIdHash aTid) override;
 	// From MUnit
 	virtual void onIfpInvalidated(MIfProv* aProv) override;
 	// From Vertu
@@ -437,22 +466,23 @@ class Const: public Vertu, public MConnPoint, public MDVarGet, public Cnt::Host
 class Des: public Syst, public MDesSyncable, public MDesObserver, public MDesAdapter, public MDesManageable
 {
     public:
+	inline static constexpr std::string_view idStr() { return "Des"sv;}
+    public:
     //using TScblReg = list<MDesSyncable*>;
     using TScblReg = vector<MDesSyncable*>;
     public:
-	static const char* Type() { return "Des";};
 	Des(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From Node.MIface
-	virtual MIface* MNode_getLif(const char *aType) override;
+	virtual MIface* MNode_getLif(TIdHash aTid) override;
 	// From Node
-	virtual MIface* MOwner_getLif(const char *aType) override;
+	virtual MIface* MOwner_getLif(TIdHash aTid) override;
 	virtual void onOwnedAttached(MOwned* aOwned) override;
 	virtual void onOwnedDetached(MOwned* aOwned) override;
-	virtual MIface* MOwned_getLif(const char *aType);
+	virtual MIface* MOwned_getLif(TIdHash aTid);
 	// From MDesSyncable
 	virtual string MDesSyncable_Uid() const override {return getUid<MDesSyncable>();}
 	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override;
-	virtual MIface* MDesSyncable_getLif(const char *aType) override { return nullptr; }
+	virtual MIface* MDesSyncable_getLif(TIdHash aTid) override { return nullptr; }
 	virtual void update() override;
 	virtual void confirm() override;
 	virtual void setUpdated() override;
@@ -465,7 +495,7 @@ class Des: public Syst, public MDesSyncable, public MDesObserver, public MDesAda
 	virtual void onActivated(MDesSyncable* aComp) override;
 	virtual void onUpdated(MDesSyncable* aComp) override;
 	// From Unit.MIfProvOwner
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq) override;
 	// From MDesManageable
 	virtual string MDesManageable_Uid() const override {return getUid<MDesManageable>();}
 	virtual void pauseDes() override;
@@ -507,24 +537,25 @@ class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver
       public MDesManageable, public MDesAdapter
 {
     public:
+	inline static constexpr std::string_view idStr() { return "ADes"sv;}
+    public:
         //using TScblReg = list<MDesSyncable*>;
         using TScblReg = vector<MDesSyncable*>;
 	using TAgtCp = NCpOnp<MAgent, MAhost>;  /*!< Agent conn point */
 	using TObserverCp = NCpOnp<MObserver, MObservable>;
     public:
-	static const char* Type() { return "ADes";};
 	ADes(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual ~ADes();
 	// From Node.MIface
-	virtual MIface* MNode_getLif(const char *aType) override;
+	virtual MIface* MNode_getLif(TIdHash aTid) override;
 	// From Node
-	virtual MIface* MOwned_getLif(const char *aType);
+	virtual MIface* MOwned_getLif(TIdHash aTid);
 	// From Unit.MIfProvOwner
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq) override;
 	// From MDesSyncable
 	virtual string MDesSyncable_Uid() const override {return getUid<MDesSyncable>();}
 	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override;
-	virtual MIface* MDesSyncable_getLif(const char *aType) override { return nullptr; }
+	virtual MIface* MDesSyncable_getLif(TIdHash aTid) override { return nullptr; }
 	virtual void update() override;
 	virtual void confirm() override;
 	virtual void setUpdated() override;
@@ -538,10 +569,10 @@ class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver
 	virtual void MDesObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
 	// From MAgent
 	virtual string MAgent_Uid() const override {return getUid<MAgent>();}
-	virtual MIface* MAgent_getLif(const char *aType) override;
+	virtual MIface* MAgent_getLif(TIdHash aTid) override;
 	// From MObserver
 	virtual string MObserver_Uid() const  override {return getUid<MObserver>();}
-	virtual MIface* MObserver_getLif(const char *aType) override;
+	virtual MIface* MObserver_getLif(TIdHash aTid) override;
 	virtual void onObsOwnerAttached(MObservable* aObl);
 	virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override;
 	virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override;
@@ -592,12 +623,13 @@ class ADes: public Unit, public MAgent, public MDesSyncable, public MDesObserver
 class DesLauncher: public Des, public MLauncher
 {
     public:
-	static const char* Type() { return "DesLauncher";};
+	inline static constexpr std::string_view idStr() { return "DesLauncher"sv;}
+    public:
 	DesLauncher(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From Node.MIface
-	virtual MIface* MNode_getLif(const char *aType) override;
+	virtual MIface* MNode_getLif(TIdHash aTid) override;
 	// From MOwned
-	virtual MIface* MOwned_getLif(const char *aType) override;
+	virtual MIface* MOwned_getLif(TIdHash aTid) override;
 	// From MLauncher
 	virtual string MLauncher_Uid() const override {return getUid<MLauncher>();}
 	virtual bool Run(int aCount = 0, int aIdleCount = 0) override;
@@ -620,7 +652,8 @@ class DesLauncher: public Des, public MLauncher
 class DesAs: public DesLauncher
 {
     public:
-	static const char* Type() { return "DesAs";};
+	inline static constexpr std::string_view idStr() { return "DesAs"sv;}
+    public:
 	DesAs(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MLauncher
 	virtual bool Run(int aCount = 0, int aIdleCount = 0) override;
@@ -641,7 +674,8 @@ class DesAs: public DesLauncher
 class DesAs2: public DesLauncher
 {
     public:
-	static const char* Type() { return "DesAs2";};
+	inline static constexpr std::string_view idStr() { return "DesAs2"sv;}
+    public:
 	DesAs2(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MLauncher
 	virtual bool Run(int aCount = 0, int aIdleCount = 0) override;
@@ -726,18 +760,18 @@ class IDesEmbHost
 class DesEIbb: public MDesInpObserver, public MDesSyncable
 {
     public:
-	DesEIbb(MNode* aHost, const string& aInpUri, const string& aCpType = CpStateInp::Type()):
+	DesEIbb(MNode* aHost, const string& aInpUri, const string_view& aCpType = CpStateInp::idStr()):
 	    mHost(aHost), mUri(aInpUri), mCpType(aCpType), mUpdated(false), mActivated(true),
 	    mChanged(false), mValid(false) { eHost()->registerIb(this);}
 	string getUri() const { return mUri;}
 	// From MDesInpObserver
 	virtual void onInpUpdated() override { setActivated();}
-	virtual string MDesInpObserver_Uid() const override { return MDesInpObserver::Type();}
+	virtual string MDesInpObserver_Uid() const override { return string(MDesInpObserver::idStr());}
 	virtual void MDesInpObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
 	// From MDesSyncable
-	virtual string MDesSyncable_Uid() const override {return MDesSyncable::Type();} 
+	virtual string MDesSyncable_Uid() const override {return string(MDesSyncable::idStr());} 
 	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
-	virtual MIface* MDesSyncable_getLif(const char *aType) override { return nullptr; }
+	virtual MIface* MDesSyncable_getLif(TIdHash aTid) override { return nullptr; }
 	virtual void update() override { mChanged = false;}
 	virtual void setUpdated() override { mUpdated = true; sHost()->setUpdated();}
 	virtual void setActivated() override { mActivated = true; auto shost = sHost(); if (shost) shost->setActivated();}
@@ -773,7 +807,7 @@ class DesEIbb: public MDesInpObserver, public MDesSyncable
 template <typename T> class DesEIbt: public DesEIbb
 {
     public:
-	DesEIbt(MNode* aHost, const string& aInpUri, const string& aCpType = CpStateInp::Type()): DesEIbb(aHost, aInpUri, aCpType) {}
+	DesEIbt(MNode* aHost, const string& aInpUri, const string_view& aCpType = CpStateInp::idStr()): DesEIbb(aHost, aInpUri, aCpType) {}
 	// From MDesSyncable
 	virtual void confirm() override;
 	// Local
@@ -850,7 +884,7 @@ class DesEIbMnode: public DesEIbt<MNode*>
     public:
 	using TP = DesEIbb;
 	using TPT = DesEIbt<MNode*>;
-	DesEIbMnode(MNode* aHost, const string& aUri): DesEIbt<MNode*>(aHost, aUri, CpStateMnodeInp::Type())
+	DesEIbMnode(MNode* aHost, const string& aUri): DesEIbt<MNode*>(aHost, aUri, CpStateMnodeInp::idStr())
 	{ TPT::mCdt = nullptr; TPT::mUdt = nullptr; }
 	// From MDesSyncable
 	virtual void update() override;
@@ -860,11 +894,11 @@ class DesEIbMnode: public DesEIbt<MNode*>
  * */
 class DesEOstb: public MDVarGet {
     public:
-	DesEOstb(MNode* aHost, const string& aCpUri, const string& aCpType = CpStateOutp::Type()):
+	DesEOstb(MNode* aHost, const string& aCpUri, const string_view& aCpType = CpStateOutp::idStr()):
 	    mHost(aHost), mCpUri(aCpUri), mCpType(aCpType) { eHost()->registerOst(this);}
 	string getCpUri() const { return mCpUri;}
 	// From MDVarGet
-	virtual string MDVarGet_Uid() const override {return MDVarGet::Type();}
+	virtual string MDVarGet_Uid() const override {return string(MDVarGet::idStr());}
     public:
 	void NotifyInpsUpdated();
     protected:
@@ -969,20 +1003,21 @@ class DesEParb
 class DesCtxSpl : public Des, public MDesCtxSpl
 {
     public:
+	inline static constexpr std::string_view idStr() { return "DesCtxSpl"sv;}
+    public:
 	using TSplCp = NCpOmnp<MDesCtxSpl, MDesCtxCsm>;  /*!< Supplier connpoint */
     public:
-	static const char* Type() { return "DesCtxSpl";};
 	DesCtxSpl(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From Node.MIface
-	virtual MIface* MNode_getLif(const char *aType) override;
+	virtual MIface* MNode_getLif(TIdHash aTid) override;
 	// From MNode.MOwned
-	virtual MIface* MOwned_getLif(const char *aType) override;
+	virtual MIface* MOwned_getLif(TIdHash aTid) override;
 	// From Unit.MIfProvOwner
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq) override;
 	// From MDesCtxSpl
 	virtual string MDesCtxSpl_Uid() const override {return getUid<MDesCtxSpl>();}
 	virtual void MDesCtxSpl_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
-	virtual MIface* MDesCtxSpl_getLif(const char *aType) override;
+	virtual MIface* MDesCtxSpl_getLif(TIdHash aTid) override;
 	// Local
 	virtual string getSplId() const { return name(); }
 	virtual MDesCtxSpl* getSplsHead() override;
@@ -1002,15 +1037,17 @@ class DesCtxSpl : public Des, public MDesCtxSpl
 class DesCtxCsm : public Des, public MDesCtxCsm
 {
     public:
+	inline static constexpr std::string_view idStr() { return "DesCtxCsm"sv;}
+    public:
 	using TCsmCp = NCpOnp<MDesCtxCsm, MDesCtxSpl>;
     public:
 	static const char* Type() { return "DesCtxCsm";};
 	DesCtxCsm(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From Node.MIface
-	virtual MIface* MNode_getLif(const char *aType) override;
+	virtual MIface* MNode_getLif(TIdHash aTid) override;
 #ifdef SELF_IFR
 	// From Unit.MIfProvOwner
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq) override;
 #endif
 	// From MDesCtxCsm
 	virtual string MDesCtxCsm_Uid() const override {return getUid<MDesCtxCsm>();}
@@ -1041,7 +1078,7 @@ class DesInpDemux : public Des
 	static const char* Type() { return "DesInpDemux";};
 	DesInpDemux(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From Unit.MIfProvOwner
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq) override;
 	// From MDesSyncable
 	virtual void confirm() override;
     protected:

@@ -11,15 +11,16 @@
 class AMntp : public Node, public MMntp
 {
     public:
-	static const char* Type() { return "AMntp";};
+	inline static constexpr std::string_view idStr() { return "AMntp"sv;}
+    public:
 	AMntp(const string &aType, const string &aName, MEnv* aEnv);
 	virtual ~AMntp();
 	// From MMntp
 	virtual string MMntp_Uid() const override {return getUid<MMntp>();}
-	virtual MIface* MMntp_getLif(const char *aType) override {return nullptr;}
+	virtual MIface* MMntp_getLif(TIdHash aTid) override {return nullptr;}
 	virtual MNode* root() const override;
 	// From Node
-	virtual MIface* MNode_getLif(const char *aType) override;
+	virtual MIface* MNode_getLif(TIdHash aTid) override;
 	// From Node.MContentOwner
 	virtual void onContentChanged(const MContent* aCont) override;
     protected:

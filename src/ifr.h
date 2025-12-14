@@ -21,10 +21,10 @@ class IfrNode : public NTnnp<MIfProv, MIfReq>, public MIfProv, protected MIfReq
 	IfrNode(MIfProvOwner* aOwner): NTnnp<MIfProv, MIfReq>(this, this), mValid(false), mOwner(aOwner) {}
 	virtual ~IfrNode() {}
 	// From MIfProv
-	virtual string MIfProv_Uid() const override { return mOwner->Uid() + Ifu::KUidSepIc + MIfProv::Type();}
-	virtual string name() const override;
+	virtual string MIfProv_Uid() const override { return mOwner->Uid() + Ifu::KUidSepIc + string(MIfProv::idStr());}
+	virtual TIdHash ifId() const override;
 	virtual void MIfProv_doDump(int aLevel, int aIdt, ostream& aOs) const override;
-	virtual void resolve(const string& aName) override;
+	virtual void resolve(TIdHash aTid) override;
 	virtual bool isValid() const override { return mValid;}
 	virtual void setValid(bool aValid) override;
 	virtual MIface* iface() override { return nullptr;}
@@ -32,7 +32,7 @@ class IfrNode : public NTnnp<MIfProv, MIfReq>, public MIfProv, protected MIfReq
 	virtual const MIfProvOwner* owner() const override { return mOwner;}
 	virtual MIfProv* findIface(const MIface* aIface) override;
 	// From MIfReq
-	virtual string MIfReq_Uid() const override { return mOwner->Uid() + Ifu::KUidSepIc + MIfReq::Type();}
+	virtual string MIfReq_Uid() const override { return mOwner->Uid() + Ifu::KUidSepIc + string(MIfReq::idStr());}
 	virtual void MIfReq_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	virtual bool isRequestor(MIfProvOwner* aOwner, int aPos) const override;
 	virtual const MIfProvOwner* rqOwner() const override { return mOwner;}
@@ -59,9 +59,9 @@ class IfrLeaf : public NCpOnp<MIfProv, MIfReq>, public MIfProv
 	IfrLeaf(MIfProvOwner* aOwner, MIface* aIface): NCpOnp<MIfProv, MIfReq>(this), mValid(true), mOwner(aOwner), mIface(aIface) {}
 	virtual ~IfrLeaf() {}
 	// From MIfProv
-	virtual string MIfProv_Uid() const override { return mOwner->Uid() + Ifu::KUidSepIc + MIfProv::Type();}
-	virtual string name() const override;
-	virtual void resolve(const string& aName) override {}
+	virtual string MIfProv_Uid() const override { return mOwner->Uid() + Ifu::KUidSepIc + string(MIfProv::idStr());}
+	virtual TIdHash ifId() const override;
+	virtual void resolve(TIdHash aTid) override {}
 	virtual MIface* iface() override { return mIface;}
 	virtual TIfaces* ifaces() override { return nullptr;}
 	virtual const MIfProvOwner* owner() const override { return mOwner;}
@@ -81,9 +81,9 @@ class IfrLeaf : public NCpOnp<MIfProv, MIfReq>, public MIfProv
 class IfrNodeRoot : public IfrNode
 {
     public:
-	IfrNodeRoot(MIfProvOwner* aOwner, const string& aIfName): IfrNode(aOwner), mName(aIfName), mIcacheValid(false) {};
+	IfrNodeRoot(MIfProvOwner* aOwner, TIdHash aIfid): IfrNode(aOwner), mIfid(aIfid), mIcacheValid(false) {};
 	// From MIfProv
-	virtual string name() const override { return mName;}
+	virtual TIdHash ifId() const override { return mIfid;}
 	virtual void setValid(bool aValid) override;
 	virtual TIfaces* ifaces() override;
 	virtual void MIfProv_doDump(int aLevel, int aIdt, ostream& aOs) const override;
@@ -93,7 +93,7 @@ class IfrNodeRoot : public IfrNode
 	void updateIcache();
 	void cleanIcache();
     protected:
-	string mName;
+	TIdHash mIfid;
 	TIfaces mIcache;  /*!< Cache of ifaces, ref ds_irm_cr */
 	bool mIcacheValid;
 };

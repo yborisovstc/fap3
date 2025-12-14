@@ -15,14 +15,17 @@ using namespace std;
 class MVert: public MCIface
 {
     public:
+	inline static constexpr std::string_view idStr() { return "MVert"sv;}
+	inline static constexpr TIdHash idHash() { return 0xedc4d46b41b2bbeb;}
+    public:
 	enum TDir { ERegular, EInp, EOut };
     public:
-	static const char* Type() { return "MVert";}
 	// From MCIface 
+	TIdHash id() const override { return idHash();}
 	virtual string MVert_Uid() const = 0;
 	virtual string Uid() const override { return MVert_Uid();}
-	virtual MIface *getLif(const char *aType) { return MVert_getLif(aType);}
-	virtual MIface *MVert_getLif(const char *aType) = 0;
+	virtual MIface *getLif(TIdHash aTid) { return MVert_getLif(aTid);}
+	virtual MIface *MVert_getLif(TIdHash aTid) = 0;
 	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { return MVert_doDump(aLevel, aIdt, std::cout);}
 	virtual void MVert_doDump(int aLevel, int aIdt, ostream& aOs) const = 0;
 	/** @brief Indicates if connnectable is compatible */

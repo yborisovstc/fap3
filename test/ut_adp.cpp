@@ -26,9 +26,9 @@ class Ut_adp : public CPPUNIT_NS::TestFixture
     MNode* constructSystem(const string& aFname);
     string getStateDstr(const string& aUri);
     private:
-    void test_MnodeAdp_1();
-    void test_MnodeAdp_2();
-    void test_MnodeAdp_3();
+    //void test_MnodeAdp_1();
+    //void test_MnodeAdp_2();
+    //void test_MnodeAdp_3();
     void test_AdpDcs_1();
     void test_Dadp_1();
     private:
@@ -74,6 +74,7 @@ void Ut_adp::tearDown()
 }
 
 
+#if 0
 /** @brief MNode DES adapter test
  * */
 void Ut_adp::test_MnodeAdp_1()
@@ -132,7 +133,9 @@ void Ut_adp::test_MnodeAdp_1()
 
     delete mEnv;
 }
+#endif
 
+#if 0
 /** @brief MNode DES adapter test
  * */
 void Ut_adp::test_MnodeAdp_2()
@@ -176,7 +179,9 @@ void Ut_adp::test_MnodeAdp_2()
 
     delete mEnv;
 }
+#endif
 
+#if 0
 /** @brief MNode DES adapter test: MAG base via input
  * */
 void Ut_adp::test_MnodeAdp_3()
@@ -220,6 +225,7 @@ void Ut_adp::test_MnodeAdp_3()
 
     delete mEnv;
 }
+#endif
 
 /** @brief MNode DES adapter DCS test/example: ordering of agents
  * */

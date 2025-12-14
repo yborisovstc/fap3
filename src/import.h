@@ -18,7 +18,8 @@ using namespace std;
 class Import : public Node
 {
     public:
-	static const char* Type() { return "Import";}
+	inline static constexpr std::string_view idStr() { return "Import"sv;}
+    public:
 	Import(const string &aType, const string &aName, MEnv* aEnv);
 	virtual ~Import();
 	// From MNode

@@ -15,7 +15,7 @@ class Cont2 : public MCont2
 	virtual ~Cont2();
 	// From MCont2
 	virtual string MCont2_Uid() const override { return string();}
-	virtual MIface* MCont2_getLif(const char *aType) override { return nullptr;}
+	virtual MIface* MCont2_getLif(TIdHash aTid) override { return nullptr;}
 	virtual bool getData(string& aData) const override;
 	virtual bool setData(const string& aData) override;
 	virtual MContNode2* node() override { return nullptr;}
@@ -40,7 +40,7 @@ class ContNode2 : public NTnip<MCont2, MContOwner2>, public MCont2, public MCont
 	virtual bool setData(const string& aData) override;
 	virtual MContNode2* node() override { return this;}
 	virtual const MContNode2* node() const override { return this;}
-	virtual MIface* MCont2_getLif(const char *aType) override { return nullptr;}
+	virtual MIface* MCont2_getLif(TIdHash aTid) override { return nullptr;}
 	virtual void MCont2_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	// From MContNode
 	virtual string MContNode2_Uid() const override { return string();}
@@ -50,7 +50,7 @@ class ContNode2 : public NTnip<MCont2, MContOwner2>, public MCont2, public MCont
 	virtual MCont2* at(const string& aName) const override;
 	virtual MCont2* getContent(const CUri& aUri) const override;
 	// From MContOwner2
-	virtual string MContOwner2_Uid() const override { return MContOwner2::Type();}
+	virtual string MContOwner2_Uid() const override { return string(MContOwner2::idStr());}
 	virtual bool onContChanged(MCont2* aCnt) override;
 	// From NTnip
 	virtual bool getId(string& aId) const override { aId = mId; return true;}
@@ -69,7 +69,7 @@ class ContLeaf2 : public NCpOnp<MCont2, MContOwner2>, public MCont2
 	virtual ~ContLeaf2();
 	// From MCont2
 	virtual string MCont2_Uid() const override { return string();}
-	virtual MIface* MCont2_getLif(const char *aType) override { return nullptr;}
+	virtual MIface* MCont2_getLif(TIdHash aTid) override { return nullptr;}
 	virtual bool getData(string& aData) const override { aData = mData; return true;}
 	virtual bool setData(const string& aData) override { mData = aData; return true;}
 	virtual MContNode2* node() override { return nullptr;}

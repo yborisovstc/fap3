@@ -28,10 +28,13 @@ class GUri;
 class MEnv : public MIface
 {
     public:
-	static const char* Type() { return "MEnv";};
+	inline static constexpr std::string_view idStr() { return "MEnv"sv;}
+	inline static constexpr TIdHash idHash() { return 0x681193193e80f18e;}
+    public:
 	virtual ~MEnv() {}
     public:
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MEnv_Uid();}
 	virtual string MEnv_Uid() const = 0;
 	virtual MIface* getLif(const char *aType) { return MEnv_getLif(aType);}

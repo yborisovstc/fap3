@@ -36,7 +36,7 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 		AdpIap(MNode& aHost, THandler aHandler): mHost(aHost), mHandler(aHandler){}
 		// From MDesInpObserver
 		virtual void onInpUpdated() override { mHandler();}
-		virtual string MDesInpObserver_Uid() const {return MDesInpObserver::Type();}
+		virtual string MDesInpObserver_Uid() const {return string(MDesInpObserver::idStr());}
 		virtual void MDesInpObserver_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
 	    protected:
 		MNode& mHost;
@@ -53,8 +53,8 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 	    public:
 		AdpPap(MNode& aHost, THandler aHandler): mHost(aHost), mHandler(aHandler){}
 		// From MDVarGet
-		virtual string MDVarGet_Uid() const override {return MDVarGet::Type();}
-		virtual MIface* DoGetDObj(const char *aName) override { return nullptr;}
+		virtual string MDVarGet_Uid() const override {return string(MDVarGet::idStr());}
+                virtual MIface* DoGetDObj(const char *aName)  override { return nullptr;}
 		virtual string VarGetIfid() const override {return Sdata<T>::TypeSig();}
 		virtual const DtBase* VDtGet(const string& aType) { return mHandler();}
 	    protected:
@@ -73,7 +73,7 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 		AdpPapB(const AdpPapB& aSrc): mHandler(aSrc.mHandler) {}
 		AdpPapB(THandler aHandler): mHandler(aHandler){}
 		// From MDVarGet
-		virtual string MDVarGet_Uid() const {return MDVarGet::Type();}
+		virtual string MDVarGet_Uid() const {return string(MDVarGet::idStr());}
 		virtual MIface* DoGetDObj(const char *aName) override { return nullptr;}
 		virtual string VarGetIfid() const override {return T::TypeSig();}
 		virtual const DtBase* VDtGet(const string& aType) { return mHandler();}
@@ -88,8 +88,8 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 		    AdpMagObs(T* aHost): mHost(aHost), mOcp(this) {}
 		    virtual ~AdpMagObs() { }
 		    // From MObserver
-		    virtual string MObserver_Uid() const {return MObserver::Type();}
-		    virtual MIface* MObserver_getLif(const char *aName) override { return nullptr;}
+		    virtual string MObserver_Uid() const {return string(MObserver::idStr());}
+		    virtual MIface* MObserver_getLif(TIdHash aTid) override { return nullptr;}
                     virtual void onObsOwnerAttached(MObservable* aObl) override {}
 		    virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override {
 			mHost->onMagOwnedAttached(aObl, aOwned);
@@ -114,20 +114,20 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 	AAdp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual ~AAdp();
 	// From Base
-	virtual MIface* MNode_getLif(const char *aName) override;
+	virtual MIface* MNode_getLif(TIdHash aTid) override;
 	// From MUnit
 	// From Unit.MIfProvOwner
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq) override;
 	// From MAgent
 	virtual string MAgent_Uid() const override {return getUid<MAgent>();}
-	virtual MIface* MAgent_getLif(const char *aName) override;
+	virtual MIface* MAgent_getLif(TIdHash aTid) override;
 	// From MDVarGet
 	virtual MIface* DoGetDObj(const char *aName) override { return nullptr;}
 	virtual string VarGetIfid() const override {return string();}
 	// From MDesSyncable
 	virtual string MDesSyncable_Uid() const override {return getUid<MDesSyncable>();}
 	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
-	virtual MIface* MDesSyncable_getLif(const char *aType) override { return nullptr; }
+	virtual MIface* MDesSyncable_getLif(TIdHash aTid) override { return nullptr; }
 	virtual void update() override;
 	virtual void confirm() override;
 	virtual bool isActive() const override { return false;}
@@ -151,7 +151,7 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 	// From MDVarGet
 	virtual string MDVarGet_Uid() const {return getUid<MDVarGet>();}
 	// From MObserver
-	virtual MIface* MObserver_getLif(const char *aType) override;
+	virtual MIface* MObserver_getLif(TIdHash aTid) override;
 	// From Node.MOwned
 	virtual void onOwnerAttached() override;
     protected:
@@ -208,14 +208,15 @@ class AAdp: public Unit, public MDesSyncable, public MDesObserver, public MDesIn
 class AMnodeAdp : public AAdp
 {
     public:
+	inline static constexpr std::string_view idStr() { return "AMnodeAdp"sv;}
+    public:
 	using TCmpNames = Vector<string>;
     public:
-	static const char* Type() { return "AMnodeAdp";};
 	AMnodeAdp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MDesSyncable
 	virtual void confirm() override;
 	// From Unit.MIfProvOwner
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq) override;
     protected:
 	const DtBase* GetCompsCount();
 	const DtBase* GetCompNames();
@@ -254,10 +255,11 @@ class AMnodeAdp : public AAdp
 class AMelemAdp : public AAdp
 {
     public:
-	static const char* Type() { return "AMelemAdp";};
+	inline static constexpr std::string_view idStr() { return "AMelemAdp"sv;}
+    public:
 	AMelemAdp(const string& aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From Unit.MIfProvOwner
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq) override;
     protected:
 	void ApplyMut();
 	void OnInpMut();
@@ -283,20 +285,22 @@ class AMelemAdp : public AAdp
 class DAdp : public Des, public IDesEmbHost
 {
     public:
+	inline static constexpr std::string_view idStr() { return "DAdp"sv;}
+    public:
 	// TODO intro "hard link" instead of MLink (w/o conn, disconn)
 	class MagLink : public MLink {
 	    public:
 		MagLink(DAdp* aHost): mHost(aHost) {}
 		// From MLink
 		virtual string MLink_Uid() const { return mHost->getUid<MLink>();}
-		virtual MIface* MLink_getLif(const char *aType) override;
+		virtual MIface* MLink_getLif(TIdHash aTid) override;
 		virtual void MLink_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
 		virtual bool connect(MNode* aPair) override { return false;}
 		virtual bool disconnect(MNode* aPair) override { return false;}
 		virtual MNode* pair() override { return mHost->mMag; }
 	    private:
-		template<class T> MIface* checkLif2(const char* aType, T*& aPtr) {
-		    if (strcmp(aType, T::Type()) == 0) {
+		template<class T> MIface* checkLif2(MIface::TIdHash aId, T*& aPtr) {
+		    if (aId == T::idHash()) {
 			if (!aPtr) {
 			    aPtr = dynamic_cast<T*>(this);
 			}
@@ -315,7 +319,7 @@ class DAdp : public Des, public IDesEmbHost
 	    MagObs(DAdp* aHost): mHost(aHost), mOcp(this) {}
 	    // From MObserver
 		virtual string MObserver_Uid() const {return mHost->getUidC<MObserver>("MagObs");}
-		virtual MIface* MObserver_getLif(const char *aName) override { return nullptr;}
+		virtual MIface* MObserver_getLif(TIdHash aTid) override { return nullptr;}
                 virtual void onObsOwnerAttached(MObservable* aObl) override {}
 		virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override { }
 		virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override { }
@@ -331,14 +335,14 @@ class DAdp : public Des, public IDesEmbHost
 	DAdp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
     public:
 	// From MNode
-	virtual MIface* MNode_getLif(const char *aName) override;
+	virtual MIface* MNode_getLif(TIdHash aTid) override;
 	// From IDesEmbHost
 	virtual void registerIb(DesEIbb* aIap) override;
 	virtual void registerOst(DesEOstb* aItem) override;
 	virtual bool meetsLogLev(int aLev) const override { return Logger()->MeetsLevel(aLev) && isLogLevel(aLev); }
 	virtual void logEmb(int aCtg, const TLog& aRec) override { Log(aCtg, aRec);}
 	// From Unit.MIfProvOwner
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq) override;
 	// From MDesSyncable
 	virtual void update() override;
 	virtual void confirm() override;
@@ -347,7 +351,7 @@ class DAdp : public Des, public IDesEmbHost
 	virtual void MDesAdapter_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
 	virtual MNode* getMag() override;
 	// From MOwner
-	virtual MIface* MOwner_getLif(const char *aType) override;
+	virtual MIface* MOwner_getLif(TIdHash aTid) override;
     protected:
 	// Local transitions
 	bool UpdateMagBase();

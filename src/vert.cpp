@@ -15,19 +15,19 @@ Vertu::~Vertu()
     disconnect();
 }
 
-MIface* Vertu::MNode_getLif(const char *aType)
+MIface* Vertu::MNode_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMVertPtr));
-    else res = Unit::MNode_getLif(aType);
+    if (res = checkLif2(aTid, mMVertPtr));
+    else res = Unit::MNode_getLif(aTid);
     return res;
 }
 
-MIface* Vertu::MVert_getLif(const char *aType)
+MIface* Vertu::MVert_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMVertPtr));
-    else if (res = checkLif2(aType, mMUnitPtr));
+    if (res = checkLif2(aTid, mMVertPtr));
+    else if (res = checkLif2(aTid, mMUnitPtr));
     return res;
 }
 
@@ -145,21 +145,21 @@ Vert::~Vert()
     disconnect();
 }
 
-MIface* Vert::MNode_getLif(const char *aType)
+MIface* Vert::MNode_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMVertPtr));
-    else res = Elem::MNode_getLif(aType);
+    if (res = checkLif2(aTid, mMVertPtr));
+    else res = Elem::MNode_getLif(aTid);
     return res;
 }
 
-MIface* Vert::MVert_getLif(const char *aType)
+MIface* Vert::MVert_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMVertPtr));
-    else if (res = checkLif2(aType, mMUnitPtr));
+    if (res = checkLif2(aTid, mMVertPtr));
+    else if (res = checkLif2(aTid, mMUnitPtr));
     // TODO Wrong redirection, vulnerability, to fix
-    else res = MNode_getLif(aType);
+    else res = MNode_getLif(aTid);
     return res;
 }
 
@@ -207,7 +207,7 @@ bool Vert::disconnect(MCIface* aPair)
 void Vert::disconnect()
 {
     while (pairsCount()) {
-	MVert::disconnect(this, getPair(0));
+        MVert::disconnect(this, getPair(0));
     }
 }
 

@@ -11,13 +11,13 @@
 #define DBG_IFR_IFC_QNT_LIM (80)
 
 
-string IfrNode::name() const
+// TODO ifId obtained here thru call chain, consider to redesign
+MIface::TIdHash IfrNode::ifId() const
 {
     if (mPair) {
-	//return mPair->provided()->owner()->name();
-	return mPair->binded()->provided()->name();
+	return mPair->binded()->provided()->ifId();
     } else {
-	return string();
+	return 0;
     }
 }
 
@@ -25,9 +25,9 @@ string IfrNode::name() const
  * Another solutionis is to use specific node that does resolution in 
  * behalf of the owner.
  * */
-void IfrNode::resolve(const string& aName)
+void IfrNode::resolve(TIdHash aTid)
 {
-    mOwner->resolveIfc(aName, binded());
+    mOwner->resolveIfc(aTid, binded());
     setValid(true);
 }
 
@@ -54,7 +54,7 @@ MIfReq* IfrNode::tail()
 void IfrNode::MIfProv_doDump(int aLevel, int aIdt, ostream& aOs) const
 {
     Ifu::offset(aIdt, aOs);
-    aOs  << "[" << name() << "], " << mOwner->Uid() << ", Valid: " << mValid << endl;
+    aOs  << "[" << ifId() << "], " << mOwner->Uid() << ", Valid: " << mValid << endl;
     auto self = const_cast<IfrNode*>(this);
     aIdt += 2;
     for (auto it = self->binded()->pairsBegin(); it != self->binded()->pairsEnd(); it++) {
@@ -66,7 +66,7 @@ void IfrNode::MIfProv_doDump(int aLevel, int aIdt, ostream& aOs) const
 void IfrNode::MIfReq_doDump(int aLevel, int aIdt, ostream& aOs) const
 {
     Ifu::offset(aIdt, aOs);
-    aOs  << "[" << name() << "], " << mOwner->Uid() << ", Valid: " << mValid << endl;
+    aOs  << "[" << ifId() << "], " << mOwner->Uid() << ", Valid: " << mValid << endl;
     auto self = const_cast<IfrNode*>(this);
     auto prev = self->binded()->provided()->prev();
     if (prev) {
@@ -134,8 +134,8 @@ bool IfrNode::isRequestor(MIfProvOwner* aOwner, int aPos) const
 IfrNode::TBase::LeafsIterator IfrNode::leafsBegin()
 {
     if (!mValid) {
-	string nm = name();
-	resolve(nm);
+	auto id = ifId();
+	resolve(id);
     }
     return TBase::leafsBegin();
 }
@@ -174,20 +174,19 @@ void IfrNode::onProvInvalidated()
 
 //// IfrLeaf
 
-string IfrLeaf::name() const
+MIface::TIdHash IfrLeaf::ifId() const
 {
     if (mPair) {
-	//return mPair->provided()->owner()->name();
-	return mPair->binded()->provided()->name();
+	return mPair->binded()->provided()->ifId();
     } else {
-	return string();
+	return 0;
     }
 }
 
 void IfrLeaf::MIfProv_doDump(int aLevel, int aIdt, ostream& aOs) const
 {
     Ifu::offset(aIdt, aOs);
-    aOs  << "<" << name() << ">, " << mOwner->Uid() << ", Valid: " << mValid << ", Iface: " << (mIface ? mIface->Uid() : "null") << endl;
+    aOs  << "<" << ifId() << ">, " << mOwner->Uid() << ", Valid: " << mValid << ", Iface: " << (mIface ? mIface->Uid() : "null") << endl;
 }
 
 void IfrLeaf::setValid(bool aValid)
@@ -212,18 +211,22 @@ MIfProv::TIfaces* IfrNodeRoot::ifaces()
     TIfaces* res = nullptr;
     if (!mValid) {
 	PFLC_DUR_STAT(START, PEvents::EDurStat_IFR_IFaces);
-	string nm = name();
+	TIdHash id = ifId();
 	auto self = const_cast<IfrNodeRoot*>(this);
-	self->resolve(nm);
+	self->resolve(id);
 	if (mValid) {
 	    res = &mIcache;
 	}
 	PFLC_DUR_STAT(REC, PEvents::EDurStat_IFR_IFaces);
     } else if (!mIcacheValid) {
+	PFLC_DUR_STAT(START, PEvents::EDurStat_IFR_IcInv);
 	updateIcache();
+	PFLC_DUR_STAT(REC, PEvents::EDurStat_IFR_IcInv);
 	res = &mIcache;
     } else {
+	PFLC_DUR_STAT(START, PEvents::EDurStat_IFR_IcVal);
 	res = &mIcache;
+	PFLC_DUR_STAT(REC, PEvents::EDurStat_IFR_IcVal);
     }
     // Debugging. Use it to set breakpoint with the given limit.
 #ifdef DBG_IFR_IFC_QNT
@@ -274,7 +277,7 @@ void IfrNodeRoot::onProvInvalidated()
 void IfrNodeRoot::MIfProv_doDump(int aLevel, int aIdt, ostream& aOs) const
 {
     Ifu::offset(aIdt, aOs);
-    aOs  << "[" << name() << "], " << mOwner->Uid() << ", Valid: " << mValid << endl;
+    aOs  << "[" << ifId() << "], " << mOwner->Uid() << ", Valid: " << mValid << endl;
     aOs << "Ifaces cache:" << endl;
     for (auto* iface : mIcache) {
 	if (iface) {

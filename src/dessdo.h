@@ -82,7 +82,7 @@ class SdoBase : public CpStateOutp, public MDVarGet, public MObserver, public MD
 		virtual ~EagObs() { }
 		// From MObserver
 		virtual string MObserver_Uid() const {return mHost->getUidC<MObserver>("EagObs");}
-		virtual MIface* MObserver_getLif(const char *aName) override { return nullptr;}
+		virtual MIface* MObserver_getLif(TIdHash aTid) override { return nullptr;}
 		virtual void onObsOwnerAttached(MObservable* aObl) override {}
 		virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override {
 		    mHost->onEagOwnedAttached(aOwned);
@@ -107,7 +107,7 @@ class SdoBase : public CpStateOutp, public MDVarGet, public MObserver, public MD
 	SdoBase(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
     public:
 	// From MNode
-	virtual MIface* MNode_getLif(const char *aType) override;
+	virtual MIface* MNode_getLif(TIdHash aTid) override;
 	// From MDVarGet
 	virtual string MDVarGet_Uid() const override { return getUid<MDVarGet>();}
 	virtual void MDVarGet_doDump(int aLevel, int aIdt, ostream& aOs) const override;
@@ -115,7 +115,7 @@ class SdoBase : public CpStateOutp, public MDVarGet, public MObserver, public MD
 	virtual void onOwnerAttached() override;
 	// From MObserver
 	virtual string MObserver_Uid() const {return getUid<MObserver>();}
-	virtual MIface* MObserver_getLif(const char *aType) override {return nullptr;}
+	virtual MIface* MObserver_getLif(TIdHash aTid) override {return nullptr;}
 	virtual void onObsOwnerAttached(MObservable* aObl) override {}
 	virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override;
 	virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override;
@@ -164,7 +164,8 @@ template <typename T> class Sdog : public SdoBase
 class SdoName : public Sdog<Sdata<string>>
 {
     public:
-	static const char* Type() { return "SdoName";};
+	inline static constexpr std::string_view idStr() { return "SdoName"sv;}
+    public:
 	SdoName(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual const DtBase* VDtGet(const string& aType) override;
 };
@@ -174,7 +175,8 @@ class SdoName : public Sdog<Sdata<string>>
 class SdoUri : public Sdog<DGuri>
 {
     public:
-	static const char* Type() { return "SdoUri";};
+	inline static constexpr std::string_view idStr() { return "SdoUri"sv;}
+    public:
 	SdoUri(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual const DtBase* VDtGet(const string& aType) override;
 };
@@ -185,7 +187,8 @@ class SdoUri : public Sdog<DGuri>
 class SdoParent : public Sdog<Sdata<string>>
 {
     public:
-	static const char* Type() { return "SdoParent";};
+	inline static constexpr std::string_view idStr() { return "SdoParent"sv;}
+    public:
 	SdoParent(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual const DtBase* VDtGet(const string& aType) override;
 };
@@ -195,7 +198,8 @@ class SdoParent : public Sdog<Sdata<string>>
 class SdoParents : public Sdog<Vector<DGuri>>
 {
     public:
-	static const char* Type() { return "SdoParents";};
+	inline static constexpr std::string_view idStr() { return "SdoParents"sv;}
+    public:
 	SdoParents(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual const DtBase* VDtGet(const string& aType) override;
 };
@@ -206,7 +210,8 @@ class SdoParents : public Sdog<Vector<DGuri>>
 class SdoCompOwner : public Sdog<DGuri>
 {
     public:
-	static const char* Type() { return "SdoCompOwner";};
+	inline static constexpr std::string_view idStr() { return "SdoCompOwner"sv;}
+    public:
 	SdoCompOwner(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual const DtBase* VDtGet(const string& aType) override;
     protected:
@@ -218,7 +223,8 @@ class SdoCompOwner : public Sdog<DGuri>
 class SdoCompComp : public Sdog<DGuri>
 {
     public:
-	static const char* Type() { return "SdoCompComp";};
+	inline static constexpr std::string_view idStr() { return "SdoCompComp"sv;}
+    public:
 	SdoCompComp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual const DtBase* VDtGet(const string& aType) override;
     protected:
@@ -232,7 +238,8 @@ class SdoCompComp : public Sdog<DGuri>
 class SdoCompUri : public Sdog<DGuri>
 {
     public:
-	static const char* Type() { return "SdoCompUri";};
+	inline static constexpr std::string_view idStr() { return "SdoCompUri"sv;}
+    public:
 	SdoCompUri(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual const DtBase* VDtGet(const string& aType) override { return nullptr;}
     protected:
@@ -249,7 +256,8 @@ class SdoCompUri : public Sdog<DGuri>
 class SdoComp : public Sdog<Sdata<bool>>
 {
     public:
-	static const char* Type() { return "SdoComp";};
+	inline static constexpr std::string_view idStr() { return "SdoComp"sv;}
+    public:
 	SdoComp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual const DtBase* VDtGet(const string& aType) override;
     protected:
@@ -261,7 +269,8 @@ class SdoComp : public Sdog<Sdata<bool>>
 class SdoCompsCount : public Sdog<Sdata<int>>
 {
     public:
-	static const char* Type() { return "SdoCompsCount";};
+	inline static constexpr std::string_view idStr() { return "SdoCompsCount"sv;}
+    public:
 	SdoCompsCount(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual const DtBase* VDtGet(const string& aType) override;
 	virtual void onEagOwnedAttached(MOwned* aOwned) override;
@@ -275,7 +284,8 @@ class SdoCompsCount : public Sdog<Sdata<int>>
 class SdoCompsNames : public Sdog<Vector<string>>
 {
     public:
-	static const char* Type() { return "SdoCompsNames";};
+	inline static constexpr std::string_view idStr() { return "SdoCompsNames"sv;}
+    public:
 	SdoCompsNames(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual const DtBase* VDtGet(const string& aType) override;
 	virtual void onEagOwnedAttached(MOwned* aOwned) override;
@@ -287,7 +297,8 @@ class SdoCompsNames : public Sdog<Vector<string>>
 class SdoCompsUri : public Sdog<Vector<DGuri>>
 {
     public:
-	static const char* Type() { return "SdoCompsUri";};
+	inline static constexpr std::string_view idStr() { return "SdoCompsUri"sv;}
+    public:
 	SdoCompsUri(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual const DtBase* VDtGet(const string& aType) override;
 	virtual void onEagOwnedAttached(MOwned* aOwned) override;
@@ -302,7 +313,8 @@ class SdoCompsUri : public Sdog<Vector<DGuri>>
 class SdoConn : public Sdog<Sdata<bool>>
 {
     public:
-	static const char* Type() { return "SdoConn";};
+	inline static constexpr std::string_view idStr() { return "SdoConn"sv;}
+    public:
 	SdoConn(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual const DtBase* VDtGet(const string& aType) override;
 	virtual void onObsChanged(MObservable* aObl) override;
@@ -318,7 +330,8 @@ class SdoConn : public Sdog<Sdata<bool>>
 class SdoPairsCount : public Sdog<Sdata<int>>
 {
     public:
-	static const char* Type() { return "SdoPairsCount";};
+	inline static constexpr std::string_view idStr() { return "SdoPairsCount"sv;}
+    public:
 	SdoPairsCount(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual const DtBase* VDtGet(const string& aType) override;
 	virtual void onObsChanged(MObservable* aObl) override;
@@ -338,7 +351,8 @@ class SdoPairsCount : public Sdog<Sdata<int>>
 class SdoPair : public Sdog<DGuri>
 {
     public:
-	static const char* Type() { return "SdoPair";};
+	inline static constexpr std::string_view idStr() { return "SdoPair"sv;}
+    public:
 	SdoPair(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual const DtBase* VDtGet(const string& aType) override;
 	virtual void onObsChanged(MObservable* aObl) override;
@@ -354,7 +368,8 @@ class SdoPair : public Sdog<DGuri>
 class SdoTcPair : public Sdog<DGuri>
 {
     public:
-	static const char* Type() { return "SdoTcPair";};
+	inline static constexpr std::string_view idStr() { return "SdoTcPair"sv;}
+    public:
 	SdoTcPair(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual const DtBase* VDtGet(const string& aType) override;
     protected:
@@ -368,7 +383,8 @@ class SdoTcPair : public Sdog<DGuri>
 class SdoPairs : public Sdog<Vector<DGuri>>
 {
     public:
-	static const char* Type() { return "SdoPairs";};
+	inline static constexpr std::string_view idStr() { return "SdoPairs"sv;}
+    public:
 	SdoPairs(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual const DtBase* VDtGet(const string& aType) override;
 };
@@ -378,7 +394,8 @@ class SdoPairs : public Sdog<Vector<DGuri>>
 class SdoTPairs : public Sdog<Vector<DGuri>>
 {
     public:
-	static const char* Type() { return "SdoTPairs";};
+	inline static constexpr std::string_view idStr() { return "SdoTPairs"sv;}
+    public:
 	SdoTPairs(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual const DtBase* VDtGet(const string& aType) override;
     protected:
@@ -390,7 +407,8 @@ class SdoTPairs : public Sdog<Vector<DGuri>>
 class SdoEdges : public Sdog<Vector<Pair<DGuri>>>
 {
     public:
-	static const char* Type() { return "SdoEdges";};
+	inline static constexpr std::string_view idStr() { return "SdoEdges"sv;}
+    public:
 	SdoEdges(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual const DtBase* VDtGet(const string& aType) override;
 };
@@ -399,6 +417,8 @@ class SdoEdges : public Sdog<Vector<Pair<DGuri>>>
  * */
 class SdoDesIdle : public Sdog<Sdata<bool>>
 {
+    public:
+	inline static constexpr std::string_view idStr() { return "SdoDesIdle"sv;}
     public:
 	static const char* Type() { return "SdoDesIdle";};
 	SdoDesIdle(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
@@ -420,14 +440,14 @@ class SdoUpdateInd: public CpStateOutp, public MDesSyncable, public MDesInpObser
 	SdoUpdateInd(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
     public:
 	// From MNode
-	virtual MIface* MNode_getLif(const char *aType) override;
+	virtual MIface* MNode_getLif(TIdHash aTid) override;
 	// From MDVarGet
 	virtual string MDVarGet_Uid() const override { return getUid<MDVarGet>();}
 	virtual void MDVarGet_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	// From MDesSyncable
 	virtual string MDesSyncable_Uid() const override {return getUid<MDesSyncable>();}
 	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
-	virtual MIface* MDesSyncable_getLif(const char *aType) override { return nullptr; }
+	virtual MIface* MDesSyncable_getLif(TIdHash aTid) override { return nullptr; }
 	virtual void update() override;
 	virtual void confirm() override;
 	virtual void setUpdated() override;

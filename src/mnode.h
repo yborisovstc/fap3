@@ -47,18 +47,20 @@ class MContentOwner;
 class MNode: public MIface
 {
     public:
+	inline static constexpr std::string_view idStr() { return "MNode"sv;}
+	inline static constexpr TIdHash idHash() { return 0xf0a96e4185c535;}
+    public:
 	//!using TOwnerCp = NCpOmi2<MOwner, MOwned>;
 	using TOwnerCp = MNcpp<MOwner, MOwned>;
 	using TOwnedCp = MNcpp<MOwned, MOwner>;
-
     public:
 	// From MIface
-	static const char* Type() { return "MNode";}
 	virtual ~MNode() {} // TODO to consider policy of system destruction
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MNode_Uid();}
 	virtual string MNode_Uid() const = 0;
-	virtual MIface* getLif(const char *aType) override { return MNode_getLif(aType);}
-	virtual MIface* MNode_getLif(const char *aType) = 0;
+	virtual MIface* getLif(TIdHash aTid) override { return MNode_getLif(aTid);}
+	virtual MIface* MNode_getLif(TIdHash aTid) = 0;
 	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { return MNode_doDump(aLevel, aIdt, aOs);}
 	virtual void MNode_doDump(int aLevel, int aIdt, ostream& aOs) const = 0;
 	// Local

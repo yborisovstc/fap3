@@ -23,13 +23,16 @@ class DtBase;
 class MProvider: public MIface
 {
     public:
-	static const char* Type() { return "MProvider";};
+	inline static constexpr std::string_view idStr() { return "MProvider"sv;}
+	inline static constexpr TIdHash idHash() { return 0xb1cbbc1ec7173a5c;}
+    public:
 	virtual ~MProvider() {};
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MProvider_Uid();}
 	virtual string MProvider_Uid() const = 0;
-	virtual MIface* getLif(const char *aType) { return MProvider_getLif(aType);}
-	virtual MIface* MProvider_getLif(const char *aType) = 0;
+	virtual MIface* getLif(TIdHash aTid) { return MProvider_getLif(aTid);}
+	virtual MIface* MProvider_getLif(TIdHash aTid) = 0;
 	virtual void doDump(int aLevel, int aIdt = 0) const { return MProvider_doDump(aLevel, aIdt, std::cout);}
 	virtual void MProvider_doDump(int aLevel, int aIdt, ostream& aOs) const = 0;
 	// Local

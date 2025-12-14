@@ -15,12 +15,15 @@
 class MConnPoint: public MIface
 {
     public:
-	static const char* Type() { return "MConnPoint";};
+	inline static constexpr std::string_view idStr() { return "MConnPoint"sv;}
+	inline static constexpr TIdHash idHash() { return 0x4ab927ef8407add3;}
+    public:
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MConnPoint_Uid();}
 	virtual string MConnPoint_Uid() const = 0;
-	virtual string provName() const = 0;
-	virtual string reqName() const = 0;
+        virtual TIdHash idProvided() const = 0;
+        virtual TIdHash idRequired() const = 0;
 };
 
 class MNode;
@@ -31,8 +34,11 @@ class MVert;
 class MSocket: public MIface
 {
     public:
-	static const char* Type() { return "MSocket";};
+	inline static constexpr std::string_view idStr() { return "MSocket"sv;}
+	inline static constexpr TIdHash idHash() { return 0xef54a3eb58d53b3c;}
+    public:
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MSocket_Uid();}
 	virtual string MSocket_Uid() const = 0;
 	// Local
@@ -52,14 +58,17 @@ class MAhost;
 class MAgent: public MIface
 {
     public:
+	inline static constexpr std::string_view idStr() { return "MAgent"sv;}
+	inline static constexpr TIdHash idHash() { return 0x253392665466b0a2;}
+    public:
 	using TCp = MNcpp<MAgent, MAhost>;
     public:
-	static const char* Type() { return "MAgent";};
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MAgent_Uid();}
 	virtual string MAgent_Uid() const = 0;
-	virtual MIface* getLif(const char *aType) override { return MAgent_getLif(aType);}
-	virtual MIface* MAgent_getLif(const char *aType) = 0;
+	virtual MIface* getLif(TIdHash aTid) override { return MAgent_getLif(aTid);}
+	virtual MIface* MAgent_getLif(TIdHash aTid) = 0;
 };
 
 
@@ -69,12 +78,15 @@ class MAgent: public MIface
 class MAhost: public MIface
 {
     public:
-	static const char* Type() { return "MAhost";};
+	inline static constexpr std::string_view idStr() { return "MAhost"sv;}
+	inline static constexpr TIdHash idHash() { return 0x5daf5c9fd0239bfb;}
+    public:
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MAhost_Uid();}
 	virtual string MAhost_Uid() const = 0;
-	virtual MIface* getLif(const char *aType) override { return MAhost_getLif(aType);}
-	virtual MIface* MAhost_getLif(const char *aType) = 0;
+	virtual MIface* getLif(TIdHash aTid) override { return MAhost_getLif(aTid);}
+	virtual MIface* MAhost_getLif(TIdHash aTid) = 0;
 };
 
 
@@ -85,8 +97,11 @@ class MAhost: public MIface
 class MActr: public MIface
 {
     public:
-	static const char* Type() { return "MActr";};
+	inline static constexpr std::string_view idStr() { return "MActr"sv;}
+	inline static constexpr TIdHash idHash() { return 0xfb77132ee5b6f81c;}
+    public:
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MActr_Uid();}
 	virtual string MActr_Uid() const = 0;
 	// Local
@@ -105,8 +120,11 @@ using TEdges = std::vector<TEdge>;
 class MSyst: public MIface
 {
     public:
-	static const char* Type() { return "MSyst";};
+	inline static constexpr std::string_view idStr() { return "MSyst"sv;}
+	inline static constexpr TIdHash idHash() { return 0x3558aa937bbb2f;}
+    public:
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MSyst_Uid();}
 	virtual string MSyst_Uid() const = 0;
 	// Local

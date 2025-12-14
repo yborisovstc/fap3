@@ -18,7 +18,7 @@ class DesSpe : public Extd
 	DesSpe(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
     protected:
 	// From Unit.MIfProvOwner
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq) override;
 };
 
 
@@ -31,7 +31,7 @@ class DesSp : public Socket
 	DesSp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
     protected:
 	// From Unit.MIfProvOwner
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq) override;
 };
 
 
@@ -46,7 +46,7 @@ class DesSpt : public Socket
 	// From MNode
 	virtual string parentName() const override { return Type(); }
 	// From Unit.MIfProvOwner
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq) override;
 };
 
 
@@ -56,22 +56,23 @@ class DesSpt : public Socket
 class ADesSpc : public Unit, public MAgent, public MDesSpc
 {
     public:
+	inline static constexpr std::string_view idStr() { return "ADesSpc"sv;}
+    public:
 	using TAgtCp = NCpOnp<MAgent, MAhost>;  /*!< Agent conn point */
     public:
-	static const char* Type() { return "ADesSpc";};
 	ADesSpc(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From Node.MIface
-	virtual MIface* MNode_getLif(const char *aType) override;
+	virtual MIface* MNode_getLif(TIdHash aTid) override;
 	// From Unit.MIfProvOwner
-	//virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	//virtual void resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq) override;
 	// From MDesSpc
 	virtual string MDesSpc_Uid() const override {return getUid<MDesSpc>();}
 	virtual void MDesSpc_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
-	virtual MIface* MDesSpc_getLif(const char *aType) override { return nullptr; }
+	virtual MIface* MDesSpc_getLif(TIdHash aTid) override { return nullptr; }
 	virtual string getId() const override;
 	// From MAgent
 	virtual string MAgent_Uid() const override {return getUid<MAgent>();}
-	virtual MIface* MAgent_getLif(const char *aType) override;
+	virtual MIface* MAgent_getLif(TIdHash aTid) override;
 	// From Node.MOwned
 	virtual void onOwnerAttached() override;
     protected:

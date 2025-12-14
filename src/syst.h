@@ -13,47 +13,30 @@
  * Has only 2 contents: Provided and Required
  * */
 // TODO Needs connpoint based on Vert (not Vertu) to support inheritance
-class ConnPointu: public Vertu, public MConnPoint, public Cnt::Host
+class ConnPointu: public Vertu, public MConnPoint
 {
     public:
-	static const char* Type() { return "ConnPointu";}
+	inline static constexpr std::string_view idStr() { return "ConnPointu"sv;}
+    public:
 	ConnPointu(const string &aType, const string &aName, MEnv* aEnv);
 	virtual ~ConnPointu() {}
 	// From MNode
-	virtual MIface* MNode_getLif(const char *aType) override;
+	MIface* MNode_getLif(TIdHash aTid) override;
 	// From MVert
-	virtual MIface *MVert_getLif(const char *aType) override;
-	virtual bool isCompatible(MVert* aPair, bool aExt) override;
+	MIface *MVert_getLif(TIdHash aTid) override;
+	bool isCompatible(MVert* aPair, bool aExt) override;
 	// From MConnPoint
-	virtual string MConnPoint_Uid() const { return getUid<MConnPoint>();}
-	virtual string provName() const override;
-	virtual string reqName() const override;
+	string MConnPoint_Uid() const { return getUid<MConnPoint>();}
 	// From MIfProvOwner
-	virtual MIface* MIfProvOwner_getLif(const char *aType) override;
-	// From Node.MContentOwner
-	virtual int contCount() const override { return 2;}
-	virtual MContent* getCont(int aIdx) override;
-	virtual const MContent* getCont(int aIdx) const override;
-	virtual bool getContent(const GUri& aCuri, string& aRes) const override;
-	virtual bool setContent(const GUri& aCuri, const string& aData) override;
-	// From Cnt.Host
-	virtual string getCntUid(const string& aName, const string& aIfName) const override { return getUid(aName, aIfName);}
-	virtual MContentOwner* cntOwner() override { return this;}
+	MIface* MIfProvOwner_getLif(TIdHash aTid) override;
     protected:
 	// From Unit.MIfProvOwner
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(TIdHash aIfid, MIfReq::TIfReqCp* aReq) override;
 	// From Vertu
 	virtual void onConnected() override;
 	virtual void onDisconnected() override;
-
     protected:
-	Cnt mReq = Cnt(*this, KReqName);
-	Cnt mProv = Cnt(*this, KProvName);
-	static string KReqName;
-	static string KProvName;
-	static const GUri KReqUri;
-	static const GUri KProvUri;
-	MConnPoint* mMConnPointPtr = nullptr;
+        MConnPoint* mMConnPointPtr = nullptr;
 };
 
 /** @brief Extender, monolitic, multicontent, unit. Redirects request for iface to internal CP of extention.
@@ -61,16 +44,17 @@ class ConnPointu: public Vertu, public MConnPoint, public Cnt::Host
 class Extd: public Vertu, public Cnt::Host
 {
     public:
-	static const char* Type() { return "Extd";};
+	inline static constexpr std::string_view idStr() { return "Extd"sv;}
+    public:
 	Extd(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MNode
-	virtual string parentName() const override { return Type(); }
+	virtual string parentName() const override { return string(idStr()); }
 	// From MVert
 	virtual bool isCompatible(MVert* aPair, bool aExt) override;
 	virtual MVert* getExtd() override;
 	virtual TDir getDir() const override;
 	// From Unit.MIfProvOwner
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq) override;
 	// From Cnt.Host
 	virtual string getCntUid(const string& aName, const string& aIfName) const override { return getUid(aName, aIfName);}
 	virtual MContentOwner* cntOwner() override { return this;}
@@ -85,16 +69,17 @@ class Extd: public Vertu, public Cnt::Host
 class Extde: public Vert
 {
     public:
-	static const char* Type() { return "Extde";};
+	inline static constexpr std::string_view idStr() { return "Extde"sv;}
+    public:
 	Extde(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MNode
-	virtual string parentName() const override { return Type(); }
+	virtual string parentName() const override { return string(idStr()); }
 	// From MVert
 	virtual bool isCompatible(MVert* aPair, bool aExt) override;
 	virtual MVert* getExtd() override;
 	virtual TDir getDir() const override;
 	// From Unit.MIfProvOwner
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq) override;
     public:
 	static const string KUriInt;  /*!< Internal connpoint */
 };
@@ -106,17 +91,18 @@ class Extde: public Vert
 class Socket: public Vert, public MSocket
 {
     public:
-	static const char* Type() { return "Socket";};
+	inline static constexpr std::string_view idStr() { return "Socket"sv;}
+    public:
 	Socket(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	// From MNode
-	virtual MIface* MNode_getLif(const char *aType) override;
-	virtual string parentName() const override { return Type(); }
+	virtual MIface* MNode_getLif(TIdHash aTid) override;
+	virtual string parentName() const override { return string(idStr()); }
 	// From MVert
 	virtual bool isCompatible(MVert* aPair, bool aExt) override;
 	virtual MVert* getExtd() override;
 	virtual TDir getDir() const override;
 	// From Unit.MIfProvOwner
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq) override;
 	// From MSocket
 	virtual string MSocket_Uid() const override  { return getUid<MSocket>();}
 	virtual int PinsCount() const override;
@@ -135,6 +121,8 @@ class Socket: public Vert, public MSocket
 class Syst : public Elem, public MAhost, public MActr, public MSyst
 {
     public:
+	inline static constexpr std::string_view idStr() { return "Syst"sv;}
+    public:
 	using TAgtCp = NCpOmnp<MAhost, MAgent>;
     public:
 	static const char* Type() { return "Syst";}
@@ -144,8 +132,8 @@ class Syst : public Elem, public MAhost, public MActr, public MSyst
 	// From Node
 	virtual void mutConnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx) override;
 	virtual void mutDisconnect(const ChromoNode& aMut, bool aUpdOnly, const MutCtx& aCtx) override;
-	virtual MIface* MNode_getLif(const char *aType) override;
-	virtual MIface* MOwner_getLif(const char *aType) override;
+	virtual MIface* MNode_getLif(TIdHash aTid) override;
+	virtual MIface* MOwner_getLif(TIdHash aTid) override;
 	vector<GUri> parentsUri() const override { return getParentsUri(); }
 	// From MActr
 	virtual string MActr_Uid() const override {return getUid<MActr>();}
@@ -154,13 +142,13 @@ class Syst : public Elem, public MAhost, public MActr, public MSyst
 	virtual bool detachAgent(MAgent::TCp* aAgt) override;
 	// From MAhost
 	virtual string MAhost_Uid() const override {return getUid<MAhost>();}
-	virtual MIface* MAhost_getLif(const char *aType) override;
+	virtual MIface* MAhost_getLif(TIdHash aTid) override;
 	// From MSyst
 	virtual string MSyst_Uid() const override {return getUid<MSyst>();};
 	virtual const TEdges& connections() const { return mEdges; }
     protected:
 	// From Unit.MIfProvOwner
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq) override;
 	// Local
 	bool isComp(MIfProvOwner* aNode) const;
     protected:
@@ -178,8 +166,12 @@ class Syst : public Elem, public MAhost, public MActr, public MSyst
 class CpMnodeInp: public ConnPointu
 {
     public:
-	static const char* Type() { return "CpMnodeInp";};
+	inline static constexpr std::string_view idStr() { return "CpMnodeInp"sv;}
+    public:
 	CpMnodeInp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+        // From MConnPoint
+        TIdHash idProvided() const override;
+        TIdHash idRequired() const override;
 };
 
 /** @brief Connection point - access to MNode
@@ -188,8 +180,12 @@ class CpMnodeInp: public ConnPointu
 class CpMnodeOutp: public ConnPointu
 {
     public:
-	static const char* Type() { return "CpMnodeOutp";};
+	inline static constexpr std::string_view idStr() { return "CpMnodeOutp"sv;}
+    public:
 	CpMnodeOutp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
+        // From MConnPoint
+        TIdHash idProvided() const override;
+        TIdHash idRequired() const override;
 };
 
 /** @brief Agent base
@@ -200,14 +196,13 @@ class AgtBase: public Unit, public MAgent
 	using TAgtCp = NCpOnp<MAgent, MAhost>;  /*!< Agent conn point */
 	using TObserverCp = NCpOmnp<MObserver, MObservable>;
     public:
-	static const char* Type() { return "AgtBase";};
 	AgtBase(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual ~AgtBase();
 	// From Base
-	virtual MIface* MNode_getLif(const char *aName) override;
+	virtual MIface* MNode_getLif(TIdHash aTid) override;
 	// From MAgent
 	virtual string MAgent_Uid() const override {return getUid<MAgent>();}
-	virtual MIface* MAgent_getLif(const char *aName) override;
+	virtual MIface* MAgent_getLif(TIdHash aTid) override;
 	// From Node.MOwned
 	virtual void onOwnerAttached() override;
     protected:

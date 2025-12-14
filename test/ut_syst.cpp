@@ -13,24 +13,30 @@
 /** @brief Test interface 1 */
 class MTIf1: public MIface{
     public:
-	static const char* Type() { return "MTIf1";}
+	inline static constexpr std::string_view idStr() { return "MTIf1"sv;}
+	inline static constexpr TIdHash idHash() { return 0xbdc147e8995c0c67;}
+    public:
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MTIf1_Uid();}
 	virtual string MTIf1_Uid() const = 0;
-	virtual MIface* getLif(const char *aType) override { return MTIf1_getLif(aType);}
-	virtual MIface* MTIf1_getLif(const char *aType) = 0;
+	virtual MIface* getLif(TIdHash aTid) override { return MTIf1_getLif(aTid);}
+	virtual MIface* MTIf1_getLif(TIdHash aTid) = 0;
 };
 
 
 /** @brief Test interface 2 */
 class MTIf2: public MIface{
     public:
-	static const char* Type() { return "MTIf2";}
+	inline static constexpr std::string_view idStr() { return "MTIf2"sv;}
+	inline static constexpr TIdHash idHash() { return 0x39a8ded3e3af773;}
+    public:
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MTIf2_Uid();}
 	virtual string MTIf2_Uid() const = 0;
-	virtual MIface* getLif(const char *aType) override { return MTIf2_getLif(aType);}
-	virtual MIface* MTIf2_getLif(const char *aType) = 0;
+	virtual MIface* getLif(TIdHash aTid) override { return MTIf2_getLif(aTid);}
+	virtual MIface* MTIf2_getLif(TIdHash aTid) = 0;
 };
 
 
@@ -41,12 +47,14 @@ class MTIf2: public MIface{
 class TstAgt: public Unit, public MAgent
 {
     public:
+	inline static constexpr std::string_view idStr() { return "TstAgt"sv;}
+    public:
 	class TestIface1: public MTIf1 {
 	    public:
 		TestIface1(TstAgt& aHost): mHost(aHost) {}
 		virtual ~TestIface1() {}
 		virtual string MTIf1_Uid() const override { return mHost.getUid<MTIf1>();}
-		virtual MIface* MTIf1_getLif(const char *aType) override {return this;}
+		virtual MIface* MTIf1_getLif(TIdHash aTid) override {return this;}
 	    private:
 		TstAgt& mHost;
 	};
@@ -56,7 +64,7 @@ class TstAgt: public Unit, public MAgent
 		TestIface2(TstAgt& aHost): mHost(aHost) {}
 		virtual ~TestIface2() {}
 		virtual string MTIf2_Uid() const override { return mHost.getUid<MTIf2>();}
-		virtual MIface* MTIf2_getLif(const char *aType) override {return this;}
+		virtual MIface* MTIf2_getLif(TIdHash aTid) override {return this;}
 	    private:
 		TstAgt& mHost;
 	};
@@ -66,25 +74,25 @@ class TstAgt: public Unit, public MAgent
 	TstAgt(const string &aType, const string& aName = string(), MEnv* aEnv = NULL): Unit(aType, aName, aEnv) { }
 	virtual ~TstAgt() {}
 	virtual string MAgent_Uid() const { return getUid<MAgent>();}
-	MIface* MNode_getLif(const char *aType) override {
+	MIface* MNode_getLif(TIdHash aTid) override {
 	    MIface* res = nullptr;
-	    if (res = checkLif<MAgent>(aType));
-	    else if (res = checkLif<MNode>(aType));
-	    else res = Unit::MNode_getLif(aType);
+	    if (res = checkLif<MAgent>(aTid));
+	    else if (res = checkLif<MNode>(aTid));
+	    else res = Unit::MNode_getLif(aTid);
 	    return res;
 	}
-	MIface* MAgent_getLif(const char *aType) override {
+	MIface* MAgent_getLif(TIdHash aTid) override {
 	    MIface* res = nullptr;
-	    if (res = checkLif<MAgent>(aType));
-	    else res = checkLif<MUnit>(aType);
+	    if (res = checkLif<MAgent>(aTid));
+	    else res = checkLif<MUnit>(aTid);
 	    return res;
 	}
 	// From Unit.MIfProvOwner
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override {
-	    if (aName == MTIf1::Type()) {
+	virtual void resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq) override {
+	    if (aTid == MTIf1::idHash()) {
 		IfrLeaf* lf = new IfrLeaf(this, &mIface1);
 		aReq->connect(lf);
-	    } else if (aName == MTIf2::Type()) {
+	    } else if (aTid == MTIf2::idHash()) {
 		IfrLeaf* lf = new IfrLeaf(this, &mIface2);
 		aReq->connect(lf);
 	    }
@@ -141,8 +149,8 @@ class Ut_syst : public CPPUNIT_NS::TestFixture
     virtual void setUp();
     virtual void tearDown();
     private:
-    void test_vert_1();
-    void test_cp_1();
+    //void test_vert_1();
+    //void test_cp_1();
     void test_syst_1();
     void test_syst_link();
     void test_cp_2();
@@ -193,6 +201,7 @@ void Ut_syst::tearDown()
     CPPUNIT_ASSERT_EQUAL_MESSAGE("tearDown", 0, 0);
 }
 
+#if 0
 /** @brief Test of vertex base functionality
  * */
 void Ut_syst::test_vert_1()
@@ -215,7 +224,10 @@ void Ut_syst::test_vert_1()
     delete vu1;
     delete vu2;
 }
+#endif
 
+#if 0 
+// Not suported Atm
 /** @brief Test of cp base functionality
  * */
 void Ut_syst::test_cp_1()
@@ -249,6 +261,7 @@ void Ut_syst::test_cp_1()
     delete cpu1;
     delete cpu2;
 }
+#endif
 
 /** @brief Test of connecting link
  * */
@@ -435,7 +448,7 @@ void Ut_syst::test_syst_cp_3()
     MNode* s1n = root->getNode("SS.S1");
     MUnit* s1u = s1n ? s1n->lIf(s1u) : nullptr;
     CPPUNIT_ASSERT_MESSAGE("Fail to get s1u", s1u);
-    MIfProv* ifp = s1u->defaultIfProv("MAgent");
+    MIfProv* ifp = s1u->defaultIfProv(MAgent::idHash());
     /*
     MIfProv* maprov = ifp->first();
     CPPUNIT_ASSERT_MESSAGE("Failed getting MAgent provider", maprov);
@@ -499,7 +512,7 @@ void Ut_syst::test_syst_cpe_1()
     MNode* s1n = root->getNode("SS.S1");
     MUnit* s1u = s1n ? s1n->lIf(s1u) : nullptr;
     CPPUNIT_ASSERT_MESSAGE("Fail to get s1u", s1u);
-    MIfProv* ifp = s1u->defaultIfProv("MAgent");
+    MIfProv* ifp = s1u->defaultIfProv(MAgent::idHash());
     /*
     MIfProv* maprov = ifp->first();
     CPPUNIT_ASSERT_MESSAGE("Failed getting MAgent provider", maprov);

@@ -24,7 +24,7 @@ class Provider: public MProvider
 	virtual ~Provider();
 	// From MProvider/MIface
 	virtual string MProvider_Uid() const override { return mName;};
-	virtual MIface* MProvider_getLif(const char *aType) override;
+	virtual MIface* MProvider_getLif(TIdHash aTid) override;
 	virtual void MProvider_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	// From MProvider
 	virtual const string& providerName() const override { return mName;}
@@ -78,7 +78,7 @@ class ProvBase: public Provider
 /** Generator of native agent factory registry item */
 template<typename T> pair<string, ProvBase::TFact*> ProvBase::Item() {
     return pair<string, ProvBase::TFact*>
-	(T::Type(), [](const string &name, MEnv* env)->MNode* { return new T(T::Type(), name, env);});
+	(T::idStr(), [](const string &name, MEnv* env)->MNode* { return new T(string(T::idStr()), name, env);});
 }
 
 /** Generator of data factory registry item */

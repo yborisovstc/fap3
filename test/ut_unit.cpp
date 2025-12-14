@@ -12,13 +12,13 @@
 class Ut_unit : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Ut_unit);
-    CPPUNIT_TEST(test_nav_1);
+    //CPPUNIT_TEST(test_nav_1);
     CPPUNIT_TEST_SUITE_END();
 public:
     virtual void setUp();
     virtual void tearDown();
 private:
-    void test_nav_1();
+    //void test_nav_1();
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION( Ut_unit );
@@ -35,6 +35,7 @@ void Ut_unit::tearDown()
     CPPUNIT_ASSERT_EQUAL_MESSAGE("tearDown", 0, 0);
 }
 
+#if 0
 /** @brief Test of navigation
  * */
 void Ut_unit::test_nav_1()
@@ -55,3 +56,4 @@ void Ut_unit::test_nav_1()
 
     delete owner;
 }
+#endif

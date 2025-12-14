@@ -8,20 +8,20 @@ DesSpt::DesSpt(const string &aType, const string& aName, MEnv* aEnv): Socket(aTy
 {
 }
 
-void DesSpt::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void DesSpt::resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq)
 {
-    MIface* ifc = MNode_getLif(aName.c_str());
+    MIface* ifc = MNode_getLif(aTid);
     if (ifc) { // Local iface
 	addIfpLeaf(ifc, aReq);
-    } else if (aName == MDesSpc::Type()) {
+    } else if (aTid == MDesSpc::idHash()) {
 	// Redirect to owner
 	MUnit* owu = Owner()->lIf(owu);
 	MIfProvOwner* owo = owu ? owu->lIf(owo) : nullptr;
 	if (owo) {
-	    owu->resolveIface(aName, aReq);
+	    owu->resolveIface(aTid, aReq);
 	}
     } else {
-	Socket::resolveIfc(aName, aReq);
+	Socket::resolveIfc(aTid, aReq);
     }
 }
 
@@ -33,9 +33,9 @@ DesSpe::DesSpe(const string &aType, const string& aName, MEnv* aEnv): Extd(aType
 {
 }
 
-void DesSpe::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void DesSpe::resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq)
 {
-    MIface* ifc = MNode_getLif(aName.c_str());
+    MIface* ifc = MNode_getLif(aTid);
     if (ifc) { // Local iface
 	addIfpLeaf(ifc, aReq);
     } else {
@@ -80,7 +80,7 @@ void DesSpe::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 			}
 			if (cltu) {
 			    // Client for the servicing subs is found. Redirect IFR to it. 
-			    cltu->resolveIface(aName, aReq);
+			    cltu->resolveIface(aTid, aReq);
 			}
 		    }
 		} else {
@@ -90,7 +90,7 @@ void DesSpe::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 		// Request from outside. Redirect to Int
 		MVert* intcp = getExtd();
 		MUnit* intcpu = intcp ? intcp->lIf(intcpu) : nullptr;
-		if (intcpu) intcpu->resolveIface(aName, aReq);
+		if (intcpu) intcpu->resolveIface(aTid, aReq);
 	    }
 	}
     }
@@ -103,9 +103,9 @@ DesSp::DesSp(const string &aType, const string& aName, MEnv* aEnv): Socket(aType
 {
 }
 
-void DesSp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void DesSp::resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq)
 {
-    MIface* ifc = MNode_getLif(aName.c_str());
+    MIface* ifc = MNode_getLif(aTid);
     if (ifc) { // Local iface
 	addIfpLeaf(ifc, aReq);
     } else {
@@ -147,7 +147,7 @@ void DesSp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 			}
 			if (ssubsu) {
 			    // Servicing subs for the client found. Redirect IFR to it. 
-			    ssubsu->resolveIface(aName, aReq);
+			    ssubsu->resolveIface(aTid, aReq);
 			}
 		    }
 		} else {
@@ -156,7 +156,7 @@ void DesSp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	    } else {
 		// Direct requestor is the pair. Redirect to owner.
 		MUnit* ownu = Owner()->lIf(ownu);
-		if (ownu) ownu->resolveIface(aName, aReq);
+		if (ownu) ownu->resolveIface(aTid, aReq);
 	    }
 	}
     }
@@ -169,20 +169,20 @@ ADesSpc::ADesSpc(const string &aType, const string& aName, MEnv* aEnv): Unit(aTy
 {
 }
 
-MIface* ADesSpc::MNode_getLif(const char *aType)
+MIface* ADesSpc::MNode_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMDesSpcPtr));
-    else if (res = checkLif2(aType, mMAgentPtr));
-    else res = Unit::MNode_getLif(aType);
+    if (res = checkLif2(aTid, mMDesSpcPtr));
+    else if (res = checkLif2(aTid, mMAgentPtr));
+    else res = Unit::MNode_getLif(aTid);
     return res;
 }
 
-MIface* ADesSpc::MAgent_getLif(const char *aType)
+MIface* ADesSpc::MAgent_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMDesSpcPtr));
-    else if (res = checkLif2(aType, mMUnitPtr)); // To allow client to request IFR
+    if (res = checkLif2(aTid, mMDesSpcPtr));
+    else if (res = checkLif2(aTid, mMUnitPtr)); // To allow client to request IFR
     return res;
 }
 

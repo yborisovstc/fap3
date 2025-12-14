@@ -42,7 +42,7 @@ void CpState::onDisconnected()
 void CpState::onIfpInvalidated(MIfProv* aProv)
 {
     ConnPointu::onIfpInvalidated(aProv);
-    if (aProv->name() == MDVarGet::Type()) {
+    if (aProv->ifId() == MDVarGet::idHash()) {
 	// Notify DES inps only in case of MDVarGet invalidated, ref ds_asr_cbscpd_ahoi
 	notifyInpsUpdated();
     }
@@ -54,9 +54,6 @@ void CpState::onIfpInvalidated(MIfProv* aProv)
 
 CpStateInp::CpStateInp(const string &aType, const string& aName, MEnv* aEnv): CpState(aType, aName, aEnv), mIop(this)
 {
-    bool res = setContent(KProvUri, "MDesInpObserver");
-    res = setContent(KReqUri, "MDVarGet");
-    assert(res);
 }
 
 void CpStateInp::onInpUpdated()
@@ -67,11 +64,11 @@ void CpStateInp::onInpUpdated()
     }
 }
 
-MIface* CpStateInp::MNode_getLif(const char *aType)
+MIface* CpStateInp::MNode_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMDesInpObserverPtr));
-    else res = CpState::MNode_getLif(aType);
+    if (res = checkLif2(aTid, mMDesInpObserverPtr));
+    else res = CpState::MNode_getLif(aTid);
     return res;
 }
 
@@ -93,7 +90,7 @@ void CpStateInp::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
     }
 }
 
-MIface* CpStateInp::InpObsProvider::MIfProvOwner_getLif(const char *aType)
+MIface* CpStateInp::InpObsProvider::MIfProvOwner_getLif(TIdHash aTid)
 {
     return nullptr;
 }
@@ -117,15 +114,12 @@ void CpStateInp::InpObsProvider::onIfpInvalidated(MIfProv* aProv)
 vector<GUri> CpStateInp::getParentsUri()
 {
     auto p = CpState::getParentsUri();
-    p.insert(p.begin(), Type());
+    p.insert(p.begin(), string(idStr()));
     return p;
 }
 
 CpStateInp::CpStateInp(const string &aType, const string& aName, MEnv* aEnv): CpState(aType, aName, aEnv)
 {
-    bool res = setContent("Provided", "MDesInpObserver");
-    res = setContent("Required", "MDVarGet");
-    assert(res);
 }
 
 #endif // DES_CPS_IFC
@@ -135,15 +129,12 @@ CpStateInp::CpStateInp(const string &aType, const string& aName, MEnv* aEnv): Cp
 vector<GUri> CpStateOutp::getParentsUri()
 {
     auto p = CpState::getParentsUri();
-    p.insert(p.begin(), Type());
+    p.insert(p.begin(), string(idStr()));
     return p;
 }
 
 CpStateOutp::CpStateOutp(const string &aType, const string& aName, MEnv* aEnv): CpState(aType, aName, aEnv)
 {
-    bool res = setContent("Provided", "MDVarGet");
-    res = setContent("Required", "MDesInpObserver");
-    assert(res);
 }
 
 void CpStateOutp::onConnected()
@@ -161,19 +152,35 @@ void CpStateOutp::onDisconnected()
 
 CpStateMnodeInp::CpStateMnodeInp(const string &aType, const string& aName, MEnv* aEnv): CpState(aType, aName, aEnv)
 {
-    bool res = setContent("Provided", "MDesInpObserver");
-    res = setContent("Required", "MLink");
-    assert(res);
 }
+
+MIface::TIdHash CpStateMnodeInp::idProvided() const
+{
+    return MDesInpObserver::idHash();
+}
+
+MIface::TIdHash CpStateMnodeInp::idRequired() const
+{
+    return MLink::idHash();
+}
+
 
 /* Connection point - output of combined chain state AStatec */
 
 CpStateMnodeOutp::CpStateMnodeOutp(const string &aType, const string& aName, MEnv* aEnv): CpState(aType, aName, aEnv)
 {
-    bool res = setContent("Provided", "MLink");
-    res = setContent("Required", "MDesInpObserver");
-    assert(res);
 }
+
+MIface::TIdHash CpStateMnodeOutp::idProvided() const
+{
+    return MLink::idHash();
+}
+
+MIface::TIdHash CpStateMnodeOutp::idRequired() const
+{
+    return MDesInpObserver::idHash();
+}
+
 
 
 /// CpStateInp direct extender
@@ -181,13 +188,13 @@ CpStateMnodeOutp::CpStateMnodeOutp(const string &aType, const string& aName, MEn
 vector<GUri> ExtdStateInp::getParentsUri()
 {
     auto p = Extd::getParentsUri();
-    p.insert(p.begin(), Type());
+    p.insert(p.begin(), string(idStr()));
     return p;
 }
 
 ExtdStateInp::ExtdStateInp(const string &aType, const string& aName, MEnv* aEnv): Extd(aType, aName, aEnv)
 {
-    MNode* cp = Provider()->createNode(CpStateOutp::Type(), Extd::KUriInt , mEnv);
+    MNode* cp = Provider()->createNode(string(CpStateOutp::idStr()), Extd::KUriInt , mEnv);
     assert(cp);
     bool res = attachOwned(cp);
     assert(res);
@@ -198,13 +205,13 @@ ExtdStateInp::ExtdStateInp(const string &aType, const string& aName, MEnv* aEnv)
 vector<GUri> ExtdStateOutp::getParentsUri()
 {
     auto p = Extd::getParentsUri();
-    p.insert(p.begin(), Type());
+    p.insert(p.begin(), string(idStr()));
     return p;
 }
 
 ExtdStateOutp::ExtdStateOutp(const string &aType, const string& aName, MEnv* aEnv): Extd(aType, aName, aEnv)
 {
-    MNode* cp = Provider()->createNode(CpStateInp::Type(), Extd::KUriInt , mEnv);
+    MNode* cp = Provider()->createNode(string(CpStateInp::idStr()), Extd::KUriInt , mEnv);
     assert(cp);
     bool res = attachOwned(cp);
     assert(res);
@@ -216,11 +223,11 @@ ExtdStateOutpI::ExtdStateOutpI(const string &aType, const string& aName, MEnv* a
 {
 }
 
-MIface* ExtdStateOutpI::MNode_getLif(const char *aType)
+MIface* ExtdStateOutpI::MNode_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMDVarGetPtr));
-    else res = ExtdStateOutp::MNode_getLif(aType);
+    if (res = checkLif2(aTid, mMDVarGetPtr));
+    else res = ExtdStateOutp::MNode_getLif(aTid);
     return res;
 }
 
@@ -256,12 +263,12 @@ string ExtdStateOutpI::VarGetIfid() const
     return inpvg ? inpvg->VarGetIfid() : string();
 }
 
-void ExtdStateOutpI::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void ExtdStateOutpI::resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq)
 {
-    MIface* ifr = MNode_getLif(aName.c_str()); // Local
+    MIface* ifr = MNode_getLif(aTid); // Local
     if (ifr) {
 	addIfpLeaf(ifr, aReq);
-    } else if (aName == MDesInpObserver::Type()) {
+    } else if (aTid == MDesInpObserver::idHash()) {
 	// Enable MDesInpObserver resolution for input
 	MVert* intcp = getExtd();
 	MUnit* intcpu = intcp ? intcp->lIf(intcpu) : nullptr;
@@ -271,7 +278,7 @@ void ExtdStateOutpI::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	    addIfpLeaf(ifr, aReq);
 	}
     } else {
-	ExtdStateOutp::resolveIfc(aName, aReq);
+	ExtdStateOutp::resolveIfc(aTid, aReq);
     }
 }
 
@@ -280,7 +287,7 @@ void ExtdStateOutpI::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 
 ExtdStateMnodeInp::ExtdStateMnodeInp(const string &aType, const string& aName, MEnv* aEnv): Extd(aType, aName, aEnv)
 {
-    MNode* cp = Provider()->createNode(CpStateMnodeOutp::Type(), Extd::KUriInt , mEnv);
+    MNode* cp = Provider()->createNode(string(CpStateMnodeOutp::idStr()), Extd::KUriInt , mEnv);
     assert(cp);
     bool res = attachOwned(cp);
     assert(res);
@@ -291,7 +298,7 @@ ExtdStateMnodeInp::ExtdStateMnodeInp(const string &aType, const string& aName, M
 
 ExtdStateMnodeOutp::ExtdStateMnodeOutp(const string &aType, const string& aName, MEnv* aEnv): Extd(aType, aName, aEnv)
 {
-    MNode* cp = Provider()->createNode(CpStateMnodeInp::Type(), Extd::KUriInt , mEnv);
+    MNode* cp = Provider()->createNode(string(CpStateMnodeInp::idStr()), Extd::KUriInt , mEnv);
     assert(cp);
     bool res = attachOwned(cp);
     assert(res);
@@ -316,7 +323,7 @@ const string State::KInpName = "Inp";
 vector<GUri> State::getParentsUri()
 {
     auto p = Vertu::getParentsUri();
-    p.insert(p.begin(), Type());
+    p.insert(p.begin(), string(idStr()));
     return p;
 }
 
@@ -334,7 +341,7 @@ bool State::SContValue::setData(const string& aData)
 State::State(const string &aType, const string& aName, MEnv* aEnv): Vertu(aType, aName, aEnv),
     mPdata(NULL), mCdata(NULL), mUpdNotified(false), mActNotified(false), mInpProv(nullptr), mStDead(false), mInp(nullptr)
 {
-    MNode* cp = Provider()->createNode(CpStateInp::Type(), KInpName, mEnv);
+    MNode* cp = Provider()->createNode(string(CpStateInp::idStr()), KInpName, mEnv);
     assert(cp);
     bool res = attachOwned(cp);
     assert(res);
@@ -351,52 +358,52 @@ State::~State()
     mStDead = true;
 }
 
-MIface* State::MNode_getLif(const char *aType)
+MIface* State::MNode_getLif(TIdHash aTid)
 {
     MIface* res = NULL;
-    if (res = checkLif2(aType, mMDesSyncablePtr));
-    else if (res = checkLif2(aType, mMDesInpObserverPtr));
-    else if (res = checkLif2(aType, mMConnPointPtr));
-    else if (res = checkLif2(aType, mMDVarGetPtr));
-    else if (res = checkLif2(aType, mMDVarSetPtr));
-    else res = Vertu::MNode_getLif(aType);
+    if (res = checkLif2(aTid, mMDesSyncablePtr));
+    else if (res = checkLif2(aTid, mMDesInpObserverPtr));
+    else if (res = checkLif2(aTid, mMConnPointPtr));
+    else if (res = checkLif2(aTid, mMDVarGetPtr));
+    else if (res = checkLif2(aTid, mMDVarSetPtr));
+    else res = Vertu::MNode_getLif(aTid);
     return res;
 }
 
-MIface* State::MOwner_getLif(const char *aType)
+MIface* State::MOwner_getLif(TIdHash aTid)
 {
     MIface* res = NULL;
-    if (res = checkLif2(aType, mMDesSyncablePtr)); // ??
-    else if(res = checkLif2(aType, mMUnitPtr));  // IFR from inputs
-    else res = Vertu::MOwner_getLif(aType);
+    if (res = checkLif2(aTid, mMDesSyncablePtr)); // ??
+    else if(res = checkLif2(aTid, mMUnitPtr));  // IFR from inputs
+    else res = Vertu::MOwner_getLif(aTid);
     return res;
 }
 
-MIface* State::MOwned_getLif(const char *aType)
+MIface* State::MOwned_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMDesSyncablePtr));
-    else res = Unit::MOwned_getLif(aType);
+    if (res = checkLif2(aTid, mMDesSyncablePtr));
+    else res = Unit::MOwned_getLif(aTid);
     return res;
 }
 
-void State::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void State::resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq)
 {
-    if (aName == provName()) {
-        MIface* ifr = MNode_getLif(aName.c_str());
+    if (aTid == idProvided()) {
+        MIface* ifr = MNode_getLif(aTid);
         if (ifr && !aReq->binded()->provided()->findIface(ifr)) {
             addIfpLeaf(ifr, aReq);
         }
 #ifdef DES_IFR_DESOBS
-    } else if (aName == MDesObserver::Type()) {
+    } else if (aTid == MDesObserver::idHash()) {
         // Redirect to owning
         MUnit* owru = Owner()->lIf(owru);
         if (owru) {
-            owru->resolveIface(aName, aReq);
+            owru->resolveIface(aTid, aReq);
         }
 #endif
 #ifdef DES_IFR_INPOBS
-    } else if (aName == MDesInpObserver::Type()) {
+    } else if (aTid == MDesInpObserver::idHash()) {
         // For owned - self, for self - owning
         bool bndHasPairs = (aReq->binded()->pairsBegin() != aReq->binded()->pairsEnd());
         MIfReq::TIfReqCp* req = bndHasPairs ? *aReq->binded()->pairsBegin() : nullptr;
@@ -405,7 +412,7 @@ void State::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
         const MOwned* reqowd = reqn ? reqn->lIf(reqowd) : nullptr; // Requestor as owned
         if (reqowd && isOwned(reqowd)) {
             // Requestor from owned - resolve as self
-            auto* ifc = MNode_getLif(aName.c_str());
+            auto* ifc = MNode_getLif(aTid);
             if (ifc) {
                 addIfpLeaf(ifc, aReq);
             }
@@ -413,12 +420,12 @@ void State::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	    // Self requestor or no requestor - redirect to pairs
 	    for (auto pair : mPairs) {
 		MUnit* pe = pair->lIf(pe);
-		pe->resolveIface(aName, aReq);
+		pe->resolveIface(aTid, aReq);
 	    }
 	}
 #endif
     } else {
-	Vertu::resolveIfc(aName, aReq);
+	Vertu::resolveIfc(aTid, aReq);
     }
 }
 
@@ -462,11 +469,11 @@ void State::onContentChanged(const MContent* aCont)
     Vertu::onContentChanged(aCont);
 }
 
-MIface* State::MVert_getLif(const char *aType)
+MIface* State::MVert_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMConnPointPtr));
-    else res = Vertu::MVert_getLif(aType);
+    if (res = checkLif2(aTid, mMConnPointPtr));
+    else res = Vertu::MVert_getLif(aTid);
     return res;
 }
 
@@ -484,12 +491,12 @@ bool State::isCompatible(MVert* aPair, bool aExt)
 	}
 	if (cp) {
 	    // Check roles conformance
-	    string prov = provName();
-	    string req = reqName();
+	    auto prov = idProvided();
+	    auto req = idRequired();
 	    MConnPoint* mcp = cp->lIf(mcp);
 	    if (mcp) {
-		string pprov = mcp->provName();
-		string preq = mcp->reqName();
+		auto pprov = mcp->idProvided();
+		auto preq = mcp->idRequired();
 		if (ext) {
 		    res = prov == pprov && req == preq;
 		} else {
@@ -516,7 +523,7 @@ void State::setActivated()
 	}
 #else
         if (!mDobsIfProv) {
-            mDobsIfProv = defaultIfProv(MDesObserver::Type());
+            mDobsIfProv = defaultIfProv(MDesObserver::idHash());
         }
         auto* ifcs = mDobsIfProv->ifaces();
         auto* obs = ifcs->size() ? reinterpret_cast<MDesObserver*>(ifcs->at(0)) : nullptr;
@@ -566,7 +573,7 @@ void State::NotifyInpsUpdated()
     //LOGN(EErr, "NotifyInpsUpdated");
 #ifdef DES_IFR_INPOBS
     if (!mInpobsIfProv) {
-	mInpobsIfProv = defaultIfProv(MDesInpObserver::Type());
+	mInpobsIfProv = defaultIfProv(MDesInpObserver::idHash());
     }
     auto* ifcs = mInpobsIfProv->ifaces();
     for (auto ifc : *ifcs) {
@@ -663,7 +670,7 @@ MDVarGet* State::GetInp()
 	if (!mInp) mInp = getComp(KInpName);
 	MNode* inp = mInp;
 	MUnit* inpu = inp ? inp->lIf(inpu) : nullptr;
-	mInpProv = inpu ? inpu->defaultIfProv(MDVarGet::Type()) : nullptr;
+	mInpProv = inpu ? inpu->defaultIfProv(MDVarGet::idHash()) : nullptr;
 	ifcs = mInpProv ? mInpProv->ifaces() : nullptr;
     } else {
 	ifcs = mInpProv->ifaces();
@@ -676,14 +683,14 @@ MDVarGet* State::GetInp()
     return res;
 }
 
-string State::provName() const
+MIface::TIdHash State::idProvided() const
 {
-    return MDVarGet::Type();
+    return MDVarGet::idHash();
 }
 
-string State::reqName() const
+MIface::TIdHash State::idRequired() const
 {
-    return MDesInpObserver::Type();
+    return MDesInpObserver::idHash();
 }
 
 string State::VarGetIfid() const
@@ -716,7 +723,7 @@ DtBase* State::CreateData(const string& aType)
 
 void State::onConnected()
 {
-    invalidateIrm(MDesInpObserver::Type());
+    invalidateIrm(MDesInpObserver::idHash());
     notifyChanged();
     //Vertu::onConnected();
     //NotifyInpsUpdated();
@@ -724,7 +731,7 @@ void State::onConnected()
 
 void State::onDisconnected()
 {
-    invalidateIrm(MDesInpObserver::Type());
+    invalidateIrm(MDesInpObserver::idHash());
     notifyChanged();
     //Vertu::onDisconnected();
     //NotifyInpsUpdated();
@@ -741,7 +748,7 @@ void State::refreshInpObsIfr()
     for (auto pair : mPairs) {
 	MUnit* pe = pair->lIf(pe);
 	// Don't add self to if request context to enable routing back to self
-	MIfProv* ifp = pe->defaultIfProv(MDesInpObserver::Type());
+	MIfProv* ifp = pe->defaultIfProv(MDesInpObserver::idHash());
 	//MIfProv* prov = ifp->first();
 	ifp->ifaces();
     }
@@ -793,7 +800,7 @@ const string Const::KCont_Value = "";
 vector<GUri> Const::getParentsUri()
 {
     auto p = Vertu::getParentsUri();
-    p.insert(p.begin(), Type());
+    p.insert(p.begin(), string(idStr()));
     return p;
 }
 
@@ -821,39 +828,39 @@ Const::~Const()
     mIsDead = true;
 }
 
-MIface* Const::MNode_getLif(const char *aType)
+MIface* Const::MNode_getLif(TIdHash aTid)
 {
     MIface* res = NULL;
-    if (res = checkLif2(aType, mMConnPointPtr));
-    else if (res = checkLif2(aType, mMDVarGetPtr));
-    else res = Vertu::MNode_getLif(aType);
+    if (res = checkLif2(aTid, mMConnPointPtr));
+    else if (res = checkLif2(aTid, mMDVarGetPtr));
+    else res = Vertu::MNode_getLif(aTid);
     return res;
 }
 
-MIface* Const::MOwner_getLif(const char *aType)
+MIface* Const::MOwner_getLif(TIdHash aTid)
 {
     MIface* res = NULL;
-    if(res = checkLif2(aType, mMUnitPtr));  // IFR from inputs
-    else res = Vertu::MOwner_getLif(aType);
+    if(res = checkLif2(aTid, mMUnitPtr));  // IFR from inputs
+    else res = Vertu::MOwner_getLif(aTid);
     return res;
 }
 
-MIface* Const::MOwned_getLif(const char *aType)
+MIface* Const::MOwned_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    res = Unit::MOwned_getLif(aType);
+    res = Unit::MOwned_getLif(aTid);
     return res;
 }
 
-void Const::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void Const::resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq)
 {
-    if (aName == provName()) {
-	MIface* ifr = MNode_getLif(aName.c_str());
+    if (aTid == idProvided()) {
+	MIface* ifr = MNode_getLif(aTid);
 	if (ifr && !aReq->binded()->provided()->findIface(ifr)) {
 	    addIfpLeaf(ifr, aReq);
 	}
     } else {
-	Vertu::resolveIfc(aName, aReq);
+	Vertu::resolveIfc(aTid, aReq);
     }
 }
 
@@ -897,11 +904,11 @@ void Const::onContentChanged(const MContent* aCont)
     Vertu::onContentChanged(aCont);
 }
 
-MIface* Const::MVert_getLif(const char *aType)
+MIface* Const::MVert_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMConnPointPtr));
-    else res = Vertu::MVert_getLif(aType);
+    if (res = checkLif2(aTid, mMConnPointPtr));
+    else res = Vertu::MVert_getLif(aTid);
     return res;
 }
 
@@ -919,12 +926,12 @@ bool Const::isCompatible(MVert* aPair, bool aExt)
 	}
 	if (cp) {
 	    // Check roles conformance
-	    string prov = provName();
-	    string req = reqName();
+	    auto prov = idProvided();
+	    auto req = idRequired();
 	    MConnPoint* mcp = cp->lIf(mcp);
 	    if (mcp) {
-		string pprov = mcp->provName();
-		string preq = mcp->reqName();
+		auto pprov = mcp->idProvided();
+		auto preq = mcp->idRequired();
 		if (ext) {
 		    res = prov == pprov && req == preq;
 		} else {
@@ -950,14 +957,14 @@ void Const::NotifyInpsUpdated()
     }
 }
 
-string Const::provName() const
+MIface::TIdHash Const::idProvided() const
 {
-    return MDVarGet::Type();
+    return MDVarGet::idHash();
 }
 
-string Const::reqName() const
+MIface::TIdHash Const::idRequired() const
 {
-    return MDesInpObserver::Type();
+    return MDesInpObserver::idHash();
 }
 
 string Const::VarGetIfid() const
@@ -972,14 +979,14 @@ DtBase* Const::CreateData(const string& aType)
 
 void Const::onConnected()
 {
-    invalidateIrm(MDesInpObserver::Type());
+    invalidateIrm(MDesInpObserver::idHash());
     //Vertu::onConnected();
     //NotifyInpsUpdated();
 }
 
 void Const::onDisconnected()
 {
-    invalidateIrm(MDesInpObserver::Type());
+    invalidateIrm(MDesInpObserver::idHash());
     notifyChanged();
     //Vertu::onDisconnected();
     //NotifyInpsUpdated();
@@ -997,7 +1004,7 @@ void Const::refreshInpObsIfr()
     for (auto pair : mPairs) {
 	MUnit* pe = pair->lIf(pe);
 	// Don't add self to if request context to enable routing back to self
-	MIfProv* ifp = pe->defaultIfProv(MDesInpObserver::Type());
+	MIfProv* ifp = pe->defaultIfProv(MDesInpObserver::idHash());
 	//MIfProv* prov = ifp->first();
 	ifp->ifaces();
     }
@@ -1047,20 +1054,20 @@ mPaused(false)
 {
 }
 
-MIface* Des::MNode_getLif(const char *aType)
+MIface* Des::MNode_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMDesSyncablePtr));
-    else if (res = checkLif2(aType, mMDesObserverPtr));
-    else if (res = checkLif2(aType, mMDesAdapterPtr));
-    else if (res = checkLif2(aType, mMDesManageablePtr));
-    else res = Syst::MNode_getLif(aType);
+    if (res = checkLif2(aTid, mMDesSyncablePtr));
+    else if (res = checkLif2(aTid, mMDesObserverPtr));
+    else if (res = checkLif2(aTid, mMDesAdapterPtr));
+    else if (res = checkLif2(aTid, mMDesManageablePtr));
+    else res = Syst::MNode_getLif(aTid);
     return res;
 }
 
-void Des::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void Des::resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq)
 {
-    if (aName == MDesCtxSpl::Type()) {
+    if (aTid == MDesCtxSpl::idHash()) {
 	// If requestor isn't comp then get local supplier
 	// and propagate request to it, ref ds_dctx_dic_cs Solution_2
 	MIfReq* ireq = aReq->provided()->tail(); // Initial requestor
@@ -1077,7 +1084,7 @@ void Des::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 			addIfpLeaf(spl, aReq);
 			MUnit* splu = spl->lIf(splu);
 			if (splu) {
-			    splu->resolveIface(aName, aReq);
+			    splu->resolveIface(aTid, aReq);
 			    redirectedToSpl = true;
 			}
 		    }
@@ -1087,17 +1094,17 @@ void Des::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 		// Propagate request to owner
 		MUnit* ownu = Owner()->lIf(ownu);
 		if (ownu) {
-		    ownu->resolveIface(aName, aReq);
+		    ownu->resolveIface(aTid, aReq);
 		}
 	    }
 	} else { // Propagate request to owner
 	    MUnit* ownu = Owner()->lIf(ownu);
 	    if (ownu) {
-		ownu->resolveIface(aName, aReq);
+		ownu->resolveIface(aTid, aReq);
 	    }
 	}
 #ifdef DES_IFR_DESOBS
-    } else if (aName == MDesObserver::Type()) {
+    } else if (aTid == MDesObserver::idHash()) {
         // For owned - self, for self - owning
         bool bndHasPairs = (aReq->binded()->pairsBegin() != aReq->binded()->pairsEnd());
         MIfReq::TIfReqCp* req = bndHasPairs ? *aReq->binded()->pairsBegin() : nullptr;
@@ -1107,7 +1114,7 @@ void Des::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
         //if (reqn && isNodeOwnedInd(reqn)) {
         if (reqowd && isOwned(reqowd)) {
             // Requestor from owned - resolve as self
-            auto* ifc = MNode_getLif(aName.c_str());
+            auto* ifc = MNode_getLif(aTid);
             if (ifc) {
                 addIfpLeaf(ifc, aReq);
             }
@@ -1115,12 +1122,12 @@ void Des::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
             // Self requestor or no requestor - redirect to owning
             MUnit* owru = Owner() ? Owner()->lIf(owru) : nullptr;
             if (owru) {
-		owru->resolveIface(aName, aReq);
+		owru->resolveIface(aTid, aReq);
             }
         }
 #endif
     } else {
-        Syst::resolveIfc(aName, aReq);
+        Syst::resolveIfc(aTid, aReq);
     }
 }
 
@@ -1191,7 +1198,7 @@ void Des::setActivated()
 	}
 #else
         if (!mDobsIfProv) {
-            mDobsIfProv = defaultIfProv(MDesObserver::Type());
+            mDobsIfProv = defaultIfProv(MDesObserver::idHash());
         }
         auto* ifcs = mDobsIfProv->ifaces();
         auto* obs = ifcs->size() ? reinterpret_cast<MDesObserver*>(ifcs->at(0)) : nullptr;
@@ -1279,20 +1286,20 @@ void Des::onOwnedDetached(MOwned* aOwned)
     }
 }
 
-MIface* Des::MOwned_getLif(const char *aType)
+MIface* Des::MOwned_getLif(TIdHash aTid)
 {
     MIface* res = NULL;
-    if (res = checkLif2(aType, mMDesSyncablePtr));
-    else res = Syst::MOwned_getLif(aType);
+    if (res = checkLif2(aTid, mMDesSyncablePtr));
+    else res = Syst::MOwned_getLif(aTid);
     return res;
 }
 
-MIface* Des::MOwner_getLif(const char *aType)
+MIface* Des::MOwner_getLif(TIdHash aTid)
 {
     MIface* res = NULL;
-    if (res = checkLif2(aType, mMDesObserverPtr)); // Notifying from owned 
-    else if (res = checkLif2(aType, mMDesAdapterPtr));
-    else res = Syst::MOwner_getLif(aType);
+    if (res = checkLif2(aTid, mMDesObserverPtr)); // Notifying from owned 
+    else if (res = checkLif2(aTid, mMDesAdapterPtr));
+    else res = Syst::MOwner_getLif(aTid);
     return res;
 }
 
@@ -1368,7 +1375,7 @@ MNode* Des::getMag()
 
 void Des::onOwnerAttached()
 {
-    invalidateIrm(MDesObserver::Type());
+    invalidateIrm(MDesObserver::idHash());
 }
 
 ///// ADES
@@ -1384,32 +1391,32 @@ ADes::~ADes()
 {
 }
 
-MIface* ADes::MNode_getLif(const char *aType)
+MIface* ADes::MNode_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMDesSyncablePtr));
-    else if (res = checkLif2(aType, mMAgentPtr));
-    else if (res = checkLif2(aType, mMDesObserverPtr));
-    else if (res = checkLif2(aType, mMDesManageablePtr));
-    else if (res = checkLif2(aType, mMDesAdapterPtr));
-    else res = Unit::MNode_getLif(aType);
+    if (res = checkLif2(aTid, mMDesSyncablePtr));
+    else if (res = checkLif2(aTid, mMAgentPtr));
+    else if (res = checkLif2(aTid, mMDesObserverPtr));
+    else if (res = checkLif2(aTid, mMDesManageablePtr));
+    else if (res = checkLif2(aTid, mMDesAdapterPtr));
+    else res = Unit::MNode_getLif(aTid);
     return res;
 }
 
-MIface* ADes::MAgent_getLif(const char *aType)
+MIface* ADes::MAgent_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMDesSyncablePtr));
-    else if (res = checkLif2(aType, mMUnitPtr)); // To allow client to request IFR
-    else if (res = checkLif2(aType, mMDesObserverPtr));
-    else if (res = checkLif2(aType, mMDesManageablePtr));
-    else if (res = checkLif2(aType, mMDesAdapterPtr));
+    if (res = checkLif2(aTid, mMDesSyncablePtr));
+    else if (res = checkLif2(aTid, mMUnitPtr)); // To allow client to request IFR
+    else if (res = checkLif2(aTid, mMDesObserverPtr));
+    else if (res = checkLif2(aTid, mMDesManageablePtr));
+    else if (res = checkLif2(aTid, mMDesAdapterPtr));
     return res;
 }
 
-void ADes::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void ADes::resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq)
 {
-    if (aName == MDesCtxSpl::Type()) {
+    if (aTid == MDesCtxSpl::idHash()) {
 	MOwner* mmo = ahostNode()->owned()->pcount() > 0 ? ahostNode()->owned()->pairAt(0)->provided() : nullptr; // Owner of owner
 	// If requestor isn't comp then get local supplier
 	// and propagate request to it, ref ds_dctx_dic_cs Solution_2
@@ -1434,7 +1441,7 @@ void ADes::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 			addIfpLeaf(spl, aReq);
 			MUnit* splu = spl->lIf(splu);
 			if (splu) {
-			    splu->resolveIface(aName, aReq);
+			    splu->resolveIface(aTid, aReq);
 			    redirectedToSpl = true;
 			}
 		    }
@@ -1444,17 +1451,17 @@ void ADes::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 		// Propagate request to owner
 		MUnit* ownu = mmo ? mmo->lIf(ownu) : nullptr;
 		if (ownu) {
-		    ownu->resolveIface(aName, aReq);
+		    ownu->resolveIface(aTid, aReq);
 		}
 	    }
 	} else { // Propagate request to owner
 	    MUnit* ownu = mmo ? mmo->lIf(ownu) : nullptr;
 	    if (ownu) {
-		ownu->resolveIface(aName, aReq);
+		ownu->resolveIface(aTid, aReq);
 	    }
 	}
 #ifdef DES_IFR_DESOBS
-    } else if (aName == MDesObserver::Type()) {
+    } else if (aTid == MDesObserver::idHash()) {
         // For owned - self, for self - owning
 	MIfReq* req = aReq->provided()->tail(); // Initial requestor
         const MIfProvOwner* reqo = req ? req->rqOwner() : nullptr;
@@ -1462,7 +1469,7 @@ void ADes::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	bool isRqLocal = (reqn == ahostNode());
 	if (reqn && !isRqLocal) {
             // Requestor from owned - resolve as self
-            auto* ifc = MNode_getLif(aName.c_str());
+            auto* ifc = MNode_getLif(aTid);
             if (ifc) {
                 addIfpLeaf(ifc, aReq);
             }
@@ -1473,13 +1480,13 @@ void ADes::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
                 MOwner* ahno = ahn->owned()->pairAt(0) ? (*ahn->owned()->pairsBegin())->provided() : nullptr;
                 MUnit* ahnou = ahno ? ahno->lIf(ahnou) : nullptr;
                 if (ahnou) {
-                    ahnou->resolveIface(aName, aReq);
+                    ahnou->resolveIface(aTid, aReq);
                 }
             }
         }
 #endif
     } else {
-	Unit::resolveIfc(aName, aReq);
+	Unit::resolveIfc(aTid, aReq);
     }
 }
 
@@ -1565,7 +1572,7 @@ void ADes::setActivated()
 	}
 #else
         if (!mDobsIfProv) {
-            mDobsIfProv = defaultIfProv(MDesObserver::Type());
+            mDobsIfProv = defaultIfProv(MDesObserver::idHash());
         }
         auto* ifcs = mDobsIfProv->ifaces();
         auto* obs = ifcs->size() ? reinterpret_cast<MDesObserver*>(ifcs->at(0)) : nullptr;
@@ -1618,15 +1625,15 @@ int ADes::countOfActive(bool aLocal) const
     return res;
 }
 
-MIface* ADes::MOwned_getLif(const char *aType)
+MIface* ADes::MOwned_getLif(TIdHash aTid)
 {
     MIface* res = NULL;
-    if (res = checkLif2(aType, mMDesSyncablePtr));
-    else res = Unit::MOwned_getLif(aType);
+    if (res = checkLif2(aTid, mMDesSyncablePtr));
+    else res = Unit::MOwned_getLif(aTid);
     return res;
 }
 
-MIface* ADes::MObserver_getLif(const char *aType)
+MIface* ADes::MObserver_getLif(TIdHash aTid)
 {
     return nullptr;
 }
@@ -1643,7 +1650,7 @@ void ADes::onObsOwnedAttached(MObservable* aObl, MOwned* aOwned)
 
 void ADes::onObsOwnerAttached(MObservable* aObl)
 {
-    invalidateIrm(MDesObserver::Type());
+    invalidateIrm(MDesObserver::idHash());
 }
 
 
@@ -1849,19 +1856,19 @@ void DesLauncher::OnIdle()
     //mStop = true;
 }
 
-MIface* DesLauncher::MOwned_getLif(const char *aType)
+MIface* DesLauncher::MOwned_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMLauncherPtr));
-    else res = Des::MOwned_getLif(aType);
+    if (res = checkLif2(aTid, mMLauncherPtr));
+    else res = Des::MOwned_getLif(aTid);
     return res;
 }
 
-MIface* DesLauncher::MNode_getLif(const char *aType)
+MIface* DesLauncher::MNode_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMLauncherPtr));
-    else res = Des::MNode_getLif(aType);
+    if (res = checkLif2(aTid, mMLauncherPtr));
+    else res = Des::MNode_getLif(aTid);
     return res;
 }
 
@@ -2130,30 +2137,30 @@ DesCtxSpl::DesCtxSpl(const string &aType, const string& aName, MEnv* aEnv): Des(
     mSplCp(this)
 {}
 
-MIface* DesCtxSpl::MNode_getLif(const char *aType)
+MIface* DesCtxSpl::MNode_getLif(TIdHash aTid)
 {
     MIface* res = NULL;
-    if (res = checkLif2(aType, mMDesCtxSplPtr));
-    else res = Des::MNode_getLif(aType);
+    if (res = checkLif2(aTid, mMDesCtxSplPtr));
+    else res = Des::MNode_getLif(aTid);
     return res;
 }
 
-MIface* DesCtxSpl::MOwned_getLif(const char *aType)
+MIface* DesCtxSpl::MOwned_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMDesCtxSplPtr));
-    else res = Des::MOwned_getLif(aType);
+    if (res = checkLif2(aTid, mMDesCtxSplPtr));
+    else res = Des::MOwned_getLif(aTid);
     return res;
 }
 
-MIface* DesCtxSpl::MDesCtxSpl_getLif(const char *aType)
+MIface* DesCtxSpl::MDesCtxSpl_getLif(TIdHash aTid)
 {
-    return checkLif2(aType, mMUnitPtr); // To enable IFR
+    return checkLif2(aTid, mMUnitPtr); // To enable IFR
 }
 
-void DesCtxSpl::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void DesCtxSpl::resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq)
 {
-    if (aName == MDesCtxSpl::Type()) {
+    if (aTid == MDesCtxSpl::idHash()) {
 	MIfReq* ireq = aReq->provided()->tail(); // Initial requestor
 	if (ireq) {
 	    MUnit* ownu = Owner()->lIf(ownu);
@@ -2170,11 +2177,11 @@ void DesCtxSpl::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	} else { // Propagate request to owner
 	    MUnit* ownu = Owner()->lIf(ownu);
 	    if (ownu) {
-		ownu->resolveIface(aName, aReq);
+		ownu->resolveIface(aTid, aReq);
 	    }
 	}
     } else {
-	Des::resolveIfc(aName, aReq);
+	Des::resolveIfc(aTid, aReq);
     }
 }
 
@@ -2234,11 +2241,11 @@ DesCtxCsm::DesCtxCsm(const string &aType, const string& aName, MEnv* aEnv): Des(
     mInitialized(false), mInitFailed(false), mCsmCp(this)
 {}
 
-MIface* DesCtxCsm::MNode_getLif(const char *aType)
+MIface* DesCtxCsm::MNode_getLif(TIdHash aTid)
 {
     MIface* res = NULL;
-    if (res = checkLif2(aType, mMDesCtxCsmPtr));
-    else res = Des::MNode_getLif(aType);
+    if (res = checkLif2(aTid, mMDesCtxCsmPtr));
+    else res = Des::MNode_getLif(aTid);
     return res;
 }
 
@@ -2376,7 +2383,7 @@ DesInpDemux::DesInpDemux(const string &aType, const string& aName, MEnv* aEnv): 
 
 void DesInpDemux::AddInput(const string& aName)
 {
-    MNode* cp = Provider()->createNode(CpStateInp::Type(), aName, mEnv);
+    MNode* cp = Provider()->createNode(string(CpStateInp::idStr()), aName, mEnv);
     assert(cp);
     bool res = attachOwned(cp);
     assert(res);
@@ -2384,7 +2391,7 @@ void DesInpDemux::AddInput(const string& aName)
 
 void DesInpDemux::AddOutput(const string& aName)
 {
-    MNode* cp = Provider()->createNode(CpStateOutp::Type(), aName, mEnv);
+    MNode* cp = Provider()->createNode(string(CpStateOutp::idStr()), aName, mEnv);
     assert(cp);
     bool res = attachOwned(cp);
     assert(res);
@@ -2402,9 +2409,9 @@ int DesInpDemux::getIfcCount()
     return res;
 }
 
-void DesInpDemux::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void DesInpDemux::resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq)
 {
-    if (aName == MDVarGet::Type()) {
+    if (aTid == MDVarGet::idHash()) {
 	MNode* outp = getNode(K_Cp_Outp);
 	MUnit* outpu = outp ? outp->lIf(outpu) : nullptr;
 	MIfProvOwner* outppo = outpu ? outpu->lIf(outppo) : nullptr;
@@ -2420,7 +2427,7 @@ void DesInpDemux::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 		addIfpLeaf(ifc, aReq);
 	    }
 	}
-    } else if (aName == MDesObserver::Type()) {
+    } else if (aTid == MDesObserver::idHash()) {
 	MNode* inp = getNode(K_Cp_Inp);
 	MUnit* inpu = inp ? inp->lIf(inpu) : nullptr;
 	MIfProvOwner* inppo = inpu ? inpu->lIf(inppo) : nullptr;
@@ -2428,10 +2435,10 @@ void DesInpDemux::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	    // Request from input, redirect to output
 	    MNode* outp = getNode(K_Cp_Outp);
 	    MUnit* outpu = outp ? outp->lIf(outpu) : nullptr;
-	    outpu->resolveIface(aName, aReq);
+	    outpu->resolveIface(aTid, aReq);
 	}
     } else {
-	Des::resolveIfc(aName, aReq);
+	Des::resolveIfc(aTid, aReq);
     }
 }
 

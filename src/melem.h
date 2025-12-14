@@ -16,12 +16,15 @@ class MParent;
 class MElem: public MIface
 {
     public:
-	static const char* Type() { return "MElem";}
+	inline static constexpr std::string_view idStr() { return "MElem"sv;}
+	inline static constexpr TIdHash idHash() { return 0xd0cb09cd212045e1;}
+    public:
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MElem_Uid();}
 	virtual string MElem_Uid() const = 0;
-	virtual MIface* getLif(const char *aType) { return MElem_getLif(aType);}
-	virtual MIface* MElem_getLif(const char *aType) = 0;
+	virtual MIface* getLif(TIdHash aTid) { return MElem_getLif(aTid);}
+	virtual MIface* MElem_getLif(TIdHash aTid) = 0;
 	virtual void doDump(int aLevel, int aIdt = 0) const { return MElem_doDump(aLevel, aIdt, std::cout);}
 	virtual void MElem_doDump(int aLevel, int aIdt, ostream& aOs) const = 0;
 	// Local

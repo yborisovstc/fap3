@@ -18,39 +18,40 @@ using namespace std;
 class Unit : public Node, public MUnit, public MIfProvOwner
 {
     public:
-	static const char* Type() { return "Unit";}
+	inline static constexpr std::string_view idStr() { return "Unit"sv;}
+    public:
 	static vector<GUri> getParentsUri();
 	Unit(const string &aType, const string &aName, MEnv* aEnv);
 	virtual ~Unit();
 	// From MNode
-	virtual MIface* MNode_getLif(const char *aType) override;
-	virtual MIface* MOwned_getLif(const char *aType);
-	virtual string parentName() const { return Type(); }
+	virtual MIface* MNode_getLif(TIdHash aTid) override;
+	virtual MIface* MOwned_getLif(TIdHash aTid);
+	virtual string parentName() const { return string(idStr()); }
 	vector<GUri> parentsUri() const override { return getParentsUri(); }
 	// From MUnit
 	virtual string MUnit_Uid() const override {  return getUid<MUnit>();}
-	virtual MIface* MUnit_getLif(const char *aType) override;
+	virtual MIface* MUnit_getLif(TIdHash aTid) override;
 	virtual void MUnit_doDump(int aLevel, int aIdt, std::ostream& aOs) const override;
-	virtual MIfProv* defaultIfProv(const string& aName) override;
-	virtual void resolveIface(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual MIfProv* defaultIfProv(TIdHash aTid) override;
+	virtual void resolveIface(TIdHash aTid, MIfReq::TIfReqCp* aReq) override;
 	// From MIfProvOwner
 	virtual string MIfProvOwner_Uid() const override { return getUid<MIfProvOwner>();}
-	virtual MIface* MIfProvOwner_getLif(const char *aType) override;
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual MIface* MIfProvOwner_getLif(TIdHash aTid) override;
+	virtual void resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq) override;
 	virtual void onIfpDisconnected(MIfProv* aProv) override;
 	virtual void onIfpInvalidated(MIfProv* aProv) override;
     protected:
-	virtual IfrNode* createIfProv(const string& aName, MIfReq::TIfReqCp* aReq) const;
+	virtual IfrNode* createIfProv(TIdHash aTid, MIfReq::TIfReqCp* aReq) const;
 	void invalidateIrm();
-	void invalidateIrm(const string& aIfcName);
+	void invalidateIrm(TIdHash aTid);
 	void addIfpLeaf(MIface* aIfc, MIfReq::TIfReqCp* aReq);
 	void addIfpLeafs(MIfProv::TIfaces* aIfcs, MIfReq::TIfReqCp* aReq);
 	// From Node.MOwner
-	virtual MIface* MOwner_getLif(const char *aType) override;
+	virtual MIface* MOwner_getLif(TIdHash aTid) override;
 	virtual void onOwnedAttached(MOwned* aOwned) override;
 	bool isRequestor(MIfReq::TIfReqCp* aReq, MNode* aOwner) const;
     protected:
-	map<string, IfrNode*> mLocalIrn; /*!< Local IFR node */
+	map<TIdHash, IfrNode*> mLocalIrn; /*!< Local IFR node */
 	list<IfrNode*> mIrns;  /*! IFR nodes */
 	MUnit* mMUnitPtr = nullptr;
 	MIfProvOwner* mMIfProvOwnerPtr = nullptr;

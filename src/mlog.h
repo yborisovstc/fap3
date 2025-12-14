@@ -65,11 +65,15 @@ class TLog
 class MLogRec: public MIface
 {
     public:
+	inline static constexpr std::string_view idStr() { return "MLogRec"sv;}
+	inline static constexpr TIdHash idHash() { return 0x6559291f5dce4e0c;}
+    public:
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MLogRec_Uid();}
 	virtual string MLogRec_Uid() const = 0;
-	virtual MIface* getLif(const char *aType) { return MLogRec_getLif(aType);}
-	virtual MIface* MLogRec_getLif(const char *aType) = 0;
+	virtual MIface* getLif(TIdHash aTid) { return MLogRec_getLif(aTid);}
+	virtual MIface* MLogRec_getLif(TIdHash aTid) = 0;
 	virtual void doDump(int aLevel, int aIdt = 0) const { return MLogRec_doDump(aLevel, aIdt, std::cout);}
 	virtual void MLogRec_doDump(int aLevel, int aIdt, ostream& aOs) const = 0;
 	// Local

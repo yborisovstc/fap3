@@ -10,7 +10,7 @@
 vector<GUri> TrBase::getParentsUri()
 {
     auto p = CpStateOutp::getParentsUri();
-    p.insert(p.begin(), Type());
+    p.insert(p.begin(), string(idStr()));
     return p;
 }
 
@@ -18,44 +18,44 @@ TrBase::TrBase(const string &aType, const string& aName, MEnv* aEnv): CpStateOut
 {
 }
 
-MIface* TrBase::MNode_getLif(const char *aType)
+MIface* TrBase::MNode_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMDVarGetPtr));
-    else res = CpStateOutp::MNode_getLif(aType);
+    if (res = checkLif2(aTid, mMDVarGetPtr));
+    else res = CpStateOutp::MNode_getLif(aTid);
     return res;
 }
 
-MIface* TrBase::MVert_getLif(const char *aType)
+MIface* TrBase::MVert_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMConnPointPtr));
-    else res = Vertu::MVert_getLif(aType);
+    if (res = checkLif2(aTid, mMConnPointPtr));
+    else res = Vertu::MVert_getLif(aTid);
     return res;
 }
 
-MIface* TrBase::MOwner_getLif(const char *aType)
+MIface* TrBase::MOwner_getLif(TIdHash aTid)
 {
     MIface* res = NULL;
-    if (res = checkLif2(aType, mMUnitPtr));  // IFR from inputs
-    else res = CpStateOutp::MOwner_getLif(aType);
+    if (res = checkLif2(aTid, mMUnitPtr));  // IFR from inputs
+    else res = CpStateOutp::MOwner_getLif(aTid);
     return res;
 }
 
 void TrBase::AddInput(const string& aName)
 {
-    MNode* cp = Provider()->createNode(CpStateInp::Type(), aName, mEnv);
+    MNode* cp = Provider()->createNode(string(CpStateInp::idStr()), aName, mEnv);
     assert(cp);
     bool res = attachOwned(cp);
     assert(res);
 }
 
-void TrBase::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void TrBase::resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq)
 {
-    MIface* ifr = MNode_getLif(aName.c_str()); // Local
+    MIface* ifr = MNode_getLif(aTid); // Local
     if (ifr) {
 	addIfpLeaf(ifr, aReq);
-    } else if (aName == MDesInpObserver::Type()) {
+    } else if (aTid == MDesInpObserver::idHash()) {
 	// Enable MDesInpObserver resolution for inputs only
 	// We cannot resolve inputs atm (it requires inputs registry)
 	// So checking components instead of inputs
@@ -72,12 +72,12 @@ void TrBase::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
             // Local request, redirect to pairs
             for (auto pair : mPairs) {
                 MUnit* pu = pair->lIf(pu);
-                pu->resolveIface(aName, aReq);
+                pu->resolveIface(aTid, aReq);
             }
 #endif
         }
     } else {
-	CpStateOutp::resolveIfc(aName, aReq);
+	CpStateOutp::resolveIfc(aTid, aReq);
     }
 }
 
@@ -88,7 +88,7 @@ void TrBase::onInpUpdated()
 #ifdef DEST_IFR_INPOBS
     // Notify inputs
     if (!mIobsIfProv) {
-        mIobsIfProv = defaultIfProv(MDesInpObserver::Type());
+        mIobsIfProv = defaultIfProv(MDesInpObserver::idHash());
     }
     auto* ifcs = mIobsIfProv->ifaces();
     for (auto ifc : *ifcs) {
@@ -114,13 +114,13 @@ Func::TInpIc* TrBase::GetInps(FInp& aInp)
 	PFL_DUR_STAT_START(PEvents::EDurStat_Tmp2);
 	MNode* inp = getNode(aInp.mName);
 	MUnit* inpu = inp ? inp->lIf(inpu) : nullptr;
-	aInp.mIfp = inpu ? inpu->defaultIfProv(MDVarGet::Type()) : nullptr;
+	aInp.mIfp = inpu ? inpu->defaultIfProv(MDVarGet::idHash()) : nullptr;
 	res = aInp.mIfp ? aInp.mIfp->ifaces() : nullptr;
 	PFL_DUR_STAT_REC(PEvents::EDurStat_Tmp2);
     } else {
-	PFL_DUR_STAT_START(PEvents::EDurStat_Tmp);
+	//PFL_DUR_STAT_START(PEvents::EDurStat_Tmp);
 	res = aInp.mIfp->ifaces();
-	PFL_DUR_STAT_REC(PEvents::EDurStat_Tmp);
+	//PFL_DUR_STAT_REC(PEvents::EDurStat_Tmp);
     }
     if (!res || res->size() == 0) {
 	LOGN(EDbg, "Cannot get input [" + aInp.mName + "]");
@@ -609,12 +609,12 @@ void TrSwitchBool2::notifyInpsUpdated(const IobsPx* aPx)
     }
 }
 
-void TrSwitchBool2::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void TrSwitchBool2::resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq)
 {
-    MIface* ifr = MNode_getLif(aName.c_str()); // Local
+    MIface* ifr = MNode_getLif(aTid); // Local
     if (ifr) {
 	addIfpLeaf(ifr, aReq);
-    } else if (aName == MDesInpObserver::Type()) {
+    } else if (aTid == MDesInpObserver::idHash()) {
 	// Enable MDesInpObserver resolution for inputs only
 	// We cannot resolve inputs atm (it requires inputs registry)
 	// So checking components instead of inputs
@@ -635,7 +635,7 @@ void TrSwitchBool2::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
 	    }
 	}
     } else {
-	CpStateOutp::resolveIfc(aName, aReq);
+	CpStateOutp::resolveIfc(aTid, aReq);
     }
 }
 

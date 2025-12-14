@@ -12,19 +12,20 @@
 class Elem: public Unit, public MElem, public MParent, public MChild
 {
     public:
+	inline static constexpr std::string_view idStr() { return "Elem"sv;}
+    public:
 	using TInhTreeNode = NTnnp<MChild, MParent>; 
     public:
-	static const char* Type() { return "Elem";}
 	static vector<GUri> getParentsUri();
 	Elem(const string &aType, const string &aName, MEnv* aEnv);
 	virtual ~Elem();
 	// From MNode.MIface
-	virtual MIface* MNode_getLif(const char *aType) override;
+	virtual MIface* MNode_getLif(TIdHash aTid) override;
 	virtual string parentName() const override;
 	vector<GUri> parentsUri() const override { return getParentsUri(); }
 	// From MElem.MIface
 	virtual string MElem_Uid() const override { return getUid<MElem>();}
-	virtual MIface* MElem_getLif(const char *aType) override;
+	virtual MIface* MElem_getLif(TIdHash aTid) override;
 	virtual void MElem_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	// From MNode
 	virtual void mutate(const ChromoNode& aMut, bool aChange /*EFalse*/, const MutCtx& aCtx, bool aTreatAsChromo = false, bool aLocal = false) override;
@@ -36,7 +37,7 @@ class Elem: public Unit, public MElem, public MParent, public MChild
 	virtual MParent* asParent() override;
 	// From MParent
 	virtual string MParent_Uid() const override {return getUid<MParent>();}
-	virtual MIface* MParent_getLif(const char *aType) override;
+	virtual MIface* MParent_getLif(TIdHash aTid) override;
 	virtual void MParent_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	virtual void onChildDeleting(MChild* aChild) override;
 	virtual bool onChildRenaming(MChild* aChild, const string& aNewName) override;
@@ -46,7 +47,7 @@ class Elem: public Unit, public MElem, public MParent, public MChild
         vector<GUri> parentsUriPrnt() const override { return parentsUri(); }
 	// From MChild
 	virtual string MChild_Uid() const override {return getUid<MParent>();}
-	virtual MIface* MChild_getLif(const char *aType) override;
+	virtual MIface* MChild_getLif(TIdHash aTid) override;
 	virtual void MChild_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	virtual void onParentDeleting(MParent* aParent) override;
 	virtual MChild::TCp* cP() override;

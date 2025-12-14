@@ -17,12 +17,15 @@ class MContNode2;
 class MCont2: public MIface
 {
     public:
-	static const char* Type() { return "MCont2";};
+	inline static constexpr std::string_view idStr() { return "MCont2"sv;}
+	inline static constexpr TIdHash idHash() { return 0xc19593acbbdbb3d4;}
+    public:
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MCont2_Uid();}
 	virtual string MCont2_Uid() const = 0;
-	virtual MIface* getLif(const char *aType) override { return MCont2_getLif(aType);}
-	virtual MIface* MCont2_getLif(const char *aType) = 0;
+	virtual MIface* getLif(TIdHash aTid) override { return MCont2_getLif(aTid);}
+	virtual MIface* MCont2_getLif(TIdHash aTid) = 0;
 	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { MCont2_doDump(aLevel, aIdt, aOs);}
 	virtual void MCont2_doDump(int aLevel, int aIdt, ostream& aOs) const = 0;
 	// Local
@@ -37,8 +40,11 @@ class MCont2: public MIface
 class MContOwner2 : public MIface
 {
     public:
-	static const char* Type() { return "MContOwner2";};
+	inline static constexpr std::string_view idStr() { return "MContOwner2"sv;}
+	inline static constexpr TIdHash idHash() { return 0x8cb38c1858bfb929;}
+    public:
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MContOwner2_Uid();}
 	virtual string MContOwner2_Uid() const = 0;
 	// Local
@@ -50,7 +56,10 @@ class MContOwner2 : public MIface
 class MContNode2 : public MIface
 {
     public:
-	static const char* Type() { return "MContNode2";};
+	inline static constexpr std::string_view idStr() { return "MContNode2"sv;}
+	inline static constexpr TIdHash idHash() { return 0xc6d32f78e57267ac;}
+    public:
+	TIdHash id() const override { return idHash();}
 	// From MIface
 	virtual string Uid() const override { return MContNode2_Uid();}
 	virtual string MContNode2_Uid() const = 0;

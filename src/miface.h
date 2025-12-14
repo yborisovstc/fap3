@@ -7,19 +7,26 @@
 using namespace std;
 
 /** @brief Interface of interface
- * Any interface has to include type static attr const char* mType
+ * Any interface has to include type static char* idStr() const
+ * and static const  TIdHash idHash() const
  * */
 class MIface
 {
     public:
+	using TIdHash = std::size_t;
+    public:
+	virtual TIdHash id() const = 0;
 	/** @brief Remote call of iface method: aRes - data of result, returns context or NULL otherwise */
 	virtual MIface* Call(const string& aSpec, string& aRes) { return nullptr;}
 	/** @brief Getting id unique in the scope of the env */
 	virtual string Uid() const = 0;
 	/** @brief Gets local interface of type aType */
-	virtual MIface* getLif(const char *aType) { return nullptr;}
-	template <class T> T* lIf(T* aInst) {return aInst = reinterpret_cast<T*>(getLif(aInst->Type()));}
-	template <class T> const T* lIf(T* aInst) const { MIface* self = const_cast<MIface*>(this); return aInst = reinterpret_cast<T*>(self->getLif(aInst->Type()));}
+	virtual MIface* getLif(TIdHash aTid) { return nullptr;}
+	const MIface* getLif(TIdHash aTid) const { return const_cast<MIface*>(this)->getLif(aTid);}
+	template <class T> T* lIf(T* aInst) {return aInst = reinterpret_cast<T*>(getLif(T::idHash()));}
+	template <class T> const T* lIf(T* aInst) const { MIface* self = const_cast<MIface*>(this); return aInst = reinterpret_cast<T*>(self->getLif(T::idHash()));}
+	template <class T> T* lIft() {return reinterpret_cast<T*>(getLif(T::idHash()));}
+	template <class T> const T* lIft() const {return reinterpret_cast<T*>(getLif(T::idHash()));}
 	/** @brief outputs dump
 	 * @param aInt  indentation level
 	 * */

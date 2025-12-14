@@ -47,6 +47,8 @@ namespace PEvents {
 	EDurStat_MutNtf = 29,           // Mutation. Owner notification
 	EDurStat_MutCad = 30,           // Mutation. Adding mut to target chromo root
 	EDurStat_Tst1 = 31,           // Test
+	EDurStat_IFR_IcInv= 32,
+	EDurStat_IFR_IcVal= 33,
 	EDurStat_MAX = 50,              // Max durstat pind
     };
 }

@@ -14,16 +14,19 @@ class MIfReq;
 class MIfProv: public MIface
 {
     public:
+	inline static constexpr std::string_view idStr() { return "MIfProv"sv;}
+	inline static constexpr TIdHash idHash() { return 0x2715b72665f4234c;}
+    public:
 	using TCp = MNcpp<MIfProv, MIfReq>; /*!< Connpoint type */
 	using TIfaces = vector<MIface*>;
 	template <class T> using TTIfaces = vector<T*>;
     public:
-	static const char* Type() { return "MIfProv";}
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MIfProv_Uid();}
 	virtual string MIfProv_Uid() const = 0;
-	virtual string name() const = 0;
-	virtual void resolve(const string& aName) = 0;
+	virtual TIdHash ifId() const = 0;
+	virtual void resolve(TIdHash aTid) = 0;
 	virtual MIface* iface() = 0;
 	virtual TIfaces* ifaces() = 0;
 	virtual const MIfProvOwner* owner() const = 0;
@@ -39,10 +42,13 @@ class MIfProv: public MIface
 class MIfReq: public MIface
 {
     public:
+	inline static constexpr std::string_view idStr() { return "MIfReq"sv;}
+	inline static constexpr TIdHash idHash() { return 0xab15665aca00012f;}
+    public:
 	using TIfReqCp = MNcpp<MIfReq, MIfProv>; /*!< IFR requestor connpoint type */
     public:
-	static const char* Type() { return "MIfReq";}
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MIfReq_Uid();}
 	virtual string MIfReq_Uid() const = 0;
 	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { MIfReq_doDump(aLevel, aIdt, aOs);}
@@ -69,15 +75,18 @@ class MIfReq: public MIface
 class MIfProvOwner: public MIface
 {
     public:
-	static const char* Type() { return "MIfProvOwner";}
+	inline static constexpr std::string_view idStr() { return "MIfProvOwner"sv;}
+	inline static constexpr TIdHash idHash() { return 0xf2c0cfe42559fbf4;}
+    public:
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MIfProvOwner_Uid();}
 	virtual string MIfProvOwner_Uid() const = 0;
-	virtual MIface* getLif(const char *aType) { return MIfProvOwner_getLif(aType);}
-	virtual MIface* MIfProvOwner_getLif(const char *aType) = 0;
+	virtual MIface* getLif(TIdHash aTid) { return MIfProvOwner_getLif(aTid);}
+	virtual MIface* MIfProvOwner_getLif(TIdHash aTid) = 0;
 	// Local
 	/** @resolve interface as provider owner */
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) = 0;
+	virtual void resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq) = 0;
 	virtual void onIfpDisconnected(MIfProv* aProv) = 0;
 	// TODO not used, remove?
 	virtual void onIfpInvalidated(MIfProv* aProv) = 0;

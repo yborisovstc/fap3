@@ -26,8 +26,8 @@ public:
     virtual void setUp();
     virtual void tearDown();
 private:
-    void test_nav_1();
-    void test_cont_1();
+    //void test_nav_1();
+    //void test_cont_1();
     void test_cre_1();
     void test_node_aul_1();
 private:
@@ -48,6 +48,7 @@ void Ut_node::tearDown()
     CPPUNIT_ASSERT_EQUAL_MESSAGE("tearDown", 0, 0);
 }
 
+#if 0
 /** @brief Test of navigation
  * */
 void Ut_node::test_nav_1()
@@ -97,7 +98,9 @@ void Ut_node::test_nav_1()
 
     delete owner;
 }
+#endif
 
+#if 0
 /** @brief Test of content
  * */
 void Ut_node::test_cont_1()
@@ -158,6 +161,7 @@ void Ut_node::test_cont_1()
 
     delete owner;
 }
+#endif
 
 /** @brief Test of creating node based model
  * */

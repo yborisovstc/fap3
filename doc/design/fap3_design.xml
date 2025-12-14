@@ -4209,6 +4209,26 @@
                 So we need to apply same extra optimization to fap3 and compare "pure" IRM and non-IRM solutions. 
             </simpara>
         </sect2>
+        <sect2 id="ds_ocfap5_uhi"><title>Optimization: Using hash Id instead of string</title>
+            <sect3><title>Intro</title>
+                <simpara>
+                    fap5 used this optimization. It would speed up local iface resolution.
+                </simpara>
+            </sect3>
+            <sect3><title>Result</title>
+                <simpara>
+                    I don't see significant performance improvements with this opt. 
+                </simpara>
+            </sect3>
+        </sect2>
+        <sect2><title>Indication: fap5 transition is faster than that of fap3 </title>
+            <sect3><title>Intro</title>
+                <simpara>
+                    Comparing fap3-fap5 on ut_avr_vert_drp_2 (5 cycle all). Total model movement time (IFC_LNCH_RUN) is
+                    1.196470 (fap5) vs 2.720346 (fap3). 
+                </simpara>
+            </sect3>
+        </sect2>
     </sect1>
 
     <sect1 id="ds_iss"><title>Issues</title>

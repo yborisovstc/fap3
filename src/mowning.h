@@ -12,14 +12,17 @@ class MutCtx;
 class MOwner : public MIface
 {
     public:
+	inline static constexpr std::string_view idStr() { return "MOwner"sv;}
+	inline static constexpr TIdHash idHash() { return 0x5ef6ce210778d73c;}
+    public:
 	using TCp =  MNcpp<MOwner, MOwned>;
     public:
-	static const char* Type() { return "MOwner";};
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MOwner_Uid();}
 	virtual string MOwner_Uid() const = 0;
-	virtual MIface* getLif(const char *aType) { return MOwner_getLif(aType);}
-	virtual MIface* MOwner_getLif(const char *aType) = 0;
+	virtual MIface* getLif(TIdHash aId) { return MOwner_getLif(aId);}
+	virtual MIface* MOwner_getLif(TIdHash aId) = 0;
 	// Local
 	/** @brief Gets node by URI
 	 * @param aReq  requesting node
@@ -44,14 +47,17 @@ class MOwner : public MIface
 class MOwned : public MIface
 {
     public:
+	inline static constexpr std::string_view idStr() { return "MOwned"sv;}
+	inline static constexpr TIdHash idHash() { return 0x20c735e6cf1457bd;}
+    public:
 	using TCp =  MNcpp<MOwned, MOwner>;
     public:
-	static const char* Type() { return "MOwned";};
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MOwned_Uid();}
 	virtual string MOwned_Uid() const = 0;
-	virtual MIface* getLif(const char *aType) override { return MOwned_getLif(aType);}
-	virtual MIface* MOwned_getLif(const char *aType) = 0;
+	virtual MIface* getLif(TIdHash aTid) override { return MOwned_getLif(aTid);}
+	virtual MIface* MOwned_getLif(TIdHash aTid) = 0;
 	// Local
 	virtual string ownedId() const = 0;
 	virtual void deleteOwned() = 0;

@@ -14,12 +14,15 @@ class MNode;
 class MParent : public MIface
 {
     public:
-	static const char* Type() { return "MParent";};
+	inline static constexpr std::string_view idStr() { return "MParent"sv;}
+	inline static constexpr TIdHash idHash() { return 0x8f2ba00fd4cbd280;}
+    public:
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MParent_Uid();}
 	virtual string MParent_Uid() const = 0;
-	virtual MIface* getLif(const char *aType) { return MParent_getLif(aType);}
-	virtual MIface* MParent_getLif(const char *aType) = 0;
+	virtual MIface* getLif(TIdHash aTid) { return MParent_getLif(aTid);}
+	virtual MIface* MParent_getLif(TIdHash aTid) = 0;
 	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { return MParent_doDump(aLevel, aIdt, std::cout);}
 	virtual void MParent_doDump(int aLevel, int aIdt, ostream& aOs) const = 0;
 	// Local
@@ -44,14 +47,17 @@ class MParent : public MIface
 class MChild : public MIface
 {
     public:
+	inline static constexpr std::string_view idStr() { return "MChild"sv;}
+	inline static constexpr TIdHash idHash() { return 0xa9ff92bbd5b98def;}
+    public:
 	using TCp =  MNcpp<MChild, MParent>;
     public:
-	static const char* Type() { return "MChild";};
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MChild_Uid();}
 	virtual string MChild_Uid() const = 0;
-	virtual MIface* getLif(const char *aType) { return MChild_getLif(aType);}
-	virtual MIface* MChild_getLif(const char *aType) = 0;
+	virtual MIface* getLif(TIdHash aTid) { return MChild_getLif(aTid);}
+	virtual MIface* MChild_getLif(TIdHash aTid) = 0;
 	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { return MChild_doDump(aLevel, aIdt, std::cout);}
 	virtual void MChild_doDump(int aLevel, int aIdt, ostream& aOs) const = 0;
 	// Local

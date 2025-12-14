@@ -10,12 +10,15 @@
 class MContent: public MIface
 {
     public:
-	static const char* Type() { return "MContent";};
+	inline static constexpr std::string_view idStr() { return "MContent"sv;}
+	inline static constexpr TIdHash idHash() { return 0xbea5b40a7c86c1a;}
+    public:
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MContent_Uid();}
 	virtual string MContent_Uid() const = 0;
-	virtual MIface* getLif(const char *aType) override { return MContent_getLif(aType);}
-	virtual MIface* MContent_getLif(const char *aType) = 0;
+	virtual MIface* getLif(TIdHash aTid) override { return MContent_getLif(aTid);}
+	virtual MIface* MContent_getLif(TIdHash aTid) = 0;
 	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { MContent_doDump(aLevel, aIdt, aOs);}
 	virtual void MContent_doDump(int aLevel, int aIdt, ostream& aOs) const = 0;
 	// Local
@@ -32,12 +35,15 @@ class GUri;
 class MContentOwner: public MIface
 {
     public:
-	static const char* Type() { return "MContentOwner";};
+	inline static constexpr std::string_view idStr() { return "MContentOwner"sv;}
+	inline static constexpr TIdHash idHash() { return 0x1e4507d19fdbe;}
+    public:
 	// From MIface
+	TIdHash id() const override { return idHash();}
 	virtual string Uid() const override { return MContentOwner_Uid();}
 	virtual string MContentOwner_Uid() const = 0;
-	virtual MIface* getLif(const char *aType) override { return MContentOwner_getLif(aType);}
-	virtual MIface* MContentOwner_getLif(const char *aType) = 0;
+	virtual MIface* getLif(TIdHash aTid) override { return MContentOwner_getLif(aTid);}
+	virtual MIface* MContentOwner_getLif(TIdHash aTid) = 0;
 	virtual void doDump(int aLevel, int aIdt, ostream& aOs) const override { MContentOwner_doDump(aLevel, aIdt, aOs);}
 	virtual void MContentOwner_doDump(int aLevel, int aIdt, ostream& aOs) const = 0;
 	// Local

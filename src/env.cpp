@@ -248,7 +248,7 @@ void Env::constructSystem()
     MChromo* mChromo = mProvider->createChromo();
     if (mSpecFile.empty() && mSpec.empty()) {
 	// TODO to add provider method createRoot. Env shouldn't know of model types.
-	mRoot = mProvider->createNode(Elem::Type(), "Root", this);
+	mRoot = mProvider->createNode(string(Elem::idStr()), "Root", this);
     } else {
 	PROF_DUR_START(mProf, PROF_DUR, PEvents::EDur_EnvSetChromo);
 	if (!mSpecFile.empty()) {

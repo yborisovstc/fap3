@@ -7,7 +7,7 @@
 vector<GUri> Elem::getParentsUri()
 {
     auto p = Unit::getParentsUri();
-    p.insert(p.begin(), Type());
+    p.insert(p.begin(), string(idStr()));
     return p;
 }
 
@@ -33,7 +33,7 @@ Elem::~Elem()
     mInode.binded()->disconnectAll();
 }
 
-MIface* Elem::MElem_getLif(const char *aType)
+MIface* Elem::MElem_getLif(TIdHash aTid)
 {
     return nullptr;
 }
@@ -42,12 +42,12 @@ void Elem::MElem_doDump(int aLevel, int aIdt, ostream& aOs) const
 {
 }
 
-MIface* Elem::MNode_getLif(const char *aType)
+MIface* Elem::MNode_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMElemPtr));
-    else if (res = checkLif2(aType, mMParentPtr));
-    else res = Unit::MNode_getLif(aType);
+    if (res = checkLif2(aTid, mMElemPtr));
+    else if (res = checkLif2(aTid, mMParentPtr));
+    else res = Unit::MNode_getLif(aTid);
     return res;
 }
 
@@ -168,7 +168,7 @@ MNode* Elem::createHeir(const string& aName)
     return heir;
 }
 
-MIface* Elem::MParent_getLif(const char *aType)
+MIface* Elem::MParent_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
     return res;
@@ -203,7 +203,7 @@ bool Elem::onChildRenaming(MChild* aChild, const string& aNewName)
     return res;
 }
 
-MIface* Elem::MChild_getLif(const char *aType)
+MIface* Elem::MChild_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
     return res;

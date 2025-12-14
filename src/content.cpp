@@ -11,19 +11,19 @@ Content::~Content()
 {
 }
 
-MIface* Content::MNode_getLif(const char *aType)
+MIface* Content::MNode_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMContentPtr));
-    else if (res = checkLif2(aType, mMContentOwnerPtr));
-    else res = Node::MNode_getLif(aType);
+    if (res = checkLif2(aTid, mMContentPtr));
+    else if (res = checkLif2(aTid, mMContentOwnerPtr));
+    else res = Node::MNode_getLif(aTid);
     return res;
 }
 
-MIface* Content::MContent_getLif(const char *aType)
+MIface* Content::MContent_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMContentOwnerPtr));
+    if (res = checkLif2(aTid, mMContentOwnerPtr));
     return res;
 }
 

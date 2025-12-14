@@ -35,7 +35,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
                 NodeCreationObserver(ASdc* aHost);
                 void startObserving(const GUri& aTargUri);
                 virtual string MObserver_Uid() const {return mHost->getUidC<MObserver>("NodeCreationObserver");}
-                virtual MIface* MObserver_getLif(const char *aName) override { return nullptr;}
+                virtual MIface* MObserver_getLif(TIdHash aTid) override { return nullptr;}
                 virtual void onObsOwnerAttached(MObservable* aObl) override {}
                 virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override;
                 virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override { }
@@ -156,7 +156,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 		virtual ~MagObs() { }
 		// From MObserver
 		virtual string MObserver_Uid() const { return mHost->getUidC<MObserver>("MagObs");}
-		virtual MIface* MObserver_getLif(const char *aName) override { return nullptr;}
+		virtual MIface* MObserver_getLif(TIdHash aTid) override { return nullptr;}
                 virtual void onObsOwnerAttached(MObservable* aObl) override {}
 		virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override {
 		    //mHost->notifyMaps();
@@ -194,7 +194,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 		void updateNuo(MNode* aNuo);
 		// From MObserver
 		virtual string MObserver_Uid() const {return mHost->getUidC<MObserver>(mNuo->name());}
-		virtual MIface* MObserver_getLif(const char *aName) override { return nullptr;}
+		virtual MIface* MObserver_getLif(TIdHash aTid) override { return nullptr;}
                 virtual void onObsOwnerAttached(MObservable* aObl) override {}
 		virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override {
 		    if (mMask & EO_ATCH) mHost->notifyOutp();
@@ -219,14 +219,14 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 	ASdc(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
 	virtual ~ASdc();
 	// From Base
-	virtual MIface* MNode_getLif(const char *aName) override;
+	virtual MIface* MNode_getLif(TIdHash aTid) override;
 	// From MUnit
 	// From Unit.MIfProvOwner
-	virtual void resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq) override;
+	virtual void resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq) override;
 	// From MDesSyncable
 	virtual string MDesSyncable_Uid() const override {return getUid<MDesSyncable>();}
 	virtual void MDesSyncable_doDump(int aLevel, int aIdt, ostream& aOs) const override {}
-	virtual MIface* MDesSyncable_getLif(const char *aType) override { return nullptr; }
+	virtual MIface* MDesSyncable_getLif(TIdHash aTid) override { return nullptr; }
 	virtual void update() override;
 	virtual void confirm() override;
 	virtual void setUpdated() override;
@@ -240,7 +240,7 @@ class ASdc : public Unit, public MDesSyncable, public MDesObserver, public MObse
 	virtual void onUpdated(MDesSyncable* aComp) override;
 	// From MObserver
 	virtual string MObserver_Uid() const {return getUid<MObserver>();}
-	virtual MIface* MObserver_getLif(const char *aType) override;
+	virtual MIface* MObserver_getLif(TIdHash aTid) override;
         virtual void onObsOwnerAttached(MObservable* aObl) override {}
 	virtual void onObsOwnedAttached(MObservable* aObl, MOwned* aOwned) override;
 	virtual void onObsOwnedDetached(MObservable* aObl, MOwned* aOwned) override;
@@ -301,7 +301,8 @@ void ASdc::SdcPapc<T>::updateData(const T& aData)
 class ASdcMut : public ASdc
 {
     public:
-	static const char* Type() { return "ASdcMut";};
+	inline static constexpr std::string_view idStr() { return "ASdcMut"sv;}
+    public:
 	ASdcMut(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
     protected:
 	// From ASdc
@@ -319,7 +320,8 @@ class ASdcMut : public ASdc
 class ASdcComp : public ASdc
 {
     public:
-	static const char* Type() { return "ASdcComp";};
+	inline static constexpr std::string_view idStr() { return "ASdcComp"sv;}
+    public:
 	ASdcComp(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
     protected:
 	// From ASdc
@@ -338,7 +340,8 @@ class ASdcComp : public ASdc
 class ASdcCompT : public ASdc
 {
     public:
-	static const char* Type() { return "ASdcCompT";};
+	inline static constexpr std::string_view idStr() { return "ASdcCompT"sv;}
+    public:
 	ASdcCompT(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
     protected:
 	// From ASdc
@@ -359,7 +362,8 @@ class ASdcCompT : public ASdc
 class ASdcRm : public ASdc
 {
     public:
-	static const char* Type() { return "ASdcRm";};
+	inline static constexpr std::string_view idStr() { return "ASdcRm"sv;}
+    public:
 	ASdcRm(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
     protected:
 	// From ASdc
@@ -379,7 +383,8 @@ class ASdcRm : public ASdc
 class ASdcConn : public ASdc
 {
     public:
-	static const char* Type() { return "ASdcConn";};
+	inline static constexpr std::string_view idStr() { return "ASdcConn"sv;}
+    public:
 	ASdcConn(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
     protected:
 	// From ASdc
@@ -397,7 +402,8 @@ class ASdcConn : public ASdc
 class ASdcConnT : public ASdc
 {
     public:
-	static const char* Type() { return "ASdcConnT";};
+	inline static constexpr std::string_view idStr() { return "ASdcConnT"sv;}
+    public:
 	ASdcConnT(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
     protected:
 	// From ASdc
@@ -417,7 +423,8 @@ class ASdcConnT : public ASdc
 class ASdcDisconn : public ASdc
 {
     public:
-	static const char* Type() { return "ASdcDisconn";};
+	inline static constexpr std::string_view idStr() { return "ASdcDisconn"sv;}
+    public:
 	ASdcDisconn(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
     protected:
 	// From ASdc
@@ -440,7 +447,8 @@ class ASdcDisconn : public ASdc
 class ASdcInsert2 : public ASdc
 {
     public:
-	static const char* Type() { return "ASdcInsert2";};
+	inline static constexpr std::string_view idStr() { return "ASdcInsert2"sv;}
+    public:
 	ASdcInsert2(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
     protected:
 	// From MObserver
@@ -491,7 +499,8 @@ class ASdcInsert3 : public ASdc
 class ASdcInsertN : public ASdc
 {
     public:
-	static const char* Type() { return "ASdcInsertN";};
+	inline static constexpr std::string_view idStr() { return "ASdcInsertN"sv;}
+    public:
 	ASdcInsertN(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
     protected:
 	// From MObserver
@@ -516,7 +525,8 @@ class ASdcInsertN : public ASdc
 class ASdcExtract : public ASdc
 {
     public:
-	static const char* Type() { return "ASdcExtract";};
+	inline static constexpr std::string_view idStr() { return "ASdcExtract"sv;}
+    public:
 	ASdcExtract(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
     protected:
 	// From ASdc
@@ -535,7 +545,8 @@ class ASdcExtract : public ASdc
 class ASdcPause : public ASdc
 {
     public:
-	static const char* Type() { return "ASdcPause";};
+	inline static constexpr std::string_view idStr() { return "ASdcPause"sv;}
+    public:
 	ASdcPause(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);
     protected:
 	// From ASdc
@@ -549,6 +560,8 @@ class ASdcPause : public ASdc
  * */
 class ASdcResume : public ASdc
 {
+    public:
+	inline static constexpr std::string_view idStr() { return "ASdcResume"sv;}
     public:
 	static const char* Type() { return "ASdcResume";};
 	ASdcResume(const string &aType, const string& aName = string(), MEnv* aEnv = NULL);

@@ -6,7 +6,7 @@
 SdoBase::InpBase::InpBase(SdoBase* aHost, const string& aName): mHost(aHost), mName(aName)
 {
     // Add  input to the host
-    MNode* cp = mHost->Provider()->createNode(CpStateInp::Type(), aName, mHost->mEnv);
+    MNode* cp = mHost->Provider()->createNode(string(CpStateInp::idStr()), aName, mHost->mEnv);
     assert(cp);
     bool res = mHost->attachOwned(cp);
     assert(res);
@@ -17,12 +17,12 @@ SdoBase::SdoBase(const string &aType, const string& aName, MEnv* aEnv): CpStateO
 {
 }
 
-MIface* SdoBase::MNode_getLif(const char *aType)
+MIface* SdoBase::MNode_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMDVarGetPtr));
-    else if (res = checkLif2(aType, mMDesInpObserverPtr));
-    else res = CpStateOutp::MNode_getLif(aType);
+    if (res = checkLif2(aTid, mMDVarGetPtr));
+    else if (res = checkLif2(aTid, mMDesInpObserverPtr));
+    else res = CpStateOutp::MNode_getLif(aTid);
     return res;
 }
 
@@ -949,7 +949,7 @@ SdoUpdateInd::SdoUpdateInd(const string &aType, const string& aName, MEnv* aEnv)
     mData.mValid = true;
 }
 
-MIface* SdoUpdateInd::MNode_getLif(const char *aType)
+MIface* SdoUpdateInd::MNode_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
     if (res = checkLif<MDVarGet>(aType));

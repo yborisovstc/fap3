@@ -11,14 +11,15 @@
 class Content : public Node, public MContent
 {
     public:
-	static const char* Type() { return "Content";}
+	inline static constexpr std::string_view idStr() { return "Content"sv;}
+    public:
 	Content(const string &aType, const string &aName, MEnv* aEnv);
 	virtual ~Content();
 	// From Node.MNode.MIface
-	virtual MIface* MNode_getLif(const char *aType) override;
+	virtual MIface* MNode_getLif(TIdHash aTid) override;
 	// From MCont.MIface
 	virtual string MContent_Uid() const override { return getUid<MContent>();}
-	virtual MIface* MContent_getLif(const char *aType) override;
+	virtual MIface* MContent_getLif(TIdHash aTid) override;
 	virtual void MContent_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	// From MContent
 	// TODO Bug. Needs to return URI?
@@ -51,8 +52,8 @@ class Cnt : public MContent {
 	Cnt(Host& aHost, const string& aName): mHost(aHost), mName(aName) {}
 	virtual ~Cnt() {}
 	// From MContent
-	virtual string MContent_Uid() const override { return mHost.getCntUid(mName, MContent::Type());}
-	virtual MIface* MContent_getLif(const char *aType) override { return nullptr;}
+	virtual string MContent_Uid() const override { return mHost.getCntUid(mName, string(MContent::idStr()));}
+	virtual MIface* MContent_getLif(TIdHash aTid) override { return nullptr;}
 	virtual void MContent_doDump(int aLevel, int aIdt, ostream& aOs) const override;
 	virtual string contName() const override { return mName;}
 	virtual bool getData(string& aData) const override { aData = mData; return true;}

@@ -12,7 +12,7 @@
 vector<GUri> Unit::getParentsUri()
 {
     auto p = Node::getParentsUri();
-    p.insert(p.begin(), Type());
+    p.insert(p.begin(), string(idStr()));
     return p;
 }
 
@@ -54,39 +54,39 @@ Unit::~Unit()
     }
 }
 
-MIface* Unit::MNode_getLif(const char *aType)
+MIface* Unit::MNode_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMUnitPtr));
-    else res = Node::MNode_getLif(aType);
+    if (res = checkLif2(aTid, mMUnitPtr));
+    else res = Node::MNode_getLif(aTid);
     return res;
 }
 
-MIface* Unit::MOwned_getLif(const char *aType)
+MIface* Unit::MOwned_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMUnitPtr)); // Enable IRM from owner
-    else res = Node::MOwned_getLif(aType);
+    if (res = checkLif2(aTid, mMUnitPtr)); // Enable IRM from owner
+    else res = Node::MOwned_getLif(aTid);
     return res;
 }
 
-MIface* Unit::MUnit_getLif(const char *aType)
+MIface* Unit::MUnit_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMUnitPtr));
-    else if (res = checkLif2(aType, mMIfProvOwnerPtr));
-    else res = MNode_getLif(aType); //YB?? vulnerability
+    if (res = checkLif2(aTid, mMUnitPtr));
+    else if (res = checkLif2(aTid, mMIfProvOwnerPtr));
+    else res = MNode_getLif(aTid); //YB?? vulnerability
     return res;
 }
 
 /**
  * MNode - to support of owner-owned deps when IFR
  * */
-MIface* Unit::MIfProvOwner_getLif(const char *aType)
+MIface* Unit::MIfProvOwner_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMUnitPtr));
-    else if (res = checkLif2(aType, mMNodePtr));
+    if (res = checkLif2(aTid, mMUnitPtr));
+    else if (res = checkLif2(aTid, mMNodePtr));
     return res;
 }
 
@@ -104,7 +104,7 @@ void Unit::MUnit_doDump(int aLevel, int aIdt, std::ostream& aOs) const
 	*/
 	Ifu::offset(aIdt, aOs); aOs << "== IRNs: ==" << endl;
 	for (auto item : mIrns) {
-	    Ifu::offset(aIdt, aOs); aOs << "Iface: " << item->name() << endl;
+	    Ifu::offset(aIdt, aOs); aOs << "Iface: " << item->ifId() << endl;
 	    item->MIfProv_doDump(aLevel, aIdt + 1, aOs);
 	    //auto req = item->firstPair() ? item->firstPair()->provided() : nullptr;
 	    auto* fpair = *item->pairsBegin();
@@ -117,7 +117,7 @@ void Unit::MUnit_doDump(int aLevel, int aIdt, std::ostream& aOs) const
     }
 }
 
-void Unit::resolveIface(const string& aName, MIfReq::TIfReqCp* aReq)
+void Unit::resolveIface(TIdHash aTid, MIfReq::TIfReqCp* aReq)
 {
     bool res = false;
     // Check if the requestor was already registered
@@ -127,38 +127,38 @@ void Unit::resolveIface(const string& aName, MIfReq::TIfReqCp* aReq)
     }
     if (prov) {
 	if (!prov->isValid()) {
-	    prov->resolve(aName);
+	    prov->resolve(aTid);
 	}
     } else {
-	IfrNode* node = createIfProv(aName, aReq);
+	IfrNode* node = createIfProv(aTid, aReq);
 	mIrns.push_back(node);
 	res = node->connect(aReq);
 	if (res) {
-	    node->resolve(aName);
+	    node->resolve(aTid);
 	}
     }
 }
 
-MIfProv* Unit::defaultIfProv(const string& aName)
+MIfProv* Unit::defaultIfProv(TIdHash aTid)
 {
     MIfProv* res = nullptr;
-    if (mLocalIrn.count(aName) > 0) {
-	res = mLocalIrn.at(aName);
+    if (mLocalIrn.count(aTid) > 0) {
+	res = mLocalIrn.at(aTid);
     } else {
-	IfrNode* node = createIfProv(aName, nullptr);
+	IfrNode* node = createIfProv(aTid, nullptr);
 	mIrns.push_back(node);
-	mLocalIrn[aName] = node;
+	mLocalIrn[aTid] = node;
 	res = node;
     }
     return res;
 }
 
-IfrNode* Unit::createIfProv(const string& aName, MIfReq::TIfReqCp* aReq) const
+IfrNode* Unit::createIfProv(TIdHash aTid, MIfReq::TIfReqCp* aReq) const
 {
     IfrNode* res = nullptr;
     Unit* self = const_cast<Unit*>(this);
     if (!aReq) {  // No requestor, create root node
-	res = new IfrNodeRoot(self, aName);
+	res = new IfrNodeRoot(self, aTid);
     } else {  // There is a requestor, created regular node
 	res = new IfrNode(self); 
     }
@@ -189,11 +189,11 @@ void Unit::invalidateIrm()
     }
 }
 
-void Unit::invalidateIrm(const string& aIfcName)
+void Unit::invalidateIrm(TIdHash aIfid)
 {
     PFL_DUR_STAT_START(PEvents::EDurStat_UInvldIrm);
     for (auto node : mIrns) {
-	if (node->isValid() && node->name() == aIfcName) {
+	if (node->isValid() && node->ifId() == aIfid) {
 	    node->setValid(false);
 	}
     }
@@ -235,19 +235,19 @@ void Unit::addIfpLeafs(MIfProv::TIfaces* aIfcs, MIfReq::TIfReqCp* aReq)
     }
 }
 
-void Unit::resolveIfc(const string& aName, MIfReq::TIfReqCp* aReq)
+void Unit::resolveIfc(TIdHash aTid, MIfReq::TIfReqCp* aReq)
 {
-    MIface* ifr = MNode_getLif(aName.c_str());
+    MIface* ifr = MNode_getLif(aTid);
     if (ifr) {
 	addIfpLeaf(ifr, aReq);
     }
 }
 
-MIface* Unit::MOwner_getLif(const char *aType)
+MIface* Unit::MOwner_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMUnitPtr)); // To enable ifr request to owner
-    else res = Node::MOwner_getLif(aType);
+    if (res = checkLif2(aTid, mMUnitPtr)); // To enable ifr request to owner
+    else res = Node::MOwner_getLif(aTid);
     return res;
 }
 

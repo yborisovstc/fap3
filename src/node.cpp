@@ -62,18 +62,18 @@ Node::~Node()
     mOcp.disconnectAll();
 }
 
-MIface* Node::MNode_getLif(const char *aType)
+MIface* Node::MNode_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMNodePtr));
-    else if (res = checkLif2(aType, mMOwnedPtr));
-    else if (res = checkLif2(aType, mMOwnerPtr));
-    else if (res = checkLif2(aType, mMContentOwnerPtr));
-    else if (res = checkLif2(aType, mMObservablePtr));
+    if (res = checkLif2(aTid, mMNodePtr));
+    else if (res = checkLif2(aTid, mMOwnedPtr));
+    else if (res = checkLif2(aTid, mMOwnerPtr));
+    else if (res = checkLif2(aTid, mMContentOwnerPtr));
+    else if (res = checkLif2(aTid, mMObservablePtr));
     return res;
 }
 
-MIface* Node::MObservable_getLif(const char *aType)
+MIface* Node::MObservable_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
     return res;
@@ -604,10 +604,10 @@ void Node::onOwnerAttached()
 }
 
 
-MIface* Node::MContentOwner_getLif(const char *aType) 
+MIface* Node::MContentOwner_getLif(TIdHash aTid) 
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMContentOwnerPtr));
+    if (res = checkLif2(aTid, mMContentOwnerPtr));
     return res;
 }
 
@@ -719,10 +719,10 @@ const MContent* Node::getCont(const GUri& aUri) const
     return res;
 }
 
-MIface* Node::MOwned_getLif(const char *aType)
+MIface* Node::MOwned_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
-    if (res = checkLif2(aType, mMNodePtr));
+    if (res = checkLif2(aTid, mMNodePtr));
     return res;
 }
 
@@ -801,15 +801,15 @@ bool Node::isOwned(const MOwned* aOwned) const
     return res;
 }
 
-MIface* Node::MOwner_getLif(const char *aType)
+MIface* Node::MOwner_getLif(TIdHash aTid)
 {
     MIface* res = nullptr;
     // TODO Vulnerabilty, consider to configure the access
-    if (res = checkLif2(aType, mMObservablePtr));
+    if (res = checkLif2(aTid, mMObservablePtr));
     // TODO to introduce specific iface for explorable, ref ds_dcs_aes_acp
-    else if (res = mExplorable ? checkLif2(aType, mMNodePtr) : nullptr);
-    else if (res = mControllable ? checkLif2(aType, mMNodePtr) : nullptr);
-    else if (res = checkLif2(aType, mMContentOwnerPtr));
+    else if (res = mExplorable ? checkLif2(aTid, mMNodePtr) : nullptr);
+    else if (res = mControllable ? checkLif2(aTid, mMNodePtr) : nullptr);
+    else if (res = checkLif2(aTid, mMContentOwnerPtr));
     return res;
 }
 
